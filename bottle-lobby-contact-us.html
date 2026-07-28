@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contact & Imprint — Bottle Lobby</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink: #0e0b0b; --paper: #f7f3ee; --wine: #6b1a1a; --gold: #b8975a;
+  --smoke: #1a1212; --dim: rgba(247,243,238,0.45); --line: rgba(247,243,238,0.07);
+}
+html { scroll-behavior: smooth; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Inter', sans-serif; background: var(--ink); color: var(--paper); font-size: 14px; line-height: 1.6; overflow-x: hidden; }
+
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 1.4rem 3rem;
+  background: rgba(14,11,11,0.97);
+  border-bottom: 1px solid var(--line);
+  backdrop-filter: blur(4px);
+}
+.nav-logo { font-family: 'Cormorant Garamond', serif; font-size: 1.35rem; font-weight: 300; letter-spacing: 0.18em; text-transform: uppercase; color: var(--paper); text-decoration: none; }
+.nav-logo span { color: var(--gold); }
+.nav-links { display:flex; gap:1.5rem; list-style:none; }
+.nav-links a { font-size:0.66rem; letter-spacing:0.07em; text-transform:uppercase; color:rgba(247,243,238,0.6); text-decoration:none; transition:color .2s; }
+.nav-links a:hover, .nav-links a.active { color: var(--paper); }
+.nav-right { display: flex; gap: 0.8rem; align-items: center; }
+.btn { font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; padding: 0.55rem 1.4rem; border-radius: 2px; text-decoration: none; font-weight: 500; transition: all 0.2s; border: 1px solid transparent; cursor: pointer; font-family: 'Inter', sans-serif; display: inline-block; }
+.btn-outline { border-color: rgba(247,243,238,0.2); color: rgba(247,243,238,0.5); background: transparent; }
+.btn-outline:hover { border-color: var(--paper); color: var(--paper); }
+.btn-gold { background: var(--gold); color: var(--ink); border-color: var(--gold); }
+.btn-gold:hover { opacity: 0.85; }
+@media (max-width: 1100px) { .nav-links { display:none; } }
+
+.hero { padding: 9.5rem 3rem 3.5rem; max-width: 1240px; margin: 0 auto; }
+.eyebrow { font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--gold); margin-bottom: 1rem; display:flex; align-items:center; gap:0.6rem; }
+.eyebrow::before { content:''; width:24px; height:1px; background:var(--gold); }
+h1 { font-family: 'Cormorant Garamond', serif; font-weight: 300; font-size: 3.2rem; line-height: 1.05; margin-bottom: 1.2rem; }
+h1 em { color: var(--gold); font-style: italic; }
+.lead { color: var(--dim); font-size: 1rem; max-width: 640px; }
+
+.wrap { max-width: 1240px; margin: 0 auto; padding: 0 3rem 6rem; display: grid; grid-template-columns: 1fr 1.3fr; gap: 4rem; }
+@media (max-width: 900px) { .wrap { grid-template-columns: 1fr; padding: 0 1.5rem 4rem; } .hero { padding: 8rem 1.5rem 2.5rem; } }
+
+.block-title { font-family: 'Cormorant Garamond', serif; font-size: 1.5rem; font-weight: 400; margin-bottom: 1.2rem; }
+.contact-item { display:flex; gap:0.9rem; padding: 1rem 0; border-bottom: 1px solid var(--line); }
+.contact-icon { color: var(--gold); font-size: 1rem; flex-shrink:0; width:1.4rem; }
+.contact-label { font-size: 0.62rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--dim); margin-bottom: 0.25rem; }
+.contact-value { font-size: 0.92rem; color: var(--paper); }
+.contact-value a { color: var(--paper); text-decoration: none; }
+.contact-value a:hover { color: var(--gold); }
+
+.imprint { margin-top: 3rem; }
+.imprint p { color: var(--dim); font-size: 0.82rem; margin-bottom: 0.9rem; }
+.imprint strong { color: var(--paper); font-weight: 500; }
+
+.form-box { background: var(--smoke); border: 1px solid var(--line); padding: 2.2rem; }
+.form-row { margin-bottom: 1.2rem; }
+.form-row label { display:block; font-size: 0.65rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--dim); margin-bottom: 0.5rem; }
+.form-row input, .form-row select, .form-row textarea {
+  width: 100%; background: var(--ink); border: 1px solid var(--line); color: var(--paper);
+  padding: 0.75rem 0.9rem; font-family: 'Inter', sans-serif; font-size: 0.85rem; border-radius: 2px;
+}
+.form-row input:focus, .form-row select:focus, .form-row textarea:focus { outline: none; border-color: var(--gold); }
+.form-row textarea { resize: vertical; min-height: 120px; }
+.form-two { display:grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.form-submit { width:100%; }
+.form-note { font-size: 0.7rem; color: var(--dim); margin-top: 0.9rem; }
+.confirm-msg { display:none; background: rgba(184,151,90,0.1); border: 1px solid var(--gold); padding: 1.2rem; margin-top: 1rem; font-size: 0.85rem; color: var(--gold); }
+
+footer { display: flex; align-items: center; justify-content: space-between; padding: 3.6rem 3rem 1.9rem; border-top: 1px solid var(--line); }
+.footer-logo { font-family: 'Cormorant Garamond', serif; font-size: 1.1rem; letter-spacing: 0.15em; text-transform: uppercase; }
+.footer-logo span { color: var(--gold); }
+.footer-brand { display:flex; flex-direction:column; gap:0.5px; justify-self:start; }
+.footer-links { display: flex; gap: 1.5rem; flex-wrap: wrap; }
+.footer-links a { font-size: 0.68rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--dim); text-decoration: none; }
+.footer-links a:hover { color: var(--paper); }
+.footer-copy { font-size: 0.616rem; color: var(--dim); }
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="bottle-lobby.html" class="nav-logo">Bottle<span>&nbsp;Lobby</span></a>
+  <ul class="nav-links">
+    <li><a href="bottle-lobby-market.html">Market</a></li>
+    <li><a href="bottle-lobby.html#solution">The Lobby</a></li>
+    <li><a href="bottle-lobby.html#stakeholders">Why Lobbying</a></li>
+    <li><a href="bottle-lobby.html#how">How it Works</a></li>
+    <li><a href="bottle-lobby-wine-guide.html">Wine Guide</a></li>
+    <li><a href="bottle-lobby.html#shows">Wine Shows</a></li>
+    <li><a href="bottle-lobby.html#wines">Own Label</a></li>
+    <li><a href="bottle-lobby.html#app">The App</a></li>
+    <li><a href="bottle-lobby.html#about">About</a></li>
+    <li><a href="bottle-lobby.html#membership">Membership</a></li>
+    <li><a href="bottle-lobby.html#investors">Partners</a></li>
+  </ul>
+  <div class="nav-right">
+    <a href="bottle-lobby.html" class="btn btn-outline">← Home</a>
+  </div>
+</nav>
+
+<div class="hero">
+  <div class="eyebrow">Get in Touch</div>
+  <h1>Let's talk<br><em>wine trade.</em></h1>
+  <p class="lead">Questions about membership, a specific winery or distributor, press, or anything else — reach us directly below, or use the form and we'll get back to you within one business day.</p>
+</div>
+
+<div class="wrap">
+  <div>
+    <div class="block-title">Contact Details</div>
+
+    <div class="contact-item">
+      <span class="contact-icon">✉</span>
+      <div>
+        <div class="contact-label">Email</div>
+        <div class="contact-value"><a href="mailto:info@caracterwines.de">info@caracterwines.de</a></div>
+      </div>
+    </div>
+
+    <div class="contact-item">
+      <span class="contact-icon">☎</span>
+      <div>
+        <div class="contact-label">Phone</div>
+        <div class="contact-value">+49 (0) 7248 9154 0</div>
+      </div>
+    </div>
+
+    <div class="contact-item">
+      <span class="contact-icon">📍</span>
+      <div>
+        <div class="contact-label">Address</div>
+        <div class="contact-value">Caracter Media GmbH<br>Becker-Göring-Straße 30<br>76307 Karlsbad, Germany</div>
+      </div>
+    </div>
+
+    <div class="imprint">
+      <div class="block-title">Imprint <span style="color:var(--dim);font-size:0.75rem;font-family:'Inter',sans-serif">(Impressum · § 5 TMG)</span></div>
+      <p><strong>Caracter Media GmbH</strong><br>
+      Becker-Göring-Straße 30<br>
+      76307 Karlsbad, Germany</p>
+
+      <p><strong>Management (Geschäftsführung):</strong><br>
+      Kelly (Management) · Serge Khaled (Marketing)</p>
+
+      <p><strong>Contact:</strong><br>
+      Phone: +49 (0) 7248 9154 0<br>
+      Email: info@caracterwines.de</p>
+
+      <p><strong>Commercial Register (Handelsregister):</strong><br>
+      Amtsgericht Mannheim, HRB [Nummer]<br>
+      VAT ID (USt-IdNr. gem. § 27a UStG): DE [Nummer]</p>
+
+      <p style="opacity:0.7">Responsible for content according to § 55 Abs. 2 RStV: Serge Khaled, address as above. This section contains placeholder registration details — please replace the bracketed values with your final registry information before publishing live.</p>
+    </div>
+  </div>
+
+  <div>
+    <div class="block-title">Send Us a Message</div>
+    <div class="form-box">
+      <form id="contactForm" onsubmit="handleContactSubmit(event)">
+        <div class="form-two">
+          <div class="form-row">
+            <label>Full Name</label>
+            <input type="text" required placeholder="Jane Doe">
+          </div>
+          <div class="form-row">
+            <label>Company</label>
+            <input type="text" placeholder="Your company (optional)">
+          </div>
+        </div>
+        <div class="form-row">
+          <label>Email</label>
+          <input type="email" required placeholder="you@company.com">
+        </div>
+        <div class="form-row">
+          <label>I am a...</label>
+          <select>
+            <option>Winery</option>
+            <option>Distributor</option>
+            <option>Restaurant / Sommelier</option>
+            <option>Retail / Fachhandel</option>
+            <option>Investor</option>
+            <option>Press / Media</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label>Message</label>
+          <textarea required placeholder="How can we help?"></textarea>
+        </div>
+        <button type="submit" class="btn btn-gold form-submit">Send Message →</button>
+        <div class="form-note">By submitting, you agree to be contacted by Bottle Lobby regarding your inquiry.</div>
+        <div class="confirm-msg" id="confirmMsg">✓ Thank you — your message has been received. We'll get back to you within one business day.</div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="footer-brand">
+    <div class="footer-logo">Bottle<span>&nbsp;Lobby</span></div>
+    <p class="footer-copy">© 2026 Caracter Media GmbH</p>
+  </div>
+  <div class="footer-links">
+    <a href="bottle-lobby.html">Home</a>
+    <a href="bottle-lobby-why-join.html">Why Join</a>
+    <a href="bottle-lobby-about.html">About</a>
+    <a href="bottle-lobby-investor.html">Investors</a>
+    <a href="bottle-lobby-contact.html">Apply</a>
+    <a href="bottle-lobby-dashboard.html">Dashboard</a>
+    <a href="bottle-lobby-profile-demo.html">Public Profile</a>
+    <a href="bottle-lobby-contact-us.html">Imprint</a>
+  </div>
+</footer>
+
+<script>
+function handleContactSubmit(e) {
+  e.preventDefault();
+  document.getElementById('confirmMsg').style.display = 'block';
+  e.target.reset();
+}
+</script>
+</body>
+</html>

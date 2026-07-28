@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Bottle Lobby Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --ink:   #0e0b0b;
+  --paper: #f7f3ee;
+  --wine:  #6b1a1a;
+  --gold:  #b8975a;
+  --smoke: #1a1212;
+  --dim:   rgba(247,243,238,0.45);
+  --line:  rgba(247,243,238,0.07);
+  --blue:  #7faaf0;
+}
+html { scroll-behavior: smooth; }
+body { font-family: 'Inter', sans-serif; background: var(--ink); color: var(--paper); font-size: 14px; line-height: 1.6; overflow-x: hidden; }
+
+/* ── NAV ── */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 1.4rem 3rem;
+  background: rgba(14,11,11,0.97); border-bottom: 1px solid var(--line);
+  backdrop-filter: blur(4px);
+}
+.nav-logo { font-family: 'Cormorant Garamond', serif; font-size: 1.35rem; font-weight: 300; letter-spacing: 0.18em; text-transform: uppercase; color: var(--paper); text-decoration: none; }
+.nav-logo span { color: var(--gold); }
+.nav-links { display: flex; gap: 1.5rem; list-style: none; }
+.nav-links a { font-size: 0.66rem; letter-spacing: 0.07em; text-transform: uppercase; color: rgba(247,243,238,0.6); text-decoration: none; transition: color 0.2s; }
+.nav-links a:hover { color: var(--paper); }
+.nav-right { display: flex; gap: 0.8rem; align-items: center; }
+.btn { font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; padding: 0.55rem 1.4rem; border-radius: 2px; text-decoration: none; font-weight: 500; transition: all 0.2s; border: 1px solid transparent; cursor: pointer; font-family: 'Inter', sans-serif; display: inline-block; }
+.btn-outline { border-color: rgba(247,243,238,0.2); color: rgba(247,243,238,0.5); background: transparent; }
+.btn-outline:hover { border-color: var(--paper); color: var(--paper); }
+.btn-gold { background: var(--gold); color: var(--ink); border-color: var(--gold); }
+.btn-gold:hover { opacity: 0.85; }
+
+.container { max-width: 1200px; margin: 0 auto; padding: 0 3rem; }
+.eyebrow { font-size: 0.62rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(--gold); margin-bottom: 1.2rem; display: flex; align-items: center; gap: 1rem; }
+.eyebrow::before { content: ''; display: block; width: 28px; height: 1px; background: var(--gold); }
+
+/* ── HERO ── */
+.hero {
+  min-height: 100vh;
+  display: flex; flex-direction: column; justify-content: center;
+  padding: 8rem 3rem 4rem;
+  position: relative; overflow: hidden;
+  background: radial-gradient(ellipse 80% 60% at 50% 40%, #1a0a0a 0%, var(--ink) 70%);
+}
+.hero::before {
+  content: ''; position: absolute; inset: 0;
+  background-image: linear-gradient(135deg, rgba(107,26,26,0.06) 1px, transparent 1px), linear-gradient(45deg, rgba(184,151,90,0.03) 1px, transparent 1px);
+  background-size: 80px 80px, 140px 140px;
+}
+.hero-inner { max-width: 1200px; margin: 0 auto; width: 100%; position: relative; display: grid; grid-template-columns: 1.05fr 1fr; gap: 4rem; align-items: center; }
+.hero h1 { font-family: 'Cormorant Garamond', serif; font-size: clamp(2.6rem, 5vw, 4.4rem); font-weight: 300; line-height: 1.06; color: var(--paper); }
+.hero h1 em { font-style: italic; color: var(--gold); }
+.hero-sub { font-size: 0.92rem; color: var(--dim); max-width: 500px; margin: 1.6rem 0 2rem; line-height: 1.9; }
+.hero-badges { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 2.3rem; }
+.badge { font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase; padding: 0.4rem 0.9rem; border-radius: 20px; border: 1px solid rgba(247,243,238,0.15); color: var(--dim); }
+.badge-active { border-color: var(--gold); color: var(--gold); }
+.hero-ctas { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; }
+.btn-primary { font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase; background: var(--gold); color: var(--ink); padding: 1rem 2.2rem; border-radius: 2px; text-decoration: none; font-weight: 500; transition: opacity 0.2s; display: inline-block; }
+.btn-primary:hover { opacity: 0.85; }
+.btn-ghost { font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--dim); text-decoration: none; padding: 1rem 0; border-bottom: 1px solid rgba(247,243,238,0.2); transition: color 0.2s; }
+.btn-ghost:hover { color: var(--paper); }
+
+/* ── BROWSER MOCKUP ── */
+.browser { background: #1a1212; border-radius: 10px; border: 2px solid rgba(184,151,90,0.3); box-shadow: 0 0 60px rgba(107,26,26,0.25), 0 30px 80px rgba(0,0,0,0.5); overflow: hidden; }
+.browser-bar { display: flex; align-items: center; gap: 6px; padding: 9px 12px; background: var(--smoke); border-bottom: 1px solid var(--line); }
+.browser-dot { width: 7px; height: 7px; border-radius: 50%; background: rgba(247,243,238,0.15); }
+.browser-url { flex: 1; margin-left: 8px; background: rgba(247,243,238,0.05); border-radius: 3px; padding: 3px 10px; font-size: 8px; color: var(--dim); }
+.dash-mini { background: #110d0d; display: flex; min-height: 300px; }
+.dash-mini-side { width: 88px; flex-shrink: 0; background: #0e0b0b; border-right: 1px solid var(--line); padding: 10px 8px; }
+.dash-mini-logo { font-family: 'Cormorant Garamond', serif; font-size: 9px; letter-spacing: 0.08em; color: var(--paper); margin-bottom: 12px; }
+.dash-mini-logo span { color: var(--gold); }
+.dash-mini-item { font-size: 6px; letter-spacing: 0.03em; color: var(--dim); padding: 4px 0; }
+.dash-mini-item.act { color: var(--gold); border-left: 2px solid var(--gold); padding-left: 5px; margin-left: -7px; }
+.dash-mini-label { font-size: 5px; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(247,243,238,0.25); margin: 8px 0 3px; }
+.dash-mini-main { flex: 1; padding: 12px 14px; }
+.dash-mini-greet { font-family: 'Cormorant Garamond', serif; font-size: 13px; color: var(--paper); margin-bottom: 10px; }
+.dash-mini-stats { display: grid; grid-template-columns: repeat(4,1fr); gap: 6px; margin-bottom: 10px; }
+.dash-mini-stat { border: 1px solid var(--line); border-radius: 4px; padding: 6px 7px; }
+.dash-mini-stat-val { font-family: 'Cormorant Garamond', serif; font-size: 13px; color: var(--paper); }
+.dash-mini-stat-lbl { font-size: 5px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--dim); margin-top: 2px; }
+.dash-mini-panel { border: 1px solid var(--line); border-radius: 4px; padding: 8px; }
+.dash-mini-panel-title { font-size: 6px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--dim); margin-bottom: 6px; display: flex; justify-content: space-between; }
+.dash-mini-row { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-bottom: 1px solid rgba(247,243,238,0.04); }
+.dash-mini-row-name { font-size: 7px; color: var(--paper); }
+.dash-mini-row-sub { font-size: 5.5px; color: var(--dim); margin-top: 1px; }
+.dash-mini-match { font-size: 6px; color: #6fbf8f; border: 1px solid rgba(111,191,143,0.3); border-radius: 3px; padding: 1px 5px; }
+
+/* ── SECTION ── */
+.section { padding: 6.5rem 3rem; }
+.section-title { font-family: 'Cormorant Garamond', serif; font-size: clamp(2rem, 3.6vw, 2.9rem); font-weight: 300; line-height: 1.15; color: var(--paper); margin-bottom: 1.2rem; }
+.section-title em { font-style: italic; color: var(--gold); }
+.section-lead { font-size: 0.9rem; color: var(--dim); max-width: 640px; line-height: 1.9; margin-bottom: 2.5rem; }
+.light { background: var(--paper); color: var(--ink); }
+.light .eyebrow { color: var(--wine); }
+.light .eyebrow::before { background: var(--wine); }
+.light .section-title { color: var(--ink); }
+.light .section-title em { color: var(--wine); }
+.light .section-lead { color: rgba(14,11,11,0.6); }
+
+/* ── PROBLEM BRIDGE ── */
+.bridge { background: var(--wine); padding: 3.5rem 3rem; text-align: center; }
+.bridge p { font-size: 1.05rem; font-family: 'Cormorant Garamond', serif; font-weight: 300; color: var(--paper); max-width: 780px; margin: 0 auto 1.2rem; line-height: 1.6; }
+.bridge a { font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(247,243,238,0.7); text-decoration: none; border-bottom: 1px solid rgba(247,243,238,0.25); padding-bottom: 2px; }
+.bridge a:hover { color: var(--paper); }
+.compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3.5rem; max-width: 880px; margin: 3rem auto 0; text-align: left; }
+.compare-label { font-size: 0.65rem; letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 1.2rem; text-align: center; font-weight: 500; }
+.compare-old .compare-label { color: rgba(247,243,238,0.45); }
+.compare-new .compare-label { color: var(--gold); }
+.compare-step { background: rgba(247,243,238,0.05); border: 1px solid rgba(247,243,238,0.12); border-radius: 4px; padding: 0.75rem 1rem; font-size: 0.78rem; color: rgba(247,243,238,0.75); text-align: center; line-height: 1.4; }
+.compare-old .compare-step { opacity: 0.75; }
+.compare-dead { background: rgba(0,0,0,0.2); border-color: rgba(247,243,238,0.12); color: rgba(247,243,238,0.5); }
+.compare-win { background: rgba(184,151,90,0.18); border-color: var(--gold); color: var(--paper); font-weight: 500; }
+.compare-arrow { text-align: center; color: rgba(247,243,238,0.3); font-size: 0.85rem; padding: 0.25rem 0; }
+.compare-new .compare-arrow { color: var(--gold); }
+@media (max-width: 700px) { .compare-grid { grid-template-columns: 1fr; gap: 2rem; } }
+
+/* ── MINDMAP ── */
+.mindmap-wrap { max-width: 900px; margin: 0 auto; }
+.mm-node-label { font-family: 'Inter', sans-serif; font-weight: 500; }
+.flow-example { max-width: 820px; margin: 3rem auto 0; text-align: center; font-size: 0.85rem; color: var(--dim); line-height: 2.1; border-top: 1px solid var(--line); padding-top: 2.2rem; }
+.flow-example strong { color: var(--gold); font-weight: 500; }
+.light .flow-example { color: rgba(14,11,11,0.62); border-top-color: rgba(14,11,11,0.1); }
+.light .flow-example strong { color: var(--wine); }
+
+/* ── CHECKLIST ── */
+.check-list { display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 2.2rem; }
+.check-item { display: flex; align-items: flex-start; gap: 0.7rem; font-size: 0.85rem; color: rgba(14,11,11,0.68); line-height: 1.6; }
+.check-item span.mark { color: var(--wine); flex-shrink: 0; }
+.dark-section .check-item { color: var(--dim); }
+.dark-section .check-item span.mark { color: var(--gold); }
+
+/* ── TOOLS GRID ── */
+.tools-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.6rem; margin-top: 3rem; }
+.tool-card { background: rgba(247,243,238,0.02); border: 1px solid var(--line); border-radius: 4px; padding: 1.8rem 1.5rem; transition: border-color 0.2s; }
+.tool-card:hover { border-color: rgba(184,151,90,0.3); }
+.tool-icon { font-size: 1.6rem; margin-bottom: 1rem; }
+.tool-title { font-family: 'Cormorant Garamond', serif; font-size: 1.2rem; color: var(--paper); margin-bottom: 0.6rem; }
+.tool-sub { font-size: 0.8rem; color: var(--dim); line-height: 1.75; }
+.light .tool-card { background: rgba(14,11,11,0.02); border-color: rgba(14,11,11,0.1); }
+.light .tool-card:hover { border-color: var(--wine); }
+.light .tool-title { color: var(--ink); }
+.light .tool-sub { color: rgba(14,11,11,0.6); }
+
+/* ── TWO COL ── */
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center; }
+
+/* ── CLOSING ── */
+.closing { background: var(--wine); text-align: center; padding: 6rem 3rem; position: relative; overflow: hidden; }
+.closing::before { content: 'CONNECTED'; position: absolute; font-family: 'Cormorant Garamond', serif; font-size: 13vw; font-weight: 300; color: rgba(255,255,255,0.035); white-space: nowrap; top: 50%; left: 50%; transform: translate(-50%,-50%); pointer-events: none; }
+.closing-inner { position: relative; max-width: 700px; margin: 0 auto; }
+.closing h2 { font-family: 'Cormorant Garamond', serif; font-size: clamp(1.9rem, 3.6vw, 2.8rem); font-weight: 300; color: var(--paper); margin-bottom: 1.3rem; line-height: 1.2; }
+.closing h2 em { font-style: italic; color: var(--gold); }
+.closing-ctas { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; margin-top: 2rem; }
+
+/* ── FOOTER ── */
+footer { background: #070404; padding: 3.6rem 3rem 1.9rem; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; border-top: 1px solid var(--line); }
+.footer-logo { font-family: 'Cormorant Garamond', serif; font-size: 1rem; font-weight: 300; letter-spacing: 0.2em; text-transform: uppercase; color: rgba(247,243,238,0.25); }
+.footer-logo span { color: var(--gold); }
+.footer-brand { display:flex; flex-direction:column; gap:0.5px; justify-self:start; }
+.footer-links { display: flex; gap: 1.8rem; flex-wrap: wrap; }
+.footer-links a { font-size: 0.65rem; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(247,243,238,0.2); text-decoration: none; transition: color 0.2s; }
+.footer-links a:hover { color: var(--gold); }
+.footer-copy { font-size: 0.572rem; color: rgba(247,243,238,0.15); }
+.floating-cta { position: fixed; bottom: 2rem; right: 2rem; z-index: 150; display: flex; gap: 0.7rem; }
+
+@media (max-width: 950px) {
+  .hero-inner, .two-col { grid-template-columns: 1fr; }
+  .tools-grid { grid-template-columns: repeat(2,1fr); }
+  .nav-links { display: none; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="bottle-lobby.html" class="nav-logo">Bottle<span>&nbsp;Lobby</span></a>
+  <ul class="nav-links">
+    <li><a href="bottle-lobby-market.html">Market</a></li>
+    <li><a href="bottle-lobby.html#solution">The Lobby</a></li>
+    <li><a href="bottle-lobby.html#stakeholders">Why Lobbying</a></li>
+    <li><a href="bottle-lobby.html#how">How it Works</a></li>
+    <li><a href="bottle-lobby.html#wine-guide">Wine Guide</a></li>
+    <li><a href="bottle-lobby.html#shows">Wine Shows</a></li>
+    <li><a href="bottle-lobby.html#wines">Own Label</a></li>
+    <li><a href="bottle-lobby.html#app">The App</a></li>
+    <li><a href="bottle-lobby.html#about">About</a></li>
+    <li><a href="bottle-lobby.html#investors">Partners</a></li>
+  </ul>
+  <div class="nav-right">
+    <a href="bottle-lobby.html" class="btn btn-outline">← Home</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-inner">
+    <div>
+      <p class="eyebrow">The Bottle Lobby Platform</p>
+      <h1>Four pillars.<br>One <em>connected</em> system.</h1>
+      <p class="hero-sub">The wine trade runs on disconnected tools — spreadsheets, email chains, and trade fairs that don't convert. Bottle Lobby replaces all of it with one system where every piece talks to the others: list a wine once, and it's instantly working across your Wine Guide listing, your matchmaking, your Wine Shows, and your own-label deals.</p>
+      <div class="hero-badges">
+        <span class="badge badge-active">🍇 For Wineries</span>
+        <span class="badge badge-active">🚚 For Distributors</span>
+        <span class="badge badge-active">🍽 For Restaurants</span>
+      </div>
+      <div class="hero-ctas">
+        <a href="#connected" class="btn-primary">See How It Connects ↓</a>
+        <a href="bottle-lobby-dashboard.html" class="btn-ghost">Explore the Dashboard →</a>
+      </div>
+    </div>
+    <div class="browser">
+      <div class="browser-bar"><span class="browser-dot"></span><span class="browser-dot"></span><span class="browser-dot"></span><span class="browser-url">app.bottlelobby.com/dashboard</span></div>
+      <div class="dash-mini">
+        <div class="dash-mini-side">
+          <div class="dash-mini-logo">Bottle <span>Lobby</span></div>
+          <div class="dash-mini-item act">◈ Dashboard</div>
+          <div class="dash-mini-item">◎ My Profile</div>
+          <div class="dash-mini-item">✦ Wine Portfolio</div>
+          <div class="dash-mini-label">Network</div>
+          <div class="dash-mini-item">◇ Matchmaking</div>
+          <div class="dash-mini-item">✉ Messages</div>
+          <div class="dash-mini-label">Events</div>
+          <div class="dash-mini-item">✦ Wine Shows</div>
+        </div>
+        <div class="dash-mini-main">
+          <div class="dash-mini-greet">Good morning, Cantina Rossi ✦</div>
+          <div class="dash-mini-stats">
+            <div class="dash-mini-stat"><div class="dash-mini-stat-val">1,240</div><div class="dash-mini-stat-lbl">Profile Views</div></div>
+            <div class="dash-mini-stat"><div class="dash-mini-stat-val">4</div><div class="dash-mini-stat-lbl">Matches</div></div>
+            <div class="dash-mini-stat"><div class="dash-mini-stat-val">6</div><div class="dash-mini-stat-lbl">Wines Listed</div></div>
+            <div class="dash-mini-stat"><div class="dash-mini-stat-val">24k</div><div class="dash-mini-stat-lbl">Bottles Dist.</div></div>
+          </div>
+          <div class="dash-mini-panel">
+            <div class="dash-mini-panel-title"><span>New Distributor Matches</span><span style="color:var(--gold)">View All →</span></div>
+            <div class="dash-mini-row"><div><div class="dash-mini-row-name">Hawesko GmbH — Hamburg</div><div class="dash-mini-row-sub">850+ restaurants · Italian &amp; French focus</div></div><span class="dash-mini-match">94%</span></div>
+            <div class="dash-mini-row"><div><div class="dash-mini-row-name">Weinland Bayern — Munich</div><div class="dash-mini-row-sub">1,200+ restaurants · Mono-cépage</div></div><span class="dash-mini-match">88%</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PROBLEM BRIDGE -->
+<div class="bridge">
+  <p>Wineries can't find a path to market. Distributors drown in choice they can't validate. Restaurants are locked into the same list as the restaurant next door. Four different problems — one connected system solves all of them at once.</p>
+  <a href="bottle-lobby-market.html">More about the problem →</a>
+
+  <div class="compare-grid">
+    <div class="compare-col compare-old">
+      <div class="compare-label">The Old Way</div>
+      <div class="compare-step">🎪 Trade fair booth — €20–50k, no guarantee</div>
+      <div class="compare-arrow">↓</div>
+      <div class="compare-step">📧 Cold emails into the void</div>
+      <div class="compare-arrow">↓</div>
+      <div class="compare-step">🤷 Maybe a meeting, maybe not</div>
+      <div class="compare-arrow">↓</div>
+      <div class="compare-step compare-dead">✕ No data. No feedback. No deal.</div>
+    </div>
+    <div class="compare-col compare-new">
+      <div class="compare-label">The Bottle Lobby Way</div>
+      <div class="compare-step">🍷 List your wine once</div>
+      <div class="compare-arrow">↓</div>
+      <div class="compare-step">🔍 Instantly live in the Wine Guide</div>
+      <div class="compare-arrow">↓</div>
+      <div class="compare-step">🎯 Matched by a real fit score</div>
+      <div class="compare-arrow">↓</div>
+      <div class="compare-step">✦ Presented together at a Wine Show</div>
+      <div class="compare-arrow">↓</div>
+      <div class="compare-step compare-win">✓ Own-Label deal + real-time tracking</div>
+    </div>
+  </div>
+</div>
+
+<!-- CONNECTING THE DOTS -->
+<section class="section light" id="connected">
+  <div class="container" style="text-align:center">
+    <p class="eyebrow" style="justify-content:center">One System, Not Four Silos</p>
+    <h2 class="section-title">Connecting the dots.</h2>
+    <p class="section-lead" style="margin-left:auto;margin-right:auto">The four pillars aren't separate products bolted together — they share one live database. Add a wine, host a show, strike an own-label deal, or track a trend, and it updates everywhere else automatically. No re-entering the same information twice.</p>
+
+    <div class="mindmap-wrap">
+      <svg viewBox="0 0 940 680" style="width:100%;height:auto" xmlns="http://www.w3.org/2000/svg">
+        <!-- Ring segments: pillar to pillar -->
+        <g stroke="var(--wine)" stroke-width="1.5" stroke-dasharray="4 5" opacity="0.55">
+          <line x1="470" y1="110" x2="700" y2="340"/>
+          <line x1="700" y1="340" x2="470" y2="570"/>
+          <line x1="470" y1="570" x2="240" y2="340"/>
+          <line x1="240" y1="340" x2="470" y2="110"/>
+        </g>
+        <!-- Spokes: center to pillar -->
+        <g stroke="var(--gold)" stroke-width="2" opacity="0.6">
+          <line x1="470" y1="340" x2="470" y2="110"/>
+          <line x1="470" y1="340" x2="700" y2="340"/>
+          <line x1="470" y1="340" x2="470" y2="570"/>
+          <line x1="470" y1="340" x2="240" y2="340"/>
+        </g>
+        <!-- Stakeholder connectors -->
+        <g stroke="#7faaf0" stroke-width="1.5" stroke-dasharray="2 4" opacity="0.5">
+          <line x1="470" y1="340" x2="660" y2="175"/>
+          <line x1="470" y1="340" x2="660" y2="505"/>
+          <line x1="470" y1="340" x2="280" y2="505"/>
+        </g>
+
+        <!-- Ring segment captions -->
+        <g font-family="Inter, sans-serif" text-anchor="middle">
+          <text x="612" y="212" font-size="12" fill="var(--wine)" font-style="italic">Show leads become</text>
+          <text x="612" y="227" font-size="12" fill="var(--wine)" font-style="italic">Own-Label deals</text>
+
+          <text x="612" y="448" font-size="12" fill="var(--wine)" font-style="italic">Every sale feeds</text>
+          <text x="612" y="463" font-size="12" fill="var(--wine)" font-style="italic">real-time trend data</text>
+
+          <text x="330" y="448" font-size="12" fill="var(--wine)" font-style="italic">Trend data drives</text>
+          <text x="330" y="463" font-size="12" fill="var(--wine)" font-style="italic">Guide visibility &amp; SEO</text>
+
+          <text x="330" y="212" font-size="12" fill="var(--wine)" font-style="italic">New wines auto-appear</text>
+          <text x="330" y="227" font-size="12" fill="var(--wine)" font-style="italic">at your next Wine Show</text>
+        </g>
+
+        <!-- Pillar nodes -->
+        <g font-family="Inter, sans-serif" text-anchor="middle">
+          <circle cx="470" cy="110" r="58" fill="#fffdfa" stroke="var(--wine)" stroke-width="1.5"/>
+          <text x="470" y="102" font-size="20">🍷</text>
+          <text x="470" y="126" font-size="12.5" font-weight="500" fill="var(--ink)">The Wine Guide</text>
+
+          <circle cx="700" cy="340" r="58" fill="#fffdfa" stroke="var(--wine)" stroke-width="1.5"/>
+          <text x="700" y="332" font-size="20">✦</text>
+          <text x="700" y="356" font-size="12.5" font-weight="500" fill="var(--ink)">Wine Shows</text>
+
+          <circle cx="470" cy="570" r="58" fill="#fffdfa" stroke="var(--wine)" stroke-width="1.5"/>
+          <text x="470" y="562" font-size="20">🏷</text>
+          <text x="470" y="586" font-size="12.5" font-weight="500" fill="var(--ink)">Own-Label Wines</text>
+
+          <circle cx="240" cy="340" r="58" fill="#fffdfa" stroke="var(--wine)" stroke-width="1.5"/>
+          <text x="240" y="330" font-size="20">📊</text>
+          <text x="240" y="350" font-size="11.5" font-weight="500" fill="var(--ink)">Intelligence &amp;</text>
+          <text x="240" y="364" font-size="11.5" font-weight="500" fill="var(--ink)">Services</text>
+        </g>
+
+        <!-- Stakeholder nodes -->
+        <g font-family="Inter, sans-serif" text-anchor="middle">
+          <circle cx="660" cy="175" r="38" fill="#fffdfa" stroke="#7faaf0" stroke-width="1.5"/>
+          <text x="660" y="170" font-size="15">🍇</text>
+          <text x="660" y="187" font-size="9.5" font-weight="500" fill="var(--ink)">Winery</text>
+
+          <circle cx="660" cy="505" r="38" fill="#fffdfa" stroke="#7faaf0" stroke-width="1.5"/>
+          <text x="660" y="500" font-size="15">🚚</text>
+          <text x="660" y="517" font-size="9.5" font-weight="500" fill="var(--ink)">Distributor</text>
+
+          <circle cx="280" cy="505" r="38" fill="#fffdfa" stroke="#7faaf0" stroke-width="1.5"/>
+          <text x="280" y="500" font-size="15">🍽</text>
+          <text x="280" y="517" font-size="9.5" font-weight="500" fill="var(--ink)">Restaurant</text>
+        </g>
+
+        <!-- Center hub -->
+        <circle cx="470" cy="340" r="66" fill="var(--wine)"/>
+        <circle cx="470" cy="340" r="66" fill="none" stroke="var(--gold)" stroke-width="1.5"/>
+        <text x="470" y="333" font-family="Cormorant Garamond, serif" font-style="italic" font-size="16" fill="#f7f3ee" text-anchor="middle">Bottle</text>
+        <text x="470" y="352" font-family="Cormorant Garamond, serif" font-style="italic" font-size="16" fill="var(--gold)" text-anchor="middle">Lobby</text>
+      </svg>
+    </div>
+
+    <div class="flow-example">
+      A winery lists a Primitivo → it's instantly searchable in <strong>the Wine Guide</strong> → a distributor discovers it through <strong>Matchmaking</strong> → they present it together at a <strong>Wine Show</strong> → it becomes an exclusive <strong>Own-Label</strong> deal → <strong>Intelligence &amp; Services</strong> tracks its performance at every restaurant that lists it.<br>One entry. Five outcomes.
+    </div>
+  </div>
+</section>
+
+<!-- DASHBOARD -->
+<section class="section dark-section">
+  <div class="container">
+    <div class="two-col">
+      <div>
+        <p class="eyebrow">Your Command Center</p>
+        <h2 class="section-title" style="max-width:480px">One login.<br>Everything in <em>view.</em></h2>
+        <p class="section-lead" style="color:var(--dim)">Every stakeholder gets the same underlying system, tailored to their role. Real matches, real messages, real numbers — pulled live from the same data behind your public profile, your Wine Guide listing, and your Wine Show presence.</p>
+        <div class="check-list">
+          <div class="check-item"><span class="mark">✓</span> Role-tailored views for wineries, distributors &amp; restaurants</div>
+          <div class="check-item"><span class="mark">✓</span> Live matchmaking with real fit scores, not guesswork</div>
+          <div class="check-item"><span class="mark">✓</span> Every message, order, and event in a single inbox</div>
+          <div class="check-item"><span class="mark">✓</span> Stats that update the moment something changes elsewhere</div>
+        </div>
+        <a href="bottle-lobby-dashboard.html" class="btn-primary">Explore the Dashboard →</a>
+      </div>
+      <div class="browser">
+        <div class="browser-bar"><span class="browser-dot"></span><span class="browser-dot"></span><span class="browser-dot"></span><span class="browser-url">app.bottlelobby.com/dashboard</span></div>
+        <div class="dash-mini">
+          <div class="dash-mini-side">
+            <div class="dash-mini-logo">Bottle <span>Lobby</span></div>
+            <div class="dash-mini-item">◈ Dashboard</div>
+            <div class="dash-mini-item act">✦ Wine Shows</div>
+            <div class="dash-mini-item">◇ Winery Matches</div>
+            <div class="dash-mini-label">Portfolio</div>
+            <div class="dash-mini-item">◈ Wine Portfolio</div>
+            <div class="dash-mini-item">❖ Own-Label Wines</div>
+          </div>
+          <div class="dash-mini-main">
+            <div class="dash-mini-greet">Welcome back, Hawesko ✦</div>
+            <div class="dash-mini-stats">
+              <div class="dash-mini-stat"><div class="dash-mini-stat-val">12</div><div class="dash-mini-stat-lbl">Active Wineries</div></div>
+              <div class="dash-mini-stat"><div class="dash-mini-stat-val">5</div><div class="dash-mini-stat-lbl">Own-Label SKUs</div></div>
+              <div class="dash-mini-stat"><div class="dash-mini-stat-val">180k</div><div class="dash-mini-stat-lbl">Bottles Moved</div></div>
+              <div class="dash-mini-stat"><div class="dash-mini-stat-val">850+</div><div class="dash-mini-stat-lbl">Restaurant Clients</div></div>
+            </div>
+            <div class="dash-mini-panel">
+              <div class="dash-mini-panel-title"><span>New Winery Matches</span><span style="color:var(--gold)">Browse All →</span></div>
+              <div class="dash-mini-row"><div><div class="dash-mini-row-name">Cantina Rossi — Sicily, IT</div><div class="dash-mini-row-sub">Primitivo · Alcamo DOC</div></div><span class="dash-mini-match">91%</span></div>
+              <div class="dash-mini-row"><div><div class="dash-mini-row-name">Henri Dubois — Sancerre, FR</div><div class="dash-mini-row-sub">Sauvignon Blanc</div></div><span class="dash-mini-match">97%</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TOOLS -->
+<section class="section light">
+  <div class="container" style="text-align:center">
+    <p class="eyebrow" style="justify-content:center">The Tools Inside</p>
+    <h2 class="section-title">Built to close deals,<br><em>not just browse them.</em></h2>
+    <p class="section-lead" style="margin-left:auto;margin-right:auto">Every pillar is powered by the same core toolset — so whichever door you come in through, the tools underneath work the same way.</p>
+    <div class="tools-grid">
+      <div class="tool-card">
+        <div class="tool-icon">🎯</div>
+        <div class="tool-title">Smart Matchmaking</div>
+        <div class="tool-sub">Real fit scores based on portfolio gaps, regional demand, and buyer history — not a directory to scroll through blind.</div>
+      </div>
+      <div class="tool-card">
+        <div class="tool-icon">🛒</div>
+        <div class="tool-title">Direct Ordering</div>
+        <div class="tool-sub">Reorder in one tap, track delivery status, and get notified the moment stock runs low — no phone calls required.</div>
+      </div>
+      <div class="tool-card">
+        <div class="tool-icon">💬</div>
+        <div class="tool-title">Direct Messaging</div>
+        <div class="tool-sub">Chat with wineries, distributors, and restaurants directly inside the platform — no email chains, no lost threads.</div>
+      </div>
+      <div class="tool-card">
+        <div class="tool-icon">📄</div>
+        <div class="tool-title">Auto-Generated Materials</div>
+        <div class="tool-sub">Wine lists, technical sheets, brochures, and table tents — generated instantly from your live profile data.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CLOSING -->
+<section class="closing">
+  <div class="closing-inner">
+    <p class="eyebrow" style="justify-content:center;color:rgba(247,243,238,0.6)"><span style="background:rgba(247,243,238,0.3)"></span>One Platform. Four Pillars.</p>
+    <h2>Every stakeholder wins<br>— <em>because everything's connected.</em></h2>
+    <div class="closing-ctas">
+      <a href="bottle-lobby-wine-guide.html" class="btn btn-gold">Explore the Wine Guide →</a>
+      <a href="bottle-lobby-contact.html" class="btn btn-outline">Join Now</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-brand">
+    <div class="footer-logo">Bottle<span>&nbsp;Lobby</span></div>
+    <p class="footer-copy">© 2026 Caracter Media GmbH</p>
+  </div>
+  <div class="footer-links">
+    <a href="bottle-lobby.html">Home</a>
+    <a href="bottle-lobby-why-join.html">Why Join</a>
+    <a href="bottle-lobby-about.html">About</a>
+    <a href="bottle-lobby-investor.html">Investors</a>
+    <a href="bottle-lobby-contact.html">Apply</a>
+    <a href="bottle-lobby-dashboard.html">Dashboard</a>
+    <a href="bottle-lobby-profile-demo.html">Public Profile</a>
+    <a href="bottle-lobby-contact-us.html">Imprint</a>
+  </div>
+</footer>
+
+<div class="floating-cta">
+  <a href="bottle-lobby-dashboard.html" class="btn btn-outline">Member Login</a>
+  <a href="bottle-lobby-contact.html" class="btn btn-gold">Join Now</a>
+</div>
+
+</body>
+</html>

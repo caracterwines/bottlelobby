@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Wine Guide — Bottle Lobby</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --ink: #0e0b0b; --paper: #f7f3ee; --wine: #6b1a1a; --gold: #b8975a;
+  --smoke: #1a1212; --dim: rgba(247,243,238,0.45); --line: rgba(247,243,238,0.07);
+}
+html { scroll-behavior: smooth; }
+body { font-family: 'Inter', sans-serif; background: var(--ink); color: var(--paper); font-size: 14px; line-height: 1.6; overflow-x: hidden; }
+
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 1.4rem 3rem;
+  background: rgba(14,11,11,0.97); border-bottom: 1px solid var(--line);
+  backdrop-filter: blur(4px);
+}
+.nav-logo { font-family: 'Cormorant Garamond', serif; font-size: 1.35rem; font-weight: 300; letter-spacing: 0.18em; text-transform: uppercase; color: var(--paper); text-decoration: none; }
+.nav-logo span { color: var(--gold); }
+.nav-links { display: flex; gap: 1.5rem; list-style: none; }
+.nav-links a { font-size: 0.66rem; letter-spacing: 0.07em; text-transform: uppercase; color: rgba(247,243,238,0.6); text-decoration: none; transition: color 0.2s; }
+.nav-links a:hover, .nav-links a.active { color: var(--paper); }
+.nav-right { display: flex; gap: 0.8rem; align-items: center; }
+.btn { font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; padding: 0.55rem 1.4rem; border-radius: 2px; text-decoration: none; font-weight: 500; transition: all 0.2s; border: 1px solid transparent; cursor: pointer; font-family: 'Inter', sans-serif; display: inline-block; }
+.btn-outline { border-color: rgba(247,243,238,0.2); color: rgba(247,243,238,0.5); background: transparent; }
+.btn-outline:hover { border-color: var(--paper); color: var(--paper); }
+.btn-gold { background: var(--gold); color: var(--ink); border-color: var(--gold); }
+.btn-gold:hover { opacity: 0.85; }
+
+/* HERO */
+.hero { padding: 8.5rem 3rem 3rem; background: radial-gradient(ellipse 80% 50% at 50% 0%, #1a0a0a 0%, var(--ink) 70%); position: relative; overflow: hidden; }
+.hero::before { content: ''; position: absolute; inset: 0; background-image: linear-gradient(135deg, rgba(107,26,26,0.05) 1px, transparent 1px), linear-gradient(45deg, rgba(184,151,90,0.025) 1px, transparent 1px); background-size: 80px 80px, 140px 140px; }
+.container { max-width: 1400px; margin: 0 auto; position: relative; }
+.eyebrow { font-size: 0.62rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(--gold); margin-bottom: 1rem; display: flex; align-items: center; gap: 1rem; }
+.eyebrow::before { content: ''; display: block; width: 28px; height: 1px; background: var(--gold); }
+h1 { font-family: 'Cormorant Garamond', serif; font-size: clamp(2.2rem, 4.2vw, 3.4rem); font-weight: 300; line-height: 1.1; color: var(--paper); margin-bottom: 1.2rem; max-width: 800px; }
+h1 em { font-style: italic; color: var(--gold); }
+.hero-lead { font-size: 0.92rem; color: var(--dim); max-width: 640px; line-height: 1.9; }
+
+/* STATS BAR */
+.stats-bar { background: rgba(184,151,90,0.05); border-top: 1px solid rgba(184,151,90,0.15); border-bottom: 1px solid rgba(184,151,90,0.15); }
+.stats-inner { max-width: 1400px; margin: 0 auto; display: grid; grid-template-columns: repeat(5,1fr); }
+.stat-item { padding: 1.5rem 1.4rem; text-align: center; border-right: 1px solid rgba(184,151,90,0.1); }
+.stat-item:last-child { border-right: none; }
+.stat-val { font-family: 'Cormorant Garamond', serif; font-size: 1.9rem; font-weight: 300; color: var(--gold); line-height: 1; }
+.stat-label { font-size: 0.6rem; letter-spacing: 0.09em; text-transform: uppercase; color: var(--dim); margin-top: 0.4rem; line-height: 1.5; }
+
+/* GUIDE TABS */
+.guide-sticky { position: sticky; top: 0; z-index: 90; background: rgba(14,11,11,0.98); border-bottom: 1px solid var(--line); backdrop-filter: blur(8px); }
+.guide-tabs { max-width: 1400px; margin: 0 auto; display: flex; padding: 0 3rem; }
+.guide-tab { flex: 1; max-width: 220px; padding: 1.1rem 1rem; cursor: pointer; text-align: center; font-size: 0.68rem; letter-spacing: 0.13em; text-transform: uppercase; color: var(--dim); border-bottom: 2px solid transparent; transition: all 0.2s; background: none; border-top: none; border-left: none; border-right: none; font-family: 'Inter', sans-serif; font-weight: 500; }
+.guide-tab:hover { color: var(--paper); }
+.guide-tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+.guide-panel { display: none; }
+.guide-panel.active { display: block; }
+
+/* LAYOUT */
+.guide-layout { max-width: 1400px; margin: 0 auto; padding: 2.5rem 3rem 6rem; display: grid; grid-template-columns: 270px 1fr; gap: 3rem; align-items: start; }
+.filter-sidebar { background: rgba(247,243,238,0.015); border: 1px solid var(--line); padding: 1.4rem 1.4rem; position: sticky; top: 5.2rem; max-height: calc(100vh - 6rem); overflow-y: auto; }
+.filter-sidebar-header { font-family: 'Cormorant Garamond', serif; font-size: 1.15rem; color: var(--paper); margin-bottom: 0.3rem; display: flex; justify-content: space-between; align-items: center; }
+.clear-filters { font-size: 0.62rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--gold); cursor: pointer; text-decoration: none; background: none; border: none; padding: 0; display: none; }
+.filter-search { width: 100%; background: var(--ink); border: 1px solid var(--line); color: var(--paper); font-size: 0.78rem; padding: 0.6rem 0.8rem; border-radius: 2px; font-family: 'Inter', sans-serif; margin: 1rem 0 1.3rem; }
+.filter-search::placeholder { color: rgba(247,243,238,0.3); }
+.filter-search:focus { outline: none; border-color: rgba(184,151,90,0.4); }
+.filter-group { border-top: 1px solid var(--line); padding: 1rem 0; }
+.filter-group-header { display: flex; justify-content: space-between; align-items: center; cursor: pointer; font-size: 0.66rem; letter-spacing: 0.09em; text-transform: uppercase; color: var(--dim); margin-bottom: 0.75rem; user-select: none; }
+.filter-group-header:hover { color: var(--paper); }
+.fg-toggle { font-size: 0.9rem; color: var(--gold); width: 1rem; text-align: center; }
+.filter-group-body { display: flex; flex-direction: column; gap: 0.55rem; overflow: hidden; }
+.filter-group-body.collapsed { display: none; }
+.filter-option { display: flex; align-items: center; gap: 0.55rem; font-size: 0.76rem; color: rgba(247,243,238,0.65); cursor: pointer; line-height: 1.4; }
+.filter-option input[type=checkbox] { accent-color: var(--gold); width: 13px; height: 13px; cursor: pointer; flex-shrink: 0; }
+.filter-option:hover { color: var(--paper); }
+.filter-option.disabled { opacity: 0.3; pointer-events: none; }
+.fg-count { color: var(--dim); font-size: 0.68rem; margin-left: auto; padding-left: 0.5rem; }
+
+/* RESULTS */
+.results-toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.6rem; padding-bottom: 1.1rem; border-bottom: 1px solid var(--line); gap: 1rem; flex-wrap: wrap; }
+.results-count { font-size: 0.8rem; color: var(--dim); }
+.results-count strong { color: var(--paper); font-weight: 500; }
+.active-chips { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.active-chip { display: flex; align-items: center; gap: 0.4rem; font-size: 0.66rem; letter-spacing: 0.03em; background: rgba(184,151,90,0.12); color: var(--gold); border: 1px solid rgba(184,151,90,0.3); padding: 0.3rem 0.6rem; border-radius: 2px; cursor: pointer; text-transform: uppercase; }
+.active-chip:hover { background: rgba(184,151,90,0.2); }
+.sort-select { background: var(--ink); border: 1px solid var(--line); color: var(--paper); font-size: 0.74rem; padding: 0.5rem 0.8rem; border-radius: 2px; font-family: 'Inter', sans-serif; cursor: pointer; }
+.empty-state { padding: 4rem 1rem; text-align: center; color: var(--dim); font-size: 0.85rem; }
+
+.results-grid { display: flex; flex-direction: column; gap: 0.8rem; }
+
+/* WINE CARD */
+.wine-card { display: grid; grid-template-columns: 4px 1fr auto; gap: 1.3rem; align-items: center; background: #110d0d; border: 1px solid var(--line); padding: 1.15rem 1.3rem; cursor: pointer; transition: border-color 0.2s; text-decoration: none; }
+.wine-card:hover { border-color: rgba(184,151,90,0.35); }
+.wc-accent { align-self: stretch; border-radius: 2px; min-height: 100%; }
+.wc-accent.Red { background: var(--wine); }
+.wc-accent.White { background: #c9b978; }
+.wc-accent.Rosé { background: #c98a8a; }
+.wc-name { font-family: 'Cormorant Garamond', serif; font-size: 1.15rem; color: var(--paper); margin-bottom: 0.3rem; }
+.wc-meta { font-size: 0.74rem; color: var(--dim); }
+.wc-tags { display: flex; gap: 0.4rem; margin-top: 0.55rem; flex-wrap: wrap; }
+.wc-tag { font-size: 0.6rem; letter-spacing: 0.04em; text-transform: uppercase; padding: 0.22rem 0.5rem; border-radius: 2px; background: rgba(247,243,238,0.05); color: var(--dim); white-space: nowrap; }
+.wc-tag.gold { background: rgba(184,151,90,0.15); color: var(--gold); }
+.wc-right { text-align: right; }
+.wc-price { font-family: 'Cormorant Garamond', serif; font-size: 1.25rem; color: var(--paper); }
+.wc-price-sub { font-size: 0.62rem; color: var(--dim); text-transform: uppercase; letter-spacing: 0.04em; margin-top: 0.15rem; }
+
+/* ENTITY CARD (Winery / Distributor) */
+.entity-card { display: flex; align-items: center; gap: 1.2rem; background: #110d0d; border: 1px solid var(--line); padding: 1.3rem 1.4rem; text-decoration: none; transition: border-color 0.2s; cursor: pointer; }
+.entity-card:hover { border-color: rgba(184,151,90,0.35); }
+.entity-avatar { width: 3.1rem; height: 3.1rem; border-radius: 4px; background: var(--wine); display: flex; align-items: center; justify-content: center; font-family: 'Cormorant Garamond', serif; font-size: 1.1rem; color: var(--paper); flex-shrink: 0; }
+.entity-avatar.dist { background: #1a3a6b; }
+.entity-name { font-family: 'Cormorant Garamond', serif; font-size: 1.2rem; color: var(--paper); }
+.entity-meta { font-size: 0.74rem; color: var(--dim); margin-top: 0.2rem; }
+.entity-badges { display: flex; gap: 0.4rem; margin-top: 0.55rem; flex-wrap: wrap; }
+.entity-arrow { margin-left: auto; color: var(--gold); font-size: 1rem; flex-shrink: 0; }
+
+.network-note { font-size: 0.72rem; color: var(--dim); background: rgba(184,151,90,0.05); border: 1px solid rgba(184,151,90,0.15); padding: 0.9rem 1.1rem; border-radius: 2px; margin-bottom: 1.6rem; line-height: 1.7; }
+.network-note strong { color: var(--gold); font-weight: 500; }
+
+/* FOOTER */
+footer { background: #070404; padding: 3.6rem 3rem 1.9rem; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; border-top: 1px solid var(--line); }
+.footer-logo { font-family: 'Cormorant Garamond', serif; font-size: 1rem; font-weight: 300; letter-spacing: 0.2em; text-transform: uppercase; color: rgba(247,243,238,0.25); }
+.footer-logo span { color: var(--gold); }
+.footer-brand { display:flex; flex-direction:column; gap:0.5px; justify-self:start; }
+.footer-links { display: flex; gap: 1.8rem; flex-wrap: wrap; }
+.footer-links a { font-size: 0.65rem; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(247,243,238,0.2); text-decoration: none; transition: color 0.2s; }
+.footer-links a:hover { color: var(--gold); }
+.footer-copy { font-size: 0.572rem; color: rgba(247,243,238,0.15); }
+
+.floating-cta { position: fixed; bottom: 2rem; right: 2rem; z-index: 150; display: flex; gap: 0.7rem; }
+
+@media (max-width: 900px) {
+  nav { padding: 1rem 1.5rem; }
+  .nav-links { display: none; }
+  .hero { padding: 7rem 1.5rem 2.5rem; }
+  .stats-inner { grid-template-columns: repeat(2,1fr); }
+  .stat-item:nth-child(2n) { border-right: none; }
+  .guide-tabs { padding: 0 1rem; overflow-x: auto; }
+  .guide-layout { grid-template-columns: 1fr; padding: 1.8rem 1.5rem 4rem; }
+  .filter-sidebar { position: static; max-height: none; }
+  .wine-card { grid-template-columns: 4px 1fr; }
+  .wc-right { grid-column: 2; text-align: left; margin-top: 0.6rem; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="bottle-lobby.html" class="nav-logo">Bottle<span>&nbsp;Lobby</span></a>
+  <ul class="nav-links">
+    <li><a href="bottle-lobby-market.html">Market</a></li>
+    <li><a href="bottle-lobby.html#solution">The Lobby</a></li>
+    <li><a href="bottle-lobby.html#stakeholders">Why Lobbying</a></li>
+    <li><a href="bottle-lobby.html#how">How it Works</a></li>
+    <li><a href="bottle-lobby.html#wine-guide" class="active">Wine Guide</a></li>
+    <li><a href="bottle-lobby.html#shows">Wine Shows</a></li>
+    <li><a href="bottle-lobby.html#wines">Own Label</a></li>
+    <li><a href="bottle-lobby.html#app">The App</a></li>
+    <li><a href="bottle-lobby.html#about">About</a></li>
+    <li><a href="bottle-lobby.html#investors">Partners</a></li>
+  </ul>
+  <div class="nav-right">
+    <a href="bottle-lobby.html" class="btn btn-outline">← Home</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="container">
+    <p class="eyebrow">The Wine Guide</p>
+    <h1>Every wine, winery, and distributor — <em>in one place.</em></h1>
+    <p class="hero-lead">The live directory of everything on Bottle Lobby. Every filter below is pulled straight from what wineries and distributors enter into their own profiles — add a wine, and it's instantly searchable here too.</p>
+    <p class="hero-lead" style="margin-top:1.1rem">✦ <strong style="color:var(--paper)">Already a member?</strong> We also produce a printed edition of the Wine Guide each quarter — the same directory, laid out for tastings, trade shows, and client meetings. Members can request a hard copy at no cost.</p>
+    <a href="bottle-lobby-contact.html" class="btn btn-gold" style="margin-top:1.3rem;display:inline-block">Request a Wine Guide Copy</a>
+  </div>
+</section>
+
+<!-- STATS -->
+<div class="stats-bar">
+  <div class="stats-inner">
+    <div class="stat-item"><div class="stat-val" id="stat-wines">–</div><div class="stat-label">Wines Listed</div></div>
+    <div class="stat-item"><div class="stat-val" id="stat-wineries">–</div><div class="stat-label">Wineries</div></div>
+    <div class="stat-item"><div class="stat-val" id="stat-distributors">–</div><div class="stat-label">Distributors</div></div>
+    <div class="stat-item"><div class="stat-val" id="stat-ownlabel">–</div><div class="stat-label">Own-Label Wines</div></div>
+    <div class="stat-item"><div class="stat-val" id="stat-countries">–</div><div class="stat-label">Countries Represented</div></div>
+  </div>
+</div>
+
+<!-- GUIDE TABS -->
+<div class="guide-sticky">
+  <div class="guide-tabs">
+    <button class="guide-tab active" id="gtab-wines" onclick="switchGuideTab('wines',this)">🍷 Wines</button>
+    <button class="guide-tab" id="gtab-wineries" onclick="switchGuideTab('wineries',this)">🍇 Wineries</button>
+    <button class="guide-tab" id="gtab-distributors" onclick="switchGuideTab('distributors',this)">🚚 Distributors</button>
+  </div>
+</div>
+
+<!-- WINES PANEL -->
+<div class="guide-panel active" id="gpanel-wines">
+  <div class="guide-layout">
+    <aside class="filter-sidebar" id="sidebar-wines"></aside>
+    <div>
+      <div class="network-note">✦ <strong>How this works:</strong> when a winery adds or edits a wine in their Wine Portfolio, it updates here automatically — the filters below are computed live from that same data, not a separate list.</div>
+      <div class="results-toolbar">
+        <div>
+          <div class="results-count" id="count-wines"></div>
+          <div class="active-chips" id="chips-wines"></div>
+        </div>
+        <select class="sort-select" id="sort-wines" onchange="renderResults('wines')">
+          <option value="name">Sort: Name A–Z</option>
+          <option value="price-asc">Sort: Price low–high</option>
+          <option value="price-desc">Sort: Price high–low</option>
+          <option value="vintage-desc">Sort: Vintage newest</option>
+          <option value="score-desc">Sort: Highest rated</option>
+        </select>
+      </div>
+      <div class="results-grid" id="results-wines"></div>
+    </div>
+  </div>
+</div>
+
+<!-- WINERIES PANEL -->
+<div class="guide-panel" id="gpanel-wineries">
+  <div class="guide-layout">
+    <aside class="filter-sidebar" id="sidebar-wineries"></aside>
+    <div>
+      <div class="network-note">✦ <strong>How this works:</strong> a winery's country, region, and grape varieties here are set once on their own profile — they're never re-entered anywhere else.</div>
+      <div class="results-toolbar">
+        <div>
+          <div class="results-count" id="count-wineries"></div>
+          <div class="active-chips" id="chips-wineries"></div>
+        </div>
+        <select class="sort-select" id="sort-wineries" onchange="renderResults('wineries')">
+          <option value="name">Sort: Name A–Z</option>
+          <option value="wines-desc">Sort: Most wines listed</option>
+        </select>
+      </div>
+      <div class="results-grid" id="results-wineries"></div>
+    </div>
+  </div>
+</div>
+
+<!-- DISTRIBUTORS PANEL -->
+<div class="guide-panel" id="gpanel-distributors">
+  <div class="guide-layout">
+    <aside class="filter-sidebar" id="sidebar-distributors"></aside>
+    <div>
+      <div class="network-note">✦ <strong>How this works:</strong> a distributor's winery partners and own-label count are drawn from the wines they've actually pulled into their own Wine Portfolio — nothing is entered twice.</div>
+      <div class="results-toolbar">
+        <div>
+          <div class="results-count" id="count-distributors"></div>
+          <div class="active-chips" id="chips-distributors"></div>
+        </div>
+        <select class="sort-select" id="sort-distributors" onchange="renderResults('distributors')">
+          <option value="name">Sort: Name A–Z</option>
+          <option value="partners-desc">Sort: Most winery partners</option>
+        </select>
+      </div>
+      <div class="results-grid" id="results-distributors"></div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="footer-brand">
+    <div class="footer-logo">Bottle<span>&nbsp;Lobby</span></div>
+    <p class="footer-copy">© 2026 Caracter Media GmbH</p>
+  </div>
+  <div class="footer-links">
+    <a href="bottle-lobby.html">Home</a>
+    <a href="bottle-lobby-why-join.html">Why Join</a>
+    <a href="bottle-lobby-about.html">About</a>
+    <a href="bottle-lobby-investor.html">Investors</a>
+    <a href="bottle-lobby-contact.html">Apply</a>
+    <a href="bottle-lobby-dashboard.html">Dashboard</a>
+    <a href="bottle-lobby-profile-demo.html">Public Profile</a>
+    <a href="bottle-lobby-contact-us.html">Imprint</a>
+  </div>
+</footer>
+
+<!-- FLOATING CTA -->
+<div class="floating-cta">
+  <a href="bottle-lobby-dashboard.html" class="btn btn-outline">Member Login</a>
+  <a href="bottle-lobby-contact.html" class="btn btn-gold">Join Now</a>
+</div>
+
+<script>
+/* ══════════════════════════════════════════════════
+   DATA — this is the "single source of truth" every
+   filter and count on this page is computed from.
+   In the real platform this comes from the database;
+   here it mirrors exactly what's entered on each
+   winery / distributor's own Wine Portfolio pages.
+═══════════════════════════════════════════════════ */
+const wines = [
+  { id:'primitivo-sicilia-igt', file:'bottle-lobby-wine-primitivo-sicilia-igt.html', name:'Primitivo — Sicilia IGT', vintage:2022, color:'Red', grape:'Primitivo', country:'Italy', region:'Sicily', appellation:'Alcamo DOC', aging:'Stainless Steel + Oak', winery:'Cantina Rossi', distributor:['Hawesko GmbH'], status:'Own-Label', score:92, award:'Gold Medal — Vinitaly', price:4.80, recognition:['90+ Points','Medal Winner'] },
+  { id:'primitivo-riserva', file:'bottle-lobby-wine-primitivo-riserva.html', name:'Primitivo Riserva', vintage:2020, color:'Red', grape:'Primitivo', country:'Italy', region:'Sicily', appellation:'Alcamo DOC', aging:'French Oak Barriques', winery:'Cantina Rossi', distributor:['Enoteca Milano Import Srl'], status:'Standard', score:94, award:'Gold Medal — Vinitaly', price:8.50, recognition:['90+ Points','Medal Winner'] },
+  { id:'nero-davola-sicilia-doc', file:'bottle-lobby-wine-nero-davola-sicilia-doc.html', name:"Nero d'Avola Sicilia DOC", vintage:2022, color:'Red', grape:"Nero d'Avola", country:'Italy', region:'Sicily', appellation:'Sicilia DOC', aging:'Stainless Steel', winery:'Cantina Rossi', distributor:['Enoteca Milano Import Srl'], status:'Available', score:90, award:null, price:4.20, recognition:['90+ Points'] },
+  { id:'catarratto-biologico', file:'bottle-lobby-wine-catarratto-biologico.html', name:'Catarratto Biologico', vintage:2023, color:'White', grape:'Catarratto', country:'Italy', region:'Sicily', appellation:'Sicilia DOC', aging:'Stainless Steel', winery:'Cantina Rossi', distributor:['Enoteca Milano Import Srl'], status:'Standard', score:null, award:null, price:3.40, recognition:['Certified Organic'] },
+  { id:'grillo-sicilia-doc', file:'bottle-lobby-wine-grillo-sicilia-doc.html', name:'Grillo Sicilia DOC', vintage:2023, color:'White', grape:'Grillo', country:'Italy', region:'Sicily', appellation:'Sicilia DOC', aging:'Stainless Steel', winery:'Cantina Rossi', distributor:['Enoteca Milano Import Srl'], status:'Available', score:88, award:null, price:3.90, recognition:[] },
+  { id:'rosato-di-sicilia', file:'bottle-lobby-wine-rosato-di-sicilia.html', name:'Rosato di Sicilia', vintage:2023, color:'Rosé', grape:"Nero d'Avola & Syrah", country:'Italy', region:'Sicily', appellation:'Sicilia DOC', aging:'Stainless Steel', winery:'Cantina Rossi', distributor:['Enoteca Milano Import Srl'], status:'Available', score:null, award:null, price:3.60, recognition:[] },
+  { id:'chardonnay-chablis-premier-cru', file:'bottle-lobby-wine-chardonnay-chablis-premier-cru.html', name:'Chardonnay — Chablis Premier Cru', vintage:2022, color:'White', grape:'Chardonnay', country:'France', region:'Burgundy', appellation:'Chablis Premier Cru AOC', aging:'Stainless Steel + Oak', winery:'Domaine Lefèvre', distributor:['Hawesko GmbH','Aktiv Getränke','Hamberger'], status:'Own-Label', score:93, award:'Silver Medal — Decanter', price:9.20, recognition:['90+ Points','Medal Winner'] },
+  { id:'merlot-bordeaux-superieur', file:'bottle-lobby-wine-merlot-bordeaux-superieur.html', name:'Merlot — Bordeaux Supérieur', vintage:2021, color:'Red', grape:'Merlot', country:'France', region:'Bordeaux', appellation:'Bordeaux Supérieur AOC', aging:'French Oak', winery:'Château Belrieu', distributor:['Hawesko GmbH'], status:'Own-Label', score:90, award:null, price:6.20, recognition:['90+ Points'] },
+  { id:'riesling-spatlese-mosel', file:'bottle-lobby-wine-riesling-spatlese-mosel.html', name:'Riesling Spätlese — Mosel', vintage:2023, color:'White', grape:'Riesling', country:'Germany', region:'Mosel', appellation:'Mosel Spätlese (Prädikatswein)', aging:'Stainless Steel', winery:'Weingut Schmitt', distributor:['Hawesko GmbH'], status:'Pending', score:90, award:null, price:6.90, recognition:['90+ Points'] },
+  { id:'sauvignon-blanc-sancerre', file:'bottle-lobby-wine-sauvignon-blanc-sancerre.html', name:'Sauvignon Blanc — Sancerre', vintage:2023, color:'White', grape:'Sauvignon Blanc', country:'France', region:'Loire Valley', appellation:'Sancerre AOC', aging:'Stainless Steel', winery:'Henri Dubois Domaine', distributor:['Hawesko GmbH'], status:'Own-Label', score:91, award:null, price:6.50, recognition:['90+ Points'] },
+  { id:'tempranillo-rioja-crianza', file:'bottle-lobby-wine-tempranillo-rioja-crianza.html', name:'Tempranillo — Rioja Crianza', vintage:2021, color:'Red', grape:'Tempranillo', country:'Spain', region:'Rioja Alta', appellation:'Rioja DOCa (Crianza)', aging:'American Oak', winery:'Bodegas Ruiz', distributor:['Hawesko GmbH'], status:'Own-Label', score:89, award:null, price:5.80, recognition:[] }
+];
+
+const wineries = [
+  { id:'cantina-rossi', name:'Cantina Rossi', country:'Italy', region:'Sicily', established:1987, avatar:'CR', ownLabel:'Partner', wineShowMember:'Yes', hasProfile:true, url:'bottle-lobby-winery-cantina-rossi.html' },
+  { id:'domaine-lefevre', name:'Domaine Lefèvre', country:'France', region:'Burgundy', established:null, avatar:'DL', ownLabel:'Partner', wineShowMember:'No', hasProfile:true, url:'bottle-lobby-winery-domaine-lefevre.html' },
+  { id:'chateau-belrieu', name:'Château Belrieu', country:'France', region:'Bordeaux', established:null, avatar:'CB', ownLabel:'Partner', wineShowMember:'No', hasProfile:true, url:'bottle-lobby-winery-chateau-belrieu.html' },
+  { id:'weingut-schmitt', name:'Weingut Schmitt', country:'Germany', region:'Mosel', established:null, avatar:'WS', ownLabel:'Pending', wineShowMember:'No', hasProfile:true, url:'bottle-lobby-winery-weingut-schmitt.html' },
+  { id:'henri-dubois-domaine', name:'Henri Dubois Domaine', country:'France', region:'Loire Valley', established:null, avatar:'HD', ownLabel:'Partner', wineShowMember:'No', hasProfile:true, url:'bottle-lobby-winery-henri-dubois-domaine.html' },
+  { id:'bodegas-ruiz', name:'Bodegas Ruiz', country:'Spain', region:'Rioja Alta', established:null, avatar:'BR', ownLabel:'Partner', wineShowMember:'No', hasProfile:true, url:'bottle-lobby-winery-bodegas-ruiz.html' }
+];
+
+const distributors = [
+  { id:'hawesko', name:'Hawesko GmbH', country:'Germany', state:'Hamburg', hq:'Hamburg', established:1964, avatar:'HW', restaurantClients:'850+', focus:['French Wines','Italian Wines','Spanish Wines','Organic / Natural','Mono-cépage Focus'], hasProfile:true, url:'bottle-lobby-distributor-hawesko-gmbh.html' },
+  { id:'enoteca-milano', name:'Enoteca Milano Import Srl', country:'Italy', state:'Lombardy', hq:'Milan', established:1978, avatar:'EM', restaurantClients:'410+', focus:['Italian Wines','Sicilian Wines','Organic / Natural'], hasProfile:true, url:'bottle-lobby-distributor-enoteca-milano-import-srl.html' },
+  { id:'vinorama-nordic', name:'Vinorama Nordic AB', country:'Sweden', state:'Stockholm County', hq:'Stockholm', established:2011, avatar:'VN', restaurantClients:'190+', focus:['Scandinavian Import','Organic / Natural'], hasProfile:true, url:'bottle-lobby-distributor-vinorama-nordic-ab.html' },
+  { id:'iberian-wine-partners', name:'Iberian Wine Partners S.L.', country:'Spain', state:'Catalonia', hq:'Barcelona', established:1995, avatar:'IW', restaurantClients:'340+', focus:['Spanish Wines','Portuguese Wines'], hasProfile:true, url:'bottle-lobby-distributor-iberian-wine-partners-sl.html' },
+  { id:'la-maison-du-vin', name:'La Maison du Vin Distribution', country:'France', state:'Auvergne-Rhône-Alpes', hq:'Lyon', established:2003, avatar:'MV', restaurantClients:'265+', focus:['French Wines','Rhône Valley','Burgundy'], hasProfile:true, url:'bottle-lobby-distributor-la-maison-du-vin-distribution.html' },
+  { id:'aktiv-getraenke', name:'Aktiv Getränke', country:'Germany', state:'North Rhine-Westphalia', hq:'Cologne', established:1992, avatar:'AG', restaurantClients:'520+', focus:['French & German Whites','Full Beverage Range'], hasProfile:true, url:'bottle-lobby-distributor-aktiv-getraenke.html' },
+  { id:'hamberger', name:'Hamberger', country:'Germany', state:'Bavaria', hq:'Munich', established:1968, avatar:'HB', restaurantClients:'680+', focus:['Full Beverage Range','Growing Wine Selection'], hasProfile:true, url:'bottle-lobby-distributor-hamberger.html' }
+];
+
+// derive computed fields
+wineries.forEach(w => {
+  const own = wines.filter(x => x.winery === w.name);
+  w.wineCount = own.length;
+  w.grapes = [...new Set(own.map(x => x.grape))];
+  w.distributor = [...new Set(own.flatMap(x => x.distributor || []).filter(Boolean))];
+  if (w.distributor.length === 0) w.distributor = ['Direct (No Distributor)'];
+});
+distributors.forEach(d => {
+  const carried = wines.filter(x => (x.distributor || []).includes(d.name));
+  d.ownLabelSKUs = carried.filter(x => x.status === 'Own-Label').length;
+  d.wineryPartners = [...new Set(carried.map(x => x.winery))];
+});
+
+/* ══════════════════════════════════════════════════
+   GENERIC FACETED FILTER ENGINE
+═══════════════════════════════════════════════════ */
+const filterConfig = {
+  wines: {
+    data: wines,
+    search: ['name','winery','grape'],
+    fields: [
+      {field:'grape', label:'Grape Variety'},
+      {field:'color', label:'Colour'},
+      {field:'country', label:'Country'},
+      {field:'region', label:'Anbaugebiet / Region'},
+      {field:'appellation', label:'Appellation'},
+      {field:'vintage', label:'Vintage'},
+      {field:'aging', label:'Aging Method'},
+      {field:'winery', label:'Winery'},
+      {field:'distributor', label:'Distributor'},
+      {field:'status', label:'Own-Label Status'},
+      {field:'recognition', label:'Awards & Recognition'}
+    ]
+  },
+  wineries: {
+    data: wineries,
+    search: ['name','region','country'],
+    fields: [
+      {field:'country', label:'Country'},
+      {field:'region', label:'Anbaugebiet / Region'},
+      {field:'grapes', label:'Grape Varieties Grown'},
+      {field:'ownLabel', label:'Own-Label Status'},
+      {field:'wineShowMember', label:'Wine Show Member'},
+      {field:'distributor', label:'Distributor'}
+    ]
+  },
+  distributors: {
+    data: distributors,
+    search: ['name','country'],
+    fields: [
+      {field:'country', label:'Country'},
+      {field:'focus', label:'Portfolio Focus'},
+      {field:'wineryPartners', label:'Winery Partners'}
+    ]
+  }
+};
+
+const state = { wines:{filters:{},search:''}, wineries:{filters:{},search:''}, distributors:{filters:{},search:''} };
+
+function fieldValues(item, field) {
+  let v = item[field];
+  if (v === null || v === undefined || v === '') v = (field === 'distributor') ? 'Direct (No Distributor)' : 'Unspecified';
+  return Array.isArray(v) ? v : [v];
+}
+
+function passesFilters(item, filters) {
+  for (const field in filters) {
+    const chosen = filters[field];
+    if (!chosen || chosen.size === 0) continue;
+    const vals = fieldValues(item, field);
+    if (!vals.some(v => chosen.has(v))) return false;
+  }
+  return true;
+}
+
+function passesSearch(item, tab) {
+  const q = state[tab].search.trim().toLowerCase();
+  if (!q) return true;
+  return filterConfig[tab].search.some(f => String(item[f] || '').toLowerCase().includes(q));
+}
+
+function computeCounts(tab, field, excludeField) {
+  const cfg = filterConfig[tab];
+  const activeFilters = { ...state[tab].filters };
+  if (excludeField) delete activeFilters[excludeField];
+  const subset = cfg.data.filter(item => passesFilters(item, activeFilters) && passesSearch(item, tab));
+  const counts = {};
+  subset.forEach(item => fieldValues(item, field).forEach(v => counts[v] = (counts[v]||0) + 1));
+  return counts;
+}
+
+function escapeHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function toggleFilter(tab, field, value, checked) {
+  const filters = state[tab].filters;
+  if (!filters[field]) filters[field] = new Set();
+  checked ? filters[field].add(value) : filters[field].delete(value);
+  if (filters[field].size === 0) delete filters[field];
+  renderFilters(tab);
+  renderResults(tab);
+}
+
+function clearFilters(tab) {
+  state[tab].filters = {};
+  state[tab].search = '';
+  const searchBox = document.getElementById('search-'+tab);
+  if (searchBox) searchBox.value = '';
+  renderFilters(tab);
+  renderResults(tab);
+}
+
+function toggleGroup(el) {
+  const body = el.nextElementSibling;
+  body.classList.toggle('collapsed');
+  el.querySelector('.fg-toggle').textContent = body.classList.contains('collapsed') ? '+' : '−';
+}
+
+function renderSidebarShell(tab) {
+  const container = document.getElementById('sidebar-'+tab);
+  container.innerHTML = `
+    <div class="filter-sidebar-header"><span>Filter</span><span class="clear-filters" id="clearlink-${tab}" onclick="clearFilters('${tab}')">Clear all ×</span></div>
+    <input type="text" class="filter-search" id="search-${tab}" placeholder="Search ${tab}...">
+    <div id="filter-groups-${tab}"></div>
+  `;
+  document.getElementById('search-'+tab).addEventListener('input', function() {
+    state[tab].search = this.value;
+    renderResults(tab);
+    updateClearLink(tab);
+  });
+}
+
+function updateClearLink(tab) {
+  const activeCount = Object.values(state[tab].filters).reduce((n,s) => n + s.size, 0);
+  const hasSearch = state[tab].search.trim().length > 0;
+  document.getElementById('clearlink-'+tab).style.display = (activeCount || hasSearch) ? 'inline' : 'none';
+}
+
+function renderFilters(tab) {
+  const cfg = filterConfig[tab];
+  const container = document.getElementById('filter-groups-'+tab);
+  updateClearLink(tab);
+  let html = '';
+  cfg.fields.forEach((f, idx) => {
+    const counts = computeCounts(tab, f.field, f.field);
+    const chosen = state[tab].filters[f.field] || new Set();
+    const entries = Object.entries(counts).sort((a,b) => b[1]-a[1] || a[0].localeCompare(b[0]));
+    if (entries.length === 0) return;
+    const collapsedClass = idx > 4 ? 'collapsed' : '';
+    const toggleChar = idx > 4 ? '+' : '−';
+    html += `<div class="filter-group">
+      <div class="filter-group-header" onclick="toggleGroup(this)"><span>${f.label}</span><span class="fg-toggle">${toggleChar}</span></div>
+      <div class="filter-group-body ${collapsedClass}">`;
+    entries.forEach(([val, count]) => {
+      const isChecked = chosen.has(val);
+      const disabled = count === 0 && !isChecked ? 'disabled' : '';
+      html += `<label class="filter-option ${disabled}">
+        <input type="checkbox" class="fopt-cb" data-field="${escapeHtml(f.field)}" data-value="${escapeHtml(val)}" ${isChecked?'checked':''}>
+        <span>${escapeHtml(val)}</span><span class="fg-count">(${count})</span>
+      </label>`;
+    });
+    html += `</div></div>`;
+  });
+  container.innerHTML = html;
+}
+
+function renderChips(tab) {
+  const chipsEl = document.getElementById('chips-'+tab);
+  let html = '';
+  for (const field in state[tab].filters) {
+    state[tab].filters[field].forEach(val => {
+      html += `<span class="active-chip" data-field="${escapeHtml(field)}" data-value="${escapeHtml(val)}">${escapeHtml(val)} ×</span>`;
+    });
+  }
+  chipsEl.innerHTML = html;
+}
+
+function sortItems(tab, items) {
+  const sortEl = document.getElementById('sort-'+tab);
+  const mode = sortEl ? sortEl.value : 'name';
+  const arr = [...items];
+  if (mode === 'name') arr.sort((a,b) => a.name.localeCompare(b.name));
+  if (mode === 'price-asc') arr.sort((a,b) => a.price - b.price);
+  if (mode === 'price-desc') arr.sort((a,b) => b.price - a.price);
+  if (mode === 'vintage-desc') arr.sort((a,b) => b.vintage - a.vintage);
+  if (mode === 'score-desc') arr.sort((a,b) => (b.score||0) - (a.score||0));
+  if (mode === 'wines-desc') arr.sort((a,b) => b.wineCount - a.wineCount);
+  if (mode === 'partners-desc') arr.sort((a,b) => b.wineryPartners.length - a.wineryPartners.length);
+  return arr;
+}
+
+function wineCardHtml(w) {
+  const tags = [];
+  if (w.status === 'Own-Label') tags.push('<span class="wc-tag gold">Own-Label</span>');
+  if (w.status === 'Available') tags.push('<span class="wc-tag">Own-Label Available</span>');
+  if (w.status === 'Pending') tags.push('<span class="wc-tag">Pending Excl.</span>');
+  if (w.score) tags.push(`<span class="wc-tag">${w.score} pts</span>`);
+  if (w.award) tags.push(`<span class="wc-tag">${w.award}</span>`);
+  return `<a class="wine-card" href="${w.file}">
+    <div class="wc-accent ${w.color}"></div>
+    <div>
+      <div class="wc-name">${w.name} ${w.vintage}</div>
+      <div class="wc-meta">${w.winery} · ${w.region}, ${w.country}</div>
+      <div class="wc-tags">${tags.join('')}</div>
+    </div>
+    <div class="wc-right">
+      <div class="wc-price">€${w.price.toFixed(2)}</div>
+      <div class="wc-price-sub">Ex-Cellar</div>
+    </div>
+  </a>`;
+}
+
+function wineryCardHtml(w) {
+  const badges = [];
+  if (w.ownLabel === 'Partner') badges.push('<span class="wc-tag gold">Own-Label Partner</span>');
+  if (w.ownLabel === 'Pending') badges.push('<span class="wc-tag">Own-Label Pending</span>');
+  if (w.wineShowMember === 'Yes') badges.push('<span class="wc-tag">Wine Show Member</span>');
+  if (!w.hasProfile) badges.push('<span class="wc-tag">Distributed Partner</span>');
+  const action = w.hasProfile ? `window.location='${w.url}'` : `jumpToWinesFiltered('winery', ${JSON.stringify(w.name)})`;
+  return `<div class="entity-card" onclick="${action}">
+    <div class="entity-avatar">${w.avatar}</div>
+    <div style="flex:1">
+      <div class="entity-name">${w.name}</div>
+      <div class="entity-meta">${w.region}, ${w.country}${w.established ? ' · Est. '+w.established : ''} · ${w.wineCount} wine${w.wineCount>1?'s':''} listed</div>
+      <div class="entity-badges">${badges.join('')}</div>
+    </div>
+    <div class="entity-arrow">${w.hasProfile ? '→' : '⌕'}</div>
+  </div>`;
+}
+
+function distributorCardHtml(d) {
+  const badges = d.focus.slice(0,3).map(f => `<span class="wc-tag">${f}</span>`).join('');
+  const action = d.hasProfile ? `window.location='${d.url}'` : '';
+  return `<div class="entity-card" onclick="${action}">
+    <div class="entity-avatar dist">${d.avatar}</div>
+    <div style="flex:1">
+      <div class="entity-name">${d.name}</div>
+      <div class="entity-meta">${d.hq}, ${d.country} · Est. ${d.established} · ${d.wineryPartners.length} winery partner${d.wineryPartners.length>1?'s':''} · ${d.ownLabelSKUs} own-label SKUs</div>
+      <div class="entity-badges">${badges}</div>
+    </div>
+    <div class="entity-arrow">→</div>
+  </div>`;
+}
+
+function renderResults(tab) {
+  const cfg = filterConfig[tab];
+  let items = cfg.data.filter(item => passesFilters(item, state[tab].filters) && passesSearch(item, tab));
+  items = sortItems(tab, items);
+  const grid = document.getElementById('results-'+tab);
+  const labels = { wines: ['wine','wines'], wineries: ['winery','wineries'], distributors: ['distributor','distributors'] };
+  const [singular, plural] = labels[tab];
+  document.getElementById('count-'+tab).innerHTML = `<strong>${items.length}</strong> ${items.length===1?singular:plural} found`;
+  renderChips(tab);
+  if (items.length === 0) {
+    grid.innerHTML = `<div class="empty-state">No results match your filters. <span style="color:var(--gold);cursor:pointer" onclick="clearFilters('${tab}')">Clear filters →</span></div>`;
+    return;
+  }
+  const htmlFn = tab === 'wines' ? wineCardHtml : tab === 'wineries' ? wineryCardHtml : distributorCardHtml;
+  grid.innerHTML = items.map(htmlFn).join('');
+}
+
+function jumpToWinesFiltered(field, value) {
+  switchGuideTab('wines', document.getElementById('gtab-wines'));
+  state.wines.filters = { [field]: new Set([value]) };
+  renderFilters('wines');
+  renderResults('wines');
+  window.scrollTo({ top: document.querySelector('.guide-sticky').offsetTop - 10, behavior: 'smooth' });
+}
+
+function switchGuideTab(tab, btn) {
+  document.querySelectorAll('.guide-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.guide-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('gpanel-'+tab).classList.add('active');
+}
+
+function setupDelegatedEvents(tab) {
+  const sidebar = document.getElementById('sidebar-'+tab);
+  sidebar.addEventListener('change', e => {
+    if (e.target.classList.contains('fopt-cb')) {
+      toggleFilter(tab, e.target.dataset.field, e.target.dataset.value, e.target.checked);
+    }
+  });
+  const chips = document.getElementById('chips-'+tab);
+  chips.addEventListener('click', e => {
+    const chip = e.target.closest('.active-chip');
+    if (chip) toggleFilter(tab, chip.dataset.field, chip.dataset.value, false);
+  });
+}
+
+function initGuide() {
+  ['wines','wineries','distributors'].forEach(tab => {
+    renderSidebarShell(tab);
+    setupDelegatedEvents(tab);
+    renderFilters(tab);
+    renderResults(tab);
+  });
+  document.getElementById('stat-wines').textContent = wines.length;
+  document.getElementById('stat-wineries').textContent = wineries.length;
+  document.getElementById('stat-distributors').textContent = distributors.length;
+  document.getElementById('stat-ownlabel').textContent = wines.filter(w => w.status === 'Own-Label').length;
+  document.getElementById('stat-countries').textContent = new Set(wines.map(w => w.country)).size;
+}
+initGuide();
+
+// Deep link: #wineries or #distributors opens that tab directly
+const guideHash = window.location.hash.replace('#','');
+if (['wines','wineries','distributors'].includes(guideHash)) {
+  switchGuideTab(guideHash, document.getElementById('gtab-'+guideHash));
+}
+</script>
+</body>
+</html>

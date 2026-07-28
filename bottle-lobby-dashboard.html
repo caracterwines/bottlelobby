@@ -1,0 +1,1524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bottle Lobby – Member Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --ink:   #0e0b0b;
+  --paper: #f7f3ee;
+  --wine:  #6b1a1a;
+  --gold:  #b8975a;
+  --smoke: #1a1212;
+  --dim:   rgba(247,243,238,0.4);
+  --line:  rgba(247,243,238,0.07);
+  --green: #2d6a4f;
+  --green-dim: rgba(45,106,79,0.15);
+  --red-dim: rgba(107,26,26,0.2);
+}
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--ink);
+  color: var(--paper);
+  font-size: 14px;
+  line-height: 1.5;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── ROLE SWITCHER (demo UI) ── */
+.demo-bar {
+  background: #070404;
+  border-bottom: 1px solid var(--line);
+  padding: 0.7rem 2rem;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  position: sticky; top: 0; z-index: 200;
+}
+.demo-label {
+  font-size: 0.62rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(247,243,238,0.25);
+}
+.demo-btns { display: flex; gap: 4px; }
+.demo-btn {
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--dim);
+  padding: 0.4rem 1rem;
+  border-radius: 2px;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  transition: all 0.2s;
+}
+.demo-btn.active { background: var(--gold); color: var(--ink); border-color: var(--gold); font-weight: 500; }
+.demo-btn:hover:not(.active) { border-color: rgba(247,243,238,0.2); color: var(--paper); }
+
+/* ── LAYOUT ── */
+.app { display: flex; height: calc(100vh - 37px); overflow: hidden; }
+
+/* ── SIDEBAR ── */
+.sidebar {
+  width: 220px;
+  min-width: 220px;
+  background: var(--smoke);
+  border-right: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+.sidebar-logo {
+  padding: 1.5rem 1.4rem 1.2rem;
+  border-bottom: 1px solid var(--line);
+}
+.sidebar-logo .logo-text {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.1rem;
+  font-weight: 300;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--paper);
+}
+.sidebar-logo .logo-text span { color: var(--gold); }
+.sidebar-user {
+  padding: 1rem 1.4rem;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+.user-avatar {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: var(--wine);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--paper);
+  flex-shrink: 0;
+}
+.user-info {}
+.user-name { font-size: 0.8rem; font-weight: 500; color: var(--paper); }
+.user-role {
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.nav-section { padding: 1.2rem 0 0.5rem; }
+.nav-section-label {
+  font-size: 0.58rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(247,243,238,0.2);
+  padding: 0 1.4rem;
+  margin-bottom: 0.4rem;
+}
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.6rem 1.4rem;
+  font-size: 0.8rem;
+  color: var(--dim);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  border-left: 2px solid transparent;
+  text-decoration: none;
+}
+.nav-item:hover { background: rgba(247,243,238,0.04); color: var(--paper); }
+.nav-item.active { background: rgba(184,151,90,0.08); color: var(--paper); border-left-color: var(--gold); }
+.nav-icon { font-size: 0.9rem; width: 16px; text-align: center; opacity: 0.7; }
+.nav-badge {
+  margin-left: auto;
+  background: var(--wine);
+  color: var(--paper);
+  font-size: 0.55rem;
+  padding: 0.15rem 0.45rem;
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+/* ── MAIN CONTENT ── */
+.main {
+  flex: 1;
+  overflow-y: auto;
+  background: #110d0d;
+}
+
+/* ── TOPBAR ── */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.2rem 2rem;
+  border-bottom: 1px solid var(--line);
+  background: var(--smoke);
+  position: sticky; top: 0; z-index: 10;
+}
+.topbar-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.4rem;
+  font-weight: 300;
+  color: var(--paper);
+}
+.topbar-actions { display: flex; gap: 0.6rem; align-items: center; }
+.btn-sm {
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 0.5rem 1.2rem;
+  border-radius: 2px;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+  border: none;
+  transition: opacity 0.2s;
+  display: inline-block;
+  text-decoration: none;
+  line-height: 1.4;
+}
+.btn-sm:hover { opacity: 0.8; }
+.btn-gold { background: var(--gold); color: var(--ink); }
+.btn-outline { background: transparent; border: 1px solid var(--line); color: var(--dim); }
+.notification-dot {
+  width: 8px; height: 8px;
+  background: var(--wine);
+  border-radius: 50%;
+}
+
+/* ── DASHBOARD PANELS ── */
+.dashboard { display: none; padding: 2rem; }
+.dashboard.active { display: block; }
+
+/* ── STAT CARDS ── */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: var(--line);
+  border: 1px solid var(--line);
+  margin-bottom: 2rem;
+}
+.stat-card {
+  background: #110d0d;
+  padding: 1.4rem 1.6rem;
+}
+.stat-card-label {
+  font-size: 0.62rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--dim);
+  margin-bottom: 0.6rem;
+}
+.stat-card-value {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 2rem;
+  font-weight: 300;
+  color: var(--paper);
+  line-height: 1;
+}
+.stat-card-value span { font-size: 1rem; color: var(--gold); }
+.stat-card-delta {
+  font-size: 0.68rem;
+  margin-top: 0.4rem;
+  color: #4caf7d;
+}
+.stat-card-delta.down { color: #e57373; }
+
+/* ── GRID LAYOUT ── */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }
+.grid-13 { display: grid; grid-template-columns: 1fr 2fr; gap: 1.5rem; margin-bottom: 1.5rem; }
+.grid-31 { display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }
+
+/* ── WIDGET ── */
+.widget {
+  background: #110d0d;
+  border: 1px solid var(--line);
+}
+.widget-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.4rem;
+  border-bottom: 1px solid var(--line);
+}
+.widget-title {
+  font-size: 0.7rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+.widget-action {
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gold);
+  cursor: pointer;
+  background: none;
+  border: none;
+  font-family: 'Inter', sans-serif;
+}
+.widget-body { padding: 1.4rem; }
+
+/* ── TABLE ── */
+.data-table { width: 100%; border-collapse: collapse; }
+.data-table th {
+  font-size: 0.58rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: rgba(247,243,238,0.25);
+  text-align: left;
+  padding: 0 0 0.8rem;
+  border-bottom: 1px solid var(--line);
+  font-weight: 400;
+}
+.data-table td {
+  padding: 0.85rem 0;
+  border-bottom: 1px solid rgba(247,243,238,0.04);
+  font-size: 0.8rem;
+  color: rgba(247,243,238,0.7);
+  vertical-align: middle;
+}
+.data-table tr:last-child td { border-bottom: none; }
+.data-table td:first-child { color: var(--paper); font-weight: 400; }
+
+/* ── TAGS ── */
+.tag {
+  display: inline-block;
+  font-size: 0.58rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.6rem;
+  border-radius: 2px;
+  font-weight: 500;
+}
+.tag-green { background: var(--green-dim); color: #4caf7d; }
+.tag-gold { background: rgba(184,151,90,0.12); color: var(--gold); }
+.tag-wine { background: var(--red-dim); color: #e07070; }
+.tag-dim { background: rgba(247,243,238,0.06); color: var(--dim); }
+
+/* ── LIST ITEMS ── */
+.list-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.9rem 0;
+  border-bottom: 1px solid rgba(247,243,238,0.04);
+}
+.list-item:last-child { border-bottom: none; }
+.list-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.list-dot-gold { background: var(--gold); }
+.list-dot-green { background: #4caf7d; }
+.list-dot-wine { background: #e07070; }
+.list-item-main { flex: 1; }
+.list-item-title { font-size: 0.82rem; color: var(--paper); margin-bottom: 0.15rem; }
+.list-item-sub { font-size: 0.7rem; color: var(--dim); }
+.list-item-right { text-align: right; }
+.list-item-value { font-size: 0.82rem; color: var(--paper); }
+.list-item-label { font-size: 0.65rem; color: var(--dim); }
+
+/* ── MINI CHART (CSS bars) ── */
+.bar-chart { display: flex; flex-direction: column; gap: 0.7rem; }
+.bar-row { display: flex; align-items: center; gap: 0.8rem; }
+.bar-label { font-size: 0.72rem; color: var(--dim); width: 80px; flex-shrink: 0; }
+.bar-track { flex: 1; height: 6px; background: rgba(247,243,238,0.06); border-radius: 3px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 3px; background: var(--gold); }
+.bar-value { font-size: 0.7rem; color: var(--dim); width: 36px; text-align: right; flex-shrink: 0; }
+
+/* ── SPARKLINE (CSS) ── */
+.sparkline-wrap { display: flex; align-items: flex-end; gap: 3px; height: 40px; padding-top: 8px; }
+.spark-bar { flex: 1; border-radius: 1px; background: rgba(184,151,90,0.25); transition: background 0.2s; }
+.spark-bar:hover { background: var(--gold); }
+.spark-bar.highlight { background: var(--gold); }
+
+/* ── PROFILE CARD ── */
+.profile-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 2rem 1.4rem;
+}
+.profile-avatar {
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  background: var(--wine);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.4rem;
+  color: var(--paper);
+  margin-bottom: 1rem;
+  border: 2px solid rgba(184,151,90,0.3);
+}
+.profile-name {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.2rem;
+  font-weight: 400;
+  color: var(--paper);
+  margin-bottom: 0.2rem;
+}
+.profile-sub { font-size: 0.7rem; color: var(--dim); margin-bottom: 1rem; }
+.profile-badges { display: flex; flex-wrap: wrap; gap: 0.4rem; justify-content: center; }
+.profile-completion {
+  width: 100%;
+  margin-top: 1.2rem;
+  padding-top: 1.2rem;
+  border-top: 1px solid var(--line);
+}
+.completion-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.65rem;
+  color: var(--dim);
+  margin-bottom: 0.5rem;
+}
+.completion-track { height: 4px; background: var(--line); border-radius: 2px; }
+.completion-fill { height: 100%; border-radius: 2px; background: var(--gold); }
+
+/* ── MATCH CARD ── */
+.match-card {
+  padding: 1rem 0;
+  border-bottom: 1px solid rgba(247,243,238,0.04);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.match-card:last-child { border-bottom: none; }
+.match-score {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  border: 2px solid var(--gold);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--gold);
+  flex-shrink: 0;
+}
+.match-info { flex: 1; }
+.match-name { font-size: 0.82rem; color: var(--paper); margin-bottom: 0.15rem; }
+.match-detail { font-size: 0.7rem; color: var(--dim); }
+.match-btn {
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  background: rgba(184,151,90,0.1);
+  border: 1px solid rgba(184,151,90,0.3);
+  color: var(--gold);
+  padding: 0.35rem 0.8rem;
+  border-radius: 2px;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  transition: background 0.2s;
+}
+.match-btn:hover { background: rgba(184,151,90,0.2); }
+
+/* ── TREND ITEM ── */
+.trend-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.8rem 0;
+  border-bottom: 1px solid rgba(247,243,238,0.04);
+}
+.trend-item:last-child { border-bottom: none; }
+.trend-rank {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.2rem;
+  color: rgba(247,243,238,0.15);
+  width: 24px;
+  flex-shrink: 0;
+  text-align: center;
+}
+.trend-info { flex: 1; }
+.trend-name { font-size: 0.82rem; color: var(--paper); }
+.trend-region { font-size: 0.68rem; color: var(--dim); }
+.trend-arrow { font-size: 0.75rem; }
+.trend-arrow.up { color: #4caf7d; }
+.trend-arrow.down { color: #e07373; }
+.trend-arrow.stable { color: var(--dim); }
+
+/* ── MESSAGE ITEM ── */
+.msg-item {
+  display: flex;
+  gap: 0.8rem;
+  padding: 0.9rem 0;
+  border-bottom: 1px solid rgba(247,243,238,0.04);
+  cursor: pointer;
+}
+.msg-item:last-child { border-bottom: none; }
+.msg-item:hover .msg-preview { color: var(--paper); }
+.msg-avatar {
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  background: var(--smoke);
+  border: 1px solid var(--line);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.65rem;
+  color: var(--gold);
+  flex-shrink: 0;
+}
+.msg-content { flex: 1; min-width: 0; }
+.msg-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.15rem; }
+.msg-from { font-size: 0.78rem; color: var(--paper); font-weight: 500; }
+.msg-time { font-size: 0.62rem; color: var(--dim); }
+.msg-preview { font-size: 0.72rem; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.msg-unread { width: 6px; height: 6px; background: var(--gold); border-radius: 50%; margin-top: 0.4rem; flex-shrink: 0; }
+
+/* ── WINE SHOW CARD ── */
+.show-card {
+  background: rgba(107,26,26,0.12);
+  border: 1px solid rgba(107,26,26,0.25);
+  padding: 1.2rem;
+  margin-bottom: 0.8rem;
+}
+.show-card:last-child { margin-bottom: 0; }
+.show-card-date {
+  font-size: 0.62rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 0.4rem;
+}
+.show-card-title { font-size: 0.88rem; color: var(--paper); margin-bottom: 0.3rem; font-weight: 500; }
+.show-card-detail { font-size: 0.72rem; color: var(--dim); margin-bottom: 0.8rem; }
+.show-card-footer { display: flex; justify-content: space-between; align-items: center; }
+
+/* ── EMPTY STATE ── */
+.empty-state {
+  text-align: center;
+  padding: 2.5rem 1rem;
+  color: var(--dim);
+  font-size: 0.78rem;
+}
+.empty-state-icon { font-size: 1.5rem; margin-bottom: 0.7rem; opacity: 0.3; }
+
+/* scrollbar */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(247,243,238,0.1); border-radius: 2px; }
+
+@media (max-width: 900px) {
+  .sidebar { width: 180px; min-width: 180px; }
+  .stats-row { grid-template-columns: repeat(2,1fr); }
+  .grid-2, .grid-3, .grid-13, .grid-31 { grid-template-columns: 1fr; }
+}
+/* ══════════════════════════════
+   WELCOME / ROLE-PICKER MODAL
+══════════════════════════════ */
+.role-picker-overlay {
+  position: fixed; inset: 0; z-index: 500;
+  background: rgba(6,4,4,0.88); backdrop-filter: blur(6px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 2rem;
+  opacity: 0; visibility: hidden; transition: opacity 0.25s ease, visibility 0.25s;
+}
+.role-picker-overlay.show { opacity: 1; visibility: visible; }
+.role-picker-card {
+  background: #120d0d; border: 1px solid rgba(184,151,90,0.25);
+  border-radius: 4px; max-width: 640px; width: 100%;
+  padding: 2.6rem 2.6rem 2.2rem; text-align: center;
+  box-shadow: 0 30px 80px rgba(0,0,0,0.55);
+  transform: translateY(14px); transition: transform 0.3s ease;
+}
+.role-picker-overlay.show .role-picker-card { transform: translateY(0); }
+.role-picker-eyebrow {
+  font-size: 0.62rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(--gold);
+  display: flex; align-items: center; justify-content: center; gap: 0.8rem; margin-bottom: 1.2rem;
+}
+.role-picker-eyebrow::before, .role-picker-eyebrow::after { content: ''; width: 24px; height: 1px; background: rgba(184,151,90,0.4); }
+.role-picker-card h2 { font-family: 'Cormorant Garamond', serif; font-weight: 300; font-size: 1.9rem; color: var(--paper); margin-bottom: 0.6rem; }
+.role-picker-card p { font-size: 0.8rem; color: var(--dim); margin-bottom: 2rem; }
+.role-picker-options { display: grid; grid-template-columns: repeat(4,1fr); gap: 0.8rem; }
+.role-picker-option {
+  background: rgba(247,243,238,0.02); border: 1px solid var(--line); border-radius: 3px;
+  padding: 1.6rem 1rem; cursor: pointer; transition: all 0.2s;
+  display: flex; flex-direction: column; align-items: center; gap: 0.6rem;
+  font-family: 'Inter', sans-serif; color: var(--paper);
+}
+.role-picker-option:hover { border-color: rgba(100,140,220,0.5); background: rgba(30,60,120,0.1); transform: translateY(-2px); }
+.role-picker-icon { font-size: 1.6rem; }
+.role-picker-label { font-size: 0.78rem; font-weight: 500; }
+.role-picker-sub { font-size: 0.65rem; color: var(--dim); line-height: 1.5; }
+.role-picker-skip { display: inline-block; margin-top: 1.8rem; font-size: 0.65rem; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(247,243,238,0.3); cursor: pointer; text-decoration: none; border-bottom: 1px solid transparent; transition: color 0.2s; background: none; border-top:none; border-left:none; border-right:none; }
+.role-picker-skip:hover { color: var(--dim); border-bottom-color: rgba(247,243,238,0.2); }
+@media (max-width: 600px) { .role-picker-options { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<!-- WELCOME / ROLE PICKER -->
+<div class="role-picker-overlay" id="role-picker">
+  <div class="role-picker-card">
+    <p class="role-picker-eyebrow">Welcome to Bottle Lobby</p>
+    <h2>What best describes you?</h2>
+    <p>Pick your role and we'll show you the dashboard exactly as you'd see it.</p>
+    <div class="role-picker-options">
+      <button class="role-picker-option" onclick="pickRole('winery')">
+        <span class="role-picker-icon">🍇</span>
+        <span class="role-picker-label">Winery</span>
+        <span class="role-picker-sub">Producer looking for distribution</span>
+      </button>
+      <button class="role-picker-option" onclick="pickRole('distributor')">
+        <span class="role-picker-icon">🚚</span>
+        <span class="role-picker-label">Distributor</span>
+        <span class="role-picker-sub">Importer or wholesaler</span>
+      </button>
+      <button class="role-picker-option" onclick="pickRole('restaurant')">
+        <span class="role-picker-icon">🍽</span>
+        <span class="role-picker-label">Restaurant</span>
+        <span class="role-picker-sub">Sommelier, buyer or owner</span>
+      </button>
+      <button class="role-picker-option" onclick="pickRole('retail')">
+        <span class="role-picker-icon">🏪</span>
+        <span class="role-picker-label">Retail</span>
+        <span class="role-picker-sub">Wine shop or Fachhandel</span>
+      </button>
+    </div>
+    <button class="role-picker-skip" onclick="closeRolePicker()">Skip, just show me around →</button>
+  </div>
+</div>
+
+
+<!-- DEMO SWITCHER -->
+<div class="demo-bar">
+  <a href="bottle-lobby.html" style="font-size:0.65rem;letter-spacing:0.12em;text-transform:uppercase;color:rgba(247,243,238,0.3);text-decoration:none;margin-right:1rem;">← Website</a><a href="bottle-lobby-investor.html" style="font-size:0.65rem;letter-spacing:0.12em;text-transform:uppercase;color:rgba(184,151,90,0.5);text-decoration:none;margin-right:0.5rem;">Investors</a><span class="demo-label">View as:</span>
+  <div class="demo-btns">
+    <button class="demo-btn active" onclick="switchDashboard('winery', this)">🍇 Winery</button>
+    <button class="demo-btn" onclick="switchDashboard('distributor', this)">🚚 Distributor</button>
+    <button class="demo-btn" onclick="switchDashboard('restaurant', this)">🍽 Restaurant</button>
+    <button class="demo-btn" onclick="switchDashboard('retail', this)">🏪 Retail</button>
+  </div>
+</div>
+
+<div class="app">
+
+  <!-- ════════════════════════════════
+       WINERY SIDEBAR
+  ════════════════════════════════ -->
+  <aside class="sidebar" id="sidebar-winery">
+    <div class="sidebar-logo">
+      <a href="bottle-lobby.html" style="text-decoration:none"><div class="logo-text">Bottle<span>&nbsp;Lobby</span></div></a>
+    </div>
+    <div class="sidebar-user">
+      <div class="user-avatar">CR</div>
+      <div class="user-info">
+        <div class="user-name">Cantina Rossi</div>
+        <div class="user-role">Winery Member</div>
+      </div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">Overview</div>
+      <div class="nav-item active"><span class="nav-icon">⬡</span> Dashboard</div>
+      <div class="nav-item" onclick="window.location='bottle-lobby-winery-profile.html'" style="cursor:pointer"><span class="nav-icon">◎</span> My Profile</div>
+      <div class="nav-item" onclick="window.location='bottle-lobby-winery-profile.html'" style="cursor:pointer"><span class="nav-icon">◈</span> Wine Portfolio</div>
+      <div class="nav-item" onclick="window.location='bottle-lobby-winery-profile.html'" style="cursor:pointer"><span class="nav-icon">❖</span> Press & Recognition</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">Network</div>
+      <div class="nav-item"><span class="nav-icon">◇</span> Matchmaking <span class="nav-badge">4</span></div>
+      <div class="nav-item" id="messages"><span class="nav-icon">✉</span> Messages <span class="nav-badge">2</span></div>
+      <div class="nav-item"><span class="nav-icon">◉</span> Distributors</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">Market</div>
+      <div class="nav-item"><span class="nav-icon">↑</span> Trend Reports</div>
+      <div class="nav-item"><span class="nav-icon">◐</span> Consumer Data</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">Events</div>
+      <div class="nav-item"><span class="nav-icon">✦</span> Wine Shows <span class="nav-badge">1</span></div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">Services</div>
+      <div class="nav-item"><span class="nav-icon">◁</span> Branding & PR</div>
+      <div class="nav-item"><span class="nav-icon">⬤</span> Import Support</div>
+      <div class="nav-item"><span class="nav-icon">◌</span> Settings</div>
+    </div>
+  </aside>
+
+  <!-- ════════════════════════════════
+       DISTRIBUTOR SIDEBAR
+  ════════════════════════════════ -->
+  <aside class="sidebar" id="sidebar-distributor" style="display:none">
+    <div class="sidebar-logo">
+      <a href="bottle-lobby.html" style="text-decoration:none"><div class="logo-text">Bottle<span>&nbsp;Lobby</span></div></a>
+    </div>
+    <div class="sidebar-user">
+      <div class="user-avatar">HW</div>
+      <div class="user-info">
+        <div class="user-name">Hawesko GmbH</div>
+        <div class="user-role">Distributor Member</div>
+      </div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">Overview</div>
+      <div class="nav-item active"><span class="nav-icon">⬡</span> Dashboard</div>
+      <div class="nav-item" onclick="window.location='bottle-lobby-distributor-profile.html'" style="cursor:pointer"><span class="nav-icon">◎</span> My Profile</div>
+      <div class="nav-item" onclick="window.location='bottle-lobby-distributor-profile.html'" style="cursor:pointer"><span class="nav-icon">◈</span> Wine Portfolio</div>
+      <div class="nav-item" onclick="window.location='bottle-lobby-distributor-profile.html'" style="cursor:pointer"><span class="nav-icon">❖</span> Own-Label Wines</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">Network</div>
+      <div class="nav-item"><span class="nav-icon">◇</span> Winery Matches <span class="nav-badge">6</span></div>
+      <div class="nav-item" id="messages-distributor"><span class="nav-icon">✉</span> Messages <span class="nav-badge">3</span></div>
+      <div class="nav-item"><span class="nav-icon">◉</span> My Wineries</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">Intelligence</div>
+      <div class="nav-item"><span class="nav-icon">↑</span> Trend Analytics</div>
+      <div class="nav-item"><span class="nav-icon">◐</span> Portfolio Gaps</div>
+      <div class="nav-item"><span class="nav-icon">⬤</span> Market Reports</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">Events</div>
+      <div class="nav-item"><span class="nav-icon">✦</span> Wine Shows <span class="nav-badge">2</span></div>
+      <div class="nav-item"><span class="nav-icon">◁</span> Client Events</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">Account</div>
+      <div class="nav-item"><span class="nav-icon">◌</span> Settings</div>
+    </div>
+  </aside>
+
+  <!-- ════════════════════════════════
+       RESTAURANT SIDEBAR
+  ════════════════════════════════ -->
+  <aside class="sidebar" id="sidebar-restaurant" style="display:none">
+    <div class="sidebar-logo">
+      <a href="bottle-lobby.html" style="text-decoration:none"><div class="logo-text">Bottle<span>&nbsp;Lobby</span></div></a>
+    </div>
+    <div class="sidebar-user">
+      <div class="user-avatar">BL</div>
+      <div class="user-info">
+        <div class="user-name">Bistro Laurent</div>
+        <div class="user-role">Restaurant Member</div>
+      </div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">Overview</div>
+      <div class="nav-item active"><span class="nav-icon">⬡</span> Dashboard</div>
+      <div class="nav-item" onclick="window.location='bottle-lobby-restaurant-profile.html'" style="cursor:pointer"><span class="nav-icon">◎</span> My Profile</div>
+      <div class="nav-item" onclick="window.location='bottle-lobby-restaurant-profile.html'" style="cursor:pointer"><span class="nav-icon">◈</span> My Wine List</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">Discover</div>
+      <div class="nav-item"><span class="nav-icon">◇</span> Browse Wines <span class="nav-badge">New</span></div>
+      <div class="nav-item"><span class="nav-icon">✦</span> Exclusive Offers</div>
+      <div class="nav-item"><span class="nav-icon">◉</span> My Distributors</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">Orders</div>
+      <div class="nav-item"><span class="nav-icon">↑</span> Order History</div>
+      <div class="nav-item"><span class="nav-icon">◐</span> Pending Orders <span class="nav-badge">1</span></div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">Tools</div>
+      <div class="nav-item"><span class="nav-icon">◁</span> Wine List Builder</div>
+      <div class="nav-item"><span class="nav-icon">⬤</span> Food Pairing</div>
+      <div class="nav-item" id="messages-restaurant"><span class="nav-icon">✉</span> Messages</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">Account</div>
+      <div class="nav-item"><span class="nav-icon">◌</span> Settings</div>
+    </div>
+  </aside>
+
+  <aside class="sidebar" id="sidebar-retail" style="display:none">
+    <div class="sidebar-logo">
+      <a href="bottle-lobby.html" style="text-decoration:none"><div class="logo-text">Bottle<span>&nbsp;Lobby</span></div></a>
+    </div>
+    <div class="sidebar-user">
+      <div class="user-avatar">WM</div>
+      <div class="user-info">
+        <div class="user-name">Weinhaus Müller</div>
+        <div class="user-role">Retail Member</div>
+      </div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">Overview</div>
+      <div class="nav-item active"><span class="nav-icon">⬡</span> Dashboard</div>
+      <div class="nav-item" onclick="window.location='bottle-lobby-retail-profile.html'" style="cursor:pointer"><span class="nav-icon">◎</span> My Profile</div>
+      <div class="nav-item" onclick="window.location='bottle-lobby-retail-profile.html'" style="cursor:pointer"><span class="nav-icon">◈</span> My Wine Selection</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">Discover</div>
+      <div class="nav-item"><span class="nav-icon">◇</span> Browse Wines <span class="nav-badge">New</span></div>
+      <div class="nav-item"><span class="nav-icon">✦</span> Events</div>
+      <div class="nav-item"><span class="nav-icon">◁</span> Promo Materials</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">Orders</div>
+      <div class="nav-item"><span class="nav-icon">↑</span> Order History</div>
+      <div class="nav-item"><span class="nav-icon">◐</span> Pending Orders <span class="nav-badge">2</span></div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">Tools</div>
+      <div class="nav-item" id="messages-retail"><span class="nav-icon">✉</span> Messages</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">Account</div>
+      <div class="nav-item"><span class="nav-icon">◌</span> Settings</div>
+    </div>
+  </aside>
+  <main class="main">
+
+    <!-- ── WINERY DASHBOARD ── -->
+    <div class="dashboard active" id="dash-winery">
+      <div class="topbar">
+        <div class="topbar-title">Good morning, Cantina Rossi ✦</div>
+        <div class="topbar-actions">
+          <div class="notification-dot"></div>
+          <button class="btn-sm btn-outline">Download Wine Guide</button>
+          <a href="bottle-lobby-winery-profile.html#add-wine" class="btn-sm btn-gold">+ Add Wine</a>
+        </div>
+      </div>
+      <div style="padding:2rem">
+
+        <!-- Stats -->
+        <div class="stats-row">
+          <div class="stat-card">
+            <div class="stat-card-label">Profile Views</div>
+            <div class="stat-card-value">1,240<span></span></div>
+            <div class="stat-card-delta">↑ +18% this month</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-label">Distributor Matches</div>
+            <div class="stat-card-value">4<span></span></div>
+            <div class="stat-card-delta">↑ 2 new this week</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-label">Wines Listed</div>
+            <div class="stat-card-value">6<span></span></div>
+            <div class="stat-card-delta">↑ +1 since last month</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-label">Bottles in Distribution</div>
+            <div class="stat-card-value">24<span>k</span></div>
+            <div class="stat-card-delta">↑ +3,200 this quarter</div>
+          </div>
+        </div>
+
+        <div class="grid-31">
+          <!-- Distributor Matches -->
+          <div class="widget">
+            <div class="widget-header">
+              <span class="widget-title">New Distributor Matches</span>
+              <button class="widget-action">View All →</button>
+            </div>
+            <div class="widget-body">
+              <div class="match-card">
+                <div class="match-score">94%</div>
+                <div class="match-info">
+                  <div class="match-name">Hawesko GmbH – Hamburg</div>
+                  <div class="match-detail">850+ restaurants · Focus: Italian & French wines</div>
+                </div>
+                <button class="match-btn">Connect</button>
+              </div>
+              <div class="match-card">
+                <div class="match-score">88%</div>
+                <div class="match-info">
+                  <div class="match-name">Weinland Bayern – Munich</div>
+                  <div class="match-detail">1,200+ restaurants · Focus: Mono-cépage, organic</div>
+                </div>
+                <button class="match-btn">Connect</button>
+              </div>
+              <div class="match-card">
+                <div class="match-score">81%</div>
+                <div class="match-info">
+                  <div class="match-name">Vinco BV – Amsterdam</div>
+                  <div class="match-detail">600+ restaurants · Focus: Southern Europe</div>
+                </div>
+                <button class="match-btn">Connect</button>
+              </div>
+              <div class="match-card">
+                <div class="match-score">76%</div>
+                <div class="match-info">
+                  <div class="match-name">Nordic Wine Import – Copenhagen</div>
+                  <div class="match-detail">430+ restaurants · Focus: Premium Italian</div>
+                </div>
+                <button class="match-btn">Connect</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Profile -->
+          <div class="widget">
+            <div class="widget-header">
+              <span class="widget-title">My Profile</span>
+              <button class="widget-action">Edit →</button>
+            </div>
+            <div class="profile-card">
+              <div class="profile-avatar">CR</div>
+              <div class="profile-name">Cantina Rossi</div>
+              <div class="profile-sub">Primitivo · Sicily, Italy · Est. 1987</div>
+              <div class="profile-badges">
+                <span class="tag tag-green">Verified</span>
+                <span class="tag tag-gold">Own-Label</span>
+                <span class="tag tag-dim">Wine Show ✦</span>
+              </div>
+              <div class="profile-completion">
+                <div class="completion-label"><span>Profile Completion</span><span>78%</span></div>
+                <div class="completion-track"><div class="completion-fill" style="width:78%"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <!-- Market Trends -->
+          <div class="widget">
+            <div class="widget-header">
+              <span class="widget-title">Trending Varieties – Germany</span>
+              <button class="widget-action">Full Report →</button>
+            </div>
+            <div class="widget-body">
+              <div class="trend-item">
+                <div class="trend-rank">1</div>
+                <div class="trend-info"><div class="trend-name">Primitivo</div><div class="trend-region">Sicily · Your variety ✦</div></div>
+                <span class="tag tag-green">↑ Hot</span>
+              </div>
+              <div class="trend-item">
+                <div class="trend-rank">2</div>
+                <div class="trend-info"><div class="trend-name">Sauvignon Blanc</div><div class="trend-region">Sancerre, Loire</div></div>
+                <span class="trend-arrow up">↑ +12%</span>
+              </div>
+              <div class="trend-item">
+                <div class="trend-rank">3</div>
+                <div class="trend-info"><div class="trend-name">Chardonnay</div><div class="trend-region">Chablis, Burgundy</div></div>
+                <span class="trend-arrow stable">→ Stable</span>
+              </div>
+              <div class="trend-item">
+                <div class="trend-rank">4</div>
+                <div class="trend-info"><div class="trend-name">Tempranillo</div><div class="trend-region">Rioja, Spain</div></div>
+                <span class="trend-arrow up">↑ +8%</span>
+              </div>
+              <div class="trend-item">
+                <div class="trend-rank">5</div>
+                <div class="trend-info"><div class="trend-name">Merlot</div><div class="trend-region">Bordeaux, France</div></div>
+                <span class="trend-arrow down">↓ −4%</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Messages & Wine Show -->
+          <div style="display:flex;flex-direction:column;gap:1.5rem">
+            <div class="widget">
+              <div class="widget-header">
+                <span class="widget-title">Messages</span>
+                <button class="widget-action">View All →</button>
+              </div>
+              <div class="widget-body" style="padding-top:0.6rem">
+                <div class="msg-item">
+                  <div class="msg-avatar">HW</div>
+                  <div class="msg-content">
+                    <div class="msg-header"><span class="msg-from">Hawesko GmbH</span><span class="msg-time">2h ago</span></div>
+                    <div class="msg-preview">We'd love to schedule a tasting for your Primitivo...</div>
+                  </div>
+                  <div class="msg-unread"></div>
+                </div>
+                <div class="msg-item">
+                  <div class="msg-avatar">BL</div>
+                  <div class="msg-content">
+                    <div class="msg-header"><span class="msg-from">Bottle Lobby Team</span><span class="msg-time">1d ago</span></div>
+                    <div class="msg-preview">Your Wine Show spot in Munich is confirmed for Sept 12</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="widget">
+              <div class="widget-header">
+                <span class="widget-title">Upcoming Wine Show</span>
+              </div>
+              <div class="widget-body">
+                <div class="show-card">
+                  <div class="show-card-date">Sept 12, 2026 · Munich</div>
+                  <div class="show-card-title">Bottle Lobby × Weinland Bayern</div>
+                  <div class="show-card-detail">38 pre-qualified buyers · Tasting dinner included</div>
+                  <div class="show-card-footer">
+                    <span class="tag tag-green">Confirmed</span>
+                    <button class="match-btn">View Details</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── DISTRIBUTOR DASHBOARD ── -->
+    <div class="dashboard" id="dash-distributor">
+      <div class="topbar">
+        <div class="topbar-title">Welcome back, Hawesko ✦</div>
+        <div class="topbar-actions">
+          <div class="notification-dot"></div>
+          <button class="btn-sm btn-outline">Portfolio Report</button>
+          <button class="btn-sm btn-gold">+ Host Wine Show</button>
+        </div>
+      </div>
+      <div style="padding:2rem">
+
+        <div class="stats-row">
+          <div class="stat-card">
+            <div class="stat-card-label">Active Wineries</div>
+            <div class="stat-card-value">12<span></span></div>
+            <div class="stat-card-delta">↑ +3 this quarter</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-label">Own-Label SKUs</div>
+            <div class="stat-card-value">5<span></span></div>
+            <div class="stat-card-delta">↑ +1 this month</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-label">Bottles Moved</div>
+            <div class="stat-card-value">180<span>k</span></div>
+            <div class="stat-card-delta">↑ +22% vs last year</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-label">Restaurant Clients</div>
+            <div class="stat-card-value">850<span>+</span></div>
+            <div class="stat-card-delta">↑ +85 this quarter</div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <!-- Own-Label Portfolio -->
+          <div class="widget">
+            <div class="widget-header">
+              <span class="widget-title">Own-Label Portfolio</span>
+              <button class="widget-action">Manage →</button>
+            </div>
+            <div class="widget-body">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Wine</th>
+                    <th>Origin</th>
+                    <th>Bottles/mo</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td>Sauvignon Blanc</td><td>Sancerre</td><td>4,200</td><td><span class="tag tag-green">Active</span></td></tr>
+                  <tr><td>Chardonnay</td><td>Chablis</td><td>3,800</td><td><span class="tag tag-green">Active</span></td></tr>
+                  <tr><td>Primitivo</td><td>Sicily</td><td>2,900</td><td><span class="tag tag-green">Active</span></td></tr>
+                  <tr><td>Tempranillo</td><td>Rioja</td><td>2,100</td><td><span class="tag tag-green">Active</span></td></tr>
+                  <tr><td>Riesling</td><td>Mosel</td><td>1,400</td><td><span class="tag tag-gold">Pending</span></td></tr>
+                  <tr><td>Merlot</td><td>Bordeaux</td><td>2,400</td><td><span class="tag tag-green">Active</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Volume Chart -->
+          <div class="widget">
+            <div class="widget-header">
+              <span class="widget-title">Monthly Volume by Wine</span>
+            </div>
+            <div class="widget-body">
+              <div class="bar-chart">
+                <div class="bar-row"><span class="bar-label">Sauv. Blanc</span><div class="bar-track"><div class="bar-fill" style="width:100%"></div></div><span class="bar-value">4.2k</span></div>
+                <div class="bar-row"><span class="bar-label">Chardonnay</span><div class="bar-track"><div class="bar-fill" style="width:90%"></div></div><span class="bar-value">3.8k</span></div>
+                <div class="bar-row"><span class="bar-label">Primitivo</span><div class="bar-track"><div class="bar-fill" style="width:69%"></div></div><span class="bar-value">2.9k</span></div>
+                <div class="bar-row"><span class="bar-label">Tempranillo</span><div class="bar-track"><div class="bar-fill" style="width:50%"></div></div><span class="bar-value">2.1k</span></div>
+                <div class="bar-row"><span class="bar-label">Riesling</span><div class="bar-track"><div class="bar-fill" style="width:33%; background: var(--gold); opacity:0.5"></div></div><span class="bar-value">1.4k</span></div>
+                <div class="bar-row"><span class="bar-label">Merlot</span><div class="bar-track"><div class="bar-fill" style="width:57%"></div></div><span class="bar-value">2.4k</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-31">
+          <!-- Winery Matches -->
+          <div class="widget">
+            <div class="widget-header">
+              <span class="widget-title">New Winery Matches</span>
+              <button class="widget-action">Browse All →</button>
+            </div>
+            <div class="widget-body">
+              <table class="data-table">
+                <thead><tr><th>Winery</th><th>Origin</th><th>Variety</th><th>Fit</th><th></th></tr></thead>
+                <tbody>
+                  <tr>
+                    <td>Henri Dubois Domaine</td>
+                    <td>Sancerre, FR</td>
+                    <td>Sauv. Blanc</td>
+                    <td><span class="tag tag-green">97%</span></td>
+                    <td><button class="match-btn">View</button></td>
+                  </tr>
+                  <tr>
+                    <td>Cantina Rossi</td>
+                    <td>Sicily, IT</td>
+                    <td>Primitivo</td>
+                    <td><span class="tag tag-green">91%</span></td>
+                    <td><button class="match-btn">View</button></td>
+                  </tr>
+                  <tr>
+                    <td>Bodegas Ruiz</td>
+                    <td>Rioja, ES</td>
+                    <td>Tempranillo</td>
+                    <td><span class="tag tag-gold">84%</span></td>
+                    <td><button class="match-btn">View</button></td>
+                  </tr>
+                  <tr>
+                    <td>Domaine Lefèvre</td>
+                    <td>Chablis, FR</td>
+                    <td>Chardonnay</td>
+                    <td><span class="tag tag-gold">79%</span></td>
+                    <td><button class="match-btn">View</button></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Upcoming Shows -->
+          <div class="widget">
+            <div class="widget-header">
+              <span class="widget-title">Wine Shows</span>
+              <button class="widget-action">+ Plan →</button>
+            </div>
+            <div class="widget-body">
+              <div class="show-card">
+                <div class="show-card-date">Sept 12 · Munich</div>
+                <div class="show-card-title">Cantina Rossi Tasting</div>
+                <div class="show-card-detail">38 clients invited · RSVP open</div>
+                <div class="show-card-footer">
+                  <span class="tag tag-gold">Planning</span>
+                  <button class="match-btn">Manage</button>
+                </div>
+              </div>
+              <div class="show-card" style="margin-top:0.8rem">
+                <div class="show-card-date">Oct 3 · Hamburg</div>
+                <div class="show-card-title">French Whites Showcase</div>
+                <div class="show-card-detail">52 clients · 2 wineries</div>
+                <div class="show-card-footer">
+                  <span class="tag tag-dim">Draft</span>
+                  <button class="match-btn">Edit</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── RESTAURANT DASHBOARD ── -->
+    <div class="dashboard" id="dash-restaurant">
+      <div class="topbar">
+        <div class="topbar-title">Welcome, Bistro Laurent ✦</div>
+        <div class="topbar-actions">
+          <div class="notification-dot"></div>
+          <button class="btn-sm btn-outline">Wine List Builder</button>
+          <button class="btn-sm btn-gold">+ Reorder</button>
+        </div>
+      </div>
+      <div style="padding:2rem">
+
+        <div class="stats-row">
+          <div class="stat-card">
+            <div class="stat-card-label">Wines on List</div>
+            <div class="stat-card-value">14<span></span></div>
+            <div class="stat-card-delta">↑ +2 this season</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-label">Exclusive Wines</div>
+            <div class="stat-card-value">6<span></span></div>
+            <div class="stat-card-delta">Protected from price dumping</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-label">Bottles This Month</div>
+            <div class="stat-card-value">320<span></span></div>
+            <div class="stat-card-delta">↑ +40 vs last month</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-label">Avg. Margin</div>
+            <div class="stat-card-value">68<span>%</span></div>
+            <div class="stat-card-delta">↑ +4% since own-label</div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <!-- My Wine List -->
+          <div class="widget">
+            <div class="widget-header">
+              <span class="widget-title">My Wine List</span>
+              <button class="widget-action">Edit List →</button>
+            </div>
+            <div class="widget-body">
+              <table class="data-table">
+                <thead><tr><th>Wine</th><th>Origin</th><th>Type</th><th>Stock</th></tr></thead>
+                <tbody>
+                  <tr><td>Sauvignon Blanc</td><td>Sancerre</td><td><span class="tag tag-gold">Exclusive</span></td><td>48 btl</td></tr>
+                  <tr><td>Chardonnay</td><td>Chablis</td><td><span class="tag tag-gold">Exclusive</span></td><td>36 btl</td></tr>
+                  <tr><td>Primitivo</td><td>Sicily</td><td><span class="tag tag-gold">Exclusive</span></td><td>24 btl</td></tr>
+                  <tr><td>Tempranillo Res.</td><td>Rioja</td><td><span class="tag tag-dim">Standard</span></td><td>18 btl</td></tr>
+                  <tr><td>Pinot Noir</td><td>Burgundy</td><td><span class="tag tag-dim">Standard</span></td><td>12 btl</td></tr>
+                  <tr><td>Riesling Spätlese</td><td>Mosel</td><td><span class="tag tag-gold">Exclusive</span></td><td><span style="color:#e07070">3 btl ⚠</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- New Exclusive Wines -->
+          <div class="widget">
+            <div class="widget-header">
+              <span class="widget-title">New Exclusive Wines Available</span>
+              <button class="widget-action">Browse All →</button>
+            </div>
+            <div class="widget-body">
+              <div class="list-item">
+                <div class="list-dot list-dot-gold"></div>
+                <div class="list-item-main">
+                  <div class="list-item-title">Grenache Blanc – Roussillon</div>
+                  <div class="list-item-sub">Via Hawesko · Exclusive in your region</div>
+                </div>
+                <div class="list-item-right">
+                  <button class="match-btn">Request</button>
+                </div>
+              </div>
+              <div class="list-item">
+                <div class="list-dot list-dot-gold"></div>
+                <div class="list-item-main">
+                  <div class="list-item-title">Vermentino – Sardinia</div>
+                  <div class="list-item-sub">Via Hawesko · Limited availability</div>
+                </div>
+                <div class="list-item-right">
+                  <button class="match-btn">Request</button>
+                </div>
+              </div>
+              <div class="list-item">
+                <div class="list-dot list-dot-green"></div>
+                <div class="list-item-main">
+                  <div class="list-item-title">Malbec – Mendoza</div>
+                  <div class="list-item-sub">Via Weinland Bayern · High demand ↑</div>
+                </div>
+                <div class="list-item-right">
+                  <button class="match-btn">Request</button>
+                </div>
+              </div>
+              <div class="list-item">
+                <div class="list-dot list-dot-gold"></div>
+                <div class="list-item-main">
+                  <div class="list-item-title">Albariño – Rías Baixas</div>
+                  <div class="list-item-sub">Via Hawesko · New arrival</div>
+                </div>
+                <div class="list-item-right">
+                  <button class="match-btn">Request</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-13">
+          <!-- Pending Order -->
+          <div class="widget">
+            <div class="widget-header">
+              <span class="widget-title">Pending Orders</span>
+              <button class="widget-action">View All →</button>
+            </div>
+            <div class="widget-body">
+              <div class="list-item">
+                <div class="list-dot list-dot-gold"></div>
+                <div class="list-item-main">
+                  <div class="list-item-title">Riesling Spätlese · 12 btl</div>
+                  <div class="list-item-sub">Via Hawesko · Est. delivery Sept 8</div>
+                </div>
+                <div class="list-item-right">
+                  <span class="tag tag-gold">In Transit</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Food Pairing & Tips -->
+          <div class="widget">
+            <div class="widget-header">
+              <span class="widget-title">Pairing Recommendations</span>
+              <button class="widget-action">Full Tool →</button>
+            </div>
+            <div class="widget-body">
+              <div class="list-item">
+                <div class="list-dot list-dot-gold"></div>
+                <div class="list-item-main">
+                  <div class="list-item-title">Sauvignon Blanc (Sancerre)</div>
+                  <div class="list-item-sub">→ Goat cheese, asparagus, sea bass</div>
+                </div>
+              </div>
+              <div class="list-item">
+                <div class="list-dot list-dot-gold"></div>
+                <div class="list-item-main">
+                  <div class="list-item-title">Primitivo (Sicily)</div>
+                  <div class="list-item-sub">→ Grilled lamb, pasta al ragù, aged pecorino</div>
+                </div>
+              </div>
+              <div class="list-item">
+                <div class="list-dot list-dot-gold"></div>
+                <div class="list-item-main">
+                  <div class="list-item-title">Riesling Spätlese (Mosel)</div>
+                  <div class="list-item-sub">→ Asian cuisine, pork belly, soft cheeses</div>
+                </div>
+              </div>
+              <div class="list-item">
+                <div class="list-dot list-dot-gold"></div>
+                <div class="list-item-main">
+                  <div class="list-item-title">Chardonnay (Chablis)</div>
+                  <div class="list-item-sub">→ Oysters, turbot, creamy risotto</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="dashboard" id="dash-retail">
+      <div class="topbar">
+        <div class="topbar-title">Welcome, Weinhaus Müller ✦</div>
+        <div class="topbar-actions">
+          <div class="notification-dot"></div>
+          <button class="btn-sm btn-outline">Browse Catalogue</button>
+          <button class="btn-sm btn-gold">+ Order Wines</button>
+        </div>
+      </div>
+      <div style="padding:2rem">
+
+        <div class="stats-row">
+          <div class="stat-card">
+            <div class="stat-card-label">Exclusive Wines</div>
+            <div class="stat-card-value">18<span></span></div>
+            <div class="stat-card-delta">Protected from price dumping</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-label">Events Planned</div>
+            <div class="stat-card-value">3<span></span></div>
+            <div class="stat-card-delta">↑ +1 vs last quarter</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-label">Bottles This Month</div>
+            <div class="stat-card-value">240<span></span></div>
+            <div class="stat-card-delta">↑ +18 vs last month</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-label">Avg. Margin</div>
+            <div class="stat-card-value">62<span>%</span></div>
+            <div class="stat-card-delta">↑ +3% since own-label</div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <!-- My Wine Selection -->
+          <div class="widget">
+            <div class="widget-header">
+              <span class="widget-title">My Wine Selection</span>
+              <button class="widget-action">Edit Selection →</button>
+            </div>
+            <div class="widget-body">
+              <table class="data-table">
+                <thead><tr><th>Wine</th><th>Origin</th><th>Type</th><th>Stock</th></tr></thead>
+                <tbody>
+                  <tr><td>Sauvignon Blanc</td><td>Sancerre</td><td><span class="tag tag-gold">Exclusive</span></td><td>32 btl</td></tr>
+                  <tr><td>Chardonnay</td><td>Chablis</td><td><span class="tag tag-gold">Exclusive</span></td><td>28 btl</td></tr>
+                  <tr><td>Primitivo</td><td>Sicily</td><td><span class="tag tag-gold">Exclusive</span></td><td>41 btl</td></tr>
+                  <tr><td>Tempranillo</td><td>Rioja</td><td><span class="tag tag-gold">Exclusive</span></td><td>19 btl</td></tr>
+                  <tr><td>Merlot</td><td>Bordeaux</td><td><span class="tag tag-dim">Standard</span></td><td>15 btl</td></tr>
+                  <tr><td>Riesling Spätlese</td><td>Mosel</td><td><span class="tag tag-dim">Pending Excl.</span></td><td><span style="color:#e07070">4 btl ⚠</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- New Exclusive Wines -->
+          <div class="widget">
+            <div class="widget-header">
+              <span class="widget-title">New Exclusive Wines Available</span>
+              <button class="widget-action">Browse All →</button>
+            </div>
+            <div class="widget-body">
+              <div class="list-item">
+                <div class="list-dot list-dot-gold"></div>
+                <div class="list-item-main">
+                  <div class="list-item-title">Sauvignon Blanc — Sancerre</div>
+                  <div class="list-item-sub">Via Henri Dubois Domaine · Already exclusive to you</div>
+                </div>
+                <div class="list-item-right">
+                  <span class="tag tag-gold">Order</span>
+                </div>
+              </div>
+              <div class="list-item">
+                <div class="list-dot list-dot-gold"></div>
+                <div class="list-item-main">
+                  <div class="list-item-title">Primitivo — Sicily</div>
+                  <div class="list-item-sub">Via Cantina Rossi · Restock available</div>
+                </div>
+                <div class="list-item-right">
+                  <span class="tag tag-gold">Order</span>
+                </div>
+              </div>
+              <div class="list-item">
+                <div class="list-dot list-dot-gold"></div>
+                <div class="list-item-main">
+                  <div class="list-item-title">Riesling — Mosel</div>
+                  <div class="list-item-sub">Via Weingut Schmitt · New arrival</div>
+                </div>
+                <div class="list-item-right">
+                  <button class="match-btn">Request</button>
+                </div>
+              </div>
+              <div class="list-item">
+                <div class="list-dot list-dot-green"></div>
+                <div class="list-item-main">
+                  <div class="list-item-title">Albariño — Rías Baixas</div>
+                  <div class="list-item-sub">Via Hawesko · High demand ↑</div>
+                </div>
+                <div class="list-item-right">
+                  <button class="match-btn">Request</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-13">
+          <!-- Upcoming Events -->
+          <div class="widget">
+            <div class="widget-header">
+              <span class="widget-title">Upcoming Events</span>
+              <button class="widget-action">View All →</button>
+            </div>
+            <div class="widget-body">
+              <div class="list-item">
+                <div class="list-dot list-dot-gold"></div>
+                <div class="list-item-main">
+                  <div class="list-item-title">Cantina Rossi Tasting</div>
+                  <div class="list-item-sub">Sept 18 · In-store</div>
+                </div>
+                <div class="list-item-right">
+                  <span class="tag tag-gold">Confirmed</span>
+                </div>
+              </div>
+              <div class="list-item">
+                <div class="list-dot list-dot-gold"></div>
+                <div class="list-item-main">
+                  <div class="list-item-title">Wine Dinner × Bistro Nord</div>
+                  <div class="list-item-sub">Oct 4 · Collab</div>
+                </div>
+                <div class="list-item-right">
+                  <span class="tag tag-gold">Confirmed</span>
+                </div>
+              </div>
+              <div class="list-item">
+                <div class="list-dot" style="background:var(--dim)"></div>
+                <div class="list-item-main">
+                  <div class="list-item-title">Oenologist Evening</div>
+                  <div class="list-item-sub">Nov 8 · Planning</div>
+                </div>
+                <div class="list-item-right">
+                  <span class="tag tag-dim">Planning</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Pending Orders -->
+          <div class="widget">
+            <div class="widget-header">
+              <span class="widget-title">Pending Orders</span>
+              <button class="widget-action">View All →</button>
+            </div>
+            <div class="widget-body">
+              <div class="list-item">
+                <div class="list-dot list-dot-gold"></div>
+                <div class="list-item-main">
+                  <div class="list-item-title">Riesling Spätlese · 12 btl</div>
+                  <div class="list-item-sub">Via Weingut Schmitt · Est. delivery Sept 6</div>
+                </div>
+                <div class="list-item-right">
+                  <span class="tag tag-gold">In Transit</span>
+                </div>
+              </div>
+              <div class="list-item">
+                <div class="list-dot list-dot-gold"></div>
+                <div class="list-item-main">
+                  <div class="list-item-title">Primitivo · 24 btl</div>
+                  <div class="list-item-sub">Via Cantina Rossi · Est. delivery Sept 22</div>
+                </div>
+                <div class="list-item-right">
+                  <span class="tag tag-gold">Processing</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+function switchDashboard(role, btn) {
+  // Demo buttons
+  document.querySelectorAll('.demo-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  // Sidebars
+  ['winery','distributor','restaurant','retail'].forEach(r => {
+    document.getElementById('sidebar-' + r).style.display = r === role ? 'flex' : 'none';
+    document.getElementById('dash-' + r).classList.toggle('active', r === role);
+  });
+  // Keep the URL in sync so every dashboard has its own shareable address:
+  // bottle-lobby-dashboard.html#winery / #distributor / #restaurant / #retail
+  history.replaceState(null, '', '#' + role);
+}
+// Init sidebar flex
+document.getElementById('sidebar-winery').style.display = 'flex';
+
+// Deep link: arriving with #winery / #distributor / #restaurant / #retail selects that dashboard view
+const rolesByHash = { winery: 0, distributor: 1, restaurant: 2, retail: 3 };
+const hashRole = window.location.hash.replace('#', '');
+if (rolesByHash.hasOwnProperty(hashRole)) {
+  const btn = document.querySelectorAll('.demo-btn')[rolesByHash[hashRole]];
+  switchDashboard(hashRole, btn);
+}
+
+// ── Welcome / role picker ──
+function closeRolePicker() {
+  document.getElementById('role-picker').classList.remove('show');
+  // If the visitor skipped the picker, the default view is showing —
+  // reflect that in the URL so it always matches what is on screen.
+  if (!window.location.hash) history.replaceState(null, '', '#winery');
+}
+function pickRole(role) {
+  const btn = document.querySelectorAll('.demo-btn')[rolesByHash[role]];
+  switchDashboard(role, btn);
+  closeRolePicker();
+}
+// Show the picker on first load, unless the visitor arrived via a direct
+// #winery / #distributor / #restaurant link — then respect that instead.
+if (!hashRole) {
+  document.getElementById('role-picker').classList.add('show');
+}
+</script>
+</body>
+</html>

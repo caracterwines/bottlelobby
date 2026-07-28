@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Wine Market — Bottle Lobby</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --ink: #0e0b0b; --paper: #f7f3ee; --wine: #6b1a1a; --gold: #b8975a;
+  --smoke: #1a1212; --dim: rgba(247,243,238,0.45); --line: rgba(247,243,238,0.07);
+}
+html { scroll-behavior: smooth; }
+body { font-family: 'Inter', sans-serif; background: var(--ink); color: var(--paper); font-size: 14px; line-height: 1.6; overflow-x: hidden; }
+
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 1.4rem 3rem;
+  background: rgba(14,11,11,0.97); border-bottom: 1px solid var(--line);
+  backdrop-filter: blur(4px);
+}
+.nav-logo { font-family: 'Cormorant Garamond', serif; font-size: 1.35rem; font-weight: 300; letter-spacing: 0.18em; text-transform: uppercase; color: var(--paper); text-decoration: none; }
+.nav-logo span { color: var(--gold); }
+.nav-links { display: flex; gap: 1.5rem; list-style: none; }
+.nav-links a { font-size: 0.66rem; letter-spacing: 0.07em; text-transform: uppercase; color: rgba(247,243,238,0.6); text-decoration: none; transition: color 0.2s; }
+.nav-links a:hover, .nav-links a.active { color: var(--paper); }
+.nav-right { display: flex; gap: 0.8rem; align-items: center; }
+.btn { font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; padding: 0.55rem 1.4rem; border-radius: 2px; text-decoration: none; font-weight: 500; transition: all 0.2s; border: 1px solid transparent; cursor: pointer; font-family: 'Inter', sans-serif; display: inline-block; }
+.btn-outline { border-color: rgba(247,243,238,0.2); color: rgba(247,243,238,0.5); background: transparent; }
+.btn-outline:hover { border-color: var(--paper); color: var(--paper); }
+.btn-gold { background: var(--gold); color: var(--ink); border-color: var(--gold); }
+.btn-gold:hover { opacity: 0.85; }
+
+/* HERO */
+.hero { padding: 12rem 3rem 7rem; background: radial-gradient(ellipse 80% 50% at 50% 0%, #1a0a0a 0%, var(--ink) 70%); position: relative; overflow: hidden; }
+.hero::before { content: ''; position: absolute; inset: 0; background-image: linear-gradient(135deg, rgba(107,26,26,0.05) 1px, transparent 1px), linear-gradient(45deg, rgba(184,151,90,0.025) 1px, transparent 1px); background-size: 80px 80px, 140px 140px; }
+.container { max-width: 1100px; margin: 0 auto; position: relative; }
+.eyebrow { font-size: 0.62rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(--gold); margin-bottom: 1rem; display: flex; align-items: center; gap: 1rem; }
+.eyebrow::before { content: ''; display: block; width: 28px; height: 1px; background: var(--gold); }
+h1 { font-family: 'Cormorant Garamond', serif; font-size: clamp(2.8rem, 5.5vw, 5rem); font-weight: 300; line-height: 1.05; color: var(--paper); margin-bottom: 1.5rem; }
+h1 em { font-style: italic; color: var(--gold); }
+.hero-lead { font-size: 0.95rem; color: var(--dim); max-width: 680px; line-height: 1.95; margin-bottom: 3rem; }
+
+/* STATS BAR */
+.stats-bar { background: rgba(184,151,90,0.05); border-top: 1px solid rgba(184,151,90,0.15); border-bottom: 1px solid rgba(184,151,90,0.15); }
+.stats-inner { max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: repeat(5,1fr); }
+.stat-item { padding: 2rem 1.5rem; text-align: center; border-right: 1px solid rgba(184,151,90,0.1); }
+.stat-item:last-child { border-right: none; }
+.stat-val { font-family: 'Cormorant Garamond', serif; font-size: 2.4rem; font-weight: 300; color: var(--gold); line-height: 1; }
+.stat-label { font-size: 0.65rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--dim); margin-top: 0.4rem; line-height: 1.5; }
+.stat-source { font-size: 0.55rem; color: rgba(247,243,238,0.2); margin-top: 0.3rem; }
+
+/* MARKET OVERVIEW */
+.section { padding: 7rem 3rem; }
+.section-alt { background: rgba(247,243,238,0.02); }
+h2 { font-family: 'Cormorant Garamond', serif; font-size: clamp(2rem, 3.5vw, 3rem); font-weight: 300; line-height: 1.1; color: var(--paper); margin-bottom: 0.8rem; }
+h2 em { font-style: italic; color: var(--gold); }
+.lead { font-size: 0.88rem; color: var(--dim); max-width: 680px; line-height: 1.95; margin-bottom: 3rem; }
+
+/* FRAGMENTATION GRID */
+.market-charts { display: flex; gap: 4rem; margin: 3rem 0 3.5rem; flex-wrap: wrap; }
+.market-chart-item { display: flex; align-items: center; gap: 1.6rem; max-width: 420px; }
+.market-chart-caption { font-size: 0.82rem; color: var(--dim); line-height: 1.75; }
+.frag-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 1px; background: var(--line); border: 1px solid var(--line); }
+.frag-item { background: var(--ink); padding: 2.5rem 2rem; }
+.frag-num { font-family: 'Cormorant Garamond', serif; font-size: 3rem; font-weight: 300; color: rgba(107,26,26,0.3); line-height: 1; margin-bottom: 0.8rem; }
+.frag-title { font-size: 0.9rem; color: var(--paper); font-weight: 500; margin-bottom: 0.6rem; }
+.frag-text { font-size: 0.78rem; color: var(--dim); line-height: 1.85; }
+
+/* TREND BOXES */
+.trend-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 1.5rem; margin-top: 3rem; }
+.trend-box { background: rgba(184,151,90,0.05); border: 1px solid rgba(184,151,90,0.15); padding: 2rem; }
+.trend-tag { font-size: 0.58rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--gold); margin-bottom: 0.8rem; }
+.trend-title { font-family: 'Cormorant Garamond', serif; font-size: 1.3rem; font-weight: 400; color: var(--paper); margin-bottom: 0.6rem; }
+.trend-text { font-size: 0.78rem; color: var(--dim); line-height: 1.85; }
+
+/* STAKEHOLDER TABS */
+.tab-bar { display: flex; border-bottom: 1px solid var(--line); margin-bottom: 4rem; overflow-x: auto; }
+.tab-btn { font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; padding: 0.9rem 1.8rem; cursor: pointer; color: var(--dim); border-bottom: 2px solid transparent; margin-bottom: -1px; background: none; border-top: none; border-left: none; border-right: none; font-family: 'Inter', sans-serif; font-weight: 500; transition: all 0.2s; white-space: nowrap; }
+.tab-btn:hover { color: var(--paper); }
+.tab-btn.aw { color: var(--wine); border-bottom-color: var(--wine); }
+.tab-btn.ad { color: #7faaf0; border-bottom-color: #7faaf0; }
+.tab-btn.ar { color: #4caf7d; border-bottom-color: #4caf7d; }
+.tab-btn.art { color: #c9a84c; border-bottom-color: #c9a84c; }
+
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* PROBLEM DEEP DIVE */
+.problem-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: start; }
+.problem-intro { font-size: 0.88rem; color: var(--dim); line-height: 1.95; margin-bottom: 2.5rem; }
+.problem-list { display: flex; flex-direction: column; gap: 1rem; }
+.problem-item { padding: 1.2rem 1.5rem; border-left: 2px solid var(--wine); background: rgba(107,26,26,0.05); }
+.problem-item.dist { border-left-color: #3a5f9f; background: rgba(58,95,159,0.05); }
+.problem-item.rest { border-left-color: #2d6a4f; background: rgba(45,106,79,0.05); }
+.problem-item.retail { border-left-color: #8a6a20; background: rgba(138,106,32,0.05); }
+.problem-item h4 { font-size: 0.82rem; color: var(--paper); font-weight: 500; margin-bottom: 0.3rem; }
+.problem-item p { font-size: 0.75rem; color: var(--dim); line-height: 1.75; }
+
+/* QUOTE BLOCK */
+.quote-block { background: rgba(107,26,26,0.08); border: 1px solid rgba(107,26,26,0.2); padding: 2.5rem; margin: 2.5rem 0; position: relative; }
+.quote-block::before { content: '"'; font-family: 'Cormorant Garamond', serif; font-size: 6rem; color: rgba(107,26,26,0.15); position: absolute; top: -1rem; left: 1.5rem; line-height: 1; }
+.quote-text { font-family: 'Cormorant Garamond', serif; font-size: 1.25rem; font-weight: 300; font-style: italic; color: var(--paper); line-height: 1.7; position: relative; }
+.quote-source { font-size: 0.65rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold); margin-top: 0.8rem; }
+
+/* SIDE STATS */
+.side-stats { display: flex; flex-direction: column; gap: 1rem; }
+.side-stat { background: rgba(247,243,238,0.03); border: 1px solid var(--line); padding: 1.5rem; }
+.side-stat-val { font-family: 'Cormorant Garamond', serif; font-size: 2.5rem; font-weight: 300; color: var(--wine); line-height: 1; }
+.side-stat-label { font-size: 0.72rem; color: var(--paper); font-weight: 500; margin: 0.3rem 0 0.2rem; }
+.side-stat-sub { font-size: 0.68rem; color: var(--dim); line-height: 1.6; }
+.side-stat.dist .side-stat-val { color: #7faaf0; }
+.side-stat.rest .side-stat-val { color: #4caf7d; }
+.side-stat.retail .side-stat-val { color: #c9a84c; }
+
+/* OPPORTUNITY */
+.opp-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 1px; background: var(--line); border: 1px solid var(--line); margin-top: 3rem; }
+.opp-item { background: var(--ink); padding: 2rem; transition: background 0.2s; }
+.opp-item:hover { background: rgba(184,151,90,0.04); }
+.opp-icon { font-size: 1.2rem; margin-bottom: 1rem; }
+.opp-title { font-family: 'Cormorant Garamond', serif; font-size: 1.2rem; font-weight: 400; color: var(--paper); margin-bottom: 0.6rem; }
+.opp-text { font-size: 0.76rem; color: var(--dim); line-height: 1.85; }
+
+/* CTA */
+.cta-section { background: var(--wine); padding: 7rem 3rem; text-align: center; position: relative; overflow: hidden; }
+.cta-section::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 50%, rgba(184,151,90,0.1) 0%, transparent 70%); }
+.cta-section h2 { color: var(--paper); max-width: 600px; margin: 0 auto 1rem; position: relative; }
+.cta-section h2 em { color: var(--gold); }
+.cta-sub { font-size: 0.88rem; color: rgba(247,243,238,0.6); margin-bottom: 2.5rem; position: relative; }
+.cta-btns { display: flex; gap: 1rem; justify-content: center; position: relative; }
+
+footer { background: #070404; padding: 3.6rem 3rem 1.9rem; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; border-top: 1px solid var(--line); }
+.footer-logo { font-family: 'Cormorant Garamond', serif; font-size: 1rem; font-weight: 300; letter-spacing: 0.2em; text-transform: uppercase; color: rgba(247,243,238,0.25); }
+.footer-logo span { color: var(--gold); }
+.footer-brand { display:flex; flex-direction:column; gap:0.5px; justify-self:start; }
+.footer-links { display: flex; gap: 1.8rem; justify-self:center; }
+.footer-links a { font-size: 0.65rem; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(247,243,238,0.2); text-decoration: none; transition: color 0.2s; }
+.footer-links a:hover { color: var(--gold); }
+.footer-copy { font-size: 0.572rem; color: rgba(247,243,238,0.15); }
+
+@media (max-width: 900px) {
+  nav { padding: 1rem 1.5rem; }
+  .nav-links { display: none; }
+  .section { padding: 4rem 1.5rem; }
+  .frag-grid, .opp-grid { grid-template-columns: 1fr; }
+  .problem-grid { grid-template-columns: 1fr; }
+  .stats-inner { grid-template-columns: repeat(2,1fr); }
+  .trend-grid { grid-template-columns: 1fr; }
+}
+
+  /* ── FLOATING CTA ── */
+  .floating-cta {
+    position: fixed;
+    bottom: 2rem;
+    right: 3rem;
+    z-index: 150;
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    background: rgba(14,11,11,0.97);
+    backdrop-filter: blur(4px);
+    padding: 0.6rem;
+    border-radius: 8px;
+    border: 1px solid rgba(247,243,238,0.1);
+    box-shadow: 0 12px 32px rgba(0,0,0,0.4);
+  }
+  @media (max-width: 640px) {
+    .floating-cta { right: 1.2rem; bottom: 1.2rem; padding: 0.45rem; gap: 0.5rem; }
+    .floating-cta .btn { padding: 0.5rem 1rem; font-size: 0.65rem; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="bottle-lobby.html" class="nav-logo">Bottle<span>&nbsp;Lobby</span></a>
+  <ul class="nav-links">
+    <li><a href="bottle-lobby.html#problem" class="active">Market</a></li>
+    <li><a href="bottle-lobby.html#solution">The Lobby</a></li>
+    <li><a href="bottle-lobby.html#stakeholders">Why Lobbying</a></li>
+    <li><a href="bottle-lobby.html#how">How it Works</a></li>
+    <li><a href="bottle-lobby.html#wine-guide">Wine Guide</a></li>
+    <li><a href="bottle-lobby.html#shows">Wine Shows</a></li>
+    <li><a href="bottle-lobby.html#wines">Own Label</a></li>
+    <li><a href="bottle-lobby.html#app">The App</a></li>
+    <li><a href="bottle-lobby.html#about">About</a></li>
+    <li><a href="bottle-lobby.html#membership">Membership</a></li>
+    <li><a href="bottle-lobby.html#investors">Partners</a></li>
+  </ul>
+  <div class="nav-right">
+    <a href="bottle-lobby.html" class="btn btn-outline">← Home</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="container">
+    <p class="eyebrow">Market Analysis</p>
+    <h1>A €450 billion market.<br><em>Structurally broken.</em></h1>
+    <p class="hero-lead">The global wine trade is one of the largest and oldest industries in the world — yet it remains fragmented, inefficient, and disconnected. Quality wineries can't find buyers. Distributors can't manage risk. Restaurants can't differentiate. Retailers can't compete. The problem is structural. The opportunity is enormous.</p>
+  </div>
+</section>
+
+<!-- STATS BAR -->
+<div class="stats-bar">
+  <div class="stats-inner">
+    <div class="stat-item">
+      <div class="stat-val">€450B</div>
+      <div class="stat-label">Global Wine Market Value 2024</div>
+      <div class="stat-source">Source: DataBridge Market Research</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-val">4%</div>
+      <div class="stat-label">Annual Market Growth (CAGR)</div>
+      <div class="stat-source">Forecast 2025–2032</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-val">44%</div>
+      <div class="stat-label">Europe's Share of Global Market</div>
+      <div class="stat-source">Source: Grand View Research 2025</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-val">15%</div>
+      <div class="stat-label">Top 5 Producers' Market Share</div>
+      <div class="stat-source">Extreme fragmentation</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-val">22.6B</div>
+      <div class="stat-label">Litres Produced Globally in 2024</div>
+      <div class="stat-source">Source: OIV 2024</div>
+    </div>
+  </div>
+</div>
+
+<!-- MARKET OVERVIEW -->
+<section class="section">
+  <div class="container">
+    <p class="eyebrow">The Structural Problem</p>
+    <h2>Enormous scale.<br><em>No functioning infrastructure.</em></h2>
+    <p class="lead">Despite being a multi-hundred-billion-euro global industry, the wine trade has no unified digital infrastructure connecting wineries, distributors, restaurants, and retailers. Every transaction still happens through outdated channels — trade fairs, cold calls, and catalogue browsing — with no data, no transparency, and no efficiency.</p>
+
+    <div class="market-charts">
+      <div class="market-chart-item">
+        <svg viewBox="0 0 200 200" width="170" height="170" style="flex-shrink:0">
+          <circle cx="100" cy="100" r="68" fill="none" stroke="var(--line)" stroke-width="16"/>
+          <circle cx="100" cy="100" r="68" fill="none" stroke="var(--gold)" stroke-width="16" stroke-dasharray="64.1 363.2" stroke-linecap="round" transform="rotate(-90 100 100)"/>
+          <text x="100" y="94" text-anchor="middle" font-family="Cormorant Garamond, serif" font-size="34" fill="var(--paper)">15%</text>
+          <text x="100" y="118" text-anchor="middle" font-family="Inter, sans-serif" font-size="8.5" letter-spacing="0.06em" fill="var(--dim)">TOP 5 PRODUCERS</text>
+        </svg>
+        <div class="market-chart-caption">The top five global wine producers hold just <strong style="color:var(--paper)">15% combined market share</strong>. The rest is split among thousands of small producers with no structured path to buyers.</div>
+      </div>
+      <div class="market-chart-item">
+        <svg viewBox="0 0 200 200" width="170" height="170" style="flex-shrink:0">
+          <circle cx="100" cy="100" r="68" fill="none" stroke="var(--line)" stroke-width="16"/>
+          <circle cx="100" cy="100" r="68" fill="none" stroke="var(--wine)" stroke-width="16" stroke-dasharray="329.0 98.3" stroke-linecap="round" transform="rotate(-90 100 100)"/>
+          <text x="100" y="94" text-anchor="middle" font-family="Cormorant Garamond, serif" font-size="34" fill="var(--paper)">77%</text>
+          <text x="100" y="118" text-anchor="middle" font-family="Inter, sans-serif" font-size="8.5" letter-spacing="0.06em" fill="var(--dim)">OFF-TRADE SHARE</text>
+        </svg>
+        <div class="market-chart-caption">Off-trade channels — retail, specialty shops, online — account for <strong style="color:var(--paper)">~77% of global distribution</strong>. Most wineries have no direct relationship with this channel at all.</div>
+      </div>
+    </div>
+
+    <div class="frag-grid">
+      <div class="frag-item">
+        <div class="frag-num">01</div>
+        <div class="frag-title">Extreme Fragmentation</div>
+        <div class="frag-text">The top five wine manufacturers globally hold a combined market share of only around 15%. The rest of the market is divided among thousands of producers — most of whom have no structured path to international buyers. A Sauvignon Blanc from Sancerre competes with tens of thousands of other bottles for attention, shelf space, and placement.</div>
+      </div>
+      <div class="frag-item">
+        <div class="frag-num">02</div>
+        <div class="frag-title">PROWEIN Is Phasing Out</div>
+        <div class="frag-text">For decades, trade fairs like PROWEIN in Düsseldorf were the primary channel for wineries to meet distributors. Today, PROWEIN is becoming increasingly inefficient, cost-prohibitive, and is now phasing out. A small winery can spend €20,000–50,000 on a single booth — competing against 60,000+ wines from 70 countries — with no guarantee of a single qualified contact.</div>
+      </div>
+      <div class="frag-item">
+        <div class="frag-num">03</div>
+        <div class="frag-title">Post-Pandemic Volatility</div>
+        <div class="frag-text">Post-pandemic market shifts have forced restaurants and distributors towards safer, simpler wine choices — predominantly single-varietal mono-cépages from established regions. EU wine consumption fell 2.8% in 2024, more than 5% below the five-year average. The market is consolidating around quality, authenticity, and known varieties. Unknown labels are losing placements.</div>
+      </div>
+      <div class="frag-item">
+        <div class="frag-num">04</div>
+        <div class="frag-title">No Real-Time Market Data</div>
+        <div class="frag-text">Distributors must forecast demand months in advance, with no real-time insight into which varieties are trending in which regions. The result: overstock of slow-moving labels, understock of trending ones, and constant margin pressure. White and rosé wines are especially vulnerable, with shelf life creating additional urgency for accurate forecasting that simply doesn't exist today.</div>
+      </div>
+      <div class="frag-item">
+        <div class="frag-num">05</div>
+        <div class="frag-title">No Communication Infrastructure</div>
+        <div class="frag-text">There is no direct communication channel between wineries, distributors, and restaurants. Feedback loops that could improve wines, identify trends, or develop products don't exist. A sommelier in Munich cannot tell a winemaker in Sicily that customers are asking for less oak. The industry operates in silos — and everyone pays the price in slower sales, lower margins, and missed opportunities.</div>
+      </div>
+      <div class="frag-item">
+        <div class="frag-num">06</div>
+        <div class="frag-title">The Mono-Cépage Trend</div>
+        <div class="frag-text">A structural shift is underway: restaurants increasingly prefer single-varietal wines from their traditional regions — Sauvignon Blanc from Sancerre, Syrah from the Rhône, Riesling from the Mosel. Customers know these names. Staff can sell them without lengthy explanation. Cuvées from unknown regions require too much effort. This trend is accelerating, creating a clear opening for a platform that curates and protects exactly these wines.</div>
+      </div>
+    </div>
+
+    <div class="trend-grid">
+      <div class="trend-box">
+        <div class="trend-tag">Rising Trend — Opportunity</div>
+        <div class="trend-title">Premiumization is accelerating</div>
+        <div class="trend-text">Consumers globally are trading up — buying fewer bottles but spending more per bottle. The premium and super-premium wine segments are outperforming the overall market. This is particularly strong in Germany, the UK, and emerging markets in Asia. Wineries with quality products and a compelling story are well-positioned — if they can reach the right buyers.</div>
+      </div>
+      <div class="trend-box">
+        <div class="trend-tag">Structural Shift — Urgent</div>
+        <div class="trend-title">Off-trade dominates: 77% of distribution</div>
+        <div class="trend-text">Off-trade channels — retail stores, specialty wine shops, online — account for approximately 77% of global wine distribution. Yet most wineries have no direct relationship with retailers and rely entirely on distributors as intermediaries. Retail is the fastest-growing channel, yet the least served by existing B2B infrastructure. The gap between winery and shelf has never been wider.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STAKEHOLDER DEEP DIVES -->
+<section class="section section-alt">
+  <div class="container">
+    <p class="eyebrow">Stakeholder Analysis</p>
+    <h2>Four players.<br><em>Four broken systems.</em></h2>
+    <p class="lead">Each stakeholder in the wine trade faces a distinct set of structural challenges. Understanding these problems — in depth — is what Bottle Lobby was built to solve.</p>
+
+    <div class="tab-bar">
+      <button class="tab-btn aw" onclick="switchTab('winery',this)">🍇 Wineries</button>
+      <button class="tab-btn" onclick="switchTab('dist',this)">🚚 Distributors</button>
+      <button class="tab-btn" onclick="switchTab('rest',this)">🍽 Restaurants</button>
+      <button class="tab-btn" onclick="switchTab('retail',this)">🏪 Retail</button>
+    </div>
+
+    <!-- WINERY -->
+    <div class="tab-panel active" id="panel-winery">
+      <div class="problem-grid">
+        <div>
+          <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.8rem;font-weight:300;color:var(--paper);margin-bottom:0.5rem">The <em style="font-style:italic;color:var(--wine)">Winery</em> Problem</h3>
+          <p class="problem-intro">Quality wine producers with significant export potential are systematically locked out of international markets. The channels that once existed — trade fairs, agents, cold outreach — have become too costly, too slow, or too inefficient. Meanwhile, the major importers already carry selections from virtually every prominent wine region. There is simply no functioning channel left.</p>
+          <div class="problem-list">
+            <div class="problem-item">
+              <h4>No data on target markets</h4>
+              <p>Most international wineries lack insight into national consumption patterns, regional preferences, trending varieties, and pricing benchmarks in their target export markets. Entering Germany, Austria, or Switzerland blind — without knowing which varieties restaurants are currently requesting — leads to wasted investment and failed market entries.</p>
+            </div>
+            <div class="problem-item">
+              <h4>No structured route to importers</h4>
+              <p>The story is always the same: there is no functioning channel to reach the right people. Wineries send emails that go unanswered, attend trade fairs where their booth is lost among 60,000 others, and spend years trying to find a single credible importer in a new market. What they need is not logistics — they need an agent or platform that actively creates demand.</p>
+            </div>
+            <div class="problem-item">
+              <h4>PROWEIN is phasing out</h4>
+              <p>For decades, PROWEIN was the primary B2B channel for market entry. Today it costs €20,000–50,000 per booth, returns are difficult to measure, and the event itself is losing relevance. With events like PROWEIN becoming increasingly inefficient and cost-prohibitive, wineries are left with few viable options.</p>
+            </div>
+            <div class="problem-item">
+              <h4>Distributors won't take risks</h4>
+              <p>Most distributors only take on products that are already in demand and effectively pre-sold. They do not invest in marketing or creating demand for a new wine, as doing so carries risk of unsold inventory and uncertain returns. This means that even exceptional, unknown wineries cannot get distribution — because no distributor will invest in building the brand first.</p>
+            </div>
+            <div class="problem-item">
+              <h4>No brand-building infrastructure</h4>
+              <p>What wineries truly need is not just logistics — they need a partner capable of branding, storytelling, press coverage, and navigating regional preferences. Without this, they remain stuck at the gate despite their potential. Most have no marketing budget, no PR contacts, and no way to build the narrative their wines deserve.</p>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="side-stats">
+            <div class="side-stat">
+              <div class="side-stat-val">€20–50k</div>
+              <div class="side-stat-label">Average PROWEIN booth cost per year</div>
+              <div class="side-stat-sub">With no guaranteed qualified contacts, no pre-screened buyers, and no measurement of return. Now phasing out.</div>
+            </div>
+            <div class="side-stat">
+              <div class="side-stat-val">15%</div>
+              <div class="side-stat-label">Top 5 manufacturers' global market share</div>
+              <div class="side-stat-sub">The rest — thousands of quality producers — compete for the remaining 85%, most without any structured market access.</div>
+            </div>
+            <div class="side-stat">
+              <div class="side-stat-val">0</div>
+              <div class="side-stat-label">Functioning B2B channels for unknown wineries</div>
+              <div class="side-stat-sub">Trade fairs are disappearing. Cold outreach doesn't convert. Agents cost too much. There is no platform built for this problem.</div>
+            </div>
+          </div>
+          <div class="quote-block" style="margin-top:1.5rem">
+            <p class="quote-text">There is no functioning channel to reach the right people. What these wineries truly need is not just logistics or warehousing — they need a partner that can actively create demand for their wines, help build brand identity, and develop a market-specific positioning strategy.</p>
+            <p class="quote-source">— Caracter Media GmbH, Market Research 2025</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DISTRIBUTOR -->
+    <div class="tab-panel" id="panel-dist">
+      <div class="problem-grid">
+        <div>
+          <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.8rem;font-weight:300;color:var(--paper);margin-bottom:0.5rem">The <em style="font-style:italic;color:#7faaf0">Distributor</em> Problem</h3>
+          <p class="problem-intro">Distributors are burdened by choice paralysis, thin margins, and structural risk. Faced with an overwhelming selection of wines and ever-evolving consumer preferences, they have become highly risk-averse — sticking to safe, already-established labels rather than investing in new relationships. The model is built for logistical efficiency, not discovery.</p>
+          <div class="problem-list">
+            <div class="problem-item dist">
+              <h4>Too many options, no reliable filter</h4>
+              <p>Distributors face thousands of potential new wines every year with no reliable way to assess market fit, demand potential, or regional suitability. The result is an increasingly conservative portfolio strategy — stick to what's already selling, avoid risk, miss opportunities. Even major importers struggle with the sheer volume of choices and the pressure to stay ahead of market movements.</p>
+            </div>
+            <div class="problem-item dist">
+              <h4>Risk of unsold inventory</h4>
+              <p>The biggest fear: bringing in a wine nobody wants. A key restaurant client switching sommeliers, a trend shifting abruptly, a new competitor undercutting on price — all can leave a distributor holding thousands of bottles they cannot sell. White and rosé wines are especially vulnerable, with limited shelf life adding urgency to an already difficult forecasting challenge.</p>
+            </div>
+            <div class="problem-item dist">
+              <h4>Razor-thin margins</h4>
+              <p>Margins are already critically thin due to frequent, small-volume orders from restaurateurs and retailers. Distributors must price competitively while covering warehousing, logistics, sales, and marketing costs. Any unsold inventory or price reduction directly erodes profitability. Without pre-validated demand, taking on new labels is a financial gamble most distributors refuse to make.</p>
+            </div>
+            <div class="problem-item dist">
+              <h4>No real-time market intelligence</h4>
+              <p>Due to the time lag between ordering and delivery, distributors depend on accurate forecasting and up-to-date trend information — which is increasingly difficult in today's volatile market. They have no live data on what restaurants in their region are requesting this quarter, which varieties are trending, or where pricing is heading. Gut feeling replaces evidence.</p>
+            </div>
+            <div class="problem-item dist">
+              <h4>No demand creation support</h4>
+              <p>Most distributors are only willing to take on products that are already pre-sold. They don't invest in marketing or creating demand for new wines — that's not their business model. But this means only already-famous labels grow. Genuinely good unknown wines never reach their potential. The entire market stagnates around existing brands.</p>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="side-stats">
+            <div class="side-stat dist">
+              <div class="side-stat-val">~3%</div>
+              <div class="side-stat-label">Typical distributor net margin on wine</div>
+              <div class="side-stat-sub">Leaving almost no room to absorb unsold inventory, price fluctuations, or investment in new brand development.</div>
+            </div>
+            <div class="side-stat dist">
+              <div class="side-stat-val">0%</div>
+              <div class="side-stat-label">Distributors willing to create demand for unknown labels</div>
+              <div class="side-stat-sub">The business model requires pre-sold demand. Without a platform that creates demand first, new wines simply can't enter the market.</div>
+            </div>
+            <div class="side-stat dist">
+              <div class="side-stat-val">Months</div>
+              <div class="side-stat-label">Lag between ordering and delivery</div>
+              <div class="side-stat-sub">With no real-time trend data, distributors order based on forecasts made months in advance — in a market that changes quarterly.</div>
+            </div>
+          </div>
+          <div class="quote-block" style="margin-top:1.5rem;border-color:rgba(58,95,159,0.3);background:rgba(58,95,159,0.06)">
+            <p class="quote-text">Distributors seek convenience, quality, and price — and prefer products that are well-known, advertised, or already established in the market. They do not invest in marketing or in creating demand for a new wine, as doing so carries the risk of unsold inventory and uncertain returns.</p>
+            <p class="quote-source" style="color:#7faaf0">— Caracter Media GmbH, Market Research 2025</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RESTAURANT -->
+    <div class="tab-panel" id="panel-rest">
+      <div class="problem-grid">
+        <div>
+          <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.8rem;font-weight:300;color:var(--paper);margin-bottom:0.5rem">The <em style="font-style:italic;color:#4caf7d">Restaurant</em> Problem</h3>
+          <p class="problem-intro">Restaurants are caught in a complex balancing act between price sensitivity, flexibility, uniqueness, and operational simplicity. They are trapped in their distributor's portfolio — limited variety, price dumping competition, and no flexibility. The wine list next door looks identical to theirs.</p>
+          <div class="problem-list">
+            <div class="problem-item rest">
+              <h4>Price dumping destroys margins</h4>
+              <p>When wines are widely available and not protected by exclusivity agreements, competitors can undercut prices at will. If a restaurant in Mannheim and one in Heidelberg both source the same Sauvignon Blanc from the same distributor, whoever drops their price first forces the other to follow. Margins collapse. The customer finds the same wine cheaper elsewhere — and the restaurant loses both the margin and the loyalty.</p>
+            </div>
+            <div class="problem-item rest">
+              <h4>Locked into a single distributor's list</h4>
+              <p>Having multiple suppliers adds stress to procurement and complicates logistics. As a result, most restaurants rely on a single distributor — who may only carry one or two Sauvignon Blancs or Chardonnays. This leads to a homogenization of wine lists across an entire region. Standing out becomes impossible when everyone is ordering from the same catalogue.</p>
+            </div>
+            <div class="problem-item rest">
+              <h4>Cuvées require too much staff effort</h4>
+              <p>Restaurants often struggle to sell wines from lesser-known wineries, as recommending these requires staff to explain aroma profiles, food pairings, and regional context. Most floor staff lack this knowledge or the time to deliver it. Mono-cépages from traditional regions solve this: customers already know what a Syrah tastes like. Sales become easier, service faster, and recommendations more confident.</p>
+            </div>
+            <div class="problem-item rest">
+              <h4>No flexibility, no consistency</h4>
+              <p>Post-pandemic volatility has created frequent stock shortages, making it difficult to maintain a stable, curated wine list. Most restaurants no longer commit to full pallets — they need small, frequent deliveries. But traditional distributors are built for bulk logistics, not just-in-time service. Seasonal concepts and changing menus require a supply chain that simply doesn't exist today.</p>
+            </div>
+            <div class="problem-item rest">
+              <h4>No direct connection to producers</h4>
+              <p>There is no channel for a sommelier to contact a winemaker directly — to ask about a specific vintage, request a tasting for a special event, or provide feedback on a wine. The lack of communication and correspondence between restaurants, distributors, and wineries results in a lack of constructive critique, research, and feedback that would improve the entire supply chain.</p>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="side-stats">
+            <div class="side-stat rest">
+              <div class="side-stat-val">~30%</div>
+              <div class="side-stat-label">Typical restaurant wine margin (without exclusivity)</div>
+              <div class="side-stat-sub">With exclusivity and protected mono-cépages, this can rise to 60–70% — a transformational difference for a restaurant's profitability.</div>
+            </div>
+            <div class="side-stat rest">
+              <div class="side-stat-val">1</div>
+              <div class="side-stat-label">Average number of distributors a restaurant relies on</div>
+              <div class="side-stat-sub">Limiting variety to a single catalogue means the same wine appears on dozens of wine lists in the same city — destroying differentiation.</div>
+            </div>
+            <div class="side-stat rest">
+              <div class="side-stat-val">0</div>
+              <div class="side-stat-label">Exclusive wines protecting the restaurant's pricing</div>
+              <div class="side-stat-sub">Without exclusivity agreements, every wine is vulnerable to price dumping the moment a competitor spots it on the menu.</div>
+            </div>
+          </div>
+          <div class="quote-block" style="margin-top:1.5rem;border-color:rgba(45,106,79,0.3);background:rgba(45,106,79,0.06)">
+            <p class="quote-text">A restaurant in Mannheim may have the exact same white wine offering as one in Heidelberg, simply because they both work with the same distributor. This not only reduces a restaurant's ability to stand out but also constrains pricing freedom.</p>
+            <p class="quote-source" style="color:#4caf7d">— Caracter Media GmbH, Market Research 2025</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RETAIL -->
+    <div class="tab-panel" id="panel-retail">
+      <div class="problem-grid">
+        <div>
+          <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.8rem;font-weight:300;color:var(--paper);margin-bottom:0.5rem">The <em style="font-style:italic;color:#c9a84c">Retail</em> Problem</h3>
+          <p class="problem-intro">Independent wine retailers and specialty stores face a structural threat from two directions: supermarkets on one side, online discounters on the other. Without exclusive products, compelling in-store experiences, and direct access to winery stories and materials, the independent retailer has no competitive advantage. The wine on their shelf can be found cheaper online with two clicks.</p>
+          <div class="problem-list">
+            <div class="problem-item retail">
+              <h4>No product differentiation</h4>
+              <p>Independent retailers carry largely the same wines as supermarkets and online platforms. When the same Sauvignon Blanc is available at Rewe for €8.99 and at the specialty wine shop for €12.50, the customer goes to Rewe. Without exclusive labels or wines that cannot be found elsewhere, the independent retailer competes entirely on price — a war they cannot win against supermarket buying power.</p>
+            </div>
+            <div class="problem-item retail">
+              <h4>No direct winery access or storytelling tools</h4>
+              <p>Specialty retailers differentiate through knowledge and experience — but they have no direct relationship with producers, no access to high-quality promotional materials, and no way to create compelling in-store events without significant effort and cost. The materials they need — tasting notes, technical sheets, origin stories, producer photography — are scattered across dozens of different sources.</p>
+            </div>
+            <div class="problem-item retail">
+              <h4>Inflexible ordering — forced to overstock</h4>
+              <p>Traditional distribution models require minimum order quantities that force retailers to overstock or commit capital to inventory they're not certain will sell. For smaller shops with limited storage and cash flow, this is a significant barrier to offering a diverse, high-quality selection. The inability to order small, frequent quantities limits both variety and financial flexibility.</p>
+            </div>
+            <div class="problem-item retail">
+              <h4>No event infrastructure</h4>
+              <p>In-store wine events — tastings, winemaker evenings, food pairing nights — are the most powerful tool a specialty retailer has to drive sales and build loyalty. But organising these requires contacts with wineries, coordination with distributors, promotional materials, and significant planning effort. Most retailers simply don't have the infrastructure to do this efficiently. Events that could happen monthly happen once a year.</p>
+            </div>
+            <div class="problem-item retail">
+              <h4>No intelligence on what's trending</h4>
+              <p>Retail buyers have no real-time insight into which wine varieties are trending, which regions are gaining interest, or what consumers are actively searching for. Ordering decisions are made based on gut feeling and last year's sales — not live market data. By the time a trend is visible in retail sales, the window to benefit from it has often already closed.</p>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="side-stats">
+            <div class="side-stat retail">
+              <div class="side-stat-val">77%</div>
+              <div class="side-stat-label">Of global wine distributed through off-trade channels</div>
+              <div class="side-stat-sub">Retail is the dominant distribution channel — yet the least served by B2B platforms, with no infrastructure connecting retailers to producers directly.</div>
+            </div>
+            <div class="side-stat retail">
+              <div class="side-stat-val">2×</div>
+              <div class="side-stat-label">Margin difference with exclusive vs. open-market wines</div>
+              <div class="side-stat-sub">Protected exclusivity agreements prevent price dumping and allow retailers to maintain sustainable margins on premium products.</div>
+            </div>
+            <div class="side-stat retail">
+              <div class="side-stat-val">12%</div>
+              <div class="side-stat-label">Online wine sales share globally (2024)</div>
+              <div class="side-stat-sub">E-commerce continues to grow, creating additional pressure on physical retailers who cannot differentiate through product alone.</div>
+            </div>
+          </div>
+          <div class="quote-block" style="margin-top:1.5rem;border-color:rgba(138,106,32,0.3);background:rgba(138,106,32,0.06)">
+            <p class="quote-text">Specialty stores hold the leading position among distribution channels with a 42% share — yet they have no B2B platform, no direct winery relationships, and no infrastructure to create the events and experiences that justify their premium positioning.</p>
+            <p class="quote-source" style="color:#c9a84c">— Future Market Insights, Wine Market Analysis 2025</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- OPPORTUNITY -->
+<section class="section">
+  <div class="container">
+    <p class="eyebrow">The Opportunity</p>
+    <h2>The same problems.<br><em>One unified solution.</em></h2>
+    <p class="lead">Every structural problem in the wine trade points to the same gap: there is no digital platform connecting all four stakeholders with real-time data, direct communication, exclusivity protection, and demand-creation tools. Bottle Lobby was built to fill exactly this gap.</p>
+
+    <div class="opp-grid">
+      <div class="opp-item">
+        <div class="opp-icon">◎</div>
+        <div class="opp-title">A Unified Digital Ecosystem</div>
+        <div class="opp-text">A single platform where wineries, distributors, restaurants, and retailers connect directly — guided by real-time market data and trends. No more cold calls, unanswered emails, or expensive trade fair booths. The right connections, facilitated by intelligent matching.</div>
+      </div>
+      <div class="opp-item">
+        <div class="opp-icon">◈</div>
+        <div class="opp-title">The Mono-Cépage Trend as Tailwind</div>
+        <div class="opp-text">The rising preference for single-varietal wines from traditional regions is a structural opportunity. A Sauvignon Blanc from Sancerre sells itself — no staff education required, no aroma explanation needed. Bottle Lobby curates exactly these wines, from verified origins, under protected own-label agreements that prevent price dumping.</div>
+      </div>
+      <div class="opp-item">
+        <div class="opp-icon">◇</div>
+        <div class="opp-title">Exclusivity Protects Everyone</div>
+        <div class="opp-text">When a wine is exclusive to one distributor per region, price wars become impossible. Restaurants maintain their margins. Retailers differentiate from supermarkets. Distributors protect their investment. Wineries build consistent partnerships. Exclusivity is not just a feature — it is the economic model that makes the entire ecosystem sustainable.</div>
+      </div>
+      <div class="opp-item">
+        <div class="opp-icon">✦</div>
+        <div class="opp-title">Demand Creation Before Distribution</div>
+        <div class="opp-text">Rather than waiting for distributors to take risks on unknown labels, Bottle Lobby inverts the model: press trips to wineries, editorial coverage in VINUM and Meininger, B2B wine shows with pre-qualified audiences — all before a single bottle is distributed. By the time the wine arrives, demand already exists. Distributors take on a pre-sold product, not a gamble.</div>
+      </div>
+      <div class="opp-item">
+        <div class="opp-icon">⬡</div>
+        <div class="opp-title">Real-Time Intelligence for All</div>
+        <div class="opp-text">Market data, pricing benchmarks, regional trends, and consumption patterns — available to every platform member. Distributors can forecast with confidence. Wineries can target the right markets. Restaurants can spot emerging varieties before they become mainstream. Retailers can order ahead of trends rather than after them.</div>
+      </div>
+      <div class="opp-item">
+        <div class="opp-icon">↑</div>
+        <div class="opp-title">A Scalable Model for Growth</div>
+        <div class="opp-text">The global wine market is projected to reach €545B by 2032. The infrastructure required to serve this growth does not yet exist. A scalable B2B SaaS platform that reduces cost, increases flexibility, and adapts to rapidly changing market behaviour is not just an opportunity — it is a structural necessity for a €450B industry that has never been digitised.</div>
+      </div>
+    </div>
+
+    <div style="text-align:center;margin-top:4rem">
+      <a href="bottle-lobby-why-join.html" class="btn btn-gold" style="margin-right:1rem">See Why Members Join →</a>
+      <a href="bottle-lobby-contact.html" class="btn btn-outline">Apply for Membership</a>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+  <p class="eyebrow" style="color:rgba(247,243,238,0.5);justify-content:center"><span style="display:block;width:28px;height:1px;background:rgba(247,243,238,0.3)"></span>The Solution</p>
+  <h2>The problem is clear.<br><em>The solution is Bottle Lobby.</em></h2>
+  <p class="cta-sub">A B2B platform built specifically for the wine trade — connecting wineries, distributors, restaurants, and retailers with the data, infrastructure, and relationships they need to thrive.</p>
+  <div class="cta-btns">
+    <a href="bottle-lobby-why-join.html" class="btn btn-gold">Why Bottle Lobby →</a>
+    <a href="bottle-lobby-contact.html" class="btn btn-outline" style="color:rgba(247,243,238,0.7);border-color:rgba(247,243,238,0.3)">Apply for Membership</a>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-brand">
+    <div class="footer-logo">Bottle<span>&nbsp;Lobby</span></div>
+    <p class="footer-copy">© 2026 Caracter Media GmbH</p>
+  </div>
+  <div class="footer-links">
+    <a href="bottle-lobby.html">Home</a>
+    <a href="bottle-lobby-why-join.html">Why Join</a>
+    <a href="bottle-lobby-about.html">About</a>
+    <a href="bottle-lobby-investor.html">Investors</a>
+    <a href="bottle-lobby-contact.html">Apply</a>
+    <a href="bottle-lobby-dashboard.html">Dashboard</a>
+    <a href="bottle-lobby-profile-demo.html">Public Profile</a>
+    <a href="bottle-lobby-contact-us.html">Imprint</a>
+  </div>
+</footer>
+
+<script>
+function switchTab(role, btn) {
+  document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('aw','ad','ar','art'));
+  const colors = { winery:'aw', dist:'ad', rest:'ar', retail:'art' };
+  if (btn) btn.classList.add(colors[role]);
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-' + role).classList.add('active');
+}
+</script>
+<!-- FLOATING CTA -->
+<div class="floating-cta">
+  <a href="bottle-lobby-dashboard.html" class="btn btn-outline">Member Login</a>
+  <a href="bottle-lobby-contact.html" class="btn btn-gold">Join Now</a>
+</div>
+
+</body>
+</html>

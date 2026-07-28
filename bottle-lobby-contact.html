@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Join the Lobby – Bottle Lobby</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --ink:   #0e0b0b;
+    --paper: #f7f3ee;
+    --wine:  #6b1a1a;
+    --gold:  #b8975a;
+    --smoke: #2a2020;
+    --mist:  #e8e0d5;
+    --dim:   rgba(247,243,238,0.45);
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--ink);
+    color: var(--paper);
+    font-size: 15px;
+    line-height: 1.6;
+    overflow-x: hidden;
+    min-height: 100vh;
+  }
+
+  /* ── NAV ── */
+  
+  
+  
+  
+  
+
+
+
+
+
+
+
+  .nav-back::before { content: '←'; font-size: 0.9rem; }
+
+  /* ── HERO ── */
+  .page-hero {
+    padding: 9rem 3rem 5rem;
+    max-width: 1100px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6rem;
+    align-items: end;
+    border-bottom: 1px solid rgba(247,243,238,0.06);
+  }
+  .hero-left {}
+  .hero-eyebrow {
+    font-size: 0.65rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  .hero-eyebrow::before {
+    content: '';
+    display: block;
+    width: 32px; height: 1px;
+    background: var(--gold);
+  }
+  .page-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(2.8rem, 5vw, 4.5rem);
+    font-weight: 300;
+    line-height: 1.05;
+    color: var(--paper);
+  }
+  .page-title em { font-style: italic; color: var(--gold); }
+  .hero-right p {
+    font-size: 0.88rem;
+    color: var(--dim);
+    line-height: 1.9;
+    margin-bottom: 1.2rem;
+  }
+
+  /* ── ROLE SELECTOR ── */
+  .role-section {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 4rem 3rem 0;
+  }
+  .role-label {
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--dim);
+    margin-bottom: 1.2rem;
+  }
+  .role-selector {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: rgba(247,243,238,0.06);
+    border: 1px solid rgba(247,243,238,0.06);
+    margin-bottom: 3.5rem;
+  }
+  .role-btn {
+    background: var(--ink);
+    border: none;
+    padding: 1.8rem 2rem;
+    cursor: pointer;
+    text-align: left;
+    border-top: 2px solid transparent;
+    transition: background 0.2s, border-color 0.2s;
+    color: var(--paper);
+  }
+  .role-btn:hover { background: #160d0d; }
+  .role-btn.active {
+    border-top-color: var(--gold);
+    background: #160d0d;
+  }
+  .role-btn-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.3rem;
+    font-weight: 400;
+    color: var(--paper);
+    display: block;
+    margin-bottom: 0.3rem;
+  }
+  .role-btn-sub {
+    font-size: 0.72rem;
+    color: var(--dim);
+    letter-spacing: 0.03em;
+  }
+  .role-btn.active .role-btn-title { color: var(--gold); }
+
+  /* ── FORM ── */
+  .form-section {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 3rem 6rem;
+  }
+  .form-panel { display: none; }
+  .form-panel.active { display: block; }
+
+  .form-intro {
+    margin-bottom: 3rem;
+    padding-bottom: 2.5rem;
+    border-bottom: 1px solid rgba(247,243,238,0.06);
+  }
+  .form-intro h2 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.8rem;
+    font-weight: 300;
+    color: var(--paper);
+    margin-bottom: 0.6rem;
+  }
+  .form-intro p {
+    font-size: 0.82rem;
+    color: var(--dim);
+    max-width: 500px;
+    line-height: 1.8;
+  }
+
+  form { display: flex; flex-direction: column; gap: 0; }
+
+  .form-group {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: rgba(247,243,238,0.05);
+    margin-bottom: 1px;
+  }
+  .form-group.full { grid-template-columns: 1fr; }
+  .form-group.three { grid-template-columns: 1fr 1fr 1fr; }
+
+  .field {
+    background: var(--ink);
+    padding: 1.6rem 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    transition: background 0.15s;
+  }
+  .field:focus-within { background: #130909; }
+
+  label {
+    font-size: 0.62rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--gold);
+    font-weight: 500;
+  }
+
+  input, select, textarea {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--paper);
+    font-family: 'Inter', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 300;
+    width: 100%;
+    appearance: none;
+    -webkit-appearance: none;
+  }
+  input::placeholder, textarea::placeholder { color: rgba(247,243,238,0.2); }
+  select option { background: #1a0f0f; color: var(--paper); }
+  textarea { resize: none; min-height: 100px; line-height: 1.7; }
+
+  .select-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  .select-wrapper::after {
+    content: '↓';
+    position: absolute; right: 0;
+    color: var(--gold);
+    font-size: 0.75rem;
+    pointer-events: none;
+  }
+
+  /* Divider between form blocks */
+  .form-divider {
+    padding: 2.5rem 0 1rem;
+    font-size: 0.62rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: rgba(247,243,238,0.2);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1px;
+  }
+  .form-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: rgba(247,243,238,0.06);
+  }
+
+  /* Checkbox group */
+  .checkbox-group {
+    background: var(--ink);
+    padding: 1.6rem 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+  }
+  .checkbox-label-title {
+    font-size: 0.62rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--gold);
+    font-weight: 500;
+    margin-bottom: 0.4rem;
+    display: block;
+  }
+  .checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    cursor: pointer;
+  }
+  .checkbox-item input[type="checkbox"] {
+    width: 14px; height: 14px;
+    border: 1px solid rgba(247,243,238,0.2);
+    background: transparent;
+    appearance: none;
+    -webkit-appearance: none;
+    border-radius: 1px;
+    cursor: pointer;
+    flex-shrink: 0;
+    position: relative;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .checkbox-item input[type="checkbox"]:checked {
+    background: var(--gold);
+    border-color: var(--gold);
+  }
+  .checkbox-item input[type="checkbox"]:checked::after {
+    content: '✓';
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 0.55rem;
+    color: var(--ink);
+    font-weight: 700;
+  }
+  .checkbox-item span {
+    font-size: 0.82rem;
+    color: rgba(247,243,238,0.55);
+  }
+
+  /* Submit */
+  .form-submit {
+    padding: 3rem 0 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2rem;
+  }
+  .submit-note {
+    font-size: 0.75rem;
+    color: rgba(247,243,238,0.25);
+    max-width: 400px;
+    line-height: 1.7;
+  }
+  .btn-submit {
+    background: var(--gold);
+    color: var(--ink);
+    border: none;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.72rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    font-weight: 500;
+    padding: 1.1rem 3rem;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: opacity 0.2s;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .btn-submit:hover { opacity: 0.85; }
+
+  /* Success message */
+  .success-message {
+    display: none;
+    text-align: center;
+    padding: 5rem 2rem;
+  }
+  .success-message.visible { display: block; }
+  .success-icon {
+    font-size: 2rem;
+    margin-bottom: 1.5rem;
+    color: var(--gold);
+  }
+  .success-message h3 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 2rem;
+    font-weight: 300;
+    color: var(--paper);
+    margin-bottom: 0.8rem;
+  }
+  .success-message p {
+    font-size: 0.85rem;
+    color: var(--dim);
+    max-width: 400px;
+    margin: 0 auto;
+    line-height: 1.8;
+  }
+
+  /* ── FOOTER STRIP ── */
+  .footer-strip {
+    border-top: 1px solid rgba(247,243,238,0.05);
+    padding: 2rem 3rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  .footer-strip p {
+    font-size: 0.7rem;
+    color: rgba(247,243,238,0.2);
+    letter-spacing: 0.05em;
+  }
+  .footer-strip a {
+    font-size: 0.7rem;
+    color: rgba(247,243,238,0.25);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  .footer-strip a:hover { color: var(--gold); }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 860px) {
+    
+    .page-hero { grid-template-columns: 1fr; gap: 2rem; padding: 7rem 1.5rem 3rem; }
+    .role-section { padding: 2.5rem 1.5rem 0; }
+    .form-section { padding: 0 1.5rem 4rem; }
+    .role-selector { grid-template-columns: 1fr; }
+    .form-group, .form-group.three { grid-template-columns: 1fr; }
+    .form-submit { flex-direction: column; align-items: flex-start; }
+    .footer-strip { flex-direction: column; gap: 0.8rem; text-align: center; }
+  }
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1.4rem 3rem;
+    background: rgba(14,11,11,0.97);
+    border-bottom: 1px solid rgba(247,243,238,0.07);
+    backdrop-filter: blur(4px);
+  }
+  .nav-logo {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.35rem;
+    font-weight: 300;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--paper);
+    text-decoration: none;
+  }
+  .nav-logo span { color: var(--gold); }
+  .nav-links { display: flex; gap: 1.5rem; list-style: none; }
+  .nav-links a {
+    font-size: 0.66rem;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: rgba(247,243,238,0.6);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  .nav-links a:hover { color: var(--paper); }
+  .nav-right { display: flex; gap: 0.8rem; align-items: center; }
+  .btn {
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 0.55rem 1.4rem;
+    border-radius: 2px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    display: inline-block;
+  }
+  .btn-outline {
+    border-color: rgba(247,243,238,0.2);
+    color: rgba(247,243,238,0.5);
+    background: transparent;
+  }
+  .btn-outline:hover { border-color: var(--paper); color: var(--paper); }
+  .btn-gold {
+    background: var(--gold);
+    color: var(--ink);
+    border-color: var(--gold);
+  }
+  .btn-gold:hover { opacity: 0.85; }
+
+  /* ── FLOATING CTA ── */
+  .floating-cta {
+    position: fixed;
+    bottom: 2rem;
+    right: 3rem;
+    z-index: 150;
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    background: rgba(14,11,11,0.97);
+    backdrop-filter: blur(4px);
+    padding: 0.6rem;
+    border-radius: 8px;
+    border: 1px solid rgba(247,243,238,0.1);
+    box-shadow: 0 12px 32px rgba(0,0,0,0.4);
+  }
+  @media (max-width: 640px) {
+    .floating-cta { right: 1.2rem; bottom: 1.2rem; padding: 0.45rem; gap: 0.5rem; }
+    .floating-cta .btn { padding: 0.5rem 1rem; font-size: 0.65rem; }
+  }
+  footer { background: #070404; padding: 2.5rem 3rem; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--line); flex-wrap: wrap; gap: 1.5rem; }
+  .footer-logo { font-family: 'Cormorant Garamond', serif; font-size: 1rem; font-weight: 300; letter-spacing: 0.2em; text-transform: uppercase; color: rgba(247,243,238,0.25); }
+  .footer-logo span { color: var(--gold); }
+  .footer-links { display: flex; gap: 1.8rem; flex-wrap: wrap; }
+  .footer-links a { font-size: 0.65rem; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(247,243,238,0.2); text-decoration: none; transition: color 0.2s; }
+  .footer-links a:hover { color: var(--gold); }
+  .footer-copy { font-size: 0.65rem; color: rgba(247,243,238,0.15); }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="bottle-lobby.html" class="nav-logo">Bottle<span>&nbsp;Lobby</span></a>
+  <ul class="nav-links">
+    <li><a href="bottle-lobby-market.html">Market</a></li>
+    <li><a href="bottle-lobby.html#solution">The Lobby</a></li>
+    <li><a href="bottle-lobby.html#stakeholders">Why Lobbying</a></li>
+    <li><a href="bottle-lobby.html#how">How it Works</a></li>
+    <li><a href="bottle-lobby.html#wine-guide">Wine Guide</a></li>
+    <li><a href="bottle-lobby.html#shows">Wine Shows</a></li>
+    <li><a href="bottle-lobby.html#wines">Own Label</a></li>
+    <li><a href="bottle-lobby.html#app">The App</a></li>
+    <li><a href="bottle-lobby.html#about">About</a></li>
+    <li><a href="bottle-lobby.html#membership">Membership</a></li>
+    <li><a href="bottle-lobby.html#investors">Partners</a></li>
+  </ul>
+  <div class="nav-right">
+    <a href="bottle-lobby.html" class="btn btn-outline">← Home</a>
+  </div>
+</nav>
+
+<!-- PAGE HERO -->
+<div class="page-hero">
+  <div class="hero-left">
+    <p class="hero-eyebrow">Applications Open</p>
+    <h1 class="page-title">Join the<br><em>Lobby.</em></h1>
+  </div>
+  <div class="hero-right">
+    <p>Whether you're a winery seeking international market access, a distributor looking for exclusive curated wines, or a restaurant wanting more flexibility — tell us about yourself and we'll be in touch.</p>
+    <p>All applications are reviewed personally. We onboard partners selectively to ensure quality and fit for every stakeholder in our network.</p>
+  </div>
+</div>
+
+<!-- ROLE SELECTOR -->
+<div class="role-section">
+  <p class="role-label">I am a …</p>
+  <div class="role-selector">
+    <button class="role-btn active" onclick="switchRole('winery', this)">
+      <span class="role-btn-title">Winery</span>
+      <span class="role-btn-sub">I produce wine and seek distribution</span>
+    </button>
+    <button class="role-btn" onclick="switchRole('distributor', this)">
+      <span class="role-btn-title">Distributor</span>
+      <span class="role-btn-sub">I import and distribute wine regionally</span>
+    </button>
+    <button class="role-btn" onclick="switchRole('restaurant', this)">
+      <span class="role-btn-title">Restaurant / Retail</span>
+      <span class="role-btn-sub">I sell wine to end consumers</span>
+    </button>
+  </div>
+</div>
+
+<!-- FORMS -->
+<div class="form-section">
+
+  <!-- ── WINERY FORM ── -->
+  <div class="form-panel active" id="panel-winery">
+    <div class="form-intro">
+      <h2>Winery Application</h2>
+      <p>Tell us about your estate, your production scale, and where you want to grow. We'll assess fit and reach out within 5 business days.</p>
+    </div>
+    <form onsubmit="handleSubmit(event, 'winery')">
+
+      <div class="form-divider">Contact Information</div>
+      <div class="form-group">
+        <div class="field">
+          <label for="w-firstname">First Name</label>
+          <input type="text" id="w-firstname" placeholder="Maria" required>
+        </div>
+        <div class="field">
+          <label for="w-lastname">Last Name</label>
+          <input type="text" id="w-lastname" placeholder="Rossi" required>
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="field">
+          <label for="w-email">Email Address</label>
+          <input type="email" id="w-email" placeholder="maria@winery.com" required>
+        </div>
+        <div class="field">
+          <label for="w-phone">Phone Number</label>
+          <input type="tel" id="w-phone" placeholder="+39 ...">
+        </div>
+      </div>
+
+      <div class="form-divider">Winery Details</div>
+      <div class="form-group">
+        <div class="field">
+          <label for="w-name">Winery Name</label>
+          <input type="text" id="w-name" placeholder="Cantina Rossi" required>
+        </div>
+        <div class="field">
+          <label for="w-website">Website</label>
+          <input type="url" id="w-website" placeholder="https://cantinarossi.it">
+        </div>
+      </div>
+      <div class="form-group three">
+        <div class="field">
+          <label for="w-country">Country</label>
+          <div class="select-wrapper">
+            <select id="w-country" required>
+              <option value="" disabled selected>Select country</option>
+              <option>Italy</option>
+              <option>France</option>
+              <option>Spain</option>
+              <option>Germany</option>
+              <option>Portugal</option>
+              <option>Argentina</option>
+              <option>Chile</option>
+              <option>South Africa</option>
+              <option>Australia</option>
+              <option>New Zealand</option>
+              <option>Other</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label for="w-region">Wine Region</label>
+          <input type="text" id="w-region" placeholder="e.g. Tuscany, Rioja, Sancerre">
+        </div>
+        <div class="field">
+          <label for="w-founded">Year Founded</label>
+          <input type="number" id="w-founded" placeholder="e.g. 1987" min="1700" max="2026">
+        </div>
+      </div>
+
+      <div class="form-divider">Production & Portfolio</div>
+      <div class="form-group">
+        <div class="field">
+          <label for="w-volume">Annual Production Volume</label>
+          <div class="select-wrapper">
+            <select id="w-volume">
+              <option value="" disabled selected>Select range</option>
+              <option>Under 100,000 bottles</option>
+              <option>100,000 – 500,000 bottles</option>
+              <option>500,000 – 1,000,000 bottles</option>
+              <option>1,000,000 – 5,000,000 bottles</option>
+              <option>Over 5,000,000 bottles</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label for="w-export">Current Export Markets</label>
+          <input type="text" id="w-export" placeholder="e.g. Germany, UK, USA">
+        </div>
+      </div>
+
+      <div class="form-group full">
+        <div class="checkbox-group">
+          <span class="checkbox-label-title">Grape Varieties You Produce</span>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.6rem 2rem;">
+            <label class="checkbox-item"><input type="checkbox"><span>Sauvignon Blanc</span></label>
+            <label class="checkbox-item"><input type="checkbox"><span>Chardonnay</span></label>
+            <label class="checkbox-item"><input type="checkbox"><span>Pinot Noir</span></label>
+            <label class="checkbox-item"><input type="checkbox"><span>Cabernet Sauvignon</span></label>
+            <label class="checkbox-item"><input type="checkbox"><span>Merlot</span></label>
+            <label class="checkbox-item"><input type="checkbox"><span>Syrah / Shiraz</span></label>
+            <label class="checkbox-item"><input type="checkbox"><span>Tempranillo</span></label>
+            <label class="checkbox-item"><input type="checkbox"><span>Primitivo / Zinfandel</span></label>
+            <label class="checkbox-item"><input type="checkbox"><span>Riesling</span></label>
+            <label class="checkbox-item"><input type="checkbox"><span>Grüner Veltliner</span></label>
+            <label class="checkbox-item"><input type="checkbox"><span>Prosecco / Sparkling</span></label>
+            <label class="checkbox-item"><input type="checkbox"><span>Other</span></label>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-divider">Goals & Interest</div>
+      <div class="form-group">
+        <div class="field">
+          <label for="w-target">Target Markets</label>
+          <input type="text" id="w-target" placeholder="e.g. Germany, Netherlands, Scandinavia">
+        </div>
+        <div class="field">
+          <label for="w-interest">Primary Interest in Bottle Lobby</label>
+          <div class="select-wrapper">
+            <select id="w-interest">
+              <option value="" disabled selected>Select one</option>
+              <option>Platform Membership & Exposure</option>
+              <option>Distributor Matchmaking</option>
+              <option>Own-Label Wine Development</option>
+              <option>Wine Show Participation</option>
+              <option>Branding & PR Services</option>
+              <option>All of the above</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="form-group full">
+        <div class="field">
+          <label for="w-message">Tell Us About Your Winery</label>
+          <textarea id="w-message" placeholder="What makes your wines distinctive? What are your international goals? Any specific challenges you're facing?" rows="5"></textarea>
+        </div>
+      </div>
+
+      <div class="form-submit">
+        <p class="submit-note">We review all applications personally and respond within 5 business days. Your data is used only to process this application.</p>
+        <button type="submit" class="btn-submit">Submit Application</button>
+      </div>
+    </form>
+    <div class="success-message" id="success-winery">
+      <div class="success-icon">✦</div>
+      <h3>Application received.</h3>
+      <p>Thank you for applying to Bottle Lobby. We'll review your winery profile and reach out within 5 business days.</p>
+      <a href="bottle-lobby-dashboard.html" style="display:inline-block;margin-top:1.5rem;font-size:0.7rem;letter-spacing:0.15em;text-transform:uppercase;background:var(--gold);color:var(--ink);padding:0.8rem 2rem;border-radius:2px;text-decoration:none;font-weight:500;">Preview Dashboard →</a>
+    </div>
+  </div>
+
+  <!-- ── DISTRIBUTOR FORM ── -->
+  <div class="form-panel" id="panel-distributor">
+    <div class="form-intro">
+      <h2>Distributor Application</h2>
+      <p>Tell us about your distribution territory and portfolio needs. We'll find the right winery matches and exclusive own-label wines for your market.</p>
+    </div>
+    <form onsubmit="handleSubmit(event, 'distributor')">
+
+      <div class="form-divider">Contact Information</div>
+      <div class="form-group">
+        <div class="field">
+          <label for="d-firstname">First Name</label>
+          <input type="text" id="d-firstname" placeholder="Klaus" required>
+        </div>
+        <div class="field">
+          <label for="d-lastname">Last Name</label>
+          <input type="text" id="d-lastname" placeholder="Müller" required>
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="field">
+          <label for="d-email">Email Address</label>
+          <input type="email" id="d-email" placeholder="k.mueller@distribution.de" required>
+        </div>
+        <div class="field">
+          <label for="d-phone">Phone Number</label>
+          <input type="tel" id="d-phone" placeholder="+49 ...">
+        </div>
+      </div>
+
+      <div class="form-divider">Company Details</div>
+      <div class="form-group">
+        <div class="field">
+          <label for="d-company">Company Name</label>
+          <input type="text" id="d-company" placeholder="Müller Weinhandel GmbH" required>
+        </div>
+        <div class="field">
+          <label for="d-website">Website</label>
+          <input type="url" id="d-website" placeholder="https://...">
+        </div>
+      </div>
+      <div class="form-group three">
+        <div class="field">
+          <label for="d-country">Country</label>
+          <div class="select-wrapper">
+            <select id="d-country" required>
+              <option value="" disabled selected>Select country</option>
+              <option>Germany</option>
+              <option>Austria</option>
+              <option>Switzerland</option>
+              <option>Netherlands</option>
+              <option>Belgium</option>
+              <option>Denmark</option>
+              <option>Sweden</option>
+              <option>Norway</option>
+              <option>UK</option>
+              <option>Other</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label for="d-region">Distribution Region(s)</label>
+          <input type="text" id="d-region" placeholder="e.g. Bavaria, Baden-Württemberg">
+        </div>
+        <div class="field">
+          <label for="d-restaurants">Restaurants in Your Network</label>
+          <div class="select-wrapper">
+            <select id="d-restaurants">
+              <option value="" disabled selected>Approx. number</option>
+              <option>Under 100</option>
+              <option>100 – 300</option>
+              <option>300 – 700</option>
+              <option>700 – 1,500</option>
+              <option>Over 1,500</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-divider">Portfolio & Needs</div>
+      <div class="form-group">
+        <div class="field">
+          <label for="d-portfolio">Current Portfolio Focus</label>
+          <input type="text" id="d-portfolio" placeholder="e.g. French wines, Italian reds, Organic wines">
+        </div>
+        <div class="field">
+          <label for="d-gap">Portfolio Gaps You Want to Fill</label>
+          <input type="text" id="d-gap" placeholder="e.g. Affordable Sauvignon Blanc, exclusive Chardonnay">
+        </div>
+      </div>
+
+      <div class="form-group full">
+        <div class="checkbox-group">
+          <span class="checkbox-label-title">Services You're Interested In</span>
+          <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:0.6rem 3rem;">
+            <label class="checkbox-item"><input type="checkbox"><span>Own-Label Monocépage Wines</span></label>
+            <label class="checkbox-item"><input type="checkbox"><span>Winery Matchmaking</span></label>
+            <label class="checkbox-item"><input type="checkbox"><span>Platform Membership & Market Data</span></label>
+            <label class="checkbox-item"><input type="checkbox"><span>Co-hosting a Bottle Lobby Wine Show</span></label>
+            <label class="checkbox-item"><input type="checkbox"><span>Trend Analytics & Consumer Insights</span></label>
+            <label class="checkbox-item"><input type="checkbox"><span>Printed Wine Guide for Clients</span></label>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group full">
+        <div class="field">
+          <label for="d-message">Anything Else We Should Know?</label>
+          <textarea id="d-message" placeholder="Tell us about your business, your clients, and what you're looking for in a partner..." rows="4"></textarea>
+        </div>
+      </div>
+
+      <div class="form-submit">
+        <p class="submit-note">We review all applications personally and respond within 5 business days. Your data is used only to process this application.</p>
+        <button type="submit" class="btn-submit">Submit Application</button>
+      </div>
+    </form>
+    <div class="success-message" id="success-distributor">
+      <div class="success-icon">✦</div>
+      <h3>Application received.</h3>
+      <p>Thank you for your interest in Bottle Lobby. We'll review your distribution profile and be in touch within 5 business days.</p>
+    </div>
+  </div>
+
+  <!-- ── RESTAURANT FORM ── -->
+  <div class="form-panel" id="panel-restaurant">
+    <div class="form-intro">
+      <h2>Restaurant & Retail Application</h2>
+      <p>Tell us about your establishment and what you need from your wine offering. We'll connect you with the right exclusive wines and distributors in your area.</p>
+    </div>
+    <form onsubmit="handleSubmit(event, 'restaurant')">
+
+      <div class="form-divider">Contact Information</div>
+      <div class="form-group">
+        <div class="field">
+          <label for="r-firstname">First Name</label>
+          <input type="text" id="r-firstname" placeholder="Sophie" required>
+        </div>
+        <div class="field">
+          <label for="r-lastname">Last Name</label>
+          <input type="text" id="r-lastname" placeholder="Laurent" required>
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="field">
+          <label for="r-email">Email Address</label>
+          <input type="email" id="r-email" placeholder="sophie@restaurant.com" required>
+        </div>
+        <div class="field">
+          <label for="r-phone">Phone Number</label>
+          <input type="tel" id="r-phone" placeholder="+49 ...">
+        </div>
+      </div>
+
+      <div class="form-divider">Establishment Details</div>
+      <div class="form-group">
+        <div class="field">
+          <label for="r-name">Restaurant / Shop Name</label>
+          <input type="text" id="r-name" placeholder="Bistro Laurent" required>
+        </div>
+        <div class="field">
+          <label for="r-type">Type of Establishment</label>
+          <div class="select-wrapper">
+            <select id="r-type">
+              <option value="" disabled selected>Select type</option>
+              <option>Fine Dining Restaurant</option>
+              <option>Casual Restaurant</option>
+              <option>Wine Bar</option>
+              <option>Boutique Wine Shop</option>
+              <option>Hotel / Resort</option>
+              <option>Restaurant Group / Franchise</option>
+              <option>Other</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="form-group three">
+        <div class="field">
+          <label for="r-city">City</label>
+          <input type="text" id="r-city" placeholder="Munich">
+        </div>
+        <div class="field">
+          <label for="r-country">Country</label>
+          <div class="select-wrapper">
+            <select id="r-country" required>
+              <option value="" disabled selected>Select</option>
+              <option>Germany</option>
+              <option>Austria</option>
+              <option>Switzerland</option>
+              <option>Netherlands</option>
+              <option>Belgium</option>
+              <option>France</option>
+              <option>UK</option>
+              <option>Other</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label for="r-covers">Covers / Seats</label>
+          <div class="select-wrapper">
+            <select id="r-covers">
+              <option value="" disabled selected>Select range</option>
+              <option>Under 30</option>
+              <option>30 – 60</option>
+              <option>60 – 120</option>
+              <option>120 – 250</option>
+              <option>Over 250</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-divider">Wine Sourcing</div>
+      <div class="form-group">
+        <div class="field">
+          <label for="r-distributor">Current Wine Distributor(s)</label>
+          <input type="text" id="r-distributor" placeholder="e.g. Hawesko, Eggers & Franke">
+        </div>
+        <div class="field">
+          <label for="r-bottles">Monthly Wine Bottle Volume</label>
+          <div class="select-wrapper">
+            <select id="r-bottles">
+              <option value="" disabled selected>Approx. volume</option>
+              <option>Under 50 bottles</option>
+              <option>50 – 150 bottles</option>
+              <option>150 – 400 bottles</option>
+              <option>400 – 1,000 bottles</option>
+              <option>Over 1,000 bottles</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group full">
+        <div class="checkbox-group">
+          <span class="checkbox-label-title">What Are You Looking For?</span>
+          <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:0.6rem 3rem;">
+            <label class="checkbox-item"><input type="checkbox"><span>Exclusive wines not listed by competitors</span></label>
+            <label class="checkbox-item"><input type="checkbox"><span>More variety within my current distributor</span></label>
+            <label class="checkbox-item"><input type="checkbox"><span>Stable, consistent supply & pricing</span></label>
+            <label class="checkbox-item"><input type="checkbox"><span>Single-varietal wines easy to recommend</span></label>
+            <label class="checkbox-item"><input type="checkbox"><span>Wine list consulting & food pairing support</span></label>
+            <label class="checkbox-item"><input type="checkbox"><span>Direct winery relationships & storytelling</span></label>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group full">
+        <div class="field">
+          <label for="r-message">Anything You'd Like to Add?</label>
+          <textarea id="r-message" placeholder="Tell us about your wine list, your cuisine style, and what's not working with your current sourcing..." rows="4"></textarea>
+        </div>
+      </div>
+
+      <div class="form-submit">
+        <p class="submit-note">We review all applications personally and respond within 5 business days. Your data is used only to process this application.</p>
+        <button type="submit" class="btn-submit">Submit Application</button>
+      </div>
+    </form>
+    <div class="success-message" id="success-restaurant">
+      <div class="success-icon">✦</div>
+      <h3>Application received.</h3>
+      <p>Thank you for reaching out to Bottle Lobby. We'll review your profile and get back to you within 5 business days.</p>
+    </div>
+  </div>
+
+</div><!-- /form-section -->
+
+<!-- FOOTER STRIP -->
+<div class="footer-strip">
+  <p>© 2026 Caracter Media GmbH</p>
+  <a href="mailto:info@caracterwines.de">info@caracterwines.de</a>
+  <a href="bottle-lobby.html">← Home</a>
+  <a href="bottle-lobby-why-join.html">Why Join</a>
+  <a href="bottle-lobby-about.html">About</a>
+  <a href="bottle-lobby-profile-demo.html">Public Profile</a>
+  <a href="bottle-lobby-investor.html">Investor Pitch →</a>
+  <a href="bottle-lobby-dashboard.html">Preview Dashboard →</a>
+  <a href="bottle-lobby-contact-us.html">Imprint</a>
+</div>
+
+<script>
+  function switchRole(role, btn) {
+    // Update buttons
+    document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    // Update panels
+    document.querySelectorAll('.form-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('panel-' + role).classList.add('active');
+    // Scroll to form
+    document.querySelector('.form-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function handleSubmit(event, role) {
+    event.preventDefault();
+    const panel = document.getElementById('panel-' + role);
+    panel.querySelector('form').style.display = 'none';
+    panel.querySelector('.form-intro').style.display = 'none';
+    panel.querySelector('.success-message').classList.add('visible');
+    window.scrollTo({ top: document.querySelector('.role-section').offsetTop - 100, behavior: 'smooth' });
+  }
+</script>
+<!-- FLOATING CTA -->
+<div class="floating-cta">
+  <a href="bottle-lobby-dashboard.html" class="btn btn-outline">Member Login</a>
+  <a href="bottle-lobby-contact.html" class="btn btn-gold">Join Now</a>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,1447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hawesko GmbH – Distributor Profile · Bottle Lobby</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --ink:   #0e0b0b;
+  --paper: #f7f3ee;
+  --wine:  #6b1a1a;
+  --gold:  #b8975a;
+  --smoke: #1a1212;
+  --dim:   rgba(247,243,238,0.45);
+  --line:  rgba(247,243,238,0.07);
+  --green: #2d6a4f;
+}
+html { scroll-behavior: smooth; }
+body { font-family: 'Inter', sans-serif; background: var(--ink); color: var(--paper); font-size: 14px; line-height: 1.6; overflow-x: hidden; }
+
+nav {
+  position: sticky; top: 0; z-index: 100;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 1rem 2.5rem;
+  background: rgba(14,11,11,0.97); border-bottom: 1px solid var(--line); backdrop-filter: blur(8px);
+}
+.nav-logo { font-family: 'Cormorant Garamond', serif; font-size: 1.1rem; font-weight: 300; letter-spacing: 0.18em; text-transform: uppercase; color: var(--paper); text-decoration: none; }
+.nav-logo span { color: var(--gold); }
+.nav-center { display: flex; align-items: center; gap: 0.4rem; background: rgba(247,243,238,0.04); border: 1px solid var(--line); border-radius: 3px; padding: 0.3rem; }
+.view-toggle { font-size: 0.65rem; letter-spacing: 0.12em; text-transform: uppercase; padding: 0.45rem 1.2rem; border-radius: 2px; cursor: pointer; border: none; font-family: 'Inter', sans-serif; font-weight: 500; transition: all 0.2s; color: var(--dim); background: transparent; }
+.view-toggle.active { background: var(--gold); color: var(--ink); }
+.nav-right { display: flex; gap: 0.6rem; align-items: center; }
+.btn-sm { font-size: 0.65rem; letter-spacing: 0.12em; text-transform: uppercase; padding: 0.5rem 1.1rem; border-radius: 2px; cursor: pointer; border: none; font-family: 'Inter', sans-serif; font-weight: 500; transition: opacity 0.2s; text-decoration: none; display: inline-block; }
+.btn-sm:hover { opacity: 0.8; }
+.btn-gold { background: var(--gold); color: var(--ink); }
+.btn-outline { background: transparent; border: 1px solid var(--line); color: var(--dim); }
+
+.view { display: none; }
+.view.active { display: block; }
+
+/* ── HERO ── */
+.profile-hero {
+  height: 300px;
+  background: linear-gradient(135deg, #0a1f4d 0%, #060f2a 40%, #0e0b0b 100%);
+  position: relative; overflow: hidden; display: flex; align-items: flex-end;
+}
+.profile-hero::before {
+  content: ''; position: absolute; inset: 0;
+  background-image: linear-gradient(135deg, rgba(30,60,120,0.12) 1px, transparent 1px), linear-gradient(45deg, rgba(184,151,90,0.06) 1px, transparent 1px);
+  background-size: 60px 60px, 100px 100px;
+}
+.hero-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(14,11,11,0.92) 0%, transparent 60%); }
+.hero-bg-text { position: absolute; font-family: 'Cormorant Garamond', serif; font-size: 16vw; font-weight: 300; color: rgba(30,60,120,0.07); white-space: nowrap; top: 50%; left: 50%; transform: translate(-50%,-50%); pointer-events: none; }
+.hero-content { position: relative; z-index: 2; padding: 2rem 3rem; display: flex; align-items: flex-end; gap: 2rem; width: 100%; }
+.hero-avatar { width: 80px; height: 80px; border-radius: 4px; background: #1a3a6b; border: 2px solid rgba(100,140,220,0.4); display: flex; align-items: center; justify-content: center; font-family: 'Cormorant Garamond', serif; font-size: 2rem; color: var(--paper); flex-shrink: 0; }
+.hero-info { flex: 1; }
+.hero-name { font-family: 'Cormorant Garamond', serif; font-size: 2.4rem; font-weight: 300; color: var(--paper); line-height: 1; margin-bottom: 0.4rem; }
+.hero-meta { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; }
+.hero-location { font-size: 0.78rem; color: var(--dim); }
+.badge { font-size: 0.58rem; letter-spacing: 0.12em; text-transform: uppercase; padding: 0.2rem 0.6rem; border-radius: 2px; font-weight: 500; }
+.badge-verified { background: rgba(45,106,79,0.2); color: #4caf7d; }
+.badge-gold { background: rgba(184,151,90,0.12); color: var(--gold); }
+.badge-blue { background: rgba(30,60,120,0.3); color: #7faaf0; }
+.hero-actions { display: flex; gap: 0.6rem; flex-shrink: 0; }
+
+/* ── LAYOUT ── */
+.profile-layout { max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: 2fr 1fr; gap: 2rem; padding: 2rem 2.5rem; }
+
+/* ── TABS ── */
+.tabs { display: flex; border-bottom: 1px solid var(--line); margin-bottom: 2rem; }
+.tab { font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase; padding: 0.8rem 1.5rem; cursor: pointer; color: var(--dim); border-bottom: 2px solid transparent; margin-bottom: -1px; background: none; border-top: none; border-left: none; border-right: none; font-family: 'Inter', sans-serif; transition: color 0.2s; }
+.tab:hover { color: var(--paper); }
+.tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* ── COMMON ── */
+.about-text { font-size: 0.88rem; color: var(--dim); line-height: 1.9; margin-bottom: 1.5rem; }
+.about-text p { margin-bottom: 1rem; }
+.facts-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 1px; background: var(--line); border: 1px solid var(--line); margin-bottom: 2rem; }
+.fact { background: var(--ink); padding: 1rem 1.2rem; }
+.fact-label { font-size: 0.6rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--dim); margin-bottom: 0.3rem; }
+.fact-value { font-size: 0.88rem; color: var(--paper); }
+
+/* ── WINES ── */
+.wines-list { display: flex; flex-direction: column; gap: 1px; background: var(--line); border: 1px solid var(--line); margin-bottom: 1rem; }
+.wine-row { background: var(--ink); padding: 1.2rem 1.6rem; display: grid; grid-template-columns: auto 1fr auto; gap: 1.1rem; align-items: center; cursor: pointer; transition: background 0.2s; }
+.wine-row:hover { background: #130909; }
+.wine-row-thumb { width: 30px; height: 88px; flex-shrink: 0; }
+.wine-row-thumb svg { width: 100%; height: 100%; display: block; }
+.wine-name { font-family: 'Cormorant Garamond', serif; font-size: 1.15rem; font-weight: 400; color: var(--paper); margin-bottom: 0.15rem; }
+.wine-origin { font-size: 0.7rem; color: var(--gold); letter-spacing: 0.08em; }
+.wine-desc { font-size: 0.75rem; color: var(--dim); margin-top: 0.4rem; line-height: 1.6; }
+.wine-tags { display: flex; gap: 0.4rem; margin-top: 0.5rem; }
+.wine-tag { font-size: 0.55rem; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.15rem 0.5rem; border-radius: 2px; }
+.tag-red { background: rgba(107,26,26,0.2); color: #e07070; }
+.tag-white { background: rgba(184,151,90,0.1); color: var(--gold); }
+.tag-excl { background: rgba(45,106,79,0.15); color: #4caf7d; }
+.tag-vol { background: rgba(184,151,90,0.08); color: var(--gold); }
+.wine-right { text-align: right; }
+.wine-vol { font-family: 'Cormorant Garamond', serif; font-size: 1.5rem; font-weight: 300; color: var(--paper); line-height: 1; }
+.wine-vol-label { font-size: 0.58rem; color: var(--dim); letter-spacing: 0.1em; text-transform: uppercase; }
+
+/* ── WINERY PARTNERS ── */
+.partners { display: flex; flex-direction: column; gap: 0.8rem; }
+.partner-card { background: #110d0d; border: 1px solid var(--line); padding: 1.2rem; display: flex; align-items: center; gap: 1rem; cursor: pointer; transition: background 0.2s; }
+.partner-card:hover { background: #160d0d; }
+.partner-avatar { width: 42px; height: 42px; border-radius: 3px; background: var(--wine); display: flex; align-items: center; justify-content: center; font-family: 'Cormorant Garamond', serif; font-size: 0.9rem; color: var(--paper); flex-shrink: 0; font-weight: 600; }
+.partner-info { flex: 1; }
+.partner-name { font-size: 0.84rem; color: var(--paper); font-weight: 500; }
+.partner-region { font-size: 0.68rem; color: var(--dim); }
+.partner-right { text-align: right; }
+.partner-stat { font-size: 0.82rem; color: var(--gold); font-weight: 500; }
+.partner-stat-label { font-size: 0.6rem; color: var(--dim); }
+
+/* ── BAR CHART ── */
+.bar-chart { display: flex; flex-direction: column; gap: 0.7rem; margin-bottom: 1.5rem; }
+.bar-row { display: flex; align-items: center; gap: 0.8rem; }
+.bar-label { font-size: 0.72rem; color: var(--dim); width: 110px; flex-shrink: 0; }
+.bar-track { flex: 1; height: 6px; background: rgba(247,243,238,0.06); border-radius: 3px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 3px; background: var(--gold); }
+.bar-val { font-size: 0.7rem; color: var(--dim); width: 40px; text-align: right; flex-shrink: 0; }
+
+/* ── REVIEWS ── */
+.reviews { display: flex; flex-direction: column; gap: 1.2rem; }
+.review { background: #110d0d; border: 1px solid var(--line); padding: 1.4rem; }
+.review-header { display: flex; justify-content: space-between; margin-bottom: 0.8rem; }
+.reviewer-name { font-size: 0.82rem; color: var(--paper); font-weight: 500; }
+.reviewer-role { font-size: 0.68rem; color: var(--dim); }
+.stars { color: var(--gold); font-size: 0.75rem; }
+.review-text { font-size: 0.8rem; color: var(--dim); line-height: 1.8; font-style: italic; }
+.review-tag { font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gold); margin-top: 0.5rem; }
+
+/* ── SIDEBAR ── */
+.sidebar { display: flex; flex-direction: column; gap: 1.5rem; }
+.widget { background: #110d0d; border: 1px solid var(--line); }
+.widget-header { padding: 0.9rem 1.2rem; border-bottom: 1px solid var(--line); font-size: 0.62rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--dim); }
+.widget-body { padding: 1.2rem; }
+.stat-row { display: flex; justify-content: space-between; align-items: center; padding: 0.6rem 0; border-bottom: 1px solid rgba(247,243,238,0.04); }
+.stat-row:last-child { border-bottom: none; }
+.stat-row-label { font-size: 0.75rem; color: var(--dim); }
+.stat-row-value { font-family: 'Cormorant Garamond', serif; font-size: 1.2rem; color: var(--paper); }
+.press-item { display: flex; flex-direction: column; gap: 0.25rem; padding: 0.8rem 0; border-bottom: 1px solid rgba(247,243,238,0.04); text-decoration: none; }
+.press-item:first-child { padding-top: 0; }
+.press-item:last-child { border-bottom: none; padding-bottom: 0; }
+.press-pub { font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gold); }
+.press-title { font-family: 'Cormorant Garamond', serif; font-weight: 500; font-size: 0.85rem; color: var(--paper); line-height: 1.35; transition: color 0.2s; }
+.press-item:hover .press-title { color: var(--gold); }
+.press-meta { font-size: 0.65rem; color: var(--dim); }
+.media-gallery { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.6rem; }
+.media-tile { aspect-ratio: 1; border-radius: 3px; position: relative; overflow: hidden; display: flex; align-items: flex-end; }
+.media-tile::before { content: ''; position: absolute; inset: 0; background-image: repeating-linear-gradient(45deg, rgba(247,243,238,0.025) 0px, rgba(247,243,238,0.025) 1px, transparent 1px, transparent 10px); }
+.media-tile-label { position: relative; z-index: 2; font-size: 0.58rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--paper); padding: 0.5rem; }
+.contact-item { display: flex; gap: 0.7rem; align-items: flex-start; padding: 0.5rem 0; border-bottom: 1px solid rgba(247,243,238,0.04); }
+.contact-item:last-child { border-bottom: none; }
+.contact-icon { color: var(--gold); font-size: 0.8rem; width: 16px; flex-shrink: 0; }
+.contact-text { font-size: 0.78rem; color: var(--dim); }
+.contact-text a { color: var(--gold); text-decoration: none; }
+.region-item { display: flex; align-items: center; gap: 0.7rem; padding: 0.5rem 0; border-bottom: 1px solid rgba(247,243,238,0.04); }
+.region-item:last-child { border-bottom: none; }
+.region-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--gold); flex-shrink: 0; }
+.region-name { font-size: 0.78rem; color: var(--dim); flex: 1; }
+.region-tag { font-size: 0.56rem; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.15rem 0.5rem; border-radius: 2px; }
+.completion-header { display: flex; justify-content: space-between; font-size: 0.68rem; color: var(--dim); margin-bottom: 0.5rem; }
+.completion-track { height: 4px; background: var(--line); border-radius: 2px; margin-bottom: 0.8rem; }
+.completion-fill { height: 100%; border-radius: 2px; background: var(--gold); }
+.completion-items { display: flex; flex-direction: column; gap: 0.4rem; }
+.c-item { font-size: 0.72rem; }
+.c-done { color: #4caf7d; }
+.c-miss { color: var(--dim); }
+
+/* ══════════════════════════════
+   EDIT VIEW
+══════════════════════════════ */
+.edit-layout { max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: 220px 1fr; gap: 0; min-height: calc(100vh - 57px); }
+.edit-nav { background: var(--smoke); border-right: 1px solid var(--line); padding: 1.5rem 0; position: sticky; top: 57px; height: calc(100vh - 57px); overflow-y: auto; }
+.enav-label { font-size: 0.58rem; letter-spacing: 0.2em; text-transform: uppercase; color: rgba(247,243,238,0.2); padding: 0 1.2rem; margin: 1rem 0 0.4rem; }
+.enav-item { display: flex; align-items: center; gap: 0.6rem; padding: 0.6rem 1.2rem; font-size: 0.78rem; color: var(--dim); cursor: pointer; border-left: 2px solid transparent; transition: all 0.15s; background: none; border-top: none; border-right: none; border-bottom: none; width: 100%; text-align: left; font-family: 'Inter', sans-serif; }
+.enav-item:hover { background: rgba(247,243,238,0.03); color: var(--paper); }
+.enav-item.active { background: rgba(184,151,90,0.07); color: var(--paper); border-left-color: var(--gold); }
+.enav-icon { font-size: 0.85rem; width: 16px; text-align: center; opacity: 0.7; }
+
+.edit-main { padding: 2rem 2.5rem; }
+.edit-sec { display: none; }
+.edit-sec.active { display: block; }
+.edit-title { font-family: 'Cormorant Garamond', serif; font-size: 1.6rem; font-weight: 300; color: var(--paper); margin-bottom: 0.3rem; }
+.edit-sub { font-size: 0.78rem; color: var(--dim); margin-bottom: 2rem; }
+
+.frow { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--line); border: 1px solid var(--line); margin-bottom: 1px; }
+.frow.full { grid-template-columns: 1fr; }
+.frow.three { grid-template-columns: 1fr 1fr 1fr; }
+.ffield { background: var(--ink); padding: 1.2rem 1.4rem; display: flex; flex-direction: column; gap: 0.4rem; transition: background 0.15s; }
+.ffield:focus-within { background: #160d0d; }
+.flabel { font-size: 0.58rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--gold); font-weight: 500; }
+.finput { background: transparent; border: none; outline: none; color: var(--paper); font-family: 'Inter', sans-serif; font-size: 0.88rem; font-weight: 300; width: 100%; }
+.finput::placeholder { color: rgba(247,243,238,0.18); }
+.ftextarea { background: transparent; border: none; outline: none; color: var(--paper); font-family: 'Inter', sans-serif; font-size: 0.88rem; font-weight: 300; width: 100%; resize: none; line-height: 1.7; }
+.ftextarea::placeholder { color: rgba(247,243,238,0.18); }
+.fselect { background: transparent; border: none; outline: none; color: var(--paper); font-family: 'Inter', sans-serif; font-size: 0.88rem; font-weight: 300; width: 100%; appearance: none; cursor: pointer; }
+.fselect option { background: #1a0f0f; }
+.fsel-wrap { position: relative; }
+.fsel-wrap::after { content: '↓'; position: absolute; right: 0; top: 0; color: var(--gold); font-size: 0.75rem; pointer-events: none; }
+
+.block-title { font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--dim); padding: 1.5rem 0 0.8rem; display: flex; align-items: center; gap: 1rem; }
+.block-title::after { content: ''; flex: 1; height: 1px; background: var(--line); }
+
+.upload-zone { background: rgba(247,243,238,0.02); border: 1px dashed rgba(247,243,238,0.12); padding: 2.5rem; text-align: center; cursor: pointer; transition: border-color 0.2s; margin-bottom: 1px; }
+.upload-zone:hover { border-color: rgba(184,151,90,0.4); }
+.upload-icon { font-size: 1.5rem; margin-bottom: 0.8rem; opacity: 0.3; }
+.upload-text { font-size: 0.78rem; color: var(--dim); }
+.upload-sub { font-size: 0.68rem; color: rgba(247,243,238,0.2); margin-top: 0.2rem; }
+
+.list-edit { display: flex; flex-direction: column; gap: 1px; background: var(--line); border: 1px solid var(--line); margin-bottom: 1rem; }
+.list-entry { background: var(--ink); padding: 1rem 1.4rem; display: flex; align-items: center; gap: 1rem; }
+.list-entry:hover { background: #130909; }
+.entry-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.entry-name { flex: 1; font-size: 0.85rem; color: var(--paper); }
+.entry-detail { font-size: 0.72rem; color: var(--dim); width: 130px; }
+.entry-tag { width: 90px; }
+.entry-actions { display: flex; gap: 0.4rem; }
+.icon-btn { background: transparent; border: 1px solid var(--line); color: var(--dim); padding: 0.3rem 0.6rem; border-radius: 2px; cursor: pointer; font-size: 0.7rem; transition: all 0.15s; font-family: 'Inter', sans-serif; }
+.icon-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+.add-btn { display: flex; align-items: center; gap: 0.6rem; font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold); background: rgba(184,151,90,0.07); border: 1px dashed rgba(184,151,90,0.3); padding: 0.8rem 1.4rem; cursor: pointer; border-radius: 2px; font-family: 'Inter', sans-serif; transition: background 0.2s; width: 100%; }
+.add-btn:hover { background: rgba(184,151,90,0.12); }
+
+.toggle-group { display: flex; flex-direction: column; gap: 0.8rem; }
+.toggle-item { display: flex; align-items: center; justify-content: space-between; padding: 0.9rem 1.2rem; background: var(--ink); border: 1px solid var(--line); }
+.toggle-label { font-size: 0.82rem; color: var(--paper); }
+.toggle-sub { font-size: 0.7rem; color: var(--dim); margin-top: 0.1rem; }
+.toggle { width: 36px; height: 20px; border-radius: 10px; background: rgba(247,243,238,0.1); position: relative; cursor: pointer; transition: background 0.2s; flex-shrink: 0; }
+.toggle.on { background: var(--gold); }
+.toggle::after { content: ''; position: absolute; width: 14px; height: 14px; border-radius: 50%; background: var(--paper); top: 3px; left: 3px; transition: left 0.2s; }
+.toggle.on::after { left: 19px; }
+
+.cb-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 0.5rem 2rem; padding: 1.2rem 1.4rem; background: var(--ink); border: 1px solid var(--line); margin-bottom: 1px; }
+.cb-item { display: flex; align-items: center; gap: 0.6rem; cursor: pointer; }
+.cb-item input[type="checkbox"] { width: 13px; height: 13px; appearance: none; border: 1px solid rgba(247,243,238,0.2); background: transparent; border-radius: 1px; cursor: pointer; flex-shrink: 0; position: relative; transition: all 0.15s; }
+.cb-item input:checked { background: var(--gold); border-color: var(--gold); }
+.cb-item input:checked::after { content: '✓'; position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); font-size: 0.5rem; color: var(--ink); font-weight: 700; }
+.cb-label { font-size: 0.78rem; color: rgba(247,243,238,0.55); }
+
+.preview-banner { background: rgba(184,151,90,0.08); border-bottom: 1px solid rgba(184,151,90,0.2); padding: 0.7rem 2.5rem; display: flex; align-items: center; justify-content: space-between; font-size: 0.72rem; color: var(--gold); }
+.edit-banner { background: rgba(107,26,26,0.1); border-bottom: 1px solid rgba(107,26,26,0.25); padding: 0.7rem 2.5rem; display: flex; align-items: center; justify-content: space-between; font-size: 0.72rem; color: #e07070; }
+
+.save-bar { position: sticky; bottom: 0; background: rgba(14,11,11,0.97); border-top: 1px solid var(--line); padding: 1rem 2.5rem; display: flex; align-items: center; justify-content: space-between; backdrop-filter: blur(8px); z-index: 50; }
+.save-info { font-size: 0.72rem; color: var(--dim); }
+.save-info strong { color: var(--gold); }
+.save-actions { display: flex; gap: 0.6rem; }
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(247,243,238,0.08); border-radius: 2px; }
+
+@media (max-width: 860px) {
+  .profile-layout, .edit-layout { grid-template-columns: 1fr; }
+  .facts-grid, .frow, .frow.three, .cb-grid { grid-template-columns: 1fr; }
+  .edit-nav { position: static; height: auto; }
+}
+
+/* ── PARTNERSHIP NETWORK ── */
+.pn-group-title { font-size:0.62rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--gold); margin:1.8rem 0 0.8rem; }
+.pn-group-title:first-child { margin-top:0; }
+.pn-card { background:#110d0d; border:1px solid var(--line); padding:1.2rem 1.4rem; display:flex; align-items:center; gap:1rem; margin-bottom:1px; }
+.pn-avatar { width:2.4rem; height:2.4rem; background:var(--wine); color:var(--paper); display:flex; align-items:center; justify-content:center; font-size:0.68rem; font-weight:600; flex-shrink:0; }
+.pn-info { flex:1; }
+.pn-name { font-size:0.9rem; color:var(--paper); margin-bottom:0.2rem; }
+.pn-meta { font-size:0.72rem; color:var(--dim); }
+.pn-right { display:flex; align-items:center; gap:0.7rem; }
+.pn-status { font-size:0.58rem; letter-spacing:0.1em; text-transform:uppercase; padding:0.25rem 0.65rem; border-radius:2px; }
+.st-active { background:rgba(76,175,125,0.15); color:#4caf7d; }
+.st-winery { background:rgba(184,151,90,0.14); color:var(--gold); }
+.st-contract { background:rgba(127,170,240,0.15); color:#7faaf0; }
+.st-declined { background:rgba(107,26,26,0.25); color:#d88; }
+.pn-link { background:transparent; border:1px solid var(--line); color:var(--dim); padding:0.35rem 0.75rem; border-radius:2px; cursor:pointer; font-size:0.68rem; font-family:'Inter',sans-serif; text-decoration:none; }
+.pn-link:hover { border-color:var(--gold); color:var(--gold); }
+.pn-empty { background:#110d0d; border:1px dashed var(--line); padding:2rem; text-align:center; color:var(--dim); font-size:0.82rem; }
+.stf-filter { display:flex; gap:0.5rem; margin-bottom:1.6rem; }
+.stf-pill { background:transparent; border:1px solid var(--line); color:var(--dim); font-family:'Inter',sans-serif; font-size:0.68rem; letter-spacing:0.05em; text-transform:uppercase; padding:0.5rem 1rem; cursor:pointer; transition:all 0.15s; }
+.stf-pill:hover { border-color:rgba(184,151,90,0.4); color:var(--paper); }
+.stf-pill.active { background:var(--gold); border-color:var(--gold); color:#0e0b0b; }
+.stf-type-tag { font-size:0.55rem; letter-spacing:0.08em; text-transform:uppercase; padding:0.2rem 0.55rem; border:1px solid rgba(247,243,238,0.2); color:var(--dim); }
+.stf-type-tag.tt-winery { border-color:rgba(107,26,26,0.5); color:#c96a6a; }
+.stf-type-tag.tt-restaurant { border-color:rgba(184,151,90,0.5); color:var(--gold); }
+.stf-type-tag.tt-retail { border-color:rgba(76,175,125,0.5); color:#4caf7d; }
+.pn-steps { display:flex; gap:0; margin-top:0.8rem; }
+.pn-step { flex:1; padding:0.5rem 0.6rem; font-size:0.6rem; letter-spacing:0.06em; text-transform:uppercase; text-align:center; border:1px solid var(--line); border-right:none; color:rgba(247,243,238,0.25); }
+.pn-step:last-child { border-right:1px solid var(--line); }
+.pn-step.done { background:rgba(76,175,125,0.1); color:#4caf7d; border-color:rgba(76,175,125,0.3); }
+.pn-step.current { background:rgba(184,151,90,0.12); color:var(--gold); border-color:rgba(184,151,90,0.35); }
+
+/* ── PARTNERSHIP REQUEST MODAL ── */
+.pr-overlay { display:none; position:fixed; inset:0; z-index:400; background:rgba(0,0,0,0.78); backdrop-filter:blur(3px); align-items:center; justify-content:center; padding:2rem; }
+.pr-overlay.active { display:flex; }
+.pr-panel { background:#141010; border:1px solid rgba(184,151,90,0.25); max-width:600px; width:100%; max-height:86vh; overflow-y:auto; border-radius:3px; }
+.pr-head { padding:1.7rem 2rem 1.2rem; border-bottom:1px solid rgba(247,243,238,0.07); display:flex; justify-content:space-between; align-items:flex-start; gap:1rem; }
+.pr-title { font-family:'Cormorant Garamond',serif; font-size:1.5rem; font-weight:300; color:#f7f3ee; }
+.pr-title span { color:#b8975a; font-style:italic; }
+.pr-close { background:none; border:none; color:rgba(247,243,238,0.45); font-size:1rem; cursor:pointer; padding:0.2rem; line-height:1; }
+.pr-close:hover { color:#f7f3ee; }
+.pr-body { padding:1.7rem 2rem; }
+.pr-lead { font-size:0.85rem; color:rgba(247,243,238,0.7); line-height:1.85; margin-bottom:1.4rem; }
+.pr-clause { background:#0e0b0b; border:1px solid rgba(247,243,238,0.07); padding:1.3rem 1.5rem; margin-bottom:1.4rem; }
+.pr-clause-title { font-size:0.62rem; letter-spacing:0.13em; text-transform:uppercase; color:#b8975a; margin-bottom:0.9rem; }
+.pr-clause p { font-size:0.79rem; color:rgba(247,243,238,0.62); line-height:1.9; margin-bottom:0.8rem; }
+.pr-clause p:last-child { margin-bottom:0; }
+.pr-agree { display:flex; align-items:flex-start; gap:0.75rem; padding:1rem 1.2rem; background:rgba(184,151,90,0.06); border:1px solid rgba(184,151,90,0.2); cursor:pointer; margin-bottom:1.5rem; }
+.pr-agree input { margin-top:0.15rem; accent-color:#b8975a; width:15px; height:15px; cursor:pointer; flex-shrink:0; }
+.pr-agree-text { font-size:0.8rem; color:rgba(247,243,238,0.8); line-height:1.7; }
+.pr-foot { display:flex; justify-content:flex-end; gap:0.7rem; }
+.pr-btn { font-size:0.68rem; letter-spacing:0.12em; text-transform:uppercase; padding:0.65rem 1.5rem; border-radius:2px; cursor:pointer; font-family:'Inter',sans-serif; font-weight:500; border:1px solid transparent; }
+.pr-cancel { background:transparent; border-color:rgba(247,243,238,0.18); color:rgba(247,243,238,0.5); }
+.pr-cancel:hover { border-color:#f7f3ee; color:#f7f3ee; }
+.pr-confirm { background:#b8975a; color:#0e0b0b; }
+.pr-confirm:disabled { opacity:0.35; cursor:not-allowed; }
+.pr-confirm:not(:disabled):hover { opacity:0.85; }
+.pr-done { text-align:center; padding:1rem 0; }
+.pr-done-icon { font-size:2rem; margin-bottom:0.9rem; }
+.pr-done-title { font-family:'Cormorant Garamond',serif; font-size:1.35rem; color:#f7f3ee; margin-bottom:0.7rem; }
+.pr-done-text { font-size:0.83rem; color:rgba(247,243,238,0.6); line-height:1.85; max-width:420px; margin:0 auto; }
+.aw-search { width:100%; box-sizing:border-box; background:#0e0b0b; border:1px solid rgba(247,243,238,0.12); color:#f7f3ee; font-family:'Inter',sans-serif; font-size:0.85rem; padding:0.75rem 1rem; margin-bottom:1.2rem; outline:none; }
+.aw-search:focus { border-color:#b8975a; }
+.aw-search::placeholder { color:rgba(247,243,238,0.3); }
+.aw-pick-list { max-height:360px; overflow-y:auto; display:flex; flex-direction:column; gap:0.3rem; }
+.aw-pick-group { font-size:0.62rem; letter-spacing:0.12em; text-transform:uppercase; color:#b8975a; padding:0.8rem 0 0.4rem; }
+.aw-pick-group:first-child { padding-top:0; }
+.aw-pick-item { display:flex; align-items:center; gap:1rem; padding:0.8rem 1rem; background:#0e0b0b; border:1px solid rgba(247,243,238,0.07); cursor:pointer; transition:border-color 0.15s; }
+.aw-pick-item:hover { border-color:rgba(184,151,90,0.4); }
+.aw-pick-name { font-size:0.85rem; color:#f7f3ee; }
+.aw-pick-meta { font-size:0.72rem; color:rgba(247,243,238,0.45); margin-top:0.25rem; }
+.aw-pick-tag { margin-left:auto; font-size:0.6rem; letter-spacing:0.05em; text-transform:uppercase; padding:0.3rem 0.65rem; border:1px solid rgba(184,151,90,0.35); color:#b8975a; flex-shrink:0; text-align:right; }
+.aw-pick-item.taken { opacity:0.4; cursor:not-allowed; }
+.aw-pick-item.taken:hover { border-color:rgba(247,243,238,0.07); }
+.aw-pick-item.taken .aw-pick-tag { border-color:rgba(247,243,238,0.15); color:rgba(247,243,238,0.4); }
+.aw-empty { text-align:center; padding:2.4rem 1rem; font-size:0.82rem; color:rgba(247,243,238,0.45); line-height:1.85; }
+.aw-selected { background:#0e0b0b; border:1px solid rgba(184,151,90,0.25); padding:1rem 1.3rem; margin-bottom:1.4rem; font-size:0.92rem; color:#f7f3ee; font-family:'Cormorant Garamond',serif; }
+.aw-selected span { display:block; font-size:0.72rem; color:rgba(247,243,238,0.45); margin-top:0.3rem; font-family:'Inter',sans-serif; }
+
+/* ── INCOMING PARTNERSHIP REQUESTS ── */
+.ir-card { background:var(--ink); border:1px solid var(--line); padding:1.3rem 1.5rem; margin-bottom:1px; }
+.ir-top { display:flex; align-items:center; gap:1rem; margin-bottom:0.9rem; }
+.ir-avatar { width:2.4rem; height:2.4rem; background:var(--wine); display:flex; align-items:center; justify-content:center; font-size:0.68rem; font-weight:600; color:var(--paper); flex-shrink:0; }
+.ir-name { font-size:0.92rem; color:var(--paper); }
+.ir-meta { font-size:0.72rem; color:var(--dim); }
+.ir-tag { font-size:0.58rem; letter-spacing:0.1em; text-transform:uppercase; padding:0.22rem 0.6rem; border-radius:2px; margin-left:auto; background:rgba(107,26,26,0.3); color:#e0a0a0; }
+.ir-msg { font-size:0.81rem; color:rgba(247,243,238,0.65); line-height:1.85; font-style:italic; padding:0.9rem 1.1rem; background:#110d0d; border-left:2px solid rgba(184,151,90,0.3); margin-bottom:1rem; }
+.ir-actions { display:flex; gap:0.5rem; }
+.btn-accept { background:rgba(76,175,125,0.12); border:1px solid rgba(76,175,125,0.4); color:#4caf7d; padding:0.4rem 0.9rem; border-radius:2px; cursor:pointer; font-size:0.68rem; letter-spacing:0.08em; text-transform:uppercase; font-family:'Inter',sans-serif; }
+.btn-accept:hover { background:rgba(76,175,125,0.2); }
+.btn-decl { background:transparent; border:1px solid var(--line); color:var(--dim); padding:0.4rem 0.9rem; border-radius:2px; cursor:pointer; font-size:0.68rem; letter-spacing:0.08em; text-transform:uppercase; font-family:'Inter',sans-serif; }
+.btn-decl:hover { border-color:var(--wine); color:#d88; }
+.ir-empty { background:#110d0d; border:1px dashed var(--line); padding:2rem; text-align:center; color:var(--dim); font-size:0.82rem; }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="bottle-lobby.html" class="nav-logo">Bottle<span>&nbsp;Lobby</span></a>
+  <div class="nav-center">
+    <button class="view-toggle active" onclick="switchView('public',this)">👁 Public Profile</button>
+    <button class="view-toggle" onclick="switchView('edit',this)">✏️ Edit Profile</button>
+  </div>
+  <div class="nav-right">
+    <a href="bottle-lobby-dashboard.html#distributor" class="btn-sm btn-outline">← Dashboard</a>
+  </div>
+</nav>
+
+<!-- ══════════════════════════════
+     PUBLIC VIEW
+══════════════════════════════ -->
+<div class="view active" id="view-public">
+
+  <div class="preview-banner">
+    <span>✦ This is how wineries and restaurants see your distributor profile</span>
+    <button class="btn-sm btn-gold" onclick="switchView('edit',document.querySelectorAll('.view-toggle')[1])" style="font-size:0.6rem;padding:0.35rem 0.9rem">Edit Profile →</button>
+  </div>
+
+  <!-- Hero -->
+  <div class="profile-hero">
+    <div class="hero-bg-text">HAMBURG</div>
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+      <div class="hero-avatar">HW</div>
+      <div class="hero-info">
+        <div class="hero-name">Hawesko GmbH</div>
+        <div class="hero-meta">
+          <span class="hero-location">📍 Hamburg, Germany · Est. 1964</span>
+          <span class="badge badge-verified">✓ Verified</span>
+          <span class="badge badge-gold">Own-Label Partner</span>
+          <span class="badge badge-blue">✦ Wine Show Host</span>
+        </div>
+      </div>
+      <div class="hero-actions">
+        <button class="btn-sm btn-outline">✉ Send Inquiry</button>
+        <button class="btn-sm btn-gold" onclick="openPartnershipModal()">Request Partnership</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Layout -->
+  <div class="profile-layout">
+    <div>
+      <!-- Tabs -->
+      <div class="tabs">
+        <button class="tab active" onclick="switchTab('about',this)">About</button>
+        <button class="tab" onclick="switchTab('wines',this)">Wines (5)</button>
+        <button class="tab" onclick="switchTab('wineries',this)">Winery Partners (12)</button>
+        <button class="tab" onclick="switchTab('reviews',this)">Reviews (4)</button>
+        <button class="tab" onclick="switchTab('shows',this)">Wine Shows</button>
+      </div>
+
+      <!-- ABOUT -->
+      <div class="tab-panel active" id="tab-about">
+        <div class="about-text">
+          <p>Hawesko GmbH is one of Germany's most respected independent wine distributors, operating from Hamburg and serving over 850 restaurants, hotels, and specialty retailers across northern Germany and Scandinavia since 1964. With deep roots in the Hamburg gastronomy scene, Hawesko has built a reputation for discovering exceptional, under-the-radar producers before they become mainstream.</p>
+          <p>As a founding Bottle Lobby Distributor Partner, Hawesko co-develops exclusive own-label mono-cépage wines with selected wineries — offering their restaurant clients stable pricing, exclusivity, and consistent supply. Their curated B2B Wine Shows, hosted twice yearly in Hamburg, have become a benchmark event for the northern German wine trade.</p>
+          <p>Hawesko is actively seeking new winery partnerships for Sauvignon Blanc (Loire), Riesling (Mosel), and premium Primitivo (Sicily) to expand their own-label portfolio heading into 2027.</p>
+        </div>
+        <div class="facts-grid">
+          <div class="fact"><div class="fact-label">Founded</div><div class="fact-value">1964</div></div>
+          <div class="fact"><div class="fact-label">Headquarters</div><div class="fact-value">Hamburg, Germany</div></div>
+          <div class="fact"><div class="fact-label">Distribution Regions</div><div class="fact-value">Hamburg, Schleswig-Holstein, Scandinavia</div></div>
+          <div class="fact"><div class="fact-label">Restaurant Network</div><div class="fact-value">850+ clients</div></div>
+          <div class="fact"><div class="fact-label">Own-Label SKUs</div><div class="fact-value">3 active</div></div>
+          <div class="fact"><div class="fact-label">Annual Volume</div><div class="fact-value">~180,000 bottles/month</div></div>
+          <div class="fact"><div class="fact-label">Portfolio Focus</div><div class="fact-value">French, Italian, Spanish mono-cépages</div></div>
+          <div class="fact"><div class="fact-label">Member Since</div><div class="fact-value">March 2026</div></div>
+        </div>
+        <div class="block-title" style="padding-top:0">Currently Seeking</div>
+        <div style="display:flex;flex-direction:column;gap:0.6rem;margin-bottom:2rem">
+          <div style="background:#110d0d;border:1px solid var(--line);padding:1rem 1.2rem;display:flex;align-items:center;gap:1rem">
+            <span style="color:var(--gold);font-size:0.9rem">✦</span>
+            <div><div style="font-size:0.84rem;color:var(--paper)">Sauvignon Blanc from Loire (Sancerre / Pouilly-Fumé)</div><div style="font-size:0.7rem;color:var(--dim)">Own-label potential · Min. 50,000 btl/year</div></div>
+            <span class="badge badge-gold" style="margin-left:auto">Priority</span>
+          </div>
+          <div style="background:#110d0d;border:1px solid var(--line);padding:1rem 1.2rem;display:flex;align-items:center;gap:1rem">
+            <span style="color:var(--gold);font-size:0.9rem">✦</span>
+            <div><div style="font-size:0.84rem;color:var(--paper)">Riesling from Mosel or Rheingau</div><div style="font-size:0.7rem;color:var(--dim)">Own-label potential · Min. 30,000 btl/year</div></div>
+            <span class="badge badge-gold" style="margin-left:auto">Priority</span>
+          </div>
+          <div style="background:#110d0d;border:1px solid var(--line);padding:1rem 1.2rem;display:flex;align-items:center;gap:1rem">
+            <span style="color:rgba(247,243,238,0.3);font-size:0.9rem">◇</span>
+            <div><div style="font-size:0.84rem;color:var(--paper)">Primitivo from Sicily (premium tier)</div><div style="font-size:0.7rem;color:var(--dim)">Standard listing · Min. 20,000 btl/year</div></div>
+            <span class="badge" style="margin-left:auto;background:rgba(247,243,238,0.05);color:var(--dim)">Open</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- WINES -->
+      <div class="tab-panel" id="tab-wines">
+        <div style="font-size:0.75rem;color:var(--dim);margin-bottom:1.2rem">Pulled from each winery's own Wine Portfolio and kept automatically in sync — when a winery updates a wine, it updates here too.</div>
+        <div class="wines-list">
+          <div class="wine-row" style="cursor:pointer" onclick="window.location='bottle-lobby-wine-sauvignon-blanc-sancerre.html'">
+            <div class="wine-row-thumb">
+              <svg viewBox="0 0 120 340" xmlns="http://www.w3.org/2000/svg">
+                <rect x="50" y="0" width="20" height="38" rx="3" fill="#2a1010"/>
+                <path d="M46 38 L74 38 L82 78 L82 110 Q82 118 74 118 L46 118 Q38 118 38 110 L38 78 Z" fill="#6a6a2a"/>
+                <path d="M30 118 Q38 108 46 118 L74 118 Q82 108 90 118 L92 320 Q92 332 80 332 L40 332 Q28 332 28 320 Z" fill="#6a6a2a"/>
+                <rect x="34" y="170" width="52" height="72" rx="2" fill="#f7f3ee" opacity="0.95"/>
+              </svg>
+            </div>
+            <div>
+              <div class="wine-name">Sauvignon Blanc — Sancerre</div>
+              <div class="wine-origin">🇫🇷 Loire Valley · Henri Dubois Domaine · 2023 Vintage</div>
+              <div class="wine-desc">Crisp, mineral and aromatic. Classic Sancerre character with gooseberry, citrus zest and flint. Exclusively available through Hawesko in northern Germany and Scandinavia.</div>
+              <div class="wine-tags"><span class="wine-tag tag-white">White</span><span class="wine-tag tag-excl">✓ Exclusive</span><span class="wine-tag tag-vol">4,200 btl/mo</span></div>
+            </div>
+            <div class="wine-right"><div class="wine-vol">4.2<span style="font-size:1rem;color:var(--gold)">k</span></div><div class="wine-vol-label">Btl / Month</div></div>
+          </div>
+          <div class="wine-row" style="cursor:pointer" onclick="window.location='bottle-lobby-wine-chardonnay-chablis-premier-cru.html'">
+            <div class="wine-row-thumb">
+              <svg viewBox="0 0 120 340" xmlns="http://www.w3.org/2000/svg">
+                <rect x="50" y="0" width="20" height="38" rx="3" fill="#2a1010"/>
+                <path d="M46 38 L74 38 L82 78 L82 110 Q82 118 74 118 L46 118 Q38 118 38 110 L38 78 Z" fill="#5a5a1a"/>
+                <path d="M30 118 Q38 108 46 118 L74 118 Q82 108 90 118 L92 320 Q92 332 80 332 L40 332 Q28 332 28 320 Z" fill="#5a5a1a"/>
+                <rect x="34" y="170" width="52" height="72" rx="2" fill="#f7f3ee" opacity="0.95"/>
+              </svg>
+            </div>
+            <div>
+              <div class="wine-name">Chardonnay — Chablis Premier Cru</div>
+              <div class="wine-origin">🇫🇷 Chablis, Burgundy · Domaine Lefèvre · 2022 Vintage</div>
+              <div class="wine-desc">Elegant and precise. Green apple, white flowers and characteristic Chablis minerality. Protected label — not available to competing distributors in the region.</div>
+              <div class="wine-tags"><span class="wine-tag tag-white">White</span><span class="wine-tag tag-excl">✓ Exclusive</span><span class="wine-tag tag-vol">3,800 btl/mo</span></div>
+            </div>
+            <div class="wine-right"><div class="wine-vol">3.8<span style="font-size:1rem;color:var(--gold)">k</span></div><div class="wine-vol-label">Btl / Month</div></div>
+          </div>
+          <div class="wine-row" style="cursor:pointer" onclick="window.location='bottle-lobby-wine-primitivo-sicilia-igt.html'">
+            <div class="wine-row-thumb">
+              <svg viewBox="0 0 120 340" xmlns="http://www.w3.org/2000/svg">
+                <rect x="50" y="0" width="20" height="38" rx="3" fill="#2a1010"/>
+                <path d="M46 38 L74 38 L82 78 L82 110 Q82 118 74 118 L46 118 Q38 118 38 110 L38 78 Z" fill="#5a1515"/>
+                <path d="M30 118 Q38 108 46 118 L74 118 Q82 108 90 118 L92 320 Q92 332 80 332 L40 332 Q28 332 28 320 Z" fill="#5a1515"/>
+                <rect x="34" y="170" width="52" height="72" rx="2" fill="#f7f3ee" opacity="0.95"/>
+              </svg>
+            </div>
+            <div>
+              <div class="wine-name">Primitivo — Sicilia IGT</div>
+              <div class="wine-origin">🇮🇹 Alcamo DOC, Sicily · Cantina Rossi · 2022 Vintage</div>
+              <div class="wine-desc">Rich, velvety and authentic. Deep blackberry and spice from 40-year-old bush vines. A restaurant staple — easy to recommend, impossible to undercut.</div>
+              <div class="wine-tags"><span class="wine-tag tag-red">Red</span><span class="wine-tag tag-excl">✓ Exclusive</span><span class="wine-tag tag-vol">2,900 btl/mo</span></div>
+            </div>
+            <div class="wine-right"><div class="wine-vol">2.9<span style="font-size:1rem;color:var(--gold)">k</span></div><div class="wine-vol-label">Btl / Month</div></div>
+          </div>
+          <div class="wine-row" style="cursor:pointer" onclick="window.location='bottle-lobby-wine-tempranillo-rioja-crianza.html'">
+            <div class="wine-row-thumb">
+              <svg viewBox="0 0 120 340" xmlns="http://www.w3.org/2000/svg">
+                <rect x="50" y="0" width="20" height="38" rx="3" fill="#2a1010"/>
+                <path d="M46 38 L74 38 L82 78 L82 110 Q82 118 74 118 L46 118 Q38 118 38 110 L38 78 Z" fill="#4a1010"/>
+                <path d="M30 118 Q38 108 46 118 L74 118 Q82 108 90 118 L92 320 Q92 332 80 332 L40 332 Q28 332 28 320 Z" fill="#4a1010"/>
+                <rect x="34" y="170" width="52" height="72" rx="2" fill="#f7f3ee" opacity="0.95"/>
+              </svg>
+            </div>
+            <div>
+              <div class="wine-name">Tempranillo — Rioja Crianza</div>
+              <div class="wine-origin">🇪🇸 Rioja Alta · Bodegas Ruiz · 2021 Vintage</div>
+              <div class="wine-desc">Structured and food-friendly. Red cherry, tobacco and vanilla from 12 months in American oak. Standard distribution — not own-label.</div>
+              <div class="wine-tags"><span class="wine-tag tag-red">Red</span><span class="wine-tag tag-vol">2,100 btl/mo</span></div>
+            </div>
+            <div class="wine-right"><div class="wine-vol">2.1<span style="font-size:1rem;color:var(--gold)">k</span></div><div class="wine-vol-label">Btl / Month</div></div>
+          </div>
+          <div class="wine-row" style="cursor:pointer" onclick="window.location='bottle-lobby-wine-riesling-spatlese-mosel.html'">
+            <div class="wine-row-thumb">
+              <svg viewBox="0 0 120 340" xmlns="http://www.w3.org/2000/svg">
+                <rect x="50" y="0" width="20" height="38" rx="3" fill="#2a1010"/>
+                <path d="M46 38 L74 38 L82 78 L82 110 Q82 118 74 118 L46 118 Q38 118 38 110 L38 78 Z" fill="#3a4a2a"/>
+                <path d="M30 118 Q38 108 46 118 L74 118 Q82 108 90 118 L92 320 Q92 332 80 332 L40 332 Q28 332 28 320 Z" fill="#3a4a2a"/>
+                <rect x="34" y="170" width="52" height="72" rx="2" fill="#f7f3ee" opacity="0.95"/>
+              </svg>
+            </div>
+            <div>
+              <div class="wine-name">Riesling Spätlese — Mosel</div>
+              <div class="wine-origin">🇩🇪 Mosel · Weingut Schmitt · 2023 Vintage</div>
+              <div class="wine-desc">Delicate and aromatic. Peach, apricot and slate minerality. Off-dry with razor-sharp acidity. Standard distribution — not own-label.</div>
+              <div class="wine-tags"><span class="wine-tag tag-white">White</span><span class="wine-tag tag-vol">1,400 btl/mo</span></div>
+            </div>
+            <div class="wine-right"><div class="wine-vol">1.4<span style="font-size:1rem;color:var(--gold)">k</span></div><div class="wine-vol-label">Btl / Month</div></div>
+          </div>
+        </div>
+        <div style="margin-top:0.5rem;display:flex;gap:0.6rem">
+          <button class="btn-sm btn-outline">✉ Inquire About Own-Label Partnership</button>
+          <button class="btn-sm btn-gold">Request Full Portfolio</button>
+        </div>
+      </div>
+
+      <!-- WINERY PARTNERS -->
+      <div class="tab-panel" id="tab-wineries">
+        <div class="block-title" style="padding-top:0">Active Winery Partners (5)</div>
+        <div class="partners">
+          <div class="partner-card" onclick="window.location='bottle-lobby-winery-cantina-rossi.html'">
+            <div class="partner-avatar" style="background:var(--wine)">CR</div>
+            <div class="partner-info"><div class="partner-name">Cantina Rossi</div><div class="partner-region">Alcamo DOC, Sicily · Primitivo, Nero d'Avola</div></div>
+            <div class="partner-right"><div class="partner-stat">2,900 btl/mo</div><div class="partner-stat-label">Own-Label</div></div>
+            <span class="badge badge-gold" style="font-size:0.55rem">Own-Label</span>
+          </div>
+          <div class="partner-card">
+            <div class="partner-avatar" style="background:#1a2a4d">HD</div>
+            <div class="partner-info"><div class="partner-name">Henri Dubois Domaine</div><div class="partner-region">Sancerre, Loire · Sauvignon Blanc</div></div>
+            <div class="partner-right"><div class="partner-stat">4,200 btl/mo</div><div class="partner-stat-label">Own-Label</div></div>
+            <span class="badge badge-gold" style="font-size:0.55rem">Own-Label</span>
+          </div>
+          <div class="partner-card">
+            <div class="partner-avatar" style="background:#2a1a4d">DL</div>
+            <div class="partner-info"><div class="partner-name">Domaine Lefèvre</div><div class="partner-region">Chablis, Burgundy · Chardonnay</div></div>
+            <div class="partner-right"><div class="partner-stat">3,800 btl/mo</div><div class="partner-stat-label">Own-Label</div></div>
+            <span class="badge badge-gold" style="font-size:0.55rem">Own-Label</span>
+          </div>
+          <div class="partner-card">
+            <div class="partner-avatar" style="background:#4d1a1a">BR</div>
+            <div class="partner-info"><div class="partner-name">Bodegas Ruiz</div><div class="partner-region">Rioja Alta, Spain · Tempranillo</div></div>
+            <div class="partner-right"><div class="partner-stat">2,100 btl/mo</div><div class="partner-stat-label">Active Partner</div></div>
+            <span class="badge badge-verified" style="font-size:0.55rem">Active</span>
+          </div>
+          <div class="partner-card">
+            <div class="partner-avatar" style="background:#1a3a2a">WS</div>
+            <div class="partner-info"><div class="partner-name">Weingut Schmitt</div><div class="partner-region">Mosel, Germany · Riesling</div></div>
+            <div class="partner-right"><div class="partner-stat">1,400 btl/mo</div><div class="partner-stat-label">New Partner</div></div>
+            <span class="badge badge-verified" style="font-size:0.55rem">Active</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- REVIEWS -->
+      <div class="tab-panel" id="tab-reviews">
+        <div class="reviews">
+          <div class="review">
+            <div class="review-header">
+              <div><div class="reviewer-name">Marco Rossi</div><div class="reviewer-role">Owner · Cantina Rossi, Sicily</div></div>
+              <div class="stars">★★★★★</div>
+            </div>
+            <div class="review-text">"Working with Hawesko through Bottle Lobby has been transformational for us. Within three months of listing our Primitivo as their own-label, we had consistent monthly orders and three restaurant clients reaching out directly for tasting appointments. This is exactly what we needed."</div>
+            <div class="review-tag">Re: Own-Label Partnership · Primitivo Sicilia</div>
+          </div>
+          <div class="review">
+            <div class="review-header">
+              <div><div class="reviewer-name">Sophie Laurent</div><div class="reviewer-role">Head Sommelier · Bistro Laurent, Frankfurt</div></div>
+              <div class="stars">★★★★★</div>
+            </div>
+            <div class="review-text">"Hawesko's own-label Sancerre is the best thing that's happened to our wine list in years. We have exclusivity — no competitor can undercut us. The story sells itself, the wine is excellent, and the reorder process through the Bottle Lobby platform is seamless."</div>
+            <div class="review-tag">Re: Sauvignon Blanc Sancerre Own-Label</div>
+          </div>
+          <div class="review">
+            <div class="review-header">
+              <div><div class="reviewer-name">Pierre Dubois</div><div class="reviewer-role">Export Manager · Henri Dubois Domaine, Sancerre</div></div>
+              <div class="stars">★★★★☆</div>
+            </div>
+            <div class="review-text">"Hawesko is a serious partner — they understand the wine, they communicate clearly, and they move volume. The Wine Show format introduced our Sauvignon Blanc to 40+ new buyers in one evening. We wouldn't have reached them any other way."</div>
+            <div class="review-tag">Re: Bottle Lobby Wine Show Hamburg · April 2026</div>
+          </div>
+          <div class="review">
+            <div class="review-header">
+              <div><div class="reviewer-name">Andreas Koch</div><div class="reviewer-role">Owner · Restaurant Nord, Hamburg</div></div>
+              <div class="stars">★★★★★</div>
+            </div>
+            <div class="review-text">"We've worked with Hawesko for 8 years. The addition of exclusive own-label wines through Bottle Lobby has elevated our list — we're no longer serving the same Chardonnay as the restaurant next door. That matters to our guests."</div>
+            <div class="review-tag">Re: Own-Label Chardonnay Chablis</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SHOWS -->
+      <div class="tab-panel" id="tab-shows">
+        <div style="display:flex;flex-direction:column;gap:1rem">
+          <div style="background:#110d0d;border:1px solid var(--line);padding:1.4rem">
+            <div style="font-size:0.62rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--gold);margin-bottom:0.4rem">Oct 3, 2026 · Hamburg</div>
+            <div style="font-family:'Cormorant Garamond',serif;font-size:1.2rem;color:var(--paper);margin-bottom:0.3rem">French Whites Showcase — Hawesko × Bottle Lobby</div>
+            <div style="font-size:0.78rem;color:var(--dim);margin-bottom:0.8rem">52 clients invited · 2 wineries presenting · Tasting dinner at Restaurant Nord</div>
+            <span class="badge" style="background:rgba(184,151,90,0.12);color:var(--gold)">Planning</span>
+          </div>
+          <div style="background:#110d0d;border:1px solid var(--line);padding:1.4rem;opacity:0.65">
+            <div style="font-size:0.62rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--dim);margin-bottom:0.4rem">April 2026 · Hamburg · Past Event</div>
+            <div style="font-family:'Cormorant Garamond',serif;font-size:1.2rem;color:var(--paper);margin-bottom:0.3rem">Italian & Spanish Reds — Hawesko × Bottle Lobby</div>
+            <div style="font-size:0.78rem;color:var(--dim)">44 attendees · 5 new winery inquiries · 8 restaurant listings confirmed</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="widget">
+        <div class="widget-header">Distributor Stats</div>
+        <div class="widget-body">
+          <div class="stat-row"><span class="stat-row-label">Profile Views (30d)</span><span class="stat-row-value">980</span></div>
+          <div class="stat-row"><span class="stat-row-label">Winery Inquiries</span><span class="stat-row-value">14</span></div>
+          <div class="stat-row"><span class="stat-row-label">Active Winery Partners</span><span class="stat-row-value">5</span></div>
+          <div class="stat-row"><span class="stat-row-label">Own-Label SKUs</span><span class="stat-row-value">3</span></div>
+          <div class="stat-row"><span class="stat-row-label">Restaurant Clients</span><span class="stat-row-value">850+</span></div>
+          <div class="stat-row"><span class="stat-row-label">Monthly Volume</span><span class="stat-row-value">~180k btl</span></div>
+        </div>
+      </div>
+
+      <div class="widget">
+        <div class="widget-header">Own-Label Wines</div>
+        <div class="widget-body">
+          <a class="press-item" href="bottle-lobby-wine-sauvignon-blanc-sancerre.html">
+            <span class="press-pub">Henri Dubois Domaine</span>
+            <span class="press-title">Sauvignon Blanc — Sancerre</span>
+            <span class="press-meta">4,200 btl/mo · Exclusive</span>
+          </a>
+          <a class="press-item" href="bottle-lobby-wine-chardonnay-chablis-premier-cru.html">
+            <span class="press-pub">Domaine Lefèvre</span>
+            <span class="press-title">Chardonnay — Chablis Premier Cru</span>
+            <span class="press-meta">3,800 btl/mo · Exclusive</span>
+          </a>
+          <a class="press-item" href="bottle-lobby-wine-primitivo-sicilia-igt.html">
+            <span class="press-pub">Cantina Rossi</span>
+            <span class="press-title">Primitivo — Sicilia IGT</span>
+            <span class="press-meta">2,900 btl/mo · Exclusive</span>
+          </a>
+          <a class="press-item" href="bottle-lobby-wine-tempranillo-rioja-crianza.html">
+            <span class="press-pub">Bodegas Ruiz</span>
+            <span class="press-title">Tempranillo — Rioja Crianza</span>
+            <span class="press-meta">2,100 btl/mo · Exclusive</span>
+          </a>
+          <a class="press-item" href="bottle-lobby-wine-riesling-spatlese-mosel.html">
+            <span class="press-pub">Weingut Schmitt</span>
+            <span class="press-title">Riesling Spätlese — Mosel</span>
+            <span class="press-meta">1,400 btl/mo · Pending</span>
+          </a>
+        </div>
+      </div>
+
+      <div class="widget">
+        <div class="widget-header">Media Gallery</div>
+        <div class="widget-body">
+          <div class="media-gallery">
+            <div class="media-tile" style="background:linear-gradient(135deg, rgba(184,151,90,0.22), rgba(14,11,11,0.95))"><span class="media-tile-label">Warehouse</span></div>
+            <div class="media-tile" style="background:linear-gradient(200deg, rgba(30,60,120,0.28), rgba(14,11,11,0.95))"><span class="media-tile-label">Tasting Room</span></div>
+            <div class="media-tile" style="background:linear-gradient(160deg, rgba(184,151,90,0.16), rgba(14,11,11,0.95))"><span class="media-tile-label">Office</span></div>
+            <div class="media-tile" style="background:linear-gradient(220deg, rgba(30,60,120,0.18), rgba(14,11,11,0.95))"><span class="media-tile-label">Team</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="widget">
+        <div class="widget-header">Profile Completion</div>
+        <div class="widget-body">
+          <div class="completion-header"><span>85% Complete</span><span style="color:var(--gold)">+Edit</span></div>
+          <div class="completion-track"><div class="completion-fill" style="width:85%"></div></div>
+          <div class="completion-items">
+            <div class="c-item c-done">✓ Basic information</div>
+            <div class="c-item c-done">✓ Own-label wines (5)</div>
+            <div class="c-item c-done">✓ Winery partners listed</div>
+            <div class="c-item c-done">✓ Distribution regions</div>
+            <div class="c-item c-done">✓ Wine Shows listed</div>
+            <div class="c-item c-miss">○ Cover photo / banner</div>
+            <div class="c-item c-miss">○ Video presentation</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="widget">
+        <div class="widget-header">Contact</div>
+        <div class="widget-body">
+          <div class="contact-item"><span class="contact-icon">✉</span><span class="contact-text"><a href="#">partnership@hawesko.de</a></span></div>
+          <div class="contact-item"><span class="contact-icon">☎</span><span class="contact-text">+49 40 XXX XXXX</span></div>
+          <div class="contact-item"><span class="contact-icon">🌐</span><span class="contact-text"><a href="#">www.hawesko.de</a></span></div>
+          <div class="contact-item"><span class="contact-icon">📍</span><span class="contact-text">Normannenweg 34, 20537 Hamburg</span></div>
+        </div>
+      </div>
+
+      <div class="widget">
+        <div class="widget-header">Distribution Regions</div>
+        <div class="widget-body">
+          <div class="region-item"><div class="region-dot"></div><span class="region-name">Hamburg</span><span class="region-tag badge-verified">Core</span></div>
+          <div class="region-item"><div class="region-dot"></div><span class="region-name">Schleswig-Holstein</span><span class="region-tag badge-verified">Core</span></div>
+          <div class="region-item"><div class="region-dot"></div><span class="region-name">Denmark / Scandinavia</span><span class="region-tag badge-gold">Active</span></div>
+          <div class="region-item"><div class="region-dot" style="background:var(--dim)"></div><span class="region-name">Berlin / Brandenburg</span><span class="region-tag" style="background:rgba(247,243,238,0.05);color:var(--dim)">Expanding</span></div>
+        </div>
+      </div>
+
+      <div class="widget">
+        <div class="widget-header">Volume by Wine</div>
+        <div class="widget-body">
+          <div class="bar-chart">
+            <div class="bar-row"><span class="bar-label">Sauv. Blanc</span><div class="bar-track"><div class="bar-fill" style="width:100%"></div></div><span class="bar-val">4.2k</span></div>
+            <div class="bar-row"><span class="bar-label">Chardonnay</span><div class="bar-track"><div class="bar-fill" style="width:90%"></div></div><span class="bar-val">3.8k</span></div>
+            <div class="bar-row"><span class="bar-label">Primitivo</span><div class="bar-track"><div class="bar-fill" style="width:69%"></div></div><span class="bar-val">2.9k</span></div>
+            <div class="bar-row"><span class="bar-label">Tempranillo</span><div class="bar-track"><div class="bar-fill" style="width:50%"></div></div><span class="bar-val">2.1k</span></div>
+            <div class="bar-row"><span class="bar-label">Riesling</span><div class="bar-track"><div class="bar-fill" style="width:33%;opacity:0.5"></div></div><span class="bar-val">1.4k</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     EDIT VIEW
+══════════════════════════════ -->
+<div class="view" id="view-edit">
+  <div class="edit-banner">
+    <span>✏️ You are editing your distributor profile — changes are not published until you save</span>
+    <button class="btn-sm btn-outline" onclick="switchView('public',document.querySelectorAll('.view-toggle')[0])" style="font-size:0.6rem;padding:0.35rem 0.9rem;color:var(--dim)">Preview →</button>
+  </div>
+  <div class="edit-layout">
+
+    <div class="edit-nav">
+      <div class="enav-label">Profile</div>
+      <button class="enav-item active" onclick="switchSec('basics',this)"><span class="enav-icon">◎</span> Basic Info</button>
+      <button class="enav-item" onclick="switchSec('media',this)"><span class="enav-icon">◈</span> Photos & Media</button>
+      <button class="enav-item" onclick="switchSec('about',this)"><span class="enav-icon">◇</span> About & Story</button>
+      <div class="enav-label">Portfolio</div>
+      <button class="enav-item" onclick="switchSec('wines',this)"><span class="enav-icon">✦</span> Wines</button>
+      <button class="enav-item" onclick="switchSec('seeking',this)"><span class="enav-icon">⬡</span> Seeking Wineries</button>
+      <button class="enav-item" onclick="switchSec('ownlabel',this)"><span class="enav-icon">❖</span> Own-Label Wines</button>
+      <div class="enav-label">Network</div>
+      <button class="enav-item" onclick="switchSec('partners',this)"><span class="enav-icon">✦</span> Active Partnerships</button>
+      <button class="enav-item" onclick="switchSec('requests',this)"><span class="enav-icon">⧗</span> Outgoing Requests</button>
+      <button class="enav-item" onclick="switchSec('incoming',this)"><span class="enav-icon">✉</span> Incoming Requests</button>
+      <button class="enav-item" onclick="switchSec('regions',this)"><span class="enav-icon">◐</span> Distribution Regions</button>
+      <button class="enav-item" onclick="switchSec('shows',this)"><span class="enav-icon">◁</span> Wine Shows</button>
+      <div class="enav-label">Settings</div>
+      <button class="enav-item" onclick="switchSec('visibility',this)"><span class="enav-icon">⬤</span> Visibility</button>
+      <button class="enav-item" onclick="switchSec('contact',this)"><span class="enav-icon">✉</span> Contact Info</button>
+    </div>
+
+    <div class="edit-main">
+
+      <!-- BASICS -->
+      <div class="edit-sec active" id="edit-basics">
+        <div class="edit-title">Basic Information</div>
+        <div class="edit-sub">This appears at the top of your public profile and in winery search results.</div>
+        <div class="frow"><div class="ffield"><div class="flabel">Company Name</div><input class="finput" type="text" value="Hawesko GmbH"></div><div class="ffield"><div class="flabel">Year Founded</div><input class="finput" type="number" value="1964"></div></div>
+        <div class="frow three">
+          <div class="ffield"><div class="flabel">Country</div><div class="fsel-wrap"><select class="fselect"><option selected>Germany</option><option>Austria</option><option>Switzerland</option><option>Netherlands</option></select></div></div>
+          <div class="ffield"><div class="flabel">City</div><input class="finput" type="text" value="Hamburg"></div>
+          <div class="ffield"><div class="flabel">Type</div><div class="fsel-wrap"><select class="fselect"><option selected>Regional Distributor</option><option>National Distributor</option><option>Importer & Distributor</option><option>Wholesaler</option></select></div></div>
+        </div>
+        <div class="frow"><div class="ffield"><div class="flabel">Website</div><input class="finput" type="url" value="https://hawesko.de"></div><div class="ffield"><div class="flabel">Restaurant Network Size</div><div class="fsel-wrap"><select class="fselect"><option>Under 100</option><option>100–300</option><option>300–700</option><option selected>700–1,500</option><option>Over 1,500</option></select></div></div></div>
+        <div class="block-title">Portfolio Focus</div>
+        <div class="cb-grid">
+          <label class="cb-item"><input type="checkbox" checked><span class="cb-label">French Wines</span></label>
+          <label class="cb-item"><input type="checkbox" checked><span class="cb-label">Italian Wines</span></label>
+          <label class="cb-item"><input type="checkbox" checked><span class="cb-label">Spanish Wines</span></label>
+          <label class="cb-item"><input type="checkbox"><span class="cb-label">German Wines</span></label>
+          <label class="cb-item"><input type="checkbox"><span class="cb-label">Portuguese Wines</span></label>
+          <label class="cb-item"><input type="checkbox" checked><span class="cb-label">Organic / Natural</span></label>
+          <label class="cb-item"><input type="checkbox" checked><span class="cb-label">Mono-cépage Focus</span></label>
+          <label class="cb-item"><input type="checkbox"><span class="cb-label">Premium / Fine Wine</span></label>
+          <label class="cb-item"><input type="checkbox"><span class="cb-label">New World Wines</span></label>
+        </div>
+      </div>
+
+      <!-- MEDIA -->
+      <div class="edit-sec" id="edit-media">
+        <div class="edit-title">Photos & Media</div>
+        <div class="edit-sub">Add a logo, banner, and gallery photos to strengthen your profile visibility.</div>
+        <div class="block-title" style="padding-top:0">Company Logo</div>
+        <div class="upload-zone"><div class="upload-icon">🏢</div><div class="upload-text">Upload your company logo</div><div class="upload-sub">PNG or SVG · Max 2MB</div></div>
+        <div class="block-title">Cover Banner</div>
+        <div class="upload-zone" style="height:130px;display:flex;flex-direction:column;justify-content:center"><div class="upload-icon">🌆</div><div class="upload-text">Upload a warehouse, event, or city photo for your banner</div><div class="upload-sub">JPG/PNG · Min 1400×400px · ⚠ Missing</div></div>
+      </div>
+
+      <!-- ABOUT -->
+      <div class="edit-sec" id="edit-about">
+        <div class="edit-title">About & Story</div>
+        <div class="edit-sub">Tell wineries and restaurants who you are and what makes you a great partner.</div>
+        <div class="frow full"><div class="ffield"><div class="flabel">Company Description</div><textarea class="ftextarea" rows="6">Hawesko GmbH is one of Germany's most respected independent wine distributors, operating from Hamburg and serving over 850 restaurants, hotels, and specialty retailers across northern Germany and Scandinavia since 1964.</textarea></div></div>
+        <div class="frow full"><div class="ffield"><div class="flabel">Partnership Philosophy</div><textarea class="ftextarea" rows="3" placeholder="What makes you a great partner for wineries? What do you value in a winery relationship?"></textarea></div></div>
+        <div class="frow"><div class="ffield"><div class="flabel">Key Contact Name</div><input class="finput" type="text" value="Klaus Müller"></div><div class="ffield"><div class="flabel">Role</div><input class="finput" type="text" value="Head of Purchasing & Partnerships"></div></div>
+      </div>
+
+      <!-- WINES -->
+      <div class="edit-sec" id="edit-wines">
+        <div class="edit-title">Wine Portfolio</div>
+        <div class="edit-sub">Wines pulled from your partner wineries' own Wine Portfolios. When a winery updates a wine's photo, text, or details, it updates here automatically. Mark a wine as Own-Label once you've licensed it exclusively.</div>
+        <div class="list-edit" id="wine-portfolio-container"></div>
+        <button class="add-btn" onclick="openPullWineModal()">+ Pull Wine from a Winery Partner</button>
+      </div>
+
+      <!-- SEEKING -->
+      <div class="edit-sec" id="edit-seeking">
+        <div class="edit-title">Seeking Wineries</div>
+        <div class="edit-sub">Tell us what wine varieties and origins you're looking for. This helps Bottle Lobby match you with the right wineries.</div>
+        <div class="block-title" style="padding-top:0">Varieties & Origins Sought</div>
+        <div class="list-edit">
+          <div class="list-entry"><div class="entry-dot" style="background:var(--gold)"></div><div class="entry-name">Sauvignon Blanc – Loire (Sancerre / Pouilly-Fumé)</div><div class="entry-detail">50,000+ btl/yr</div><div class="entry-tag"><span class="badge badge-gold" style="font-size:0.55rem">Priority</span></div><div class="entry-actions"><button class="icon-btn">Edit</button></div></div>
+          <div class="list-entry"><div class="entry-dot" style="background:var(--gold)"></div><div class="entry-name">Riesling – Mosel or Rheingau</div><div class="entry-detail">30,000+ btl/yr</div><div class="entry-tag"><span class="badge badge-gold" style="font-size:0.55rem">Priority</span></div><div class="entry-actions"><button class="icon-btn">Edit</button></div></div>
+          <div class="list-entry"><div class="entry-dot" style="background:var(--dim)"></div><div class="entry-name">Primitivo – Sicily (premium tier)</div><div class="entry-detail">20,000+ btl/yr</div><div class="entry-tag"><span class="badge" style="font-size:0.55rem;background:rgba(247,243,238,0.05);color:var(--dim)">Open</span></div><div class="entry-actions"><button class="icon-btn">Edit</button></div></div>
+        </div>
+        <button class="add-btn">+ Add Variety Sought</button>
+      </div>
+
+      <!-- OWN-LABEL WINES -->
+      <div class="edit-sec" id="edit-ownlabel">
+        <div class="edit-title">Own-Label Wines</div>
+        <div class="edit-sub">The wines from your Wine Portfolio that you've co-developed and exclusively licensed with a winery — purchased in volume, labeled for Hawesko, and unavailable to competing distributors.</div>
+        <div class="list-edit">
+          <div class="list-entry"><div class="entry-dot" style="background:var(--gold)"></div><div class="entry-name">Sauvignon Blanc – Sancerre 2023</div><div class="entry-detail">Henri Dubois Domaine · 4,200 btl/mo</div><div class="entry-tag"><span class="badge badge-gold" style="font-size:0.55rem">Exclusive</span></div><div class="entry-actions"><button class="icon-btn">Edit</button><button class="icon-btn">⋮</button></div></div>
+          <div class="list-entry"><div class="entry-dot" style="background:var(--gold)"></div><div class="entry-name">Chardonnay – Chablis 2022</div><div class="entry-detail">Domaine Lefèvre · 3,800 btl/mo</div><div class="entry-tag"><span class="badge badge-gold" style="font-size:0.55rem">Exclusive</span></div><div class="entry-actions"><button class="icon-btn">Edit</button><button class="icon-btn">⋮</button></div></div>
+          <div class="list-entry"><div class="entry-dot" style="background:var(--wine)"></div><div class="entry-name">Primitivo – Sicilia IGT 2022</div><div class="entry-detail">Cantina Rossi · 2,900 btl/mo</div><div class="entry-tag"><span class="badge badge-gold" style="font-size:0.55rem">Exclusive</span></div><div class="entry-actions"><button class="icon-btn">Edit</button><button class="icon-btn">⋮</button></div></div>
+        </div>
+        <button class="add-btn">+ Mark a Wine as Own-Label</button>
+      </div>
+
+      <!-- REGIONS -->
+      <div class="edit-sec" id="edit-regions">
+        <div class="edit-title">Distribution Regions</div>
+        <div class="edit-sub">Define your active distribution territory. Wineries will be matched based on your regions.</div>
+        <div class="block-title" style="padding-top:0">Active Regions</div>
+        <div class="cb-grid" style="grid-template-columns:repeat(2,1fr)">
+          <label class="cb-item"><input type="checkbox" checked><span class="cb-label">Hamburg</span></label>
+          <label class="cb-item"><input type="checkbox" checked><span class="cb-label">Schleswig-Holstein</span></label>
+          <label class="cb-item"><input type="checkbox" checked><span class="cb-label">Denmark</span></label>
+          <label class="cb-item"><input type="checkbox" checked><span class="cb-label">Sweden / Norway</span></label>
+          <label class="cb-item"><input type="checkbox"><span class="cb-label">Berlin / Brandenburg</span></label>
+          <label class="cb-item"><input type="checkbox"><span class="cb-label">Bavaria</span></label>
+          <label class="cb-item"><input type="checkbox"><span class="cb-label">NRW</span></label>
+          <label class="cb-item"><input type="checkbox"><span class="cb-label">Netherlands</span></label>
+        </div>
+        <div class="frow three" style="margin-top:1px">
+          <div class="ffield"><div class="flabel">Min. Order (bottles)</div><input class="finput" type="number" value="300"></div>
+          <div class="ffield"><div class="flabel">Lead Time Needed (weeks)</div><input class="finput" type="number" value="4"></div>
+          <div class="ffield"><div class="flabel">Price Range Preferred</div><input class="finput" type="text" value="€3 – €12 ex-cellar"></div>
+        </div>
+      </div>
+
+      <!-- VISIBILITY -->
+      
+      <!-- ACTIVE PARTNERSHIPS -->
+      <div class="edit-sec" id="edit-partners">
+        <div class="edit-title">Active Partnerships</div>
+        <div class="edit-sub">Wineries, restaurants and retailers you have a confirmed, Bottle&nbsp;Lobby-approved partnership with — accepted by both sides, both contracts signed and returned, and confirmed by Bottle&nbsp;Lobby. Only active partners' full profiles and direct contact are open to you, and only active winery partners' wines can appear in your portfolio.</div>
+        <div class="stf-filter" id="stf-partners">
+          <button class="stf-pill active" onclick="setFilter('partners','all',this)">All</button>
+          <button class="stf-pill" onclick="setFilter('partners','winery',this)">Wineries</button>
+          <button class="stf-pill" onclick="setFilter('partners','restaurant',this)">Restaurants</button>
+          <button class="stf-pill" onclick="setFilter('partners','retail',this)">Retailers</button>
+        </div>
+        <div id="pn-active-list"></div>
+      </div>
+
+      <!-- OUTGOING REQUESTS -->
+      <div class="edit-sec" id="edit-requests">
+        <div class="edit-title">Outgoing Requests</div>
+        <div class="edit-sub">Partnership requests you have sent — to wineries whose wines you want in your portfolio, or to restaurants and retailers you want to supply — and where each one stands. Every partnership needs two signed contracts before Bottle&nbsp;Lobby confirms it.</div>
+        <div class="stf-filter" id="stf-requests">
+          <button class="stf-pill active" onclick="setFilter('requests','all',this)">All</button>
+          <button class="stf-pill" onclick="setFilter('requests','winery',this)">Wineries</button>
+          <button class="stf-pill" onclick="setFilter('requests','restaurant',this)">Restaurants</button>
+          <button class="stf-pill" onclick="setFilter('requests','retail',this)">Retailers</button>
+        </div>
+        <div id="pn-request-list"></div>
+        <div style="margin-top:2rem;padding:1.3rem 1.5rem;background:rgba(184,151,90,0.06);border:1px solid rgba(184,151,90,0.2);border-radius:2px">
+          <div style="font-size:0.75rem;color:var(--gold);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:0.6rem">How a partnership is formed</div>
+          <div style="font-size:0.8rem;color:var(--dim);line-height:1.9">
+            1. You send a request from a winery's, restaurant's or retailer's public profile and accept the exclusivity terms.<br>
+            2. They review your request and accept the same terms on their side.<br>
+            3. Bottle&nbsp;Lobby sends <strong style="color:var(--paper)">two contracts</strong> — one to you, one to them. Both must be signed and returned.<br>
+            4. Once both signed contracts are with us, Bottle&nbsp;Lobby confirms the partnership and they move to <strong style="color:var(--paper)">Active Partnerships</strong> — full profile and direct contact become available to you.
+          </div>
+        </div>
+      </div>
+
+      
+      <!-- INCOMING PARTNERSHIP REQUESTS -->
+      <div class="edit-sec" id="edit-incoming">
+        <div class="edit-title">Incoming Requests</div>
+        <div class="edit-sub">Wineries, restaurants and retailers who have asked to partner with you. Accepting commits both sides to Bottle&nbsp;Lobby's exclusivity terms — we then send both contracts, and confirm the partnership once they are signed and returned.</div>
+        <div class="stf-filter" id="stf-incoming">
+          <button class="stf-pill active" onclick="setFilter('incoming','all',this)">All</button>
+          <button class="stf-pill" onclick="setFilter('incoming','winery',this)">Wineries</button>
+          <button class="stf-pill" onclick="setFilter('incoming','restaurant',this)">Restaurants</button>
+          <button class="stf-pill" onclick="setFilter('incoming','retail',this)">Retailers</button>
+        </div>
+        <div id="ir-list"></div>
+      </div>
+
+      <div class="edit-sec" id="edit-visibility">
+        <div class="edit-title">Visibility & Privacy</div>
+        <div class="edit-sub">Control who can see your profile and how you appear in winery searches.</div>
+        <div class="toggle-group">
+          <div class="toggle-item"><div><div class="toggle-label">Public Profile</div><div class="toggle-sub">Visible to all wineries and restaurants on Bottle Lobby</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+          <div class="toggle-item"><div><div class="toggle-label">Show Restaurant Network Size</div><div class="toggle-sub">Display approximate number of restaurant clients on your profile</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+          <div class="toggle-item"><div><div class="toggle-label">Show Own-Label Portfolio</div><div class="toggle-sub">Display your exclusive wines publicly to attract winery partners</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+          <div class="toggle-item"><div><div class="toggle-label">Allow Direct Winery Inquiries</div><div class="toggle-sub">Wineries can contact you directly through Bottle Lobby</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+          <div class="toggle-item"><div><div class="toggle-label">Show Volume Statistics</div><div class="toggle-sub">Display monthly bottle volumes on your profile</div></div><div class="toggle" onclick="this.classList.toggle('on')"></div></div>
+        </div>
+      </div>
+
+      <!-- CONTACT -->
+      <div class="edit-sec" id="edit-contact">
+        <div class="edit-title">Contact Information</div>
+        <div class="edit-sub">Shown to verified Bottle Lobby members on your public profile.</div>
+        <div class="frow"><div class="ffield"><div class="flabel">Partnership Email</div><input class="finput" type="email" value="partnership@hawesko.de"></div><div class="ffield"><div class="flabel">Phone</div><input class="finput" type="tel" value="+49 40 XXX XXXX"></div></div>
+        <div class="frow full"><div class="ffield"><div class="flabel">Address</div><input class="finput" type="text" value="Normannenweg 34, 20537 Hamburg, Germany"></div></div>
+        <div class="frow"><div class="ffield"><div class="flabel">LinkedIn</div><input class="finput" type="url" placeholder="https://linkedin.com/company/..."></div><div class="ffield"><div class="flabel">Website</div><input class="finput" type="url" value="https://hawesko.de"></div></div>
+      </div>
+
+      <!-- SHOWS -->
+      <div class="edit-sec" id="edit-shows">
+        <div class="edit-title">Wine Shows</div>
+        <div class="edit-sub">Manage your upcoming and past Bottle Lobby Wine Shows.</div>
+        <div class="list-edit">
+          <div class="list-entry"><div class="entry-dot" style="background:var(--gold)"></div><div class="entry-name">French Whites Showcase</div><div class="entry-detail">Oct 3 · Hamburg</div><div class="entry-tag"><span class="badge badge-gold" style="font-size:0.55rem">Planning</span></div><div class="entry-actions"><button class="icon-btn">Edit</button></div></div>
+          <div class="list-entry" style="opacity:0.5"><div class="entry-dot" style="background:var(--dim)"></div><div class="entry-name">Italian & Spanish Reds</div><div class="entry-detail">April 2026 · Past</div><div class="entry-tag"><span class="badge badge-verified" style="font-size:0.55rem">Done</span></div><div class="entry-actions"><button class="icon-btn">View</button></div></div>
+        </div>
+        <button class="add-btn">+ Plan New Wine Show</button>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="save-bar">
+    <div class="save-info">Last saved: <strong>Today at 15:10</strong> · Unsaved changes in: Basic Info</div>
+    <div class="save-actions">
+      <button class="btn-sm btn-outline" onclick="switchView('public',document.querySelectorAll('.view-toggle')[0])">Preview Profile</button>
+      <button class="btn-sm btn-gold" onclick="alert('✦ Profile saved successfully!')">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function switchView(view, btn) {
+  document.querySelectorAll('.view-toggle').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-' + view).classList.add('active');
+  window.scrollTo(0, 0);
+}
+function switchTab(tab, btn) {
+  document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+}
+function switchSec(sec, btn) {
+  document.querySelectorAll('.enav-item').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.edit-sec').forEach(s => s.classList.remove('active'));
+  document.getElementById('edit-' + sec).classList.add('active');
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   PARTNERSHIP NETWORK
+   ──────────────────────────────────────────────────────────────────
+   A winery, restaurant or retailer must request a partnership from
+   your public profile and accept the exclusivity terms (or you can
+   request one from theirs). The other side then accepts on their
+   side, signs the Bottle Lobby contract, and Bottle Lobby confirms
+   it. Only then does a request move from "Outgoing/Incoming
+   Requests" to "Active Partnerships" — and only then is their full
+   profile and direct contact available here, and — for wineries
+   only — their wines available for your portfolio.
+   Every entry carries a `type`: 'winery' | 'restaurant' | 'retail'.
+══════════════════════════════════════════════════════════════════ */
+const partnerRequests = [];
+
+const activePartners = [
+  { winery:'Cantina Rossi', type:'winery', avatar:'CR', region:'Sicily, Italy',
+    url:'bottle-lobby-winery-cantina-rossi.html', since:'March 2026', meta:'6 wines in your portfolio' },
+  { winery:'Domaine Lefèvre', type:'winery', avatar:'DL', region:'Burgundy, France',
+    url:'bottle-lobby-winery-domaine-lefevre.html', since:'April 2026', meta:'1 wine in your portfolio' },
+  { winery:'Henri Dubois Domaine', type:'winery', avatar:'HD', region:'Loire Valley, France',
+    url:'bottle-lobby-winery-henri-dubois-domaine.html', since:'February 2026', meta:'1 wine in your portfolio' },
+  { winery:'Bodegas Ruiz', type:'winery', avatar:'BR', region:'Rioja Alta, Spain',
+    url:'bottle-lobby-winery-bodegas-ruiz.html', since:'June 2026', meta:'1 wine in your portfolio' },
+  { winery:'Weingut Schmitt', type:'winery', avatar:'WS', region:'Mosel, Germany',
+    url:'bottle-lobby-winery-weingut-schmitt.html', since:'July 2026', meta:'1 wine in your portfolio' },
+  { winery:'Bistro Laurent', type:'restaurant', avatar:'BL', region:'Frankfurt, Germany',
+    url:'bottle-lobby-restaurant-profile.html', since:'March 2026', meta:'Sources through your portfolio' },
+  { winery:'Weinhaus Müller', type:'retail', avatar:'WM', region:'Munich, Germany',
+    url:'bottle-lobby-retail-profile.html', since:'April 2026', meta:'Sources through your portfolio' }
+];
+
+/* ══════════════════════════════════════════════════════════════════
+   PULL WINE FROM A WINERY PARTNER — picker over existing partner-
+   winery wines. Distributors never create wine data (see Wine
+   Portfolio note above). partnerWinesPool = every wine belonging to
+   a winery in activePartners — in the real build this is a live
+   query joined through the partnership relation, not a hand-
+   maintained list. currentWinePortfolio = this distributor's picks,
+   each one a join-table row (own-label flag / volume) referencing
+   the winery's wine, never a copy of it.
+══════════════════════════════════════════════════════════════════ */
+const partnerWinesPool = [
+  { winery:'Cantina Rossi', name:'Catarratto Biologico', vintage:2023, type:'White', note:'Organic', origin:'Sicilia DOC, Sicily' },
+  { winery:'Cantina Rossi', name:'Grillo Sicilia DOC', vintage:2023, type:'White', note:'Own-Label Available', origin:'Sicilia DOC, Sicily' },
+  { winery:'Cantina Rossi', name:"Nero d'Avola Sicilia DOC", vintage:2022, type:'Red', note:'Own-Label Available', origin:'Sicilia DOC, Sicily' },
+  { winery:'Cantina Rossi', name:'Primitivo Riserva', vintage:2020, type:'Red', note:'Riserva · Premium Tier', origin:'Alcamo DOC, Sicily' },
+  { winery:'Cantina Rossi', name:'Primitivo Sicilia IGT', vintage:2022, type:'Red', note:'Exclusive', origin:'Alcamo DOC, Sicily' },
+  { winery:'Cantina Rossi', name:'Rosato di Sicilia', vintage:2023, type:'Rosé', note:'Own-Label Available', origin:'Sicilia DOC, Sicily' },
+  { winery:'Domaine Lefèvre', name:'Chardonnay — Chablis Premier Cru', vintage:2022, type:'White', note:'Exclusive', origin:'Chablis, Burgundy' },
+  { winery:'Henri Dubois Domaine', name:'Sauvignon Blanc — Sancerre', vintage:2023, type:'White', note:'Exclusive', origin:'Loire Valley, France' },
+  { winery:'Bodegas Ruiz', name:'Tempranillo — Rioja Crianza', vintage:2021, type:'Red', note:'Standard', origin:'Rioja Alta, Spain' },
+  { winery:'Weingut Schmitt', name:'Riesling Spätlese — Mosel', vintage:2023, type:'White', note:'Standard', origin:'Mosel, Germany' }
+];
+
+let currentWinePortfolio = [
+  { winery:'Henri Dubois Domaine', name:'Sauvignon Blanc — Sancerre', vintage:2023, ownLabel:true },
+  { winery:'Domaine Lefèvre', name:'Chardonnay — Chablis Premier Cru', vintage:2022, ownLabel:true },
+  { winery:'Cantina Rossi', name:'Primitivo Sicilia IGT', vintage:2022, ownLabel:true },
+  { winery:'Bodegas Ruiz', name:'Tempranillo — Rioja Crianza', vintage:2021, ownLabel:false },
+  { winery:'Weingut Schmitt', name:'Riesling Spätlese — Mosel', vintage:2023, ownLabel:false }
+];
+
+let awSelectedWine = null;
+
+function renderWinePortfolio() {
+  const el = document.getElementById('wine-portfolio-container');
+  if (!el) return;
+  el.innerHTML = currentWinePortfolio.map(w => `
+    <div class="list-entry">
+      <div class="entry-dot" style="background:${w.ownLabel ? 'var(--gold)' : 'var(--dim)'}"></div>
+      <div class="entry-name">${w.name} ${w.vintage}</div>
+      <div class="entry-detail">${w.winery}</div>
+      <div class="entry-tag"><span class="badge${w.ownLabel ? ' badge-gold' : ''}" style="font-size:0.55rem${w.ownLabel ? '' : ';background:rgba(247,243,238,0.05);color:var(--dim)'}">${w.ownLabel ? 'Own-Label' : 'Standard'}</span></div>
+      <div class="entry-actions"><button class="icon-btn">Edit</button><button class="icon-btn">⋮</button></div>
+    </div>`).join('');
+}
+
+function openPullWineModal() {
+  document.getElementById('aw-step-pick').style.display = 'block';
+  document.getElementById('aw-step-details').style.display = 'none';
+  document.getElementById('aw-search').value = '';
+  renderWinePicker('');
+  document.getElementById('aw-modal').classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+function closePullWineModal() {
+  document.getElementById('aw-modal').classList.remove('active');
+  document.body.style.overflow = '';
+}
+function renderWinePicker(search) {
+  const list = document.getElementById('aw-pick-list');
+  if (!activePartners.length) {
+    list.innerHTML = '<div class="aw-empty">No active winery partnerships yet.<br>Send a request from any winery\'s public profile — once accepted and confirmed, their wines appear here.</div>';
+    return;
+  }
+  const term = (search || '').toLowerCase();
+  const pool = partnerWinesPool.filter(w => activePartners.some(p => p.winery === w.winery));
+  const filtered = pool.filter(w => !term || w.name.toLowerCase().includes(term) || w.winery.toLowerCase().includes(term));
+  if (!filtered.length) {
+    list.innerHTML = '<div class="aw-empty">No wines match your search.</div>';
+    return;
+  }
+  const groups = {};
+  filtered.forEach(w => { (groups[w.winery] = groups[w.winery] || []).push(w); });
+  list.innerHTML = Object.keys(groups).map(winery => `
+    <div class="aw-pick-group">${winery}</div>
+    ${groups[winery].map(w => {
+      const taken = currentWinePortfolio.some(cw => cw.winery === w.winery && cw.name === w.name);
+      return `<div class="aw-pick-item${taken ? ' taken' : ''}" ${taken ? '' : `onclick="selectWineForAdd('${w.winery.replace(/'/g, "\\'")}','${w.name.replace(/'/g, "\\'")}')"`}>
+        <div>
+          <div class="aw-pick-name">${w.name} <span style="color:rgba(247,243,238,0.4)">${w.vintage}</span></div>
+          <div class="aw-pick-meta">${w.type} · ${w.origin}</div>
+        </div>
+        <div class="aw-pick-tag">${taken ? 'Already in portfolio' : w.note}</div>
+      </div>`;
+    }).join('')}`).join('');
+}
+function selectWineForAdd(winery, name) {
+  awSelectedWine = partnerWinesPool.find(w => w.winery === winery && w.name === name);
+  if (!awSelectedWine) return;
+  document.getElementById('aw-selected-summary').innerHTML =
+    `${awSelectedWine.name} <span>${awSelectedWine.vintage} · ${awSelectedWine.winery}</span>`;
+  document.getElementById('aw-volume').value = '';
+  document.getElementById('aw-ownlabel').checked = false;
+  document.getElementById('aw-step-pick').style.display = 'none';
+  document.getElementById('aw-step-details').style.display = 'block';
+}
+function backToPicker() {
+  document.getElementById('aw-step-details').style.display = 'none';
+  document.getElementById('aw-step-pick').style.display = 'block';
+  renderWinePicker(document.getElementById('aw-search').value);
+}
+function confirmAddWine() {
+  if (!awSelectedWine) return;
+  currentWinePortfolio.push({
+    winery: awSelectedWine.winery,
+    name: awSelectedWine.name,
+    vintage: awSelectedWine.vintage,
+    ownLabel: document.getElementById('aw-ownlabel').checked
+  });
+  renderWinePortfolio();
+  closePullWineModal();
+}
+
+const stageLabels = {
+  sent:     { text:'Awaiting response', cls:'st-winery' },
+  winery:   { text:'Awaiting response', cls:'st-winery' },
+  contract: { text:'Contracts pending', cls:'st-contract' },
+  declined: { text:'Declined',          cls:'st-declined' }
+};
+
+function stepMarkup(stage) {
+  const order = ['sent','winery','contract','active'];
+  const idx = order.indexOf(stage === 'sent' ? 'sent' : stage);
+  const names = ['Request sent','Accepted','Both contracts signed','Confirmed'];
+  return '<div class="pn-steps">' + names.map((n,i) => {
+    let cls = '';
+    if (i < idx) cls = 'done';
+    else if (i === idx) cls = 'current';
+    return `<div class="pn-step ${cls}">${n}</div>`;
+  }).join('') + '</div>';
+}
+
+const filters = { partners:'all', requests:'all', incoming:'all' };
+
+function typeTag(type) {
+  const labels = { winery:'Winery', restaurant:'Restaurant', retail:'Retail' };
+  return `<span class="stf-type-tag tt-${type}">${labels[type] || type}</span>`;
+}
+
+function setFilter(scope, type, btn) {
+  filters[scope] = type;
+  document.querySelectorAll('#stf-' + scope + ' .stf-pill').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  if (scope === 'incoming') renderIncomingRequests();
+  else renderPartnerNetwork();
+}
+
+function renderPartnerNetwork() {
+  // Active partnerships — grouped by region, filterable by type
+  const act = document.getElementById('pn-active-list');
+  if (act) {
+    const shown = activePartners.filter(p => filters.partners === 'all' || p.type === filters.partners);
+    if (!shown.length) {
+      act.innerHTML = '<div class="pn-empty">No active partnerships in this category yet. Send a request from a winery\'s, restaurant\'s or retailer\'s public profile to get started.</div>';
+    } else {
+      const groups = {};
+      shown.forEach(p => { (groups[p.region] = groups[p.region] || []).push(p); });
+      act.innerHTML = Object.keys(groups).sort().map(region => `
+        <div class="pn-group-title">${region}</div>
+        ${groups[region].map(p => `
+          <div class="pn-card">
+            <div class="pn-avatar">${p.avatar}</div>
+            <div class="pn-info">
+              <div class="pn-name">${p.winery}</div>
+              <div class="pn-meta">Partner since ${p.since} · ${p.meta}</div>
+            </div>
+            <div class="pn-right" style="align-items:flex-end;gap:0.4rem">
+              <div style="display:flex;gap:0.5rem;align-items:center">${typeTag(p.type)}<span class="pn-status st-active">Active</span></div>
+              <a class="pn-link" href="${p.url}">View profile →</a>
+            </div>
+          </div>`).join('')}
+      `).join('');
+    }
+  }
+
+  // Outgoing requests — filterable by type
+  const req = document.getElementById('pn-request-list');
+  if (req) {
+    const shown = partnerRequests.filter(r => filters.requests === 'all' || r.type === filters.requests);
+    if (!shown.length) {
+      req.innerHTML = '<div class="pn-empty">No open requests in this category.</div>';
+    } else {
+      req.innerHTML = shown.map(r => {
+        const s = stageLabels[r.stage] || stageLabels.sent;
+        return `
+        <div style="margin-bottom:1.4rem">
+          <div class="pn-card">
+            <div class="pn-avatar">${r.avatar}</div>
+            <div class="pn-info">
+              <div class="pn-name">${r.winery}</div>
+              <div class="pn-meta">${r.region} · Requested ${r.sent}</div>
+            </div>
+            <div class="pn-right" style="align-items:flex-end;gap:0.4rem">
+              <div style="display:flex;gap:0.5rem;align-items:center">${typeTag(r.type)}<span class="pn-status ${s.cls}">${s.text}</span></div>
+            </div>
+          </div>
+          ${stepMarkup(r.stage)}
+        </div>`;
+      }).join('');
+    }
+  }
+}
+renderPartnerNetwork();
+</script>
+
+<!-- ══ PARTNERSHIP REQUEST MODAL (winery is the requester) ══ -->
+<div class="pr-overlay" id="pr-modal" onclick="if(event.target===this) closePartnershipModal()">
+  <div class="pr-panel">
+    <div class="pr-head">
+      <div class="pr-title">Request <span>Partnership</span></div>
+      <button class="pr-close" onclick="closePartnershipModal()">✕</button>
+    </div>
+    <div class="pr-body" id="pr-body-form">
+      <p class="pr-lead">A Bottle&nbsp;Lobby partnership lets this partner list and sell your wines, and opens their full profile and direct contact to you. Before we forward your request, please confirm you accept the exclusivity terms below.</p>
+
+      <div class="pr-clause">
+        <div class="pr-clause-title">Exclusivity Terms</div>
+        <p>By requesting this partnership, I confirm that any export, distribution or sale of my wines to this partner will take place <strong style="color:#f7f3ee">exclusively through the Bottle&nbsp;Lobby platform</strong> and with Bottle&nbsp;Lobby's knowledge and written agreement.</p>
+        <p>I will not supply this partner through channels outside the platform, nor negotiate separate commercial terms with them without written consent.</p>
+        <p>I understand that Bottle&nbsp;Lobby will send me a partnership contract to complete and return, and that this partner signs a matching contract on their side.</p>
+        <p>The partnership only becomes active once <strong style="color:#f7f3ee">both signed contracts have been received</strong> and Bottle&nbsp;Lobby confirms it — and breaching these terms may end the partnership and my membership.</p>
+      </div>
+
+      <label class="pr-agree">
+        <input type="checkbox" id="pr-checkbox" onchange="document.getElementById('pr-confirm-btn').disabled = !this.checked">
+        <span class="pr-agree-text">I have read and agree to the exclusivity terms above, and confirm I am authorised to enter this agreement on behalf of my winery.</span>
+      </label>
+
+      <div class="pr-foot">
+        <button class="pr-btn pr-cancel" onclick="closePartnershipModal()">Cancel</button>
+        <button class="pr-btn pr-confirm" id="pr-confirm-btn" disabled onclick="confirmPartnership()">Confirm &amp; Send Request</button>
+      </div>
+    </div>
+
+    <div class="pr-body" id="pr-body-done" style="display:none">
+      <div class="pr-done">
+        <div class="pr-done-icon">✓</div>
+        <div class="pr-done-title">Request sent</div>
+        <p class="pr-done-text">This partner has been notified and will review your request.<br><br>We are also sending <strong style="color:#f7f3ee">your partnership contract by email</strong> — please complete it and send it back. The partner signs a matching contract on their side. Once both signed contracts are with us and Bottle&nbsp;Lobby confirms the partnership, they move to your <strong style="color:#b8975a">Active Partners</strong>.</p>
+      </div>
+      <div class="pr-foot" style="margin-top:1.6rem;justify-content:center">
+        <button class="pr-btn pr-confirm" onclick="closePartnershipModal()">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ── PARTNERSHIP REQUEST (winery → this partner) ──────────────── */
+function openPartnershipModal() {
+  document.getElementById('pr-body-form').style.display = 'block';
+  document.getElementById('pr-body-done').style.display = 'none';
+  document.getElementById('pr-checkbox').checked = false;
+  document.getElementById('pr-confirm-btn').disabled = true;
+  document.getElementById('pr-modal').classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+function closePartnershipModal() {
+  document.getElementById('pr-modal').classList.remove('active');
+  document.body.style.overflow = '';
+}
+function confirmPartnership() {
+  document.getElementById('pr-body-form').style.display = 'none';
+  document.getElementById('pr-body-done').style.display = 'block';
+}
+</script>
+
+<!-- ══ ACCEPT PARTNERSHIP MODAL (winery → this partner) ══ -->
+<div class="pr-overlay" id="ir-modal" onclick="if(event.target===this) closeAcceptModal()">
+  <div class="pr-panel">
+    <div class="pr-head">
+      <div class="pr-title">Accept <span>Partnership</span></div>
+      <button class="pr-close" onclick="closeAcceptModal()">✕</button>
+    </div>
+    <div class="pr-body" id="ir-form">
+      <p class="pr-lead">You are about to accept a partnership request from <strong id="ir-name" style="color:#f7f3ee"></strong>. Please confirm you accept the exclusivity terms below.</p>
+
+      <div class="pr-clause">
+        <div class="pr-clause-title">Exclusivity Terms</div>
+        <p>By accepting this partnership, I confirm that any import, distribution, supply or resale of wines between us will take place <strong style="color:#f7f3ee">exclusively through the Bottle&nbsp;Lobby platform</strong> and with Bottle&nbsp;Lobby's knowledge and written agreement.</p>
+        <p>I will not source, import, supply or resell through channels outside the platform with this partner, nor pass on contact details or commercial terms to third parties without written consent.</p>
+        <p>I understand that Bottle&nbsp;Lobby will send me a partnership contract to complete and return, and that this partner signs a matching contract on their side.</p>
+        <p>The partnership only becomes active once <strong style="color:#f7f3ee">both signed contracts have been received</strong> and Bottle&nbsp;Lobby confirms it.</p>
+      </div>
+
+      <label class="pr-agree">
+        <input type="checkbox" id="ir-checkbox" onchange="document.getElementById('ir-confirm').disabled = !this.checked">
+        <span class="pr-agree-text">I have read and agree to the exclusivity terms above, and confirm I am authorised to enter this agreement on behalf of my business.</span>
+      </label>
+
+      <div class="pr-foot">
+        <button class="pr-btn pr-cancel" onclick="closeAcceptModal()">Cancel</button>
+        <button class="pr-btn pr-confirm" id="ir-confirm" disabled onclick="confirmIncomingAccept()">Confirm &amp; Accept</button>
+      </div>
+    </div>
+
+    <div class="pr-body" id="ir-done" style="display:none">
+      <div class="pr-done">
+        <div class="pr-done-icon">✓</div>
+        <div class="pr-done-title">Partnership accepted</div>
+        <p class="pr-done-text">They have been notified.<br><br>We are sending <strong style="color:#f7f3ee">your partnership contract by email</strong> — please complete it and send it back. This partner signs a matching contract on their side. Once both signed contracts are with us and Bottle&nbsp;Lobby confirms the partnership, they move to your <strong style="color:#b8975a">Active Partnerships</strong>.</p>
+      </div>
+      <div class="pr-foot" style="margin-top:1.6rem;justify-content:center">
+        <button class="pr-btn pr-confirm" onclick="closeAcceptModal()">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="pr-overlay" id="aw-modal" onclick="if(event.target===this) closePullWineModal()">
+  <div class="pr-panel" style="max-width:640px">
+    <div class="pr-head">
+      <div class="pr-title">Pull a Wine <span>from a Winery Partner</span></div>
+      <button class="pr-close" onclick="closePullWineModal()">✕</button>
+    </div>
+
+    <div class="pr-body" id="aw-step-pick">
+      <p class="pr-lead">Choose from wines already in your active winery partners' portfolios — you can't create a new wine here, only a winery can do that. Once linked, any edit the winery makes updates here automatically.</p>
+      <input type="text" class="aw-search" id="aw-search" placeholder="Search by wine or winery…" oninput="renderWinePicker(this.value)">
+      <div id="aw-pick-list" class="aw-pick-list"></div>
+    </div>
+
+    <div class="pr-body" id="aw-step-details" style="display:none">
+      <div class="aw-selected" id="aw-selected-summary"></div>
+      <div class="ffield" style="margin-bottom:1px"><div class="flabel">Monthly Volume (bottles)</div><input class="finput" type="number" step="100" id="aw-volume" placeholder="e.g. 2000"></div>
+      <label class="pr-agree" style="margin-top:1px">
+        <input type="checkbox" id="aw-ownlabel">
+        <span class="pr-agree-text">Mark as Own-Label — licensed exclusively, not available to competing distributors.</span>
+      </label>
+      <div class="pr-foot" style="margin-top:1.4rem">
+        <button class="pr-btn pr-cancel" onclick="backToPicker()">← Back</button>
+        <button class="pr-btn pr-confirm" onclick="confirmAddWine()">Pull into Portfolio</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ══════════════════════════════════════════════════════════════════
+   INCOMING PARTNERSHIP REQUESTS (winery → this stakeholder)
+   ──────────────────────────────────────────────────────────────────
+   The mirror image of the outgoing flow. A winery can approach a
+   distributor, restaurant or retailer just as they can approach a
+   winery. Either way both sides accept the same exclusivity model,
+   both sign a contract, and Bottle Lobby confirms the partnership
+   in the internal admin before it goes active.
+══════════════════════════════════════════════════════════════════ */
+let incomingRequests = [
+  { id:1, winery:'Château Belrieu', type:'winery', avatar:'CB', region:'Bordeaux, France',
+    received:'20 July 2026',
+    msg:'We are looking for a partner to bring our Bordeaux Supérieur into your market — happy to discuss volumes and own-label options.',
+    stage:'pending' }
+];
+
+let acceptingIncomingId = null;
+
+function renderIncomingRequests() {
+  const el = document.getElementById('ir-list');
+  if (!el) return;
+  const open = incomingRequests.filter(r => r.stage !== 'declined' && (filters.incoming === 'all' || r.type === filters.incoming));
+  el.innerHTML = open.length ? open.map(r => `
+    <div class="ir-card">
+      <div class="ir-top">
+        <div class="ir-avatar">${r.avatar}</div>
+        <div style="flex:1">
+          <div class="ir-name">${r.winery}</div>
+          <div class="ir-meta">${r.region} · Requested ${r.received}</div>
+        </div>
+        ${typeTag(r.type)}
+      </div>
+      <div class="ir-msg">"${r.msg}"</div>
+      ${r.stage === 'contract'
+        ? `<div style="display:flex;align-items:center;gap:0.8rem">
+             <span class="pn-status st-contract">Contracts pending</span>
+             <span style="font-size:0.76rem;color:var(--dim)">You accepted this request — both contracts are out. Bottle&nbsp;Lobby confirms the partnership once both signed contracts are back.</span>
+           </div>`
+        : `<div class="ir-actions">
+             <button class="btn-accept" onclick="openIncomingAccept(${r.id})">✓ Accept partnership</button>
+             <button class="btn-decl" onclick="declineIncoming(${r.id})">Decline</button>
+           </div>`}
+    </div>`).join('')
+    : '<div class="ir-empty">No incoming partnership requests in this category.</div>';
+}
+
+function openIncomingAccept(id) {
+  acceptingIncomingId = id;
+  const r = incomingRequests.find(x => x.id === id);
+  document.getElementById('ir-name').textContent = r.winery;
+  document.getElementById('ir-form').style.display = 'block';
+  document.getElementById('ir-done').style.display = 'none';
+  document.getElementById('ir-checkbox').checked = false;
+  document.getElementById('ir-confirm').disabled = true;
+  document.getElementById('ir-modal').classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+function closeAcceptModal() {
+  document.getElementById('ir-modal').classList.remove('active');
+  document.body.style.overflow = '';
+  renderIncomingRequests();
+}
+function confirmIncomingAccept() {
+  const r = incomingRequests.find(x => x.id === acceptingIncomingId);
+  if (r) r.stage = 'contract';
+  document.getElementById('ir-form').style.display = 'none';
+  document.getElementById('ir-done').style.display = 'block';
+}
+function declineIncoming(id) {
+  if (!confirm('Decline this partnership request?')) return;
+  const r = incomingRequests.find(x => x.id === id);
+  if (r) r.stage = 'declined';
+  renderIncomingRequests();
+}
+
+renderIncomingRequests();
+renderWinePortfolio();
+</script>
+</body>
+</html>

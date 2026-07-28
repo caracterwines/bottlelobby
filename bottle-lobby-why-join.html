@@ -1,0 +1,1472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Why Join Bottle Lobby</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --ink:   #0e0b0b;
+  --paper: #f7f3ee;
+  --wine:  #6b1a1a;
+  --gold:  #b8975a;
+  --smoke: #1a1212;
+  --dim:   rgba(247,243,238,0.45);
+  --line:  rgba(247,243,238,0.07);
+  --green: #2d6a4f;
+}
+html { scroll-behavior: smooth; }
+body { font-family: 'Inter', sans-serif; background: var(--ink); color: var(--paper); font-size: 14px; line-height: 1.6; overflow-x: hidden; }
+
+/* ── NAV ── */
+
+
+
+
+
+
+
+
+
+
+
+
+/* ── PROGRESS ── */
+.progress { position: fixed; top: 0; left: 0; height: 2px; background: var(--gold); z-index: 200; transition: width 0.1s; width: 0; }
+
+/* ── HERO ── */
+.hero {
+  min-height: 100vh;
+  display: flex; flex-direction: column; justify-content: flex-end;
+  padding: 0 3rem 5rem; position: relative; overflow: hidden;
+  background: radial-gradient(ellipse 80% 60% at 50% 30%, #1e0808 0%, var(--ink) 68%);
+}
+.hero::before {
+  content: ''; position: absolute; inset: 0;
+  background-image: linear-gradient(135deg, rgba(107,26,26,0.06) 1px, transparent 1px), linear-gradient(45deg, rgba(184,151,90,0.03) 1px, transparent 1px);
+  background-size: 80px 80px, 140px 140px;
+}
+.hero-bg-text { position: absolute; font-family: 'Cormorant Garamond', serif; font-size: 22vw; font-weight: 300; color: rgba(107,26,26,0.05); white-space: nowrap; top: 50%; left: 50%; transform: translate(-50%,-50%); pointer-events: none; letter-spacing: -0.02em; }
+.hero-inner { max-width: 1100px; margin: 0 auto; width: 100%; position: relative; }
+.hero-eyebrow { font-size: 0.62rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(--gold); margin-bottom: 1.5rem; display: flex; align-items: center; gap: 1rem; }
+.hero-eyebrow::before { content: ''; display: block; width: 28px; height: 1px; background: var(--gold); }
+.hero h1 { font-family: 'Cormorant Garamond', serif; font-size: clamp(3rem, 6.5vw, 5.5rem); font-weight: 300; line-height: 1.04; color: var(--paper); }
+.hero h1 em { font-style: italic; color: var(--gold); }
+.hero-sub { font-size: 0.95rem; color: var(--dim); max-width: 520px; margin: 2rem 0 3rem; line-height: 1.85; }
+.hero-role-btns { display: flex; gap: 0.8rem; flex-wrap: wrap; }
+.role-jump {
+  font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase;
+  padding: 0.85rem 1.8rem; border-radius: 2px; cursor: pointer;
+  font-family: 'Inter', sans-serif; font-weight: 500; text-decoration: none;
+  transition: all 0.2s; display: inline-block;
+}
+.role-jump-winery { background: var(--wine); color: var(--paper); }
+.role-jump-dist { background: rgba(30,60,120,0.8); color: var(--paper); }
+.role-jump-rest { background: var(--green); color: var(--paper); }
+.role-jump:hover { opacity: 0.85; transform: translateY(-1px); }
+
+/* ── ROLE SELECTOR STICKY ── */
+.role-sticky {
+  position: sticky; top: 4.7rem; z-index: 80;
+  background: rgba(14,11,11,0.98); border-bottom: 1px solid var(--line);
+  backdrop-filter: blur(8px);
+}
+.role-tabs { max-width: 1100px; margin: 0 auto; display: flex; }
+.role-tab {
+  flex: 1; padding: 1.1rem 2rem; cursor: pointer; text-align: center;
+  font-size: 0.68rem; letter-spacing: 0.15em; text-transform: uppercase;
+  color: var(--dim); border-bottom: 2px solid transparent;
+  transition: all 0.2s; background: none; border-top: none; border-left: none; border-right: none;
+  font-family: 'Inter', sans-serif; font-weight: 500;
+}
+.role-tab:hover { color: var(--paper); background: rgba(247,243,238,0.02); }
+.role-tab.active-winery { color: #e07070; border-bottom-color: var(--wine); }
+.role-tab.active-dist { color: #7faaf0; border-bottom-color: #1e3c78; }
+.role-tab.active-rest { color: #4caf7d; border-bottom-color: var(--green); }
+  .role-tab.active-retail { color: #c9a84c; border-bottom-color: #c9a84c; }
+  .role-jump-retail { background: rgba(180,140,60,0.8); color: var(--paper); }
+
+/* ── SECTIONS ── */
+section { padding: 7rem 3rem; }
+.container { max-width: 1100px; margin: 0 auto; }
+.eyebrow { font-size: 0.62rem; letter-spacing: 0.25em; text-transform: uppercase; margin-bottom: 1rem; display: flex; align-items: center; gap: 1rem; }
+.eyebrow::before { content: ''; display: block; width: 28px; height: 1px; }
+h2 { font-family: 'Cormorant Garamond', serif; font-size: clamp(2rem, 4vw, 3rem); font-weight: 300; line-height: 1.1; color: var(--paper); margin-bottom: 1rem; }
+h2 em { font-style: italic; }
+.lead { font-size: 0.88rem; color: var(--dim); line-height: 1.9; max-width: 640px; margin-bottom: 4rem; }
+
+/* ── ROLE PANEL ── */
+.role-panel { display: none; }
+.role-panel.active { display: block; }
+
+/* ── BENEFITS GRID ── */
+.benefits-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 1px; background: var(--line); border: 1px solid var(--line); margin-bottom: 4rem; }
+.benefit { background: var(--ink); padding: 2.2rem 1.8rem; transition: background 0.2s; }
+.benefit:hover { background: #130909; }
+.benefit-icon { font-size: 1.1rem; margin-bottom: 1rem; }
+.benefit-num { font-family: 'Cormorant Garamond', serif; font-size: 2.5rem; font-weight: 300; color: rgba(184,151,90,0.12); line-height: 1; margin-bottom: 0.8rem; }
+.benefit h3 { font-family: 'Cormorant Garamond', serif; font-size: 1.3rem; font-weight: 400; color: var(--paper); margin-bottom: 0.6rem; }
+.benefit p { font-size: 0.8rem; color: var(--dim); line-height: 1.8; }
+
+/* ── HOW IT WORKS ── */
+.steps-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 1px; background: var(--line); border: 1px solid var(--line); margin-bottom: 4rem; }
+.step { background: var(--ink); padding: 2rem 1.6rem; position: relative; }
+.step-num { font-family: 'Cormorant Garamond', serif; font-size: 3rem; font-weight: 300; color: rgba(184,151,90,0.1); line-height: 1; margin-bottom: 0.8rem; }
+.step h4 { font-size: 0.82rem; color: var(--paper); font-weight: 500; margin-bottom: 0.4rem; }
+.step p { font-size: 0.75rem; color: var(--dim); line-height: 1.75; }
+.step-tag { font-size: 0.55rem; letter-spacing: 0.15em; text-transform: uppercase; display: inline-block; padding: 0.18rem 0.6rem; border-radius: 2px; margin-bottom: 0.8rem; }
+
+/* ── DASHBOARD PREVIEW ── */
+.preview-wrap {
+  background: #0a0707; border: 1px solid var(--line);
+  padding: 1px; margin-bottom: 4rem; position: relative; overflow: hidden;
+}
+.preview-label {
+  position: absolute; top: 1rem; left: 1rem; z-index: 5;
+  font-size: 0.58rem; letter-spacing: 0.15em; text-transform: uppercase;
+  background: var(--gold); color: var(--ink); padding: 0.2rem 0.7rem;
+  border-radius: 2px; font-weight: 600;
+}
+.mini-
+.mini-logo { font-family: 'Cormorant Garamond', serif; font-size: 0.85rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--paper); }
+.mini-logo span { color: var(--gold); }
+.mini-dots { display: flex; gap: 0.3rem; margin-left: auto; }
+.mini-dot { width: 8px; height: 8px; border-radius: 50%; }
+.mini-inner { display: grid; grid-template-columns: 160px 1fr; min-height: 340px; }
+.mini-sidebar { background: var(--smoke); border-right: 1px solid var(--line); padding: 1rem 0; }
+.mini-nav-item { padding: 0.45rem 1rem; font-size: 0.65rem; color: var(--dim); display: flex; align-items: center; gap: 0.5rem; }
+.mini-nav-item.active { background: rgba(184,151,90,0.07); color: var(--paper); border-left: 2px solid var(--gold); }
+.mini-nav-icon { font-size: 0.7rem; width: 12px; }
+.mini-main { padding: 1.2rem; background: #110d0d; }
+.mini-topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+.mini-title { font-family: 'Cormorant Garamond', serif; font-size: 1.1rem; color: var(--paper); }
+.mini-btn { font-size: 0.55rem; letter-spacing: 0.1em; text-transform: uppercase; background: var(--gold); color: var(--ink); padding: 0.3rem 0.8rem; border-radius: 2px; font-weight: 600; }
+.mini-stats { display: grid; grid-template-columns: repeat(4,1fr); gap: 1px; background: var(--line); border: 1px solid var(--line); margin-bottom: 1rem; }
+.mini-stat { background: #110d0d; padding: 0.8rem; }
+.mini-stat-val { font-family: 'Cormorant Garamond', serif; font-size: 1.4rem; color: var(--paper); line-height: 1; }
+.mini-stat-val span { font-size: 0.8rem; color: var(--gold); }
+.mini-stat-label { font-size: 0.55rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--dim); margin-top: 0.2rem; }
+.mini-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--line); border: 1px solid var(--line); }
+.mini-widget { background: #110d0d; padding: 0.8rem; }
+.mini-widget-title { font-size: 0.55rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim); margin-bottom: 0.6rem; }
+.mini-row { display: flex; justify-content: space-between; align-items: center; padding: 0.4rem 0; border-bottom: 1px solid rgba(247,243,238,0.04); }
+.mini-row:last-child { border-bottom: none; }
+.mini-row-label { font-size: 0.65rem; color: var(--dim); }
+.mini-row-val { font-size: 0.65rem; color: var(--paper); }
+.mini-tag { font-size: 0.5rem; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.12rem 0.4rem; border-radius: 2px; }
+.tag-g { background: rgba(45,106,79,0.2); color: #4caf7d; }
+.tag-gold { background: rgba(184,151,90,0.12); color: var(--gold); }
+.tag-w { background: rgba(107,26,26,0.2); color: #e07070; }
+.mini-match { display: flex; align-items: center; gap: 0.6rem; padding: 0.4rem 0; border-bottom: 1px solid rgba(247,243,238,0.04); }
+.mini-match:last-child { border-bottom: none; }
+.mini-score { width: 28px; height: 28px; border-radius: 50%; border: 1.5px solid var(--gold); display: flex; align-items: center; justify-content: center; font-size: 0.55rem; color: var(--gold); font-weight: 600; flex-shrink: 0; }
+.mini-match-name { font-size: 0.65rem; color: var(--paper); }
+.mini-match-loc { font-size: 0.58rem; color: var(--dim); }
+
+/* ── CASE STUDY ── */
+.case-study { background: #0a0707; }
+.case-study .eyebrow { color: var(--gold); }
+.case-study .eyebrow::before { background: var(--gold); }
+.case-header { display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: start; margin-bottom: 4rem; }
+.case-tag { display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.6rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--gold); border: 1px solid rgba(184,151,90,0.3); padding: 0.3rem 0.9rem; border-radius: 2px; margin-bottom: 1.2rem; }
+.case-logo { font-family: 'Cormorant Garamond', serif; font-size: 3.5rem; font-weight: 300; color: rgba(140,80,180,0.5); letter-spacing: 0.1em; line-height: 1; margin-bottom: 0.5rem; }
+.case-origin { font-size: 0.72rem; color: var(--dim); margin-bottom: 1.5rem; line-height: 1.7; }
+.case-text p { font-size: 0.85rem; color: var(--dim); line-height: 1.9; margin-bottom: 1rem; }
+.case-text p strong { color: var(--paper); }
+.case-phases { display: grid; grid-template-columns: repeat(4,1fr); gap: 1px; background: var(--line); border: 1px solid var(--line); margin-bottom: 3rem; }
+.case-phase { background: #0a0707; padding: 1.6rem 1.4rem; }
+.case-phase:hover { background: #130909; }
+.cp-num { font-family: 'Cormorant Garamond', serif; font-size: 2rem; color: rgba(184,151,90,0.15); line-height: 1; margin-bottom: 0.6rem; }
+.cp-title { font-size: 0.65rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--gold); margin-bottom: 0.4rem; }
+.cp-text { font-size: 0.75rem; color: var(--dim); line-height: 1.75; }
+.case-results { display: grid; grid-template-columns: repeat(3,1fr); gap: 1px; background: var(--line); border: 1px solid var(--line); margin-bottom: 3rem; }
+.case-result { background: var(--wine); padding: 2rem; text-align: center; }
+.cr-val { font-family: 'Cormorant Garamond', serif; font-size: 2.5rem; font-weight: 300; color: var(--paper); line-height: 1; }
+.cr-val span { font-size: 1.2rem; color: var(--gold); }
+.cr-label { font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(247,243,238,0.6); margin-top: 0.3rem; }
+.case-quote { border-left: 2px solid var(--gold); padding: 1.5rem 2rem; background: rgba(184,151,90,0.05); }
+.case-quote p { font-family: 'Cormorant Garamond', serif; font-size: 1.3rem; font-style: italic; color: var(--paper); line-height: 1.5; margin-bottom: 0.5rem; }
+.case-quote cite { font-size: 0.65rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gold); }
+
+/* ── SERVICES INCLUDED ── */
+.services-box { background: var(--paper); color: var(--ink); padding: 4rem 3rem; }
+.services-box .eyebrow { color: var(--wine); }
+.services-box .eyebrow::before { background: var(--wine); }
+.services-box h2 { color: var(--ink); }
+.services-box h2 em { color: var(--wine); }
+.services-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 1.5rem; margin-top: 3rem; }
+.service-item { border-top: 2px solid var(--wine); padding-top: 1.2rem; }
+.service-icon { font-size: 1rem; margin-bottom: 0.6rem; }
+.service-item h4 { font-family: 'Cormorant Garamond', serif; font-size: 1.1rem; font-weight: 400; color: var(--ink); margin-bottom: 0.4rem; }
+.service-item p { font-size: 0.78rem; color: rgba(14,11,11,0.55); line-height: 1.75; }
+
+/* ── WINERY SECTION ── */
+.winery-section { background: var(--ink); }
+.winery-section .eyebrow { color: var(--wine); }
+.winery-section .eyebrow::before { background: var(--wine); }
+.winery-section h2 { color: var(--paper); }
+.winery-section h2 em { color: var(--wine); }
+.winery-section .lead { color: var(--dim); }
+
+/* ── DISTRIBUTOR SECTION ── */
+.dist-section { background: #070d1a; }
+.dist-section .eyebrow { color: #7faaf0; }
+.dist-section .eyebrow::before { background: #7faaf0; }
+.dist-section h2 { color: var(--paper); }
+.dist-section h2 em { color: #7faaf0; }
+.dist-section .lead { color: var(--dim); }
+.dist-benefits { display: grid; grid-template-columns: repeat(3,1fr); gap: 1px; background: rgba(100,140,220,0.1); border: 1px solid rgba(100,140,220,0.1); margin-bottom: 4rem; }
+.dist-benefit { background: #070d1a; padding: 2.2rem 1.8rem; }
+.dist-benefit:hover { background: #0a1220; }
+.dist-benefit .benefit-num { color: rgba(127,170,240,0.1); }
+.dist-benefit h3 { font-family: 'Cormorant Garamond', serif; font-size: 1.3rem; font-weight: 400; color: var(--paper); margin-bottom: 0.6rem; }
+.dist-benefit p { font-size: 0.8rem; color: var(--dim); line-height: 1.8; }
+.dist-mini-sidebar { background: #0a1020; border-right: 1px solid rgba(100,140,220,0.1); padding: 1rem 0; }
+
+/* ── RESTAURANT SECTION ── */
+.rest-section { background: #060f0a; }
+.rest-section .eyebrow { color: #4caf7d; }
+.rest-section .eyebrow::before { background: #4caf7d; }
+.rest-section h2 { color: var(--paper); }
+.rest-section h2 em { color: #4caf7d; }
+.rest-section .lead { color: var(--dim); }
+.rest-benefits { display: grid; grid-template-columns: repeat(3,1fr); gap: 1px; background: rgba(45,106,79,0.1); border: 1px solid rgba(45,106,79,0.1); margin-bottom: 4rem; }
+.rest-benefit { background: #060f0a; padding: 2.2rem 1.8rem; }
+.rest-benefit:hover { background: #091408; }
+.rest-benefit .benefit-num { color: rgba(76,175,125,0.1); }
+.rest-benefit h3 { font-family: 'Cormorant Garamond', serif; font-size: 1.3rem; font-weight: 400; color: var(--paper); margin-bottom: 0.6rem; }
+.rest-benefit p { font-size: 0.8rem; color: var(--dim); line-height: 1.8; }
+
+/* ── RETAIL SECTION ── */
+.retail-section { background: #0f0c07; }
+.retail-section .eyebrow { color: #c9a84c; }
+.retail-section .eyebrow::before { background: #c9a84c; }
+.retail-section h2 { color: var(--paper); }
+.retail-section h2 em { color: #c9a84c; }
+.retail-section .lead { color: var(--dim); }
+
+/* ── STAKEHOLDER NETWORK BLOCK ── */
+.network-block { display: grid; grid-template-columns: 1fr 1.15fr; gap: 3.5rem; align-items: center; margin: 3.5rem 0; }
+.network-block-text { font-size: 0.85rem; color: var(--dim); line-height: 1.85; }
+.network-block-eyebrow { font-size: 0.62rem; letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.8rem; }
+.network-block-eyebrow::before { content: ''; width: 24px; height: 1px; background: currentColor; opacity: 0.6; }
+@media (max-width: 900px) { .network-block { grid-template-columns: 1fr; } }
+
+/* ── CTA ── */
+.cta-section { background: var(--wine); text-align: center; padding: 8rem 3rem; position: relative; overflow: hidden; }
+.cta-section::before { content: 'JOIN'; position: absolute; font-family: 'Cormorant Garamond', serif; font-size: 20vw; font-weight: 300; color: rgba(255,255,255,0.04); white-space: nowrap; top: 50%; left: 50%; transform: translate(-50%,-50%); pointer-events: none; }
+.cta-section h2 { color: var(--paper); max-width: 600px; margin: 0 auto 1rem; position: relative; }
+.cta-section h2 em { color: var(--gold); }
+.cta-sub { font-size: 0.88rem; color: rgba(247,243,238,0.6); margin-bottom: 3rem; position: relative; }
+.cta-btns { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; position: relative; }
+.btn-white { font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase; background: var(--paper); color: var(--ink); padding: 1rem 2.4rem; border-radius: 2px; text-decoration: none; font-weight: 500; transition: opacity 0.2s; display: inline-block; }
+.btn-white:hover { opacity: 0.85; }
+.btn-ghost-white { font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase; color: rgba(247,243,238,0.65); text-decoration: none; padding: 1rem 0; border-bottom: 1px solid rgba(247,243,238,0.3); transition: color 0.2s; display: inline-block; }
+.btn-ghost-white:hover { color: var(--paper); }
+
+/* ── FOOTER ── */
+footer { background: #070404; padding: 3.6rem 3rem 1.9rem; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; border-top: 1px solid var(--line); }
+.footer-logo { font-family: 'Cormorant Garamond', serif; font-size: 1rem; font-weight: 300; letter-spacing: 0.2em; text-transform: uppercase; color: rgba(247,243,238,0.25); }
+.footer-logo span { color: var(--gold); }
+.footer-brand { display:flex; flex-direction:column; gap:0.5px; justify-self:start; }
+.footer-links { display: flex; gap: 1.8rem; justify-self:center; }
+.footer-links a { font-size: 0.65rem; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(247,243,238,0.2); text-decoration: none; transition: color 0.2s; }
+.footer-links a:hover { color: var(--gold); }
+.footer-copy { font-size: 0.572rem; color: rgba(247,243,238,0.15); }
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(247,243,238,0.08); border-radius: 2px; }
+
+@media (max-width: 900px) {
+  
+  section { padding: 4rem 1.5rem; }
+  .hero { padding: 0 1.5rem 4rem; }
+  .benefits-grid, .steps-grid, .case-phases, .case-results, .services-grid, .dist-benefits, .rest-benefits { grid-template-columns: 1fr; }
+  .case-header, .mini-inner { grid-template-columns: 1fr; }
+  footer { grid-template-columns: 1fr; justify-items: center; row-gap: 1rem; text-align: center; }
+  .footer-links { justify-content: center; flex-wrap: wrap; }
+  .role-tab { font-size: 0.58rem; padding: 0.9rem 0.8rem; }
+}
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1.4rem 3rem;
+    background: rgba(14,11,11,0.97);
+    border-bottom: 1px solid rgba(247,243,238,0.07);
+    backdrop-filter: blur(4px);
+  }
+  .nav-logo {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.35rem;
+    font-weight: 300;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--paper);
+    text-decoration: none;
+  }
+  .nav-logo span { color: var(--gold); }
+  .nav-links { display: flex; gap: 1.5rem; list-style: none; }
+  .nav-links a {
+    font-size: 0.66rem;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: rgba(247,243,238,0.6);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  .nav-links a:hover { color: var(--paper); }
+  .nav-right { display: flex; gap: 0.8rem; align-items: center; }
+  .btn {
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 0.55rem 1.4rem;
+    border-radius: 2px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    display: inline-block;
+  }
+  .btn-outline {
+    border-color: rgba(247,243,238,0.2);
+    color: rgba(247,243,238,0.5);
+    background: transparent;
+  }
+  .btn-outline:hover { border-color: var(--paper); color: var(--paper); }
+  .btn-gold {
+    background: var(--gold);
+    color: var(--ink);
+    border-color: var(--gold);
+  }
+  .btn-gold:hover { opacity: 0.85; }
+
+  /* ── FLOATING CTA ── */
+  .floating-cta {
+    position: fixed;
+    bottom: 2rem;
+    right: 3rem;
+    z-index: 150;
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    background: rgba(14,11,11,0.97);
+    backdrop-filter: blur(4px);
+    padding: 0.6rem;
+    border-radius: 8px;
+    border: 1px solid rgba(247,243,238,0.1);
+    box-shadow: 0 12px 32px rgba(0,0,0,0.4);
+  }
+  @media (max-width: 640px) {
+    .floating-cta { right: 1.2rem; bottom: 1.2rem; padding: 0.45rem; gap: 0.5rem; }
+    .floating-cta .btn { padding: 0.5rem 1rem; font-size: 0.65rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="progress" id="progress"></div>
+
+<!-- NAV -->
+<nav>
+  <a href="bottle-lobby.html" class="nav-logo">Bottle<span>&nbsp;Lobby</span></a>
+  <ul class="nav-links">
+    <li><a href="bottle-lobby-market.html">Market</a></li>
+    <li><a href="bottle-lobby.html#solution">The Lobby</a></li>
+    <li><a href="bottle-lobby.html#stakeholders">Why Lobbying</a></li>
+    <li><a href="bottle-lobby.html#how">How it Works</a></li>
+    <li><a href="bottle-lobby.html#wine-guide">Wine Guide</a></li>
+    <li><a href="bottle-lobby.html#shows">Wine Shows</a></li>
+    <li><a href="bottle-lobby.html#wines">Own Label</a></li>
+    <li><a href="bottle-lobby.html#app">The App</a></li>
+    <li><a href="bottle-lobby.html#about">About</a></li>
+    <li><a href="bottle-lobby.html#membership">Membership</a></li>
+    <li><a href="bottle-lobby.html#investors">Partners</a></li>
+  </ul>
+  <div class="nav-right">
+    <a href="bottle-lobby.html" class="btn btn-outline">← Home</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero" id="top">
+  <div class="hero-bg-text">LOBBY</div>
+  <div class="hero-inner">
+    <p class="hero-eyebrow">Membership Benefits</p>
+    <h1>Why join<br><em>Bottle Lobby?</em></h1>
+    <p class="hero-sub">One platform. Three stakeholders. Every actor in the wine trade benefits — but in different ways. Choose your role and discover exactly what Bottle Lobby does for you.</p>
+    <div class="hero-role-btns">
+      <a href="#winery" class="role-jump role-jump-winery" onclick="setTab('winery')">🍇 I'm a Winery</a>
+      <a href="#distributor" class="role-jump role-jump-dist" onclick="setTab('dist')">🚚 I'm a Distributor</a>
+      <a href="#restaurant" class="role-jump role-jump-rest" onclick="setTab('rest')">🍽 I'm a Restaurant</a>
+      <a href="#retail" class="role-jump role-jump-retail" onclick="setTab('retail')">🏪 I'm a Retailer</a>
+    </div>
+  </div>
+</section>
+
+<!-- STICKY ROLE TABS -->
+<div class="role-sticky">
+  <div class="role-tabs">
+    <button class="role-tab active-winery" id="tab-winery" onclick="setTab('winery')">🍇 For Wineries</button>
+    <button class="role-tab" id="tab-dist" onclick="setTab('dist')">🚚 For Distributors</button>
+    <button class="role-tab" id="tab-rest" onclick="setTab('rest')">🍽 For Restaurants</button>
+    <button class="role-tab" id="tab-retail" onclick="setTab('retail')">🏪 For Retail</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     WINERY SECTION
+══════════════════════════════ -->
+<div class="role-panel active" id="winery">
+
+  <!-- Benefits -->
+  <section class="winery-section" id="winery-benefits">
+    <div class="container">
+      <p class="eyebrow">For Wineries</p>
+      <h2>Stop waiting to be <em>discovered.</em></h2>
+      <p class="lead">You make exceptional wine. Bottle Lobby makes sure the right people find it — with data, matchmaking, marketing, and a complete market-entry strategy built around your label.</p>
+      <div class="benefits-grid">
+        <div class="benefit">
+          <div class="benefit-icon">◎</div>
+          <div class="benefit-num">01</div>
+          <h3>Direct Access to Distributors</h3>
+          <p>Stop relying on trade fairs that cost tens of thousands and rarely convert. Our smart matchmaking connects you with distributors covering 1,000+ restaurants in their region — based on portfolio fit, not chance.</p>
+        </div>
+        <div class="benefit">
+          <div class="benefit-icon">◈</div>
+          <div class="benefit-num">02</div>
+          <h3>Real Market Intelligence</h3>
+          <p>Know exactly what's trending in Germany before you decide what to export. Consumer behaviour data, pricing benchmarks, and regional demand signals ensure every decision is evidence-based, not guesswork.</p>
+        </div>
+        <div class="benefit">
+          <div class="benefit-icon">◇</div>
+          <div class="benefit-num">03</div>
+          <h3>Own-Label Wine Strategy</h3>
+          <p>Your wine, a protected label, exclusive to one distributor per region. No price dumping. No competitor undercutting. Just stable, recurring orders from distributors who have already validated demand with their clients.</p>
+        </div>
+        <div class="benefit">
+          <div class="benefit-icon">✦</div>
+          <div class="benefit-num">04</div>
+          <h3>Curated B2B Wine Shows</h3>
+          <p>Present your wines to pre-qualified buyers — chefs, sommeliers, and restaurant buyers already working with your partner distributor. Real feedback. Real orders. Placed on the night. No wasted exposure.</p>
+        </div>
+        <div class="benefit">
+          <div class="benefit-icon">⬡</div>
+          <div class="benefit-num">05</div>
+          <h3>Press, PR & Branding</h3>
+          <p>We create demand for your wines before distributors have to sell them. Press campaigns, influencer outreach, journalist trips, trade media — we build the narrative that turns a great wine into a market story.</p>
+        </div>
+        <div class="benefit">
+          <div class="benefit-icon">◐</div>
+          <div class="benefit-num">06</div>
+          <h3>Visibility in the Wine Guide</h3>
+          <p>Your SEO-optimized profile is promoted to 500+ distributors via our printed B2B wine guide — distributed to regional wholesalers, press outlets, and agencies across Germany and Europe.</p>
+        </div>
+
+      </div>
+
+      <!-- How it works -->
+      <p style="font-size:0.65rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--dim);margin-bottom:1.2rem">How It Works</p>
+      <div class="steps-grid">
+        <div class="step">
+          <span class="step-tag" style="background:rgba(107,26,26,0.15);color:var(--wine)">Step 1</span>
+          <div class="step-num">1</div>
+          <h4>Join & Build Your Profile</h4>
+          <p>Create your winery profile with wines, origin story, certifications, and target markets. We index you in the platform and the distributor wine guide.</p>
+        </div>
+        <div class="step">
+          <span class="step-tag" style="background:rgba(107,26,26,0.15);color:var(--wine)">Step 2</span>
+          <div class="step-num">2</div>
+          <h4>Get Matched</h4>
+          <p>Our algorithm connects you with distributors whose portfolio gaps and client needs match your wines. You receive match scores and introduction requests.</p>
+        </div>
+        <div class="step">
+          <span class="step-tag" style="background:rgba(107,26,26,0.15);color:var(--wine)">Step 3</span>
+          <div class="step-num">3</div>
+          <h4>Present at a Wine Show</h4>
+          <p>We co-host a regional B2B tasting with your matched distributor. Their restaurant clients taste your wine, give feedback, and place orders on the spot.</p>
+        </div>
+        <div class="step">
+          <span class="step-tag" style="background:rgba(107,26,26,0.15);color:var(--wine)">Step 4</span>
+          <div class="step-num">4</div>
+          <h4>List & Scale</h4>
+          <p>Your wine is listed under a protected own-label. Orders flow through the platform. Margins are protected. You focus on winemaking — we handle the market.</p>
+        </div>
+      </div>
+
+      <!-- Network Block (Winery-focused) -->
+      <div class="network-block">
+        <div>
+          <p class="network-block-eyebrow" style="color:var(--wine)">Not A Concept — A Working Network</p>
+          <div class="network-block-text">Cantina Rossi doesn't sell into a black box. Every connection on the platform is a named, working relationship, not a hypothetical pipeline. A distributor in Hamburg moved 2,900 bottles of their Primitivo last month alone, under an exclusive own-label deal that keeps the price protected from undercutting. A restaurant in Frankfurt added the same wine to its list after tasting it in person at a regional Wine Show — no cold email, no sales rep, just a direct introduction that turned into a standing order. And a specialty wine shop in Munich now pours it for walk-in customers at in-store tastings, building a fourth channel entirely on its own. Three different routes to market, one winery, and not a single cold outreach anywhere in the chain.</div>
+        </div>
+        <div><svg viewBox="0 0 700 500" style="width:100%;height:auto;display:block" xmlns="http://www.w3.org/2000/svg">
+          <g stroke="var(--gold)" stroke-width="1.5" opacity="0.55">
+            <line x1="350" y1="310" x2="350" y2="85"/>
+            <line x1="350" y1="310" x2="545" y2="430"/>
+            <line x1="350" y1="310" x2="155" y2="430"/>
+          </g>
+          <g font-family="Inter, sans-serif" font-style="italic" fill="var(--gold)" font-size="11">
+            <text x="430" y="185" text-anchor="start">Own-label Primitivo</text>
+            <text x="430" y="199" text-anchor="start">2,900 btl/mo, exclusive</text>
+            <text x="500" y="345" text-anchor="middle">Direct relationship</text>
+            <text x="500" y="359" text-anchor="middle">Met at the Munich Wine Show</text>
+            <text x="200" y="345" text-anchor="middle">Direct relationship</text>
+            <text x="200" y="359" text-anchor="middle">Primitivo on shelf, tastings</text>
+          </g>
+          <g font-family="Inter, sans-serif" text-anchor="middle">
+            <circle cx="350" cy="85" r="55" fill="#150f0f" stroke="#7faaf0" stroke-width="2"/>
+            <text x="350" y="78" font-size="18">🚚</text>
+            <text x="350" y="97" font-size="11" font-weight="500" fill="var(--paper)">Hawesko GmbH</text>
+            <text x="350" y="111" font-size="8.5" fill="var(--dim)">Hamburg, DE · Distributor</text>
+
+            <circle cx="545" cy="430" r="55" fill="#150f0f" stroke="#4caf7d" stroke-width="2"/>
+            <text x="545" y="423" font-size="18">🍽</text>
+            <text x="545" y="442" font-size="11" font-weight="500" fill="var(--paper)">Bistro Laurent</text>
+            <text x="545" y="456" font-size="8.5" fill="var(--dim)">Frankfurt, DE · Restaurant</text>
+
+            <circle cx="155" cy="430" r="55" fill="#150f0f" stroke="#c9a84c" stroke-width="2"/>
+            <text x="155" y="423" font-size="18">🏪</text>
+            <text x="155" y="442" font-size="11" font-weight="500" fill="var(--paper)">Weinhaus Müller</text>
+            <text x="155" y="456" font-size="8.5" fill="var(--dim)">Munich, DE · Retail</text>
+          </g>
+          <circle cx="350" cy="310" r="85" fill="#150f0f" stroke="var(--wine)" stroke-width="3"/>
+          <text x="350" y="298" text-anchor="middle" font-size="26">🍇</text>
+          <text x="350" y="326" text-anchor="middle" font-family="Inter, sans-serif" font-size="15" font-weight="500" fill="var(--paper)">Cantina Rossi</text>
+          <text x="350" y="343" text-anchor="middle" font-family="Inter, sans-serif" font-size="10.5" fill="var(--dim)">Sicily, Italy · Winery</text>
+        </svg></div>
+      </div>
+
+      <!-- Dashboard Preview -->
+      <p style="font-size:0.65rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--dim);margin-bottom:0.8rem;margin-top:3rem">Platform Preview</p>
+      <h2 style="margin-bottom:0.5rem">Your winery <em>dashboard.</em></h2>
+      <p style="font-size:0.82rem;color:var(--dim);margin-bottom:2rem;max-width:500px">This is what you see after joining — a live view of your profile performance, distributor matches, market trends, and upcoming Wine Shows.</p>
+
+      <div class="preview-wrap">
+        <div class="preview-label">✦ Live Preview</div>
+        <!-- Mini dashboard mockup -->
+        <div class="mini-nav">
+          <span class="mini-logo">Bottle<span>&nbsp;Lobby</span></span>
+          <div style="margin-left:auto;display:flex;gap:0.5rem;align-items:center">
+            <span style="font-size:0.55rem;color:var(--wine);letter-spacing:0.1em;text-transform:uppercase">Cantina Rossi · Winery Member</span>
+            <div style="width:20px;height:20px;border-radius:50%;background:var(--wine);display:flex;align-items:center;justify-content:center;font-size:0.6rem">CR</div>
+          </div>
+        </div>
+        <div class="mini-inner">
+          <div class="mini-sidebar">
+            <div class="mini-nav-item active" style="border-left-color:var(--wine);background:rgba(107,26,26,0.1)"><span class="mini-nav-icon">⬡</span> Dashboard</div>
+            <div class="mini-nav-item"><span class="mini-nav-icon">◎</span> My Profile</div>
+            <div class="mini-nav-item"><span class="mini-nav-icon">◈</span> Wine Portfolio</div>
+            <div class="mini-nav-item" style="color:var(--wine)"><span class="mini-nav-icon">◇</span> Matches <span style="background:var(--wine);color:var(--paper);font-size:0.5rem;padding:0.1rem 0.35rem;border-radius:8px;margin-left:0.3rem">4</span></div>
+            <div class="mini-nav-item"><span class="mini-nav-icon">↑</span> Trends</div>
+            <div class="mini-nav-item"><span class="mini-nav-icon">✦</span> Wine Shows</div>
+            <div class="mini-nav-item"><span class="mini-nav-icon">✉</span> Messages</div>
+          </div>
+          <div class="mini-main">
+            <div class="mini-topbar">
+              <span class="mini-title">Good morning, Cantina Rossi ✦</span>
+              <span class="mini-btn" style="background:var(--wine);color:var(--paper)">+ Add Wine</span>
+            </div>
+            <div class="mini-stats">
+              <div class="mini-stat"><div class="mini-stat-val">1,240<span></span></div><div class="mini-stat-label">Profile Views</div></div>
+              <div class="mini-stat"><div class="mini-stat-val">4<span></span></div><div class="mini-stat-label">New Matches</div></div>
+              <div class="mini-stat"><div class="mini-stat-val">6<span></span></div><div class="mini-stat-label">Wines Listed</div></div>
+              <div class="mini-stat"><div class="mini-stat-val">24<span>k</span></div><div class="mini-stat-label">Bottles Distributed</div></div>
+            </div>
+            <div class="mini-grid2">
+              <div class="mini-widget">
+                <div class="mini-widget-title">Distributor Matches</div>
+                <div class="mini-match"><div class="mini-score">94%</div><div><div class="mini-match-name">Hawesko GmbH</div><div class="mini-match-loc">Hamburg · 850+ restaurants</div></div></div>
+                <div class="mini-match"><div class="mini-score">88%</div><div><div class="mini-match-name">Weinland Bayern</div><div class="mini-match-loc">Munich · 1,200+ restaurants</div></div></div>
+                <div class="mini-match"><div class="mini-score">81%</div><div><div class="mini-match-name">Vinco BV</div><div class="mini-match-loc">Amsterdam · 600+ restaurants</div></div></div>
+              </div>
+              <div class="mini-widget">
+                <div class="mini-widget-title">Trending in Germany</div>
+                <div class="mini-row"><span class="mini-row-label">Primitivo · Sicily ✦ You</span><span class="tag tag-g" style="font-size:0.5rem;padding:0.1rem 0.4rem;border-radius:2px;background:rgba(45,106,79,0.2);color:#4caf7d">↑ Hot</span></div>
+                <div class="mini-row"><span class="mini-row-label">Sauvignon Blanc</span><span class="mini-row-val" style="color:#4caf7d">↑ +12%</span></div>
+                <div class="mini-row"><span class="mini-row-label">Chardonnay</span><span class="mini-row-val" style="color:var(--dim)">→ Stable</span></div>
+                <div class="mini-row"><span class="mini-row-label">Tempranillo</span><span class="mini-row-val" style="color:#4caf7d">↑ +8%</span></div>
+                <div class="mini-row"><span class="mini-row-label">Merlot</span><span class="mini-row-val" style="color:#e07070">↓ −4%</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;gap:0.8rem;margin-top:1rem;flex-wrap:wrap">
+        <a href="bottle-lobby-winery-cantina-rossi.html" class="btn btn-gold">View Full Winery Profile →</a>
+        <a href="bottle-lobby-contact.html" class="btn btn-outline">Apply as Winery</a>
+        <a href="bottle-lobby-dashboard.html#winery" class="btn btn-outline">Explore Dashboard →</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- CASE STUDY: ADYAR -->
+  <section class="case-study" id="case-adyar">
+    <div class="container">
+      <p class="eyebrow">Real Case Study</p>
+      <h2>How we brought <em>Adyar</em> to Germany.</h2>
+      <p class="lead">This is what a Bottle Lobby market entry strategy looks like in practice. We executed this full campaign for Adyar — Lebanon's oldest monastic winery — and it's exactly what we do for every winery member who needs to enter a new market.</p>
+
+      <div class="case-header">
+        <div>
+          <div class="case-tag">● Live Case Study · Caracter Media × Adyar</div>
+          <div class="case-logo">ADYAR</div>
+          <p style="font-size:0.65rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--gold);margin-bottom:0.5rem">Oldest Monastic Winery of Lebanon · Crusader Era Heritage</p>
+          <p class="case-origin">Adyar is one of Lebanon's most extraordinary wine estates — nine monasteries, centuries of history, and the potential to equal Lebanon's entire current wine output. The challenge: zero presence in Germany, no distributor network, no market visibility.</p>
+          <p class="case-origin">Bottle Lobby was asked to change that. Here's exactly what we did.</p>
+        </div>
+        <div>
+          <div class="case-text">
+            <p><strong>The brief was simple but ambitious:</strong> take a winery with no German presence and no existing distribution relationships, and create real, lasting demand in premium gastronomy — within months, not years.</p>
+            <p>Our approach combined press strategy, distributor federation integration, a live B2B event series, and full import coordination — all synchronized so that by the time the press coverage launched, the product was already in Germany and ready to deliver.</p>
+            <p>The result was a complete, risk-free market entry that gave Adyar immediate placement in premium restaurants and a foundation for long-term national expansion.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Phases -->
+      <p style="font-size:0.65rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--dim);margin-bottom:1.2rem">The 4-Phase Strategy</p>
+      <div class="case-phases">
+        <div class="case-phase">
+          <div class="cp-num">1</div>
+          <div class="cp-title">The Lebanon Trip</div>
+          <p class="cp-text">We curated an exclusive trip to Lebanon for journalists from Meininger, Falstaff, Vinum, and Der Feinschmecker — plus senior representatives from the FFD, Germany's national federation of leading wine wholesalers. They visited all nine Adyar monasteries, met the monks, and experienced the winery's spiritual heritage first-hand.</p>
+        </div>
+        <div class="case-phase">
+          <div class="cp-num">2</div>
+          <div class="cp-title">Press & PR Launch</div>
+          <p class="cp-text">Journalists returned as long-term ambassadors — publishing reviews, monastery stories, and brand features across Germany's top wine media. Coverage in Meininger, Falstaff, and Der Feinschmecker created national visibility and positioned Adyar as a cultural discovery, not just another imported wine.</p>
+        </div>
+        <div class="case-phase">
+          <div class="cp-num">3</div>
+          <div class="cp-title">FLAIR of ADYAR Events</div>
+          <p class="cp-text">We hosted a series of high-impact regional B2B events — "FLAIR of ADYAR" — in collaboration with FFD member distributors across Germany. Each event featured Adyar's oenologist, a Maronite monk, as the living embodiment of the brand. Distributors invited their key gastronomy clients. Orders were placed on the night.</p>
+        </div>
+        <div class="case-phase">
+          <div class="cp-num">4</div>
+          <div class="cp-title">Import & Availability</div>
+          <p class="cp-text">Caracter Media secured the full German import in advance — so that the moment press coverage launched and events created demand, the product was already in Germany and ready to deliver. Zero risk for distributors. Immediate fulfillment for restaurants.</p>
+        </div>
+      </div>
+
+      <!-- Results -->
+      <p style="font-size:0.65rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--dim);margin-bottom:1.2rem">The Outcome</p>
+      <div class="case-results">
+        <div class="case-result">
+          <div class="cr-val">4<span>+</span></div>
+          <div class="cr-label">Top wine media outlets covering Adyar nationally</div>
+        </div>
+        <div class="case-result" style="background:#560e0e">
+          <div class="cr-val">FFD<span></span></div>
+          <div class="cr-label">National wholesaler federation integrated as distribution backbone</div>
+        </div>
+        <div class="case-result">
+          <div class="cr-val">0<span>€</span></div>
+          <div class="cr-label">Risk for distributors — product secured & ready before events</div>
+        </div>
+      </div>
+
+      <div class="case-quote">
+        <p>"This structure creates a seamless win-win ecosystem: restaurants gain a unique premium wine, distributors gain ready-made demand, the federation strengthens its value offering, and the winery achieves rapid and stable market penetration."</p>
+        <cite>— Serge Khaled, Co-Founder, Bottle Lobby · Adyar Strategy Document, 2025</cite>
+      </div>
+
+      <!-- What this means for you -->
+      <div style="margin-top:3rem;background:#110d0d;border:1px solid var(--line);padding:2.5rem">
+        <p style="font-size:0.65rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin-bottom:1rem">What This Means For Your Winery</p>
+        <p style="font-size:1.1rem;font-family:'Cormorant Garamond',serif;color:var(--paper);line-height:1.5;margin-bottom:1rem">The Adyar strategy is not unique to Adyar. It is the Bottle Lobby methodology — available to every winery member who joins our platform and wants to enter the German or European market.</p>
+        <p style="font-size:0.82rem;color:var(--dim);line-height:1.8;max-width:700px">We have the press contacts. We have the FFD relationship. We have the import infrastructure. We have the distributor network. And we have the event format that creates real, immediate demand — with zero stock risk for the distributor. All you need to bring is great wine and the ambition to grow.</p>
+        <a href="bottle-lobby-contact.html" class="btn btn-gold" style="margin-top:1.5rem;display:inline-block">Apply as a Winery Member →</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROVEN IN THE FIELD -->
+  <section style="background:var(--paper);padding:7rem 3rem" id="press-proof">
+    <div class="container">
+      <p style="font-size:0.62rem;letter-spacing:0.25em;text-transform:uppercase;color:var(--wine);margin-bottom:1rem;display:flex;align-items:center;gap:1rem"><span style="display:block;width:28px;height:1px;background:var(--wine)"></span>Proven in the Field</p>
+      <h2 style="color:var(--ink);margin-bottom:0.8rem">This is not a concept. <em style="color:var(--wine)">It is a track record.</em></h2>
+      <p style="font-size:0.88rem;color:rgba(14,11,11,0.55);max-width:680px;line-height:1.9;margin-bottom:4rem">The Bottle Lobby methodology has been executed in full — with real wineries, real press coverage in Europe's leading wine publications, and real B2B events across Germany. Here is what it looks like in practice.</p>
+
+      <!-- Press Coverage Grid -->
+      <p style="font-size:0.62rem;letter-spacing:0.2em;text-transform:uppercase;color:rgba(14,11,11,0.35);margin-bottom:1.2rem">Press Coverage — VINUM Weinmagazin</p>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:rgba(14,11,11,0.08);border:1px solid rgba(14,11,11,0.08);margin-bottom:3rem">
+
+        <div style="background:var(--paper);padding:2rem">
+          <div style="font-size:0.58rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--wine);margin-bottom:0.8rem">VINUM · März 2019 · ProWein</div>
+          <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:400;color:var(--ink);margin-bottom:0.6rem;line-height:1.2">Grosse Weine aus einem kleinen Land</h3>
+          <p style="font-size:0.78rem;color:rgba(14,11,11,0.55);line-height:1.8;margin-bottom:1rem">VINUM magazine published a feature on Lebanese wines for their ProWein 2019 edition — curated and presented by Kelly Khaled and Serge Khaled of Caracter Media. The tasting was held at Hall 14, C61, ProWein Düsseldorf.</p>
+          <div style="font-size:0.65rem;color:rgba(14,11,11,0.4);font-style:italic">"Kelly Khaled und sein Sohn Serge haben als Chefs von Caracter Media in Karlsbad familiäre Verbindungen in dieses wunderbare Weinland."<br><span style="font-style:normal;color:var(--wine);margin-top:0.3rem;display:block">— VINUM, März 2019</span></div>
+        </div>
+
+        <div style="background:var(--paper);padding:2rem;border-left:1px solid rgba(14,11,11,0.08)">
+          <div style="font-size:0.58rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--wine);margin-bottom:0.8rem">VINUM · Mai 2019 · Full Guide</div>
+          <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:400;color:var(--ink);margin-bottom:0.6rem;line-height:1.2">Boom in der Levante — Weinguide Libanon</h3>
+          <p style="font-size:0.78rem;color:rgba(14,11,11,0.55);line-height:1.8;margin-bottom:1rem">VINUM dedicated a full 5-page wine guide to Lebanon, with Caracter Media listed as the German importer for 12+ highly-rated estates. 100 wines tasted, 33 selected, including multiple 17-18 point ratings.</p>
+          <div style="display:flex;flex-direction:column;gap:0.3rem;margin-bottom:1rem">
+            <div style="display:flex;justify-content:space-between;font-size:0.68rem;padding:0.3rem 0;border-bottom:1px solid rgba(14,11,11,0.07)"><span style="color:rgba(14,11,11,0.6)">Domaine Wardy Private Selection</span><span style="color:var(--wine);font-weight:600">18 Punkte</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:0.68rem;padding:0.3rem 0;border-bottom:1px solid rgba(14,11,11,0.07)"><span style="color:rgba(14,11,11,0.6)">Château Barka 2012</span><span style="color:var(--wine);font-weight:600">17 Punkte</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:0.68rem;padding:0.3rem 0"><span style="color:rgba(14,11,11,0.6)">Château Fakra Collection Privée</span><span style="color:var(--wine);font-weight:600">17 Punkte</span></div>
+          </div>
+          <a href="https://www.vinum.eu/de/magazin/weinguides/2019/05/weinguide-libanon/" target="_blank" style="font-size:0.62rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--wine);text-decoration:none;border-bottom:1px solid rgba(107,26,26,0.3)">Read Full Guide → vinum.eu</a>
+        </div>
+
+        <div style="background:var(--paper);padding:2rem;border-left:1px solid rgba(14,11,11,0.08)">
+          <div style="font-size:0.58rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--wine);margin-bottom:0.8rem">VINUM · April 2019 · Interview</div>
+          <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:400;color:var(--ink);margin-bottom:0.6rem;line-height:1.2">Coteaux du Liban — Roula Khater Interview</h3>
+          <p style="font-size:0.78rem;color:rgba(14,11,11,0.55);line-height:1.8;margin-bottom:1rem">Following the Lebanon press trip, VINUM published an in-depth profile of winery owner Roula Ghantous Abou Khater — distributed by Caracter Media in Germany — demonstrating the long-term editorial value of a well-executed press strategy.</p>
+          <div style="font-size:0.65rem;color:rgba(14,11,11,0.4);font-style:italic">Continued press coverage keeps the winery visible and relevant — long after the initial launch event.</div>
+        </div>
+      </div>
+
+      <!-- Events Timeline -->
+      <p style="font-size:0.62rem;letter-spacing:0.2em;text-transform:uppercase;color:rgba(14,11,11,0.35);margin-bottom:1.2rem">FLAIR of LEBANON — B2B Wine Show Events</p>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:rgba(14,11,11,0.08);border:1px solid rgba(14,11,11,0.08);margin-bottom:3rem">
+        <div style="background:var(--paper);padding:1.6rem 1.4rem">
+          <div style="font-size:0.58rem;letter-spacing:0.15em;text-transform:uppercase;color:rgba(14,11,11,0.35);margin-bottom:0.5rem">Event 1</div>
+          <h4 style="font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-weight:400;color:var(--ink);margin-bottom:0.4rem">FLAIR of LEBANON — Agenda</h4>
+          <p style="font-size:0.72rem;color:rgba(14,11,11,0.5);line-height:1.7;margin-bottom:0.8rem">The original event series programme — regional tastings, distributor integration, and gastronomy events across Germany.</p>
+          <a href="https://www.weinstore24.de/de/content/110-agenda" target="_blank" style="font-size:0.6rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--wine);text-decoration:none;border-bottom:1px solid rgba(107,26,26,0.3)">View Agenda →</a>
+        </div>
+        <div style="background:var(--paper);padding:1.6rem 1.4rem;border-left:1px solid rgba(14,11,11,0.08)">
+          <div style="font-size:0.58rem;letter-spacing:0.15em;text-transform:uppercase;color:rgba(14,11,11,0.35);margin-bottom:0.5rem">Event 2</div>
+          <h4 style="font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-weight:400;color:var(--ink);margin-bottom:0.4rem">FLAIR of LEBANON — Düsseldorf</h4>
+          <p style="font-size:0.72rem;color:rgba(14,11,11,0.5);line-height:1.7;margin-bottom:0.8rem">Regional B2B wine show in Düsseldorf — distributors, restaurant buyers, and key gastronomy clients attending in person.</p>
+          <a href="https://www.weinstore24.de/de/content/113-flair-of-lebanon-duesseldorf" target="_blank" style="font-size:0.6rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--wine);text-decoration:none;border-bottom:1px solid rgba(107,26,26,0.3)">View Event →</a>
+        </div>
+        <div style="background:var(--paper);padding:1.6rem 1.4rem;border-left:1px solid rgba(14,11,11,0.08)">
+          <div style="font-size:0.58rem;letter-spacing:0.15em;text-transform:uppercase;color:rgba(14,11,11,0.35);margin-bottom:0.5rem">Event 3</div>
+          <h4 style="font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-weight:400;color:var(--ink);margin-bottom:0.4rem">FLAIR of LEBANON — Hamburg</h4>
+          <p style="font-size:0.72rem;color:rgba(14,11,11,0.5);line-height:1.7;margin-bottom:0.8rem">Hamburg edition — co-hosted with regional distributor partners, bringing Lebanese wine producers directly to northern German gastronomy buyers.</p>
+          <a href="https://www.weinstore24.de/de/content/114-flair-of-lebanon-hamburg" target="_blank" style="font-size:0.6rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--wine);text-decoration:none;border-bottom:1px solid rgba(107,26,26,0.3)">View Event →</a>
+        </div>
+        <div style="background:var(--paper);padding:1.6rem 1.4rem;border-left:1px solid rgba(14,11,11,0.08)">
+          <div style="font-size:0.58rem;letter-spacing:0.15em;text-transform:uppercase;color:rgba(14,11,11,0.35);margin-bottom:0.5rem">Event 4 · Digital</div>
+          <h4 style="font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-weight:400;color:var(--ink);margin-bottom:0.4rem">FLAIR of LEBANON — eTasting 2020</h4>
+          <p style="font-size:0.72rem;color:rgba(14,11,11,0.5);line-height:1.7;margin-bottom:0.8rem">When COVID shut down live events, we adapted to online format — proving the model works in any environment. Digital tasting with distributors and press.</p>
+          <a href="https://www.weinstore24.de/de/content/112-etasting-flair-of-lebanon-am-070520-um-1800" target="_blank" style="font-size:0.6rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--wine);text-decoration:none;border-bottom:1px solid rgba(107,26,26,0.3)">View eTasting →</a>
+        </div>
+      </div>
+
+      <!-- vs ProWein argument -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;margin-bottom:3rem">
+        <div style="background:rgba(14,11,11,0.04);border:1px solid rgba(14,11,11,0.08);padding:2rem">
+          <p style="font-size:0.62rem;letter-spacing:0.15em;text-transform:uppercase;color:rgba(14,11,11,0.35);margin-bottom:0.8rem">❌ The Old Way — ProWein &amp; Trade Fairs</p>
+          <div style="display:flex;flex-direction:column;gap:0.5rem">
+            <div style="font-size:0.78rem;color:rgba(14,11,11,0.55);padding:0.5rem 0;border-bottom:1px solid rgba(14,11,11,0.06)">€20,000–50,000 booth cost per year</div>
+            <div style="font-size:0.78rem;color:rgba(14,11,11,0.55);padding:0.5rem 0;border-bottom:1px solid rgba(14,11,11,0.06)">60,000+ wines competing for attention</div>
+            <div style="font-size:0.78rem;color:rgba(14,11,11,0.55);padding:0.5rem 0;border-bottom:1px solid rgba(14,11,11,0.06)">No targeted audience — anyone walks by</div>
+            <div style="font-size:0.78rem;color:rgba(14,11,11,0.55);padding:0.5rem 0;border-bottom:1px solid rgba(14,11,11,0.06)">No guaranteed press or follow-up</div>
+            <div style="font-size:0.78rem;color:rgba(14,11,11,0.55);padding:0.5rem 0;border-bottom:1px solid rgba(14,11,11,0.06)">No distributor integration or pre-sold demand</div>
+            <div style="font-size:0.78rem;color:rgba(14,11,11,0.55);padding:0.5rem 0">ProWein is now phasing out</div>
+          </div>
+        </div>
+        <div style="background:rgba(107,26,26,0.06);border:1px solid rgba(107,26,26,0.15);padding:2rem">
+          <p style="font-size:0.62rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--wine);margin-bottom:0.8rem">✓ The Bottle Lobby Way</p>
+          <div style="display:flex;flex-direction:column;gap:0.5rem">
+            <div style="font-size:0.78rem;color:rgba(14,11,11,0.7);padding:0.5rem 0;border-bottom:1px solid rgba(107,26,26,0.08)">Press campaign in VINUM, Meininger, Falstaff</div>
+            <div style="font-size:0.78rem;color:rgba(14,11,11,0.7);padding:0.5rem 0;border-bottom:1px solid rgba(107,26,26,0.08)">Pre-qualified audience — real buyers only</div>
+            <div style="font-size:0.78rem;color:rgba(14,11,11,0.7);padding:0.5rem 0;border-bottom:1px solid rgba(107,26,26,0.08)">Distributor co-hosts — their clients attend</div>
+            <div style="font-size:0.78rem;color:rgba(14,11,11,0.7);padding:0.5rem 0;border-bottom:1px solid rgba(107,26,26,0.08)">Orders placed on the night, no stock risk</div>
+            <div style="font-size:0.78rem;color:rgba(14,11,11,0.7);padding:0.5rem 0;border-bottom:1px solid rgba(107,26,26,0.08)">Ongoing editorial coverage after events</div>
+            <div style="font-size:0.78rem;color:rgba(14,11,11,0.7);padding:0.5rem 0">Works live, digital, or hybrid</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- YouTube Video -->
+      <p style="font-size:0.62rem;letter-spacing:0.2em;text-transform:uppercase;color:rgba(14,11,11,0.35);margin-bottom:1.2rem">See It in Action</p>
+      <div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;background:rgba(14,11,11,0.05);border:1px solid rgba(14,11,11,0.08);margin-bottom:2rem">
+        <iframe
+          src="https://www.youtube.com/embed/CvXbMJG2dPg"
+          title="FLAIR of LEBANON — Bottle Lobby Wine Show"
+          frameborder="0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowfullscreen
+          style="position:absolute;top:0;left:0;width:100%;height:100%">
+        </iframe>
+      </div>
+      <p style="font-size:0.78rem;color:rgba(14,11,11,0.45);text-align:center;margin-bottom:3rem">FLAIR of LEBANON — A real Bottle Lobby B2B Wine Show event</p>
+
+      <!-- Campaign arc summary -->
+      <div style="background:rgba(107,26,26,0.05);border:1px solid rgba(107,26,26,0.12);padding:2.5rem">
+        <p style="font-size:0.65rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--wine);margin-bottom:1rem">The Full Campaign Arc — What We Do For Every Winery</p>
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:1rem;margin-bottom:1.5rem">
+          <div style="text-align:center">
+            <div style="font-family:'Cormorant Garamond',serif;font-size:2rem;color:rgba(107,26,26,0.2);line-height:1;margin-bottom:0.4rem">1</div>
+            <div style="font-size:0.65rem;color:var(--wine);font-weight:500;margin-bottom:0.3rem">Strategy</div>
+            <div style="font-size:0.7rem;color:rgba(14,11,11,0.5);line-height:1.6">Custom market entry plan for your winery & target country</div>
+          </div>
+          <div style="text-align:center">
+            <div style="font-family:'Cormorant Garamond',serif;font-size:2rem;color:rgba(107,26,26,0.2);line-height:1;margin-bottom:0.4rem">2</div>
+            <div style="font-size:0.65rem;color:var(--wine);font-weight:500;margin-bottom:0.3rem">Press Trip</div>
+            <div style="font-size:0.7rem;color:rgba(14,11,11,0.5);line-height:1.6">Journalists from top wine media visit your estate</div>
+          </div>
+          <div style="text-align:center">
+            <div style="font-family:'Cormorant Garamond',serif;font-size:2rem;color:rgba(107,26,26,0.2);line-height:1;margin-bottom:0.4rem">3</div>
+            <div style="font-size:0.65rem;color:var(--wine);font-weight:500;margin-bottom:0.3rem">Coverage</div>
+            <div style="font-size:0.7rem;color:rgba(14,11,11,0.5);line-height:1.6">Articles, guides & features published in VINUM, Meininger, Falstaff</div>
+          </div>
+          <div style="text-align:center">
+            <div style="font-family:'Cormorant Garamond',serif;font-size:2rem;color:rgba(107,26,26,0.2);line-height:1;margin-bottom:0.4rem">4</div>
+            <div style="font-size:0.65rem;color:var(--wine);font-weight:500;margin-bottom:0.3rem">B2B Events</div>
+            <div style="font-size:0.7rem;color:rgba(14,11,11,0.5);line-height:1.6">FLAIR Wine Shows with pre-qualified distributor client audiences</div>
+          </div>
+          <div style="text-align:center">
+            <div style="font-family:'Cormorant Garamond',serif;font-size:2rem;color:rgba(107,26,26,0.2);line-height:1;margin-bottom:0.4rem">5</div>
+            <div style="font-size:0.65rem;color:var(--wine);font-weight:500;margin-bottom:0.3rem">Sales</div>
+            <div style="font-size:0.7rem;color:rgba(14,11,11,0.5);line-height:1.6">Orders placed on the night. Import secured. Distributor delivers. Zero risk.</div>
+          </div>
+        </div>
+        <div style="text-align:center">
+          <a href="bottle-lobby-contact.html" class="btn btn-gold">Start Your Campaign →</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Services Included -->
+  <div class="services-box">
+    <div class="container">
+      <p class="eyebrow">What's Included</p>
+      <h2 style="color:var(--ink)">Your membership <em style="color:var(--wine)">includes all of this.</em></h2>
+      <div class="services-grid">
+        <div class="service-item"><div class="service-icon">◎</div><h4>Platform Profile & SEO</h4><p>A fully indexed winery profile with virtual showrooms, wine listings, awards, and stylistic data — promoted on the platform and in our printed distributor wine guide.</p></div>
+        <div class="service-item"><div class="service-icon">◈</div><h4>Smart Matchmaking</h4><p>Data-driven matching with distributors based on portfolio gaps, regional demand, and client compatibility. You see match scores and make the first move.</p></div>
+        <div class="service-item"><div class="service-icon">◇</div><h4>Market Intelligence</h4><p>Monthly trend reports covering consumer behaviour, variety rankings, pricing benchmarks, and regional demand signals across Germany and Europe.</p></div>
+        <div class="service-item"><div class="service-icon">✦</div><h4>B2B Wine Show Access</h4><p>Participate in curated regional tastings with pre-qualified buyers. Your participation fee covers planning, promotion, and access to the distributor's client network.</p></div>
+        <div class="service-item"><div class="service-icon">⬡</div><h4>Direct Messaging</h4><p>Communicate directly with distributors and restaurants through the platform. No email chains, no missed opportunities. Fast, transparent, documented.</p></div>
+        <div class="service-item"><div class="service-icon">◐</div><h4>Branding & PR (Add-on)</h4><p>Optional premium services: label design, PR campaigns, press outreach, journalist trips, virtual tastings, import compliance, and market entry strategy workshops.</p></div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /winery panel -->
+
+<!-- ══════════════════════════════
+     DISTRIBUTOR SECTION
+══════════════════════════════ -->
+<div class="role-panel" id="distributor">
+
+  <section class="dist-section" id="dist-benefits">
+    <div class="container">
+      <p class="eyebrow">For Distributors</p>
+      <h2>Stop drowning in options. <em>Start finding the right ones.</em></h2>
+      <p class="lead">You don't need more wines. You need the right wines — pre-validated, exclusively yours, supported by demand creation you don't have to do yourself. That's exactly what Bottle Lobby delivers.</p>
+      <div class="dist-benefits">
+        <div class="dist-benefit">
+          <div class="benefit-icon">◎</div>
+          <div class="benefit-num">01</div>
+          <h3>Curated Winery Matchmaking</h3>
+          <p>Our algorithm surfaces wineries whose production, variety, origin, and volume match exactly what your portfolio needs — based on your client base, your region, and the gaps you tell us about. No more endless catalogues.</p>
+        </div>
+        <div class="dist-benefit">
+          <div class="benefit-icon">◈</div>
+          <div class="benefit-num">02</div>
+          <h3>Exclusive Own-Label Wines</h3>
+          <p>Source protected, single-varietal wines from their authentic regions under your exclusive own-label. Your Chardonnay from Chablis. Your Primitivo from Sicily. No competitor can list the same bottle. No price wars.</p>
+        </div>
+        <div class="dist-benefit">
+          <div class="benefit-icon">◇</div>
+          <div class="benefit-num">03</div>
+          <h3>Risk-Free Market Testing</h3>
+          <p>Never commit to large volumes without knowing demand first. Our Wine Shows let you test any wine with your existing clients before ordering. Real feedback, real appetite assessment, zero inventory risk.</p>
+        </div>
+        <div class="dist-benefit">
+          <div class="benefit-icon">✦</div>
+          <div class="benefit-num">04</div>
+          <h3>Ready-Made Demand</h3>
+          <p>We create demand for the wines before you have to sell them. Press coverage, journalist trips, media campaigns — when a wine lands in your portfolio through Bottle Lobby, it already has a story your clients want to hear.</p>
+        </div>
+        <div class="dist-benefit">
+          <div class="benefit-icon">⬡</div>
+          <div class="benefit-num">05</div>
+          <h3>Trend Intelligence Dashboard</h3>
+          <p>Real-time access to consumer trend data, variety rankings, pricing movements, and regional demand patterns. Know what's trending in Q1 before your competitors know it in Q3.</p>
+        </div>
+        <div class="dist-benefit">
+          <div class="benefit-icon">◐</div>
+          <div class="benefit-num">06</div>
+          <h3>Co-host Wine Shows</h3>
+          <p>Partner with Bottle Lobby to host exclusive B2B tastings for your restaurant clients. We manage logistics, bring the winery, and handle the event. You strengthen your client relationships and validate new products — all in one evening.</p>
+        </div>
+
+      </div>
+
+      <!-- How it works -->
+      <p style="font-size:0.65rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--dim);margin-bottom:1.2rem">How It Works</p>
+      <div class="steps-grid">
+        <div class="step">
+          <span class="step-tag" style="background:rgba(127,170,240,0.1);color:#7faaf0">Step 1</span>
+          <div class="step-num">1</div>
+          <h4>Join & Define Your Needs</h4>
+          <p>Tell us your distribution regions, portfolio focus, and gaps. We set up your distributor profile and activate matchmaking.</p>
+        </div>
+        <div class="step">
+          <span class="step-tag" style="background:rgba(127,170,240,0.1);color:#7faaf0">Step 2</span>
+          <div class="step-num">2</div>
+          <h4>Receive Winery Matches</h4>
+          <p>We surface the highest-fit wineries based on your needs. Review profiles, tasting notes, volume capacity, and ex-cellar pricing.</p>
+        </div>
+        <div class="step">
+          <span class="step-tag" style="background:rgba(127,170,240,0.1);color:#7faaf0">Step 3</span>
+          <div class="step-num">3</div>
+          <h4>Test at a Wine Show</h4>
+          <p>Co-host a Bottle Lobby Wine Show with your selected winery. Your restaurant clients taste and give real feedback. Orders placed on the night.</p>
+        </div>
+        <div class="step">
+          <span class="step-tag" style="background:rgba(127,170,240,0.1);color:#7faaf0">Step 4</span>
+          <div class="step-num">4</div>
+          <h4>List with Exclusivity</h4>
+          <p>Confirmed wines are listed under your exclusive own-label. Price-protected, demand-validated, and ready to integrate into your portfolio.</p>
+        </div>
+      </div>
+
+      <!-- Network Block (Distributor-focused) -->
+      <div class="network-block">
+        <div>
+          <p class="network-block-eyebrow" style="color:#7faaf0">Not A Concept — A Working Network</p>
+          <div class="network-block-text">Hawesko's own-label program isn't built on guesswork — it runs on relationships the platform already validated. A winery in Sicily supplies five exclusive SKUs under co-developed own-label terms, each one priced and positioned before a single bottle ships. Over 850 restaurants across northern Germany and Scandinavia pull from that same portfolio, giving every new own-label wine an existing network to land in rather than a cold market to build from scratch. And a Munich retailer now channels a slice of that same volume through in-store tastings, turning shelf space into another outlet for wines Hawesko already committed to. One distributor, one connected portfolio, three very different sales channels all drawing from the same protected pricing and the same trusted producer relationships.</div>
+        </div>
+        <div><svg viewBox="0 0 700 500" style="width:100%;height:auto;display:block" xmlns="http://www.w3.org/2000/svg">
+          <g stroke="var(--gold)" stroke-width="1.5" opacity="0.55">
+            <line x1="350" y1="310" x2="350" y2="85"/>
+            <line x1="350" y1="310" x2="545" y2="430"/>
+            <line x1="350" y1="310" x2="155" y2="430"/>
+          </g>
+          <g font-family="Inter, sans-serif" font-style="italic" fill="var(--gold)" font-size="11">
+            <text x="430" y="185" text-anchor="start">5 own-label SKUs</text>
+            <text x="430" y="199" text-anchor="start">co-developed, exclusive</text>
+            <text x="500" y="345" text-anchor="middle">Primary distributor</text>
+            <text x="500" y="359" text-anchor="middle">since 2022, 850+ network</text>
+            <text x="200" y="345" text-anchor="middle">Primary supplier</text>
+            <text x="200" y="359" text-anchor="middle">since 2023, retail channel</text>
+          </g>
+          <g font-family="Inter, sans-serif" text-anchor="middle">
+            <circle cx="350" cy="85" r="55" fill="#150f0f" stroke="var(--wine)" stroke-width="2"/>
+            <text x="350" y="78" font-size="18">🍇</text>
+            <text x="350" y="97" font-size="11" font-weight="500" fill="var(--paper)">Cantina Rossi</text>
+            <text x="350" y="111" font-size="8.5" fill="var(--dim)">Sicily, Italy · Winery</text>
+
+            <circle cx="545" cy="430" r="55" fill="#150f0f" stroke="#4caf7d" stroke-width="2"/>
+            <text x="545" y="423" font-size="18">🍽</text>
+            <text x="545" y="442" font-size="11" font-weight="500" fill="var(--paper)">Bistro Laurent</text>
+            <text x="545" y="456" font-size="8.5" fill="var(--dim)">Frankfurt, DE · Restaurant</text>
+
+            <circle cx="155" cy="430" r="55" fill="#150f0f" stroke="#c9a84c" stroke-width="2"/>
+            <text x="155" y="423" font-size="18">🏪</text>
+            <text x="155" y="442" font-size="11" font-weight="500" fill="var(--paper)">Weinhaus Müller</text>
+            <text x="155" y="456" font-size="8.5" fill="var(--dim)">Munich, DE · Retail</text>
+          </g>
+          <circle cx="350" cy="310" r="85" fill="#150f0f" stroke="#7faaf0" stroke-width="3"/>
+          <text x="350" y="298" text-anchor="middle" font-size="26">🚚</text>
+          <text x="350" y="326" text-anchor="middle" font-family="Inter, sans-serif" font-size="15" font-weight="500" fill="var(--paper)">Hawesko GmbH</text>
+          <text x="350" y="343" text-anchor="middle" font-family="Inter, sans-serif" font-size="10.5" fill="var(--dim)">Hamburg, DE · Distributor</text>
+        </svg></div>
+      </div>
+
+      <!-- Dashboard Preview (distributor) -->
+      <p style="font-size:0.65rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--dim);margin-bottom:0.8rem;margin-top:3rem">Platform Preview</p>
+      <h2 style="margin-bottom:0.5rem">Your distributor <em>dashboard.</em></h2>
+      <p style="font-size:0.82rem;color:var(--dim);margin-bottom:2rem;max-width:500px">This is what you see after joining — a live view of your own-label portfolio, winery matches, and restaurant reach.</p>
+      <div class="preview-wrap" style="background:#070d1a;border-color:rgba(100,140,220,0.15)">
+        <div class="preview-label">✦ Distributor Dashboard</div>
+        <div class="mini-nav" style="background:#040810">
+          <span class="mini-logo">Bottle<span>&nbsp;Lobby</span></span>
+          <div style="margin-left:auto;display:flex;gap:0.5rem;align-items:center">
+            <span style="font-size:0.55rem;color:#7faaf0;letter-spacing:0.1em;text-transform:uppercase">Hawesko GmbH · Distributor Member</span>
+            <div style="width:20px;height:20px;border-radius:50%;background:#1a3a6b;display:flex;align-items:center;justify-content:center;font-size:0.6rem">HW</div>
+          </div>
+        </div>
+        <div class="mini-inner">
+          <div class="mini-sidebar" style="background:#070d1a">
+            <div class="mini-nav-item active" style="border-left-color:#7faaf0;background:rgba(127,170,240,0.05)"><span class="mini-nav-icon">⬡</span> Dashboard</div>
+            <div class="mini-nav-item"><span class="mini-nav-icon">◈</span> Own-Label Wines</div>
+            <div class="mini-nav-item" style="color:#7faaf0"><span class="mini-nav-icon">◇</span> Matches <span style="background:#1a3a6b;color:#7faaf0;font-size:0.5rem;padding:0.1rem 0.35rem;border-radius:8px;margin-left:0.3rem">6</span></div>
+            <div class="mini-nav-item"><span class="mini-nav-icon">↑</span> Trend Analytics</div>
+            <div class="mini-nav-item"><span class="mini-nav-icon">✦</span> Wine Shows</div>
+          </div>
+          <div class="mini-main" style="background:#0a1020">
+            <div class="mini-topbar">
+              <span class="mini-title">Welcome back, Müller Wein ✦</span>
+              <span class="mini-btn" style="background:#1e3c78;color:var(--paper)">+ Host Wine Show</span>
+            </div>
+            <div class="mini-stats">
+              <div class="mini-stat" style="background:#0a1020"><div class="mini-stat-val">12<span></span></div><div class="mini-stat-label">Active Wineries</div></div>
+              <div class="mini-stat" style="background:#0a1020"><div class="mini-stat-val">8<span></span></div><div class="mini-stat-label">Own-Label SKUs</div></div>
+              <div class="mini-stat" style="background:#0a1020"><div class="mini-stat-val">186<span>k</span></div><div class="mini-stat-label">Bottles Moved</div></div>
+              <div class="mini-stat" style="background:#0a1020"><div class="mini-stat-val">1,140<span></span></div><div class="mini-stat-label">Restaurant Clients</div></div>
+            </div>
+            <div class="mini-grid2">
+              <div class="mini-widget" style="background:#0a1020">
+                <div class="mini-widget-title">Own-Label Portfolio</div>
+                <div class="mini-row"><span class="mini-row-label">Sauvignon Blanc · Sancerre</span><span class="tag tag-g" style="font-size:0.5rem;padding:0.1rem 0.4rem;border-radius:2px;background:rgba(45,106,79,0.2);color:#4caf7d">4.2k/mo</span></div>
+                <div class="mini-row"><span class="mini-row-label">Chardonnay · Chablis</span><span class="tag tag-g" style="font-size:0.5rem;padding:0.1rem 0.4rem;border-radius:2px;background:rgba(45,106,79,0.2);color:#4caf7d">3.8k/mo</span></div>
+                <div class="mini-row"><span class="mini-row-label">Primitivo · Sicily</span><span class="tag tag-g" style="font-size:0.5rem;padding:0.1rem 0.4rem;border-radius:2px;background:rgba(45,106,79,0.2);color:#4caf7d">2.9k/mo</span></div>
+                <div class="mini-row"><span class="mini-row-label">Riesling · Mosel</span><span style="font-size:0.5rem;color:var(--gold)">Pending</span></div>
+              </div>
+              <div class="mini-widget" style="background:#0a1020">
+                <div class="mini-widget-title">New Winery Matches</div>
+                <div class="mini-match"><div class="mini-score" style="border-color:#7faaf0;color:#7faaf0">97%</div><div><div class="mini-match-name">Château Moreau</div><div class="mini-match-loc">Sancerre · Sauv. Blanc</div></div></div>
+                <div class="mini-match"><div class="mini-score" style="border-color:#7faaf0;color:#7faaf0">91%</div><div><div class="mini-match-name">Cantina Rossi</div><div class="mini-match-loc">Sicily · Primitivo</div></div></div>
+                <div class="mini-match"><div class="mini-score" style="border-color:#7faaf0;color:#7faaf0">84%</div><div><div class="mini-match-name">Bodegas Ruiz</div><div class="mini-match-loc">Rioja · Tempranillo</div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;gap:0.8rem;margin-top:1rem;flex-wrap:wrap">
+        <a href="bottle-lobby-distributor-hawesko-gmbh.html" class="btn btn-gold">View Full Distributor Profile →</a>
+        <a href="bottle-lobby-contact.html" class="btn btn-outline">Apply as Distributor</a>
+        <a href="bottle-lobby-dashboard.html#distributor" class="btn btn-outline">Explore Dashboard →</a>
+      </div>
+      <!-- Proven Risk Reduction Box -->
+      <div style="background:rgba(30,60,120,0.08);border:1px solid rgba(100,140,220,0.15);padding:2.5rem;margin-top:3rem">
+        <p style="font-size:0.65rem;letter-spacing:0.2em;text-transform:uppercase;color:#7faaf0;margin-bottom:1rem">✦ Why This Is Better Than ProWein</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:3rem;align-items:start">
+          <div>
+            <h3 style="font-family:Cormorant Garamond,serif;font-size:1.5rem;font-weight:300;color:var(--paper);margin-bottom:0.8rem">We create the demand before you have to sell.</h3>
+            <p style="font-size:0.82rem;color:var(--dim);line-height:1.85">When a Bottle Lobby Wine Show comes to your region, the wines are already known. Press coverage in VINUM, Meininger, and Falstaff has already built awareness. Journalists who visited the winery are in the room. Your clients taste wines they've already read about — and place orders on the night.</p>
+            <p style="font-size:0.82rem;color:var(--dim);line-height:1.85;margin-top:0.8rem">Caracter Media secures the import in advance, so you can deliver immediately. No stock risk. No marketing cost. No branding burden.</p>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:0.5rem">
+            <div style="display:flex;align-items:flex-start;gap:0.8rem;padding:0.8rem;background:rgba(247,243,238,0.03);border:1px solid rgba(100,140,220,0.1)">
+              <span style="color:#7faaf0;font-size:0.9rem;flex-shrink:0">✓</span>
+              <span style="font-size:0.78rem;color:var(--dim);line-height:1.6">Press already published before your clients arrive — they come curious, not cold</span>
+            </div>
+            <div style="display:flex;align-items:flex-start;gap:0.8rem;padding:0.8rem;background:rgba(247,243,238,0.03);border:1px solid rgba(100,140,220,0.1)">
+              <span style="color:#7faaf0;font-size:0.9rem;flex-shrink:0">✓</span>
+              <span style="font-size:0.78rem;color:var(--dim);line-height:1.6">You invite your own clients — 100% pre-qualified, no wasted exposure</span>
+            </div>
+            <div style="display:flex;align-items:flex-start;gap:0.8rem;padding:0.8rem;background:rgba(247,243,238,0.03);border:1px solid rgba(100,140,220,0.1)">
+              <span style="color:#7faaf0;font-size:0.9rem;flex-shrink:0">✓</span>
+              <span style="font-size:0.78rem;color:var(--dim);line-height:1.6">Product already in Germany — orders fulfilled same night, zero stock risk for you</span>
+            </div>
+            <div style="display:flex;align-items:flex-start;gap:0.8rem;padding:0.8rem;background:rgba(247,243,238,0.03);border:1px solid rgba(100,140,220,0.1)">
+              <span style="color:#7faaf0;font-size:0.9rem;flex-shrink:0">✓</span>
+              <span style="font-size:0.78rem;color:var(--dim);line-height:1.6">Exclusive own-label means your clients can't find the same wine cheaper elsewhere</span>
+            </div>
+            <a href="https://www.weinstore24.de/de/content/113-flair-of-lebanon-duesseldorf" target="_blank" style="margin-top:0.5rem;font-size:0.62rem;letter-spacing:0.12em;text-transform:uppercase;color:#7faaf0;text-decoration:none;border-bottom:1px solid rgba(127,170,240,0.3);padding-bottom:2px;align-self:flex-start">See a Real Event Example (Düsseldorf) →</a>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:0.8rem;margin-top:2rem">
+        <a href="bottle-lobby-distributor-hawesko-gmbh.html" class="btn btn-gold">View Full Distributor Profile →</a>
+        <a href="bottle-lobby-contact.html" class="btn btn-outline">Apply as Distributor</a>
+      </div>
+    </div>
+  </section>
+
+</div><!-- /distributor panel -->
+
+<!-- ══════════════════════════════
+     RESTAURANT SECTION
+══════════════════════════════ -->
+<div class="role-panel" id="restaurant">
+
+  <section class="rest-section" id="rest-benefits">
+    <div class="container">
+      <p class="eyebrow">For Restaurants &amp; Retail</p>
+      <h2>Break free from the <em>same wine list.</em></h2>
+      <p class="lead">Your guests deserve better than the same Sauvignon Blanc as the restaurant next door. Bottle Lobby gives you access to exclusive wines, price protection, and sourcing flexibility — without changing your distributor.</p>
+      <div class="rest-benefits">
+        <div class="rest-benefit">
+          <div class="benefit-icon">◎</div>
+          <div class="benefit-num">01</div>
+          <h3>Exclusive Wines No One Else Has</h3>
+          <p>Access wines distributed under exclusive own-label agreements. Your Chablis is yours alone in your area — no competitor can undercut you on the same bottle. Your list is genuinely different.</p>
+        </div>
+        <div class="rest-benefit">
+          <div class="benefit-icon">◈</div>
+          <div class="benefit-num">02</div>
+          <h3>Price Protection Built In</h3>
+          <p>When wines carry exclusivity, price dumping is impossible. Your margins are protected by design. No more watching competitors serve the same wine 30% cheaper across the street.</p>
+        </div>
+        <div class="rest-benefit">
+          <div class="benefit-icon">◇</div>
+          <div class="benefit-num">03</div>
+          <h3>Easy-to-Sell Mono-Cépages</h3>
+          <p>Single-varietal wines from their classic regions — Sauvignon Blanc from Sancerre, Primitivo from Sicily, Tempranillo from Rioja. Your staff can explain it in one sentence. Your guests know what to expect.</p>
+        </div>
+        <div class="rest-benefit">
+          <div class="benefit-icon">✦</div>
+          <div class="benefit-num">04</div>
+          <h3>More Variety Without More Distributors</h3>
+          <p>Expand your wine list with new exclusive labels — all accessible through your existing distributor network. No new invoices, no new accounts, no procurement headaches.</p>
+        </div>
+        <div class="rest-benefit">
+          <div class="benefit-icon">⬡</div>
+          <div class="benefit-num">05</div>
+          <h3>Meet the Producers</h3>
+          <p>Bottle Lobby Wine Shows give your team direct contact with winemakers and their stories. Your sommelier who met the monk who made the wine? That's the kind of recommendation that sells bottles.</p>
+        </div>
+        <div class="rest-benefit">
+          <div class="benefit-icon">◐</div>
+          <div class="benefit-num">06</div>
+          <h3>Wine List Consulting & Pairings</h3>
+          <p>Access to food pairing recommendations, wine list building tools, and sommelier consultation — helping you curate a list that's easy to manage, profitable, and genuinely distinctive for your concept.</p>
+        </div>
+      </div>
+
+      <!-- Network Block (Restaurant-focused) -->
+      <div class="network-block">
+        <div>
+          <p class="network-block-eyebrow" style="color:#4caf7d">Not A Concept — A Working Network</p>
+          <div class="network-block-text">Bistro Laurent's wine list isn't assembled from a catalogue — it's built on relationships the team can actually point to. The Primitivo on the list came from meeting the winemaker in person at a Bottle Lobby Wine Show in Munich, which is exactly the kind of story staff now tell guests when they recommend it. The primary distributor relationship, running since 2022, keeps five own-label wines flowing without a single cold reorder call. And because every own-label wine sits in the same protected pool other members draw from, a Munich retailer stocking the identical Primitivo isn't a competitor undercutting the price — it's proof the label is scarce enough to be worth pouring in the first place. Three connections, one wine list, and a guest-facing story behind almost every glass poured.</div>
+        </div>
+        <div><svg viewBox="0 0 700 500" style="width:100%;height:auto;display:block" xmlns="http://www.w3.org/2000/svg">
+          <g stroke="var(--gold)" stroke-width="1.5" opacity="0.55">
+            <line x1="350" y1="310" x2="350" y2="85"/>
+            <line x1="350" y1="310" x2="545" y2="430"/>
+            <line x1="350" y1="310" x2="155" y2="430"/>
+          </g>
+          <g font-family="Inter, sans-serif" font-style="italic" fill="var(--gold)" font-size="11">
+            <text x="430" y="185" text-anchor="start">Direct relationship</text>
+            <text x="430" y="199" text-anchor="start">Met at the Munich Wine Show</text>
+            <text x="500" y="345" text-anchor="middle">Primary distributor</text>
+            <text x="500" y="359" text-anchor="middle">since 2022, 5 own-label wines</text>
+            <text x="200" y="345" text-anchor="middle">Same regional network</text>
+            <text x="200" y="359" text-anchor="middle">shared own-label pool</text>
+          </g>
+          <g font-family="Inter, sans-serif" text-anchor="middle">
+            <circle cx="350" cy="85" r="55" fill="#150f0f" stroke="var(--wine)" stroke-width="2"/>
+            <text x="350" y="78" font-size="18">🍇</text>
+            <text x="350" y="97" font-size="11" font-weight="500" fill="var(--paper)">Cantina Rossi</text>
+            <text x="350" y="111" font-size="8.5" fill="var(--dim)">Sicily, Italy · Winery</text>
+
+            <circle cx="545" cy="430" r="55" fill="#150f0f" stroke="#7faaf0" stroke-width="2"/>
+            <text x="545" y="423" font-size="18">🚚</text>
+            <text x="545" y="442" font-size="11" font-weight="500" fill="var(--paper)">Hawesko GmbH</text>
+            <text x="545" y="456" font-size="8.5" fill="var(--dim)">Hamburg, DE · Distributor</text>
+
+            <circle cx="155" cy="430" r="55" fill="#150f0f" stroke="#c9a84c" stroke-width="2"/>
+            <text x="155" y="423" font-size="18">🏪</text>
+            <text x="155" y="442" font-size="11" font-weight="500" fill="var(--paper)">Weinhaus Müller</text>
+            <text x="155" y="456" font-size="8.5" fill="var(--dim)">Munich, DE · Retail</text>
+          </g>
+          <circle cx="350" cy="310" r="85" fill="#150f0f" stroke="#4caf7d" stroke-width="3"/>
+          <text x="350" y="298" text-anchor="middle" font-size="26">🍽</text>
+          <text x="350" y="326" text-anchor="middle" font-family="Inter, sans-serif" font-size="15" font-weight="500" fill="var(--paper)">Bistro Laurent</text>
+          <text x="350" y="343" text-anchor="middle" font-family="Inter, sans-serif" font-size="10.5" fill="var(--dim)">Frankfurt, DE · Restaurant</text>
+        </svg></div>
+      </div>
+
+      <!-- Restaurant Dashboard Preview -->
+      <p style="font-size:0.65rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--dim);margin-bottom:0.8rem;margin-top:3rem">Platform Preview</p>
+      <h2 style="margin-bottom:0.5rem">Your restaurant <em>dashboard.</em></h2>
+      <p style="font-size:0.82rem;color:var(--dim);margin-bottom:2rem;max-width:500px">This is what you see after joining — your wine list, new exclusive offers, and ordering, all in one place.</p>
+      <div class="preview-wrap" style="background:#060f0a;border-color:rgba(45,106,79,0.2)">
+        <div class="preview-label" style="background:var(--green)">✦ Restaurant Dashboard</div>
+        <div class="mini-nav" style="background:#030805">
+          <span class="mini-logo">Bottle<span>&nbsp;Lobby</span></span>
+          <div style="margin-left:auto;display:flex;gap:0.5rem;align-items:center">
+            <span style="font-size:0.55rem;color:#4caf7d;letter-spacing:0.1em;text-transform:uppercase">Bistro Laurent · Restaurant Member</span>
+            <div style="width:20px;height:20px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center;font-size:0.6rem">BL</div>
+          </div>
+        </div>
+        <div class="mini-inner">
+          <div class="mini-sidebar" style="background:#060f0a">
+            <div class="mini-nav-item active" style="border-left-color:#4caf7d;background:rgba(45,106,79,0.08)"><span class="mini-nav-icon">⬡</span> Dashboard</div>
+            <div class="mini-nav-item"><span class="mini-nav-icon">◈</span> My Wine List</div>
+            <div class="mini-nav-item" style="color:#4caf7d"><span class="mini-nav-icon">◇</span> New Wines <span style="background:var(--green);color:var(--paper);font-size:0.5rem;padding:0.1rem 0.35rem;border-radius:8px;margin-left:0.3rem">4</span></div>
+            <div class="mini-nav-item"><span class="mini-nav-icon">⬤</span> Food Pairing</div>
+            <div class="mini-nav-item"><span class="mini-nav-icon">↑</span> Orders</div>
+          </div>
+          <div class="mini-main" style="background:#08120a">
+            <div class="mini-topbar">
+              <span class="mini-title">Welcome, Bistro Laurent ✦</span>
+              <span class="mini-btn" style="background:var(--green)">+ Reorder</span>
+            </div>
+            <div class="mini-stats">
+              <div class="mini-stat" style="background:#08120a"><div class="mini-stat-val">14<span></span></div><div class="mini-stat-label">Wines on List</div></div>
+              <div class="mini-stat" style="background:#08120a"><div class="mini-stat-val">6<span></span></div><div class="mini-stat-label">Exclusive Wines</div></div>
+              <div class="mini-stat" style="background:#08120a"><div class="mini-stat-val">320<span></span></div><div class="mini-stat-label">Btl This Month</div></div>
+              <div class="mini-stat" style="background:#08120a"><div class="mini-stat-val">68<span>%</span></div><div class="mini-stat-label">Avg. Margin</div></div>
+            </div>
+            <div class="mini-grid2">
+              <div class="mini-widget" style="background:#08120a">
+                <div class="mini-widget-title">My Wine List</div>
+                <div class="mini-row"><span class="mini-row-label">Sauvignon Blanc · Sancerre</span><span class="tag tag-g" style="font-size:0.5rem;padding:0.1rem 0.4rem;border-radius:2px;background:rgba(45,106,79,0.2);color:#4caf7d">Exclusive</span></div>
+                <div class="mini-row"><span class="mini-row-label">Chardonnay · Chablis</span><span class="tag tag-g" style="font-size:0.5rem;padding:0.1rem 0.4rem;border-radius:2px;background:rgba(45,106,79,0.2);color:#4caf7d">Exclusive</span></div>
+                <div class="mini-row"><span class="mini-row-label">Primitivo · Sicily</span><span class="tag tag-g" style="font-size:0.5rem;padding:0.1rem 0.4rem;border-radius:2px;background:rgba(45,106,79,0.2);color:#4caf7d">Exclusive</span></div>
+                <div class="mini-row"><span class="mini-row-label">Riesling · Mosel</span><span style="font-size:0.5rem;color:#e07070">3 btl ⚠ Low</span></div>
+              </div>
+              <div class="mini-widget" style="background:#08120a">
+                <div class="mini-widget-title">New Exclusive Wines</div>
+                <div class="mini-row"><span class="mini-row-label">Grenache · Roussillon</span><span style="font-size:0.5rem;color:var(--gold)">Request</span></div>
+                <div class="mini-row"><span class="mini-row-label">Vermentino · Sardinia</span><span style="font-size:0.5rem;color:var(--gold)">Request</span></div>
+                <div class="mini-row"><span class="mini-row-label">Malbec · Mendoza</span><span style="font-size:0.5rem;color:var(--gold)">Request</span></div>
+                <div class="mini-row"><span class="mini-row-label">Albariño · Rías Baixas</span><span style="font-size:0.5rem;color:var(--gold)">Request</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;gap:0.8rem;margin-top:1rem;flex-wrap:wrap">
+        <a href="bottle-lobby-restaurant-profile.html" class="btn btn-gold">View Full Restaurant Profile →</a>
+        <a href="bottle-lobby-contact.html" class="btn btn-outline">Apply as Restaurant Member</a>
+        <a href="bottle-lobby-dashboard.html#restaurant" class="btn btn-outline">Explore Dashboard →</a>
+      </div>
+    </div>
+  </section>
+
+
+</div><!-- /restaurant panel -->
+
+<!-- ══════════════════════════════
+     RETAIL PANEL
+══════════════════════════════ -->
+<div class="role-panel" id="retail">
+
+  <section class="retail-section" id="retail-benefits">
+    <div class="container">
+      <p class="eyebrow">For Retail / Fachhandel</p>
+      <h2>Offer your customers what <em>no supermarket can.</em></h2>
+      <p class="lead">Bottle Lobby gives independent retailers and specialty wine shops access to exclusive labels, flexible delivery, and a complete event infrastructure — making you the destination for wine lovers in your area.</p>
+      <div class="rest-benefits" style="background:rgba(180,140,60,0.1);border-color:rgba(180,140,60,0.1)">
+        <div class="rest-benefit" style="background:#0f0c07">
+          <div class="benefit-icon">◎</div>
+          <div class="benefit-num">01</div>
+          <h3>Exclusive Wines Nobody Else Has</h3>
+          <p>Source wines under protected own-label agreements — unavailable in supermarkets or online discount retailers. Your shop becomes the only place in your area where customers can find these labels.</p>
+        </div>
+        <div class="rest-benefit" style="background:#0f0c07">
+          <div class="benefit-icon">◈</div>
+          <div class="benefit-num">02</div>
+          <h3>Just-in-Time & Flexible Delivery</h3>
+          <p>No more over-ordering or tying up capital in unsold stock. Order exactly what you need, when you need it — with flexible delivery schedules that adapt to your seasonal peaks, campaigns, and large events.</p>
+        </div>
+        <div class="rest-benefit" style="background:#0f0c07">
+          <div class="benefit-icon">◇</div>
+          <div class="benefit-num">03</div>
+          <h3>Winery & Oenologist Events In-Store</h3>
+          <p>Host intimate tastings and winemaker evenings directly in your shop — with the actual producer or oenologist present. These are the experiences customers can't get online. We coordinate everything with the winery and distributor.</p>
+        </div>
+        <div class="rest-benefit" style="background:#0f0c07">
+          <div class="benefit-icon">✦</div>
+          <div class="benefit-num">04</div>
+          <h3>Event Collaboration with Restaurants</h3>
+          <p>Co-host wine dinners, tasting evenings, and pairing events together with local restaurants — featuring wines from your shared Bottle Lobby portfolio. Split the effort, double the audience, create something memorable.</p>
+        </div>
+        <div class="rest-benefit" style="background:#0f0c07">
+          <div class="benefit-icon">⬡</div>
+          <div class="benefit-num">05</div>
+          <h3>Promotional Materials from Winery Profiles</h3>
+          <p>Tasting notes, origin stories, scores, food pairings, and label images — pulled automatically from winery profiles on the platform. Use them for shelf cards, flyers, social posts, and event invitations without any extra work.</p>
+        </div>
+        <div class="rest-benefit" style="background:#0f0c07">
+          <div class="benefit-icon">◐</div>
+          <div class="benefit-num">06</div>
+          <h3>Price Protection & Healthy Margins</h3>
+          <p>Because your wines are exclusive, no online retailer or competitor can undercut your pricing. Bottle Lobby's own-label model means stable margins, loyal customers, and no race to the bottom on shared labels.</p>
+        </div>
+      </div>
+
+      <!-- How it works -->
+      <p style="font-size:0.65rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--dim);margin-bottom:1.2rem;margin-top:3rem">How It Works</p>
+      <div class="steps-grid">
+        <div class="step">
+          <span class="step-tag" style="background:rgba(180,140,60,0.1);color:#c9a84c">Step 1</span>
+          <div class="step-num">1</div>
+          <h4>Join & Set Up Your Profile</h4>
+          <p>Create your retail profile — shop type, location, customer base, and wine preferences. We match you with the right distributors and exclusive wines for your area.</p>
+        </div>
+        <div class="step">
+          <span class="step-tag" style="background:rgba(180,140,60,0.1);color:#c9a84c">Step 2</span>
+          <div class="step-num">2</div>
+          <h4>Browse & Order Exclusive Wines</h4>
+          <p>Access the Bottle Lobby wine catalogue — filtered for your region and distributor network. Order flexibly with just-in-time delivery, no large volume commitments required.</p>
+        </div>
+        <div class="step">
+          <span class="step-tag" style="background:rgba(180,140,60,0.1);color:#c9a84c">Step 3</span>
+          <div class="step-num">3</div>
+          <h4>Plan Your Events</h4>
+          <p>Use the platform to organise in-store tastings, winemaker evenings, and restaurant collaborations. We connect you with the winery, distributor, and any co-hosts — and provide the promotional materials.</p>
+        </div>
+        <div class="step">
+          <span class="step-tag" style="background:rgba(180,140,60,0.1);color:#c9a84c">Step 4</span>
+          <div class="step-num">4</div>
+          <h4>Grow & Differentiate</h4>
+          <p>Your shop becomes known for wines customers can't find anywhere else — backed by expert storytelling, event experiences, and a supply chain built for flexibility and quality.</p>
+        </div>
+      </div>
+
+      <!-- Network Block (Retail-focused) -->
+      <div class="network-block">
+        <div>
+          <p class="network-block-eyebrow" style="color:#c9a84c">Not A Concept — A Working Network</p>
+          <div class="network-block-text">Weinhaus Müller's shelf isn't stocked from a wholesaler's generic list — every label has a relationship behind it. The shop's direct link to Cantina Rossi in Sicily started the same way as it does for other members — a conversation at a Bottle Lobby Wine Show in Munich that turned into an exclusive bottle now poured at in-store tastings. Hawesko has supplied the shop since 2023, keeping five own-label wines in rotation without a single cold reorder. And because that own-label pool is shared and protected across the platform, a Frankfurt restaurant carrying the same Primitivo isn't undercutting Weinhaus Müller on price — it's further proof the label is exclusive enough to build a tasting evening around. Three relationships, one curated shelf, and a story worth telling every time a customer asks what's new.</div>
+        </div>
+        <div><svg viewBox="0 0 700 500" style="width:100%;height:auto;display:block" xmlns="http://www.w3.org/2000/svg">
+          <g stroke="var(--gold)" stroke-width="1.5" opacity="0.55">
+            <line x1="350" y1="310" x2="350" y2="85"/>
+            <line x1="350" y1="310" x2="545" y2="430"/>
+            <line x1="350" y1="310" x2="155" y2="430"/>
+          </g>
+          <g font-family="Inter, sans-serif" font-style="italic" fill="var(--gold)" font-size="11">
+            <text x="430" y="185" text-anchor="start">Direct relationship</text>
+            <text x="430" y="199" text-anchor="start">Met at the Munich Wine Show</text>
+            <text x="500" y="345" text-anchor="middle">Primary supplier</text>
+            <text x="500" y="359" text-anchor="middle">since 2023, 5 own-label wines</text>
+            <text x="200" y="345" text-anchor="middle">Same regional network</text>
+            <text x="200" y="359" text-anchor="middle">shared own-label pool</text>
+          </g>
+          <g font-family="Inter, sans-serif" text-anchor="middle">
+            <circle cx="350" cy="85" r="55" fill="#150f0f" stroke="var(--wine)" stroke-width="2"/>
+            <text x="350" y="78" font-size="18">🍇</text>
+            <text x="350" y="97" font-size="11" font-weight="500" fill="var(--paper)">Cantina Rossi</text>
+            <text x="350" y="111" font-size="8.5" fill="var(--dim)">Sicily, Italy · Winery</text>
+
+            <circle cx="545" cy="430" r="55" fill="#150f0f" stroke="#7faaf0" stroke-width="2"/>
+            <text x="545" y="423" font-size="18">🚚</text>
+            <text x="545" y="442" font-size="11" font-weight="500" fill="var(--paper)">Hawesko GmbH</text>
+            <text x="545" y="456" font-size="8.5" fill="var(--dim)">Hamburg, DE · Distributor</text>
+
+            <circle cx="155" cy="430" r="55" fill="#150f0f" stroke="#4caf7d" stroke-width="2"/>
+            <text x="155" y="423" font-size="18">🍽</text>
+            <text x="155" y="442" font-size="11" font-weight="500" fill="var(--paper)">Bistro Laurent</text>
+            <text x="155" y="456" font-size="8.5" fill="var(--dim)">Frankfurt, DE · Restaurant</text>
+          </g>
+          <circle cx="350" cy="310" r="85" fill="#150f0f" stroke="#c9a84c" stroke-width="3"/>
+          <text x="350" y="298" text-anchor="middle" font-size="26">🏪</text>
+          <text x="350" y="326" text-anchor="middle" font-family="Inter, sans-serif" font-size="15" font-weight="500" fill="var(--paper)">Weinhaus Müller</text>
+          <text x="350" y="343" text-anchor="middle" font-family="Inter, sans-serif" font-size="10.5" fill="var(--dim)">Munich, DE · Retail</text>
+        </svg></div>
+      </div>
+
+      <!-- Dashboard Preview -->
+      <p style="font-size:0.65rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--dim);margin-bottom:0.8rem;margin-top:3rem">Platform Preview</p>
+      <h2 style="margin-bottom:0.5rem">Your retail <em>dashboard.</em></h2>
+      <p style="font-size:0.82rem;color:var(--dim);margin-bottom:2rem;max-width:500px">This is what you see after joining — your exclusive wine selection, upcoming events, and ordering, all in one place.</p>
+      <div class="preview-wrap" style="background:#0a0905;border-color:rgba(180,140,60,0.2)">
+        <div class="preview-label" style="background:#c9a84c;color:var(--ink)">✦ Retail Dashboard</div>
+        <div class="mini-nav" style="background:#070602">
+          <span class="mini-logo">Bottle<span>&nbsp;Lobby</span></span>
+          <div style="margin-left:auto;display:flex;gap:0.5rem;align-items:center">
+            <span style="font-size:0.55rem;color:#c9a84c;letter-spacing:0.1em;text-transform:uppercase">Weinhaus Müller · Retail Member</span>
+            <div style="width:20px;height:20px;border-radius:50%;background:#c9a84c;display:flex;align-items:center;justify-content:center;font-size:0.6rem;color:var(--ink)">WM</div>
+          </div>
+        </div>
+        <div class="mini-inner">
+          <div class="mini-sidebar" style="background:#0a0905">
+            <div class="mini-nav-item active" style="border-left-color:#c9a84c;background:rgba(180,140,60,0.07)"><span class="mini-nav-icon">⬡</span> Dashboard</div>
+            <div class="mini-nav-item"><span class="mini-nav-icon">◈</span> My Wine Selection</div>
+            <div class="mini-nav-item" style="color:#c9a84c"><span class="mini-nav-icon">◇</span> Browse Wines <span style="background:#c9a84c;color:var(--ink);font-size:0.5rem;padding:0.1rem 0.35rem;border-radius:8px;margin-left:0.3rem">New</span></div>
+            <div class="mini-nav-item"><span class="mini-nav-icon">✦</span> Events</div>
+            <div class="mini-nav-item"><span class="mini-nav-icon">◁</span> Promo Materials</div>
+            <div class="mini-nav-item"><span class="mini-nav-icon">↑</span> Orders</div>
+          </div>
+          <div class="mini-main" style="background:#0d0a06">
+            <div class="mini-topbar">
+              <span class="mini-title">Welcome, Weinhaus Müller ✦</span>
+              <span class="mini-btn" style="background:#c9a84c;color:var(--ink)">+ Order Wines</span>
+            </div>
+            <div class="mini-stats">
+              <div class="mini-stat" style="background:#0d0a06"><div class="mini-stat-val">18<span></span></div><div class="mini-stat-label">Exclusive Wines</div></div>
+              <div class="mini-stat" style="background:#0d0a06"><div class="mini-stat-val">3<span></span></div><div class="mini-stat-label">Events Planned</div></div>
+              <div class="mini-stat" style="background:#0d0a06"><div class="mini-stat-val">240<span></span></div><div class="mini-stat-label">Btl This Month</div></div>
+              <div class="mini-stat" style="background:#0d0a06"><div class="mini-stat-val">62<span>%</span></div><div class="mini-stat-label">Avg. Margin</div></div>
+            </div>
+            <div class="mini-grid2">
+              <div class="mini-widget" style="background:#0d0a06">
+                <div class="mini-widget-title">Upcoming Events</div>
+                <div class="mini-row"><span class="mini-row-label">Cantina Rossi Tasting</span><span style="font-size:0.5rem;color:#c9a84c">Sept 18 · In-store</span></div>
+                <div class="mini-row"><span class="mini-row-label">Wine Dinner × Bistro Nord</span><span style="font-size:0.5rem;color:#c9a84c">Oct 4 · Collab</span></div>
+                <div class="mini-row"><span class="mini-row-label">Oenologist Evening</span><span style="font-size:0.5rem;color:var(--dim)">Nov 8 · Planning</span></div>
+              </div>
+              <div class="mini-widget" style="background:#0d0a06">
+                <div class="mini-widget-title">New Exclusive Wines</div>
+                <div class="mini-row"><span class="mini-row-label">Sauvignon Blanc · Sancerre</span><span style="font-size:0.5rem;color:#c9a84c">Order</span></div>
+                <div class="mini-row"><span class="mini-row-label">Primitivo · Sicily</span><span style="font-size:0.5rem;color:#c9a84c">Order</span></div>
+                <div class="mini-row"><span class="mini-row-label">Riesling · Mosel</span><span style="font-size:0.5rem;color:#c9a84c">Order</span></div>
+                <div class="mini-row"><span class="mini-row-label">Albariño · Rías Baixas</span><span style="font-size:0.5rem;color:var(--dim)">New ✦</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;gap:0.8rem;margin-top:1rem;flex-wrap:wrap">
+        <a href="bottle-lobby-retail-profile.html" class="btn btn-gold">View Full Retail Profile →</a>
+        <a href="bottle-lobby-contact.html" class="btn btn-outline">Apply as Retail Member</a>
+        <a href="bottle-lobby-dashboard.html#retail" class="btn btn-outline">Explore Dashboard →</a>
+      </div>
+    </div>
+  </section>
+
+</div><!-- /retail panel -->
+
+<!-- CTA -->
+<section class="cta-section">
+  <div class="container">
+    <p class="eyebrow" style="color:rgba(247,243,238,0.5);justify-content:center"><span style="display:block;width:28px;height:1px;background:rgba(247,243,238,0.3)"></span>Ready to Join</p>
+    <h2>The lobby is <em>open.</em></h2>
+    <p class="cta-sub">Wineries, distributors, and restaurants — apply now and become part of the platform redefining how wine crosses borders.</p>
+    <div class="cta-btns">
+      <a href="bottle-lobby-contact.html" class="btn-white">Apply for Membership</a>
+      <a href="bottle-lobby-investor.html" class="btn-ghost-white">View Investor Pitch →</a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-brand">
+    <div class="footer-logo">Bottle<span>&nbsp;Lobby</span></div>
+    <p class="footer-copy">© 2026 Caracter Media GmbH</p>
+  </div>
+  <div class="footer-links">
+    <a href="bottle-lobby.html">Home</a>
+    <a href="bottle-lobby-about.html">About</a>
+    <a href="bottle-lobby-investor.html">Investors</a>
+    <a href="bottle-lobby-contact.html">Apply</a>
+    <a href="bottle-lobby-dashboard.html">Dashboard</a>
+    <a href="bottle-lobby-profile-demo.html">Public Profile</a>
+    <a href="bottle-lobby-contact-us.html">Imprint</a>
+  </div>
+</footer>
+
+<script>
+// Progress bar
+window.addEventListener('scroll', () => {
+  const d = document.documentElement;
+  document.getElementById('progress').style.width = (d.scrollTop / (d.scrollHeight - d.clientHeight) * 100) + '%';
+});
+
+// Tab switching
+function setTab(role) {
+  // Reset all tabs
+  document.querySelectorAll('.role-tab').forEach(t => {
+    t.classList.remove('active-winery','active-dist','active-rest','active-retail');
+  });
+  // Reset all panels
+  document.querySelectorAll('.role-panel').forEach(p => p.classList.remove('active'));
+
+  if (role === 'winery') {
+    document.getElementById('tab-winery').classList.add('active-winery');
+    document.getElementById('winery').classList.add('active');
+  } else if (role === 'dist') {
+    document.getElementById('tab-dist').classList.add('active-dist');
+    document.getElementById('distributor').classList.add('active');
+  } else if (role === 'rest') {
+    document.getElementById('tab-rest').classList.add('active-rest');
+    document.getElementById('restaurant').classList.add('active');
+  } else if (role === 'retail') {
+    document.getElementById('tab-retail').classList.add('active-retail');
+    document.getElementById('retail').classList.add('active');
+  }
+}
+</script>
+<!-- FLOATING CTA -->
+<div class="floating-cta">
+  <a href="bottle-lobby-dashboard.html" class="btn btn-outline">Member Login</a>
+  <a href="bottle-lobby-contact.html" class="btn btn-gold">Join Now</a>
+</div>
+
+</body>
+</html>

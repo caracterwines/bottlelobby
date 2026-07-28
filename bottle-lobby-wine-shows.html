@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wine Shows — Bottle Lobby</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --ink: #0e0b0b; --paper: #f7f3ee; --wine: #6b1a1a; --gold: #b8975a;
+  --smoke: #1a1212; --dim: rgba(247,243,238,0.45); --line: rgba(247,243,238,0.07);
+}
+html { scroll-behavior: smooth; }
+body { font-family: 'Inter', sans-serif; background: var(--ink); color: var(--paper); font-size: 14px; line-height: 1.6; overflow-x: hidden; }
+
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 1.4rem 3rem;
+  background: rgba(14,11,11,0.97); border-bottom: 1px solid var(--line);
+  backdrop-filter: blur(4px);
+}
+.nav-logo { font-family: 'Cormorant Garamond', serif; font-size: 1.35rem; font-weight: 300; letter-spacing: 0.18em; text-transform: uppercase; color: var(--paper); text-decoration: none; }
+.nav-logo span { color: var(--gold); }
+.nav-links { display: flex; gap: 1.5rem; list-style: none; }
+.nav-links a { font-size: 0.66rem; letter-spacing: 0.07em; text-transform: uppercase; color: rgba(247,243,238,0.6); text-decoration: none; transition: color 0.2s; }
+.nav-links a:hover, .nav-links a.active { color: var(--paper); }
+.nav-right { display: flex; gap: 0.8rem; align-items: center; }
+.btn { font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; padding: 0.55rem 1.4rem; border-radius: 2px; text-decoration: none; font-weight: 500; transition: all 0.2s; border: 1px solid transparent; cursor: pointer; font-family: 'Inter', sans-serif; display: inline-block; }
+.btn-outline { border-color: rgba(247,243,238,0.2); color: rgba(247,243,238,0.5); background: transparent; }
+.btn-outline:hover { border-color: var(--paper); color: var(--paper); }
+.btn-gold { background: var(--gold); color: var(--ink); border-color: var(--gold); }
+.btn-gold:hover { opacity: 0.85; }
+
+/* HERO */
+.hero { padding: 12rem 3rem 6rem; background: radial-gradient(ellipse 80% 50% at 50% 0%, #1a0a0a 0%, var(--ink) 70%); position: relative; overflow: hidden; }
+.hero::before { content: ''; position: absolute; inset: 0; background-image: linear-gradient(135deg, rgba(107,26,26,0.05) 1px, transparent 1px), linear-gradient(45deg, rgba(184,151,90,0.025) 1px, transparent 1px); background-size: 80px 80px, 140px 140px; }
+.container { max-width: 1100px; margin: 0 auto; position: relative; }
+.eyebrow { font-size: 0.62rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(--gold); margin-bottom: 1rem; display: flex; align-items: center; gap: 1rem; }
+.eyebrow::before { content: ''; display: block; width: 28px; height: 1px; background: var(--gold); }
+h1 { font-family: 'Cormorant Garamond', serif; font-size: clamp(2.8rem, 5.5vw, 5rem); font-weight: 300; line-height: 1.05; color: var(--paper); margin-bottom: 1.5rem; }
+h1 em { font-style: italic; color: var(--gold); }
+.hero-lead { font-size: 0.95rem; color: var(--dim); max-width: 680px; line-height: 1.95; margin-bottom: 2.5rem; }
+.hero-actions { display: flex; gap: 1.5rem; align-items: center; flex-wrap: wrap; }
+.btn-primary { display: inline-block; font-size: 0.72rem; letter-spacing: 0.15em; text-transform: uppercase; background: var(--gold); color: var(--ink); padding: 1rem 2.4rem; border-radius: 2px; text-decoration: none; font-weight: 500; transition: opacity 0.2s; }
+.btn-primary:hover { opacity: 0.85; }
+.btn-ghost { display: inline-block; font-size: 0.72rem; letter-spacing: 0.15em; text-transform: uppercase; color: rgba(247,243,238,0.6); text-decoration: none; padding: 1rem 0; border-bottom: 1px solid rgba(247,243,238,0.2); transition: color 0.2s, border-color 0.2s; }
+.btn-ghost:hover { color: var(--paper); border-color: var(--paper); }
+
+/* STATS BAR */
+.stats-bar { background: rgba(184,151,90,0.05); border-top: 1px solid rgba(184,151,90,0.15); border-bottom: 1px solid rgba(184,151,90,0.15); }
+.stats-inner { max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: repeat(5,1fr); }
+.stat-item { padding: 2rem 1.4rem; text-align: center; border-right: 1px solid rgba(184,151,90,0.1); }
+.stat-item:last-child { border-right: none; }
+.stat-val { font-family: 'Cormorant Garamond', serif; font-size: 2.3rem; font-weight: 300; color: var(--gold); line-height: 1; }
+.stat-label { font-size: 0.63rem; letter-spacing: 0.09em; text-transform: uppercase; color: var(--dim); margin-top: 0.4rem; line-height: 1.5; }
+.stat-source { font-size: 0.55rem; color: rgba(247,243,238,0.2); margin-top: 0.3rem; }
+
+/* SECTIONS */
+.section { padding: 7rem 3rem; }
+.section-alt { background: rgba(247,243,238,0.02); }
+h2 { font-family: 'Cormorant Garamond', serif; font-size: clamp(2rem, 3.5vw, 3rem); font-weight: 300; line-height: 1.15; color: var(--paper); margin-bottom: 0.8rem; }
+h2 em { font-style: italic; color: var(--gold); }
+.lead { font-size: 0.88rem; color: var(--dim); max-width: 700px; line-height: 1.95; margin-bottom: 3rem; }
+
+/* GENERIC ICON GRID (process pillars / logistics) */
+.info-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 1px; background: var(--line); border: 1px solid var(--line); margin-top: 1rem; }
+.info-item { background: var(--ink); padding: 2.2rem 2rem; transition: background 0.2s; }
+.info-item:hover { background: rgba(184,151,90,0.04); }
+.info-icon { font-size: 1.2rem; color: var(--gold); margin-bottom: 1rem; }
+.info-title { font-family: 'Cormorant Garamond', serif; font-size: 1.2rem; font-weight: 400; color: var(--paper); margin-bottom: 0.6rem; }
+.info-text { font-size: 0.78rem; color: var(--dim); line-height: 1.85; }
+
+/* PROCESS STEPS */
+.ws-steps { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--line); border: 1px solid var(--line); margin-top: 3rem; }
+.ws-step { background: var(--ink); padding: 2.4rem 2.2rem; display: flex; gap: 1.6rem; }
+.ws-step-num { font-family: 'Cormorant Garamond', serif; font-size: 2.4rem; font-weight: 300; color: rgba(184,151,90,0.25); line-height: 1; flex-shrink: 0; width: 2.6rem; }
+.ws-step h3 { font-family: 'Cormorant Garamond', serif; font-size: 1.15rem; font-weight: 400; color: var(--paper); margin-bottom: 0.5rem; }
+.ws-step p { font-size: 0.78rem; color: var(--dim); line-height: 1.85; }
+
+/* CITY CARDS */
+.city-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin: 2.5rem 0 3rem; }
+.city-card { background: rgba(247,243,238,0.03); border: 1px solid var(--line); padding: 2.2rem; }
+.city-card h3 { font-family: 'Cormorant Garamond', serif; font-size: 1.5rem; font-weight: 400; color: var(--paper); margin-bottom: 0.3rem; }
+.city-meta { font-size: 0.68rem; color: var(--gold); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 1.4rem; }
+.city-stats { display: flex; gap: 1.8rem; margin-bottom: 1.4rem; padding-bottom: 1.4rem; border-bottom: 1px solid var(--line); }
+.city-stat-val { font-family: 'Cormorant Garamond', serif; font-size: 1.9rem; color: var(--paper); line-height: 1; }
+.city-stat-label { font-size: 0.62rem; color: var(--dim); text-transform: uppercase; letter-spacing: 0.04em; margin-top: 0.3rem; }
+.city-card p.desc { font-size: 0.8rem; color: var(--dim); line-height: 1.85; }
+
+/* PHOTO GALLERY */
+.photo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem; }
+.photo-grid.thirds { grid-template-columns: repeat(3,1fr); }
+.photo-card { position: relative; overflow: hidden; border-radius: 2px; aspect-ratio: 4/3; background: var(--smoke); border: 1px solid var(--line); }
+.photo-card img { width: 100%; height: 100%; object-fit: cover; display: block; filter: saturate(0.92); transition: transform 0.5s ease, filter 0.5s ease; }
+.photo-card:hover img { transform: scale(1.05); filter: saturate(1.05); }
+.photo-cap { position: absolute; left: 0; right: 0; bottom: 0; padding: 1rem 1.1rem 0.8rem; background: linear-gradient(to top, rgba(0,0,0,0.8), transparent); font-size: 0.68rem; letter-spacing: 0.02em; color: rgba(247,243,238,0.9); line-height: 1.4; }
+.recap-links { margin-top: 1.6rem; font-size: 0.76rem; color: var(--dim); }
+.recap-links a { color: var(--gold); text-decoration: none; border-bottom: 1px solid rgba(184,151,90,0.3); }
+.recap-links a:hover { border-color: var(--gold); }
+
+/* VIDEO */
+.video-wrap { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 2px; margin-top: 2.5rem; border: 1px solid var(--line); background: var(--smoke); }
+.video-wrap iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; }
+
+/* PRESS ROW */
+.press-row { display: flex; gap: 1.4rem; margin-top: 2.2rem; flex-wrap: wrap; }
+.press-item { flex: 1; min-width: 240px; background: rgba(247,243,238,0.03); border: 1px solid var(--line); padding: 1.6rem; text-decoration: none; display: block; transition: border-color 0.2s, background 0.2s; }
+.press-item:hover { border-color: rgba(184,151,90,0.3); background: rgba(184,151,90,0.04); }
+.press-source { font-size: 0.6rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--gold); margin-bottom: 0.6rem; }
+.press-title { font-size: 0.82rem; color: var(--paper); line-height: 1.55; margin-bottom: 0.6rem; }
+.press-link { font-size: 0.66rem; color: var(--dim); }
+
+/* DUAL COLUMN BENEFITS */
+.dual-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3.5rem; margin-top: 3rem; }
+.dual-col-head { display: flex; align-items: baseline; gap: 0.7rem; margin-bottom: 1.6rem; padding-bottom: 1.1rem; border-bottom: 1px solid var(--line); }
+.dual-col.winery .dual-col-head { border-bottom-color: rgba(107,26,26,0.35); }
+.dual-col.buyer .dual-col-head { border-bottom-color: rgba(184,151,90,0.35); }
+.dual-col-head .tag { font-size: 0.6rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--dim); }
+.dual-col-head h3 { font-family: 'Cormorant Garamond', serif; font-size: 1.6rem; font-weight: 400; color: var(--paper); }
+.benefit-item { display: flex; gap: 1.1rem; padding: 1.1rem 0; border-bottom: 1px solid var(--line); }
+.benefit-item:last-child { border-bottom: none; padding-bottom: 0; }
+.benefit-icon { font-size: 1rem; flex-shrink: 0; width: 1.4rem; padding-top: 0.1rem; }
+.dual-col.winery .benefit-icon { color: var(--wine); }
+.dual-col.buyer .benefit-icon { color: var(--gold); }
+.benefit-text h4 { font-size: 0.85rem; color: var(--paper); font-weight: 500; margin-bottom: 0.3rem; }
+.benefit-text p { font-size: 0.78rem; color: var(--dim); line-height: 1.8; }
+
+/* INVESTMENT / COST */
+.cost-wrap { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 3.5rem; align-items: start; margin-top: 1rem; }
+.cost-text p { font-size: 0.86rem; color: var(--dim); line-height: 1.95; margin-bottom: 1.2rem; }
+.benchmark-box { background: rgba(107,26,26,0.08); border: 1px solid rgba(107,26,26,0.2); padding: 2.2rem; }
+.benchmark-label { font-size: 0.6rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--gold); margin-bottom: 1.2rem; }
+.benchmark-row { display: flex; justify-content: space-between; padding: 0.65rem 0; border-bottom: 1px solid rgba(247,243,238,0.08); font-size: 0.78rem; color: var(--dim); }
+.benchmark-row span:last-child { color: var(--paper); }
+.benchmark-row.total { border-bottom: none; padding-top: 1rem; font-size: 0.85rem; color: var(--paper); font-weight: 500; }
+.benchmark-row.total span:last-child { color: var(--gold); font-family: 'Cormorant Garamond', serif; font-size: 1.3rem; font-weight: 400; }
+.benchmark-note { font-size: 0.68rem; color: rgba(247,243,238,0.35); margin-top: 1.2rem; line-height: 1.6; }
+
+/* CTA */
+.cta-section { background: var(--wine); padding: 7rem 3rem; text-align: center; position: relative; overflow: hidden; }
+.cta-section::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 50%, rgba(184,151,90,0.1) 0%, transparent 70%); }
+.cta-section h2 { color: var(--paper); max-width: 600px; margin: 0 auto 1rem; position: relative; }
+.cta-section h2 em { color: var(--gold); }
+.cta-sub { font-size: 0.88rem; color: rgba(247,243,238,0.6); margin-bottom: 2.5rem; position: relative; max-width: 560px; margin-left: auto; margin-right: auto; }
+.cta-btns { display: flex; gap: 1rem; justify-content: center; position: relative; flex-wrap: wrap; }
+
+footer { background: #070404; padding: 3.6rem 3rem 1.9rem; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; border-top: 1px solid var(--line); }
+.footer-logo { font-family: 'Cormorant Garamond', serif; font-size: 1rem; font-weight: 300; letter-spacing: 0.2em; text-transform: uppercase; color: rgba(247,243,238,0.25); }
+.footer-logo span { color: var(--gold); }
+.footer-brand { display:flex; flex-direction:column; gap:0.5px; justify-self:start; }
+.footer-links { display: flex; gap: 1.8rem; flex-wrap: wrap; }
+.footer-links a { font-size: 0.65rem; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(247,243,238,0.2); text-decoration: none; transition: color 0.2s; }
+.footer-links a:hover { color: var(--gold); }
+.footer-copy { font-size: 0.572rem; color: rgba(247,243,238,0.15); }
+
+@media (max-width: 900px) {
+  nav { padding: 1rem 1.5rem; }
+  .nav-links { display: none; }
+  .section, .hero { padding: 4rem 1.5rem; }
+  .hero { padding-top: 8rem; }
+  .stats-inner { grid-template-columns: repeat(2,1fr); }
+  .info-grid, .photo-grid.thirds { grid-template-columns: 1fr; }
+  .ws-steps, .city-grid, .photo-grid, .dual-grid, .cost-wrap { grid-template-columns: 1fr; }
+  .press-row { flex-direction: column; }
+}
+
+/* FLOATING CTA */
+.floating-cta {
+  position: fixed; bottom: 2rem; right: 3rem; z-index: 150;
+  display: flex; align-items: center; gap: 0.7rem;
+  background: rgba(14,11,11,0.97); backdrop-filter: blur(4px);
+  padding: 0.6rem; border-radius: 8px; border: 1px solid rgba(247,243,238,0.1);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.4);
+}
+@media (max-width: 640px) {
+  .floating-cta { right: 1.2rem; bottom: 1.2rem; padding: 0.45rem; gap: 0.5rem; }
+  .floating-cta .btn { padding: 0.5rem 1rem; font-size: 0.65rem; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="bottle-lobby.html" class="nav-logo">Bottle<span>&nbsp;Lobby</span></a>
+  <ul class="nav-links">
+    <li><a href="bottle-lobby-market.html">Market</a></li>
+    <li><a href="bottle-lobby.html#solution">The Lobby</a></li>
+    <li><a href="bottle-lobby.html#stakeholders">Why Lobbying</a></li>
+    <li><a href="bottle-lobby.html#how">How it Works</a></li>
+    <li><a href="bottle-lobby.html#wine-guide">Wine Guide</a></li>
+    <li><a href="bottle-lobby.html#shows" class="active">Wine Shows</a></li>
+    <li><a href="bottle-lobby.html#wines">Own Label</a></li>
+    <li><a href="bottle-lobby.html#app">The App</a></li>
+    <li><a href="bottle-lobby.html#about">About</a></li>
+    <li><a href="bottle-lobby.html#membership">Membership</a></li>
+    <li><a href="bottle-lobby.html#investors">Partners</a></li>
+  </ul>
+  <div class="nav-right">
+    <a href="bottle-lobby.html" class="btn btn-outline">← Home</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="container">
+    <p class="eyebrow">Bottle Lobby Wine Shows</p>
+    <h1>Trade fairs,<br><em>reimagined.</em></h1>
+    <p class="hero-lead">A Wine Show is an intimate, regionally targeted B2B tasting — one room, one afternoon, 25 to 35 pre-qualified buyers already active in that market. No trade-fair floor, no anonymous booth, no cold leads. Wineries present directly to the people who can actually place an order — and buyers taste a curated portfolio they'd otherwise never find.</p>
+    <div class="hero-actions">
+      <a href="bottle-lobby-contact.html" class="btn-primary">Apply as a Winery →</a>
+      <a href="mailto:info@caracterwines.de?subject=Wine%20Show%20%E2%80%93%20Buyer%20Invitation%20Request" class="btn-ghost">Request an Invitation</a>
+    </div>
+  </div>
+</section>
+
+<!-- STATS BAR -->
+<div class="stats-bar">
+  <div class="stats-inner">
+    <div class="stat-item">
+      <div class="stat-val">2</div>
+      <div class="stat-label">Cities Hosted So Far</div>
+      <div class="stat-source">Düsseldorf &amp; Hamburg</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-val">62</div>
+      <div class="stat-label">Trade Professionals Attended</div>
+      <div class="stat-source">Flair of Lebanon, 2019–2020</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-val">43</div>
+      <div class="stat-label">Wines Poured Across Both Events</div>
+      <div class="stat-source">In guided, sequential tastings</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-val">6</div>
+      <div class="stat-label">Wineries Presented</div>
+      <div class="stat-source">Grew from 5 to 6 between events</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-val">1,000+</div>
+      <div class="stat-label">Sommeliers in Our Invitation Network</div>
+      <div class="stat-source">Via Sommelier Union Deutschland</div>
+    </div>
+  </div>
+</div>
+
+<!-- PROCESS -->
+<section class="section">
+  <div class="container">
+    <p class="eyebrow">The Format</p>
+    <h2>Small enough to be personal.<br><em>Curated enough to convert.</em></h2>
+    <p class="lead">Every Bottle Lobby Wine Show follows the same six-step structure — refined across real events long before it became a platform feature. Nothing here is theoretical.</p>
+
+    <div class="ws-steps">
+      <div class="ws-step">
+        <div class="ws-step-num">01</div>
+        <div>
+          <h3>Apply &amp; Get Curated</h3>
+          <p>Submit your wines and your story through Bottle Lobby. We review portfolio fit, pricing, and story potential before a city is chosen.</p>
+        </div>
+      </div>
+      <div class="ws-step">
+        <div class="ws-step-num">02</div>
+        <div>
+          <h3>We Build the Guest List</h3>
+          <p>Using our network of sommeliers, distributors, and gastronomes, we hand-select 25–35 buyers already active in that regional market. No open registration, no tire-kickers.</p>
+        </div>
+      </div>
+      <div class="ws-step">
+        <div class="ws-step-num">03</div>
+        <div>
+          <h3>An Expert Tells Your Story</h3>
+          <p>A recognised wine journalist or sommelier presents your region's history and your winery's story, in a venue that fits the wine's character.</p>
+        </div>
+      </div>
+      <div class="ws-step">
+        <div class="ws-step-num">04</div>
+        <div>
+          <h3>Guided Tasting</h3>
+          <p>Guests taste every wine in sequence, guided in real time — typically 20 to 25 labels across all participating wineries in one sitting.</p>
+        </div>
+      </div>
+      <div class="ws-step">
+        <div class="ws-step-num">05</div>
+        <div>
+          <h3>Wine &amp; Dine</h3>
+          <p>The evening closes with a curated dinner menu, paired to the exact wines just tasted — turning a tasting into a memorable, networked evening.</p>
+        </div>
+      </div>
+      <div class="ws-step">
+        <div class="ws-step-num">06</div>
+        <div>
+          <h3>Orders &amp; Follow-Up</h3>
+          <p>Every participating winery receives a full attendee report and direct introductions through Bottle Lobby. Interested buyers move straight to ordering.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CASE STUDY -->
+<section class="section section-alt">
+  <div class="container">
+    <p class="eyebrow">Case Study</p>
+    <h2>Before Bottle Lobby,<br><em>we ran the playbook ourselves.</em></h2>
+    <p class="lead">The Wine Show format wasn't designed on a whiteboard. It's the direct evolution of <strong style="color:var(--paper);font-weight:500">Flair of Lebanon</strong> — a series of professional wine shows our founding team organised in 2019 and 2020, introducing Lebanese wines to Germany's wine trade one city at a time, in partnership with the Sommelier Union Deutschland.</p>
+
+    <div class="city-grid">
+      <div class="city-card">
+        <h3>Hamburg</h3>
+        <div class="city-meta">9 September 2019 · Restaurant Mazza, Eimsbüttel</div>
+        <div class="city-stats">
+          <div><div class="city-stat-val">33</div><div class="city-stat-label">Professionals</div></div>
+          <div><div class="city-stat-val">20</div><div class="city-stat-label">Wines</div></div>
+          <div><div class="city-stat-val">5</div><div class="city-stat-label">Wineries</div></div>
+        </div>
+        <p class="desc">The first Wine Show. Presented by Rudolf Knoll (then Chief Editor, VINUM) and Peer Holm (President, Sommelier Union Deutschland). Buyers included Rindchen Weinkontor, Weinland, Kinfelts, Enoteca, and independent sommeliers and restaurateurs from across the city.</p>
+      </div>
+      <div class="city-card">
+        <h3>Düsseldorf</h3>
+        <div class="city-meta">27 January 2020 · Restaurant ArabesQ</div>
+        <div class="city-stats">
+          <div><div class="city-stat-val">29</div><div class="city-stat-label">Professionals</div></div>
+          <div><div class="city-stat-val">23</div><div class="city-stat-label">Wines</div></div>
+          <div><div class="city-stat-val">6</div><div class="city-stat-label">Wineries</div></div>
+        </div>
+        <p class="desc">The format, repeated and expanded — one more winery, three more wines. Buyers included Metro, Handelsblatt, Weinhandel Kraas, Messe Düsseldorf, and sommeliers and gastronomes from the region.</p>
+      </div>
+    </div>
+
+    <div class="photo-grid">
+      <div class="photo-card">
+        <img src="images/hamburg-tasting-room.jpg" alt="Flair of Lebanon tasting room, Hamburg">
+        <div class="photo-cap">Hamburg — the room set for 33 buyers, Restaurant Mazza</div>
+      </div>
+      <div class="photo-card">
+        <img src="images/duesseldorf-tasting-wide.jpg" alt="Flair of Lebanon tasting, Düsseldorf">
+        <div class="photo-cap">Düsseldorf — the tasting in full swing, Restaurant ArabesQ</div>
+      </div>
+    </div>
+    <div class="photo-grid thirds" style="margin-top:1rem">
+      <div class="photo-card">
+        <img src="images/duesseldorf-presenter.jpg" alt="Rudolf Knoll presenting">
+        <div class="photo-cap">Rudolf Knoll presents the region's wine culture</div>
+      </div>
+      <div class="photo-card">
+        <img src="images/duesseldorf-pouring.jpg" alt="Guided wine tasting in progress">
+        <div class="photo-cap">Guided tasting — every wine, poured in sequence</div>
+      </div>
+      <div class="photo-card">
+        <img src="images/hamburg-glasses.jpg" alt="Wine glasses lined up for tasting">
+        <div class="photo-cap">20 wines, ready to taste, Hamburg</div>
+      </div>
+    </div>
+
+    <p class="recap-links">Full event recaps: <a href="https://www.weinstore24.de/de/content/114-flair-of-lebanon-hamburg" target="_blank" rel="noopener">Flair of Lebanon — Hamburg</a> · <a href="https://www.weinstore24.de/de/content/113-flair-of-lebanon-duesseldorf" target="_blank" rel="noopener">Flair of Lebanon — Düsseldorf</a></p>
+  </div>
+</section>
+
+<!-- VIDEO -->
+<section class="section" style="padding-top:5rem;padding-bottom:5rem">
+  <div class="container">
+    <p class="eyebrow">See It In Action</p>
+    <h2>Watch: <em>Flair of Lebanon.</em></h2>
+    <p class="lead" style="margin-bottom:0">A short look inside the format — the room, the presentation, and the tasting that convinced 62 wine professionals to reconsider a country they'd mostly overlooked.</p>
+    <div class="video-wrap">
+      <iframe src="https://www.youtube.com/embed/CvXbMJG2dPg" title="Flair of Lebanon" allowfullscreen></iframe>
+    </div>
+  </div>
+</section>
+
+<!-- STORY -->
+<section class="section section-alt">
+  <div class="container">
+    <p class="eyebrow">Where It Starts</p>
+    <h2>Every Wine Show<br><em>starts with a journey.</em></h2>
+    <p class="lead">Before a single bottle reaches the tasting table, someone has to go and see where it comes from. Our 2018 trip through Lebanon's Bekaa Valley — meeting winemakers on their own ground, walking the same limestone slopes they farm — became the story that filled two rooms with buyers a year later. It's the same principle behind every Wine Show since: the presentation is never just tasting notes. It's a place, a people, and a reason to care.</p>
+
+    <div class="photo-grid">
+      <div class="photo-card">
+        <img src="images/lebanon-vineyard.jpg" alt="Vineyards in the Bekaa Valley, Lebanon">
+        <div class="photo-cap">The Bekaa Valley — up to 1,400m altitude, limestone soils</div>
+      </div>
+      <div class="photo-card">
+        <img src="images/lebanon-team.jpg" alt="Meeting winemakers in Lebanon">
+        <div class="photo-cap">Meeting the winemakers on their own ground, 2018</div>
+      </div>
+    </div>
+
+    <p class="lead" style="margin-top:3rem;margin-bottom:0.5rem;max-width:100%">That trip also earned independent press coverage — the same kind of third-party credibility every Bottle Lobby Wine Show is designed to build for the wineries that present.</p>
+    <div class="press-row">
+      <a class="press-item" href="https://www.caracterwines.de/press/Libanon_Vinum_Weinguide_libanesische_Weine_Caracter_Wines.pdf" target="_blank" rel="noopener">
+        <div class="press-source">VINUM Weinguide · May 2019</div>
+        <div class="press-title">Lebanon's wine culture and Caracter Media's portfolio, featured in VINUM's independent wine guide.</div>
+        <div class="press-link">Read the feature →</div>
+      </a>
+      <a class="press-item" href="https://www.caracterwines.de/press/Vinum_libanesisches_Weingut_Libanon_Interview_Roula_Khater.pdf" target="_blank" rel="noopener">
+        <div class="press-source">VINUM Interview</div>
+        <div class="press-title">Roula Khater of Coteaux du Liban speaks with VINUM about rebuilding her late husband's winery.</div>
+        <div class="press-link">Read the interview →</div>
+      </a>
+      <a class="press-item" href="https://www.caracterwines.de/press/Chain_Journal_Coteaux_du_Liban.pdf" target="_blank" rel="noopener">
+        <div class="press-source">Chaîne-Journal</div>
+        <div class="press-title">Sommelier Union president Peer Holm reviews a Coteaux du Liban Château for Chaîne-Journal.</div>
+        <div class="press-link">Read the review →</div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- BOTH SIDES -->
+<section class="section">
+  <div class="container">
+    <p class="eyebrow">Built for Both Sides of the Table</p>
+    <h2>One event.<br><em>Two reasons to be there.</em></h2>
+    <p class="lead">A Wine Show only works if it's worth both sides' time. Here's what each side actually gets out of the room.</p>
+
+    <div class="dual-grid">
+      <div class="dual-col winery">
+        <div class="dual-col-head"><span class="tag">For</span><h3>Wineries</h3></div>
+        <div class="benefit-item">
+          <div class="benefit-icon">◎</div>
+          <div class="benefit-text"><h4>No Trade-Fair Price Tag</h4><p>Skip the €20,000+ booth. Costs are shared across all participating wineries and Bottle Lobby.</p></div>
+        </div>
+        <div class="benefit-item">
+          <div class="benefit-icon">◈</div>
+          <div class="benefit-text"><h4>A Curated Room, Not a Crowded Hall</h4><p>Present to 25–35 buyers already looking for what you make — not passers-by collecting brochures.</p></div>
+        </div>
+        <div class="benefit-item">
+          <div class="benefit-icon">◇</div>
+          <div class="benefit-text"><h4>Story-Led Presentation</h4><p>A recognised sommelier or wine journalist presents your history and terroir, so you don't have to sell yourself.</p></div>
+        </div>
+        <div class="benefit-item">
+          <div class="benefit-icon">⬡</div>
+          <div class="benefit-text"><h4>Real Feedback, Real Fast</h4><p>Gauge buyer reaction to specific wines before committing to volume, new labels, or packaging.</p></div>
+        </div>
+        <div class="benefit-item">
+          <div class="benefit-icon">✦</div>
+          <div class="benefit-text"><h4>A Press-Ready Moment</h4><p>Wine Shows have generated coverage in VINUM and other trade press before — and can again.</p></div>
+        </div>
+      </div>
+      <div class="dual-col buyer">
+        <div class="dual-col-head"><span class="tag">For</span><h3>Distributors &amp; Buyers</h3></div>
+        <div class="benefit-item">
+          <div class="benefit-icon">◎</div>
+          <div class="benefit-text"><h4>Pre-Vetted Portfolios</h4><p>Every winery in the room has already been reviewed for quality, pricing, and market fit.</p></div>
+        </div>
+        <div class="benefit-item">
+          <div class="benefit-icon">◈</div>
+          <div class="benefit-text"><h4>Taste 20+ Wines in One Sitting</h4><p>No inbox full of samples, no wasted meetings — one afternoon, one decision-ready shortlist.</p></div>
+        </div>
+        <div class="benefit-item">
+          <div class="benefit-icon">◇</div>
+          <div class="benefit-text"><h4>A Direct Line to the Winery</h4><p>Talk to the people who actually make the wine — not a fourth-tier reseller reciting a spec sheet.</p></div>
+        </div>
+        <div class="benefit-item">
+          <div class="benefit-icon">⬡</div>
+          <div class="benefit-text"><h4>Discover Before Your Competitors Do</h4><p>Exclusive regions and labels not yet available through standard channels.</p></div>
+        </div>
+        <div class="benefit-item">
+          <div class="benefit-icon">✦</div>
+          <div class="benefit-text"><h4>Dinner, Not Just a Deck</h4><p>Wines are served the way they're meant to be enjoyed — paired with food, in conversation.</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- LOGISTICS -->
+<section class="section section-alt">
+  <div class="container">
+    <p class="eyebrow">Behind the Scenes</p>
+    <h2>Every detail,<br><em>planned in advance.</em></h2>
+    <p class="lead">Each Wine Show follows a tested operational checklist, so wineries and venue partners always know exactly what to expect.</p>
+
+    <div class="info-grid">
+      <div class="info-item">
+        <div class="info-icon">◎</div>
+        <div class="info-title">Venue &amp; Format</div>
+        <div class="info-text">A seated room for 25–35 guests, laid out for a guided tasting followed by dinner. Format and flow are set in advance for each location.</div>
+      </div>
+      <div class="info-item">
+        <div class="info-icon">◈</div>
+        <div class="info-title">Dedicated Service Staff</div>
+        <div class="info-text">A minimum of two servers stay on the floor throughout — pouring on time, clearing and resetting glassware between flights.</div>
+      </div>
+      <div class="info-item">
+        <div class="info-icon">⬡</div>
+        <div class="info-title">Tasting Equipment</div>
+        <div class="info-text">Up to four glasses per guest, spittoons shared between pairs, and a screen, projector, and sound system for the presentation.</div>
+      </div>
+      <div class="info-item">
+        <div class="info-icon">◇</div>
+        <div class="info-title">Palate-Cleansing Hospitality</div>
+        <div class="info-text">Still water and plain bread throughout the tasting, followed by a curated dinner menu paired to the wines just poured.</div>
+      </div>
+      <div class="info-item">
+        <div class="info-icon">✦</div>
+        <div class="info-title">Curated, Invitation-Only Guest List</div>
+        <div class="info-text">No open ticket sales. Every attendee is selected through our sommelier and distributor network for genuine buying relevance.</div>
+      </div>
+      <div class="info-item">
+        <div class="info-icon">↑</div>
+        <div class="info-title">Full Attendee Report</div>
+        <div class="info-text">Every participating winery leaves with contact details, feedback, and a written report — not just a stack of business cards.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- INVESTMENT -->
+<section class="section">
+  <div class="container">
+    <p class="eyebrow">Investment</p>
+    <h2>Shared costs.<br><em>Shared upside.</em></h2>
+    <div class="cost-wrap">
+      <div class="cost-text">
+        <p>Bottle Lobby coordinates the venue, the invitation network, the presentation talent, and the hospitality. Costs are split transparently among all participating wineries — with Bottle Lobby contributing a share as well — scaled to the city, venue, and guest count.</p>
+        <p>It's a fraction of a single trade-fair booth, split between everyone in the room, for a result no anonymous fair floor can match: a curated, story-led introduction to buyers who were already looking for what you make.</p>
+      </div>
+      <div class="benchmark-box">
+        <div class="benchmark-label">Benchmark — Düsseldorf 2020</div>
+        <div class="benchmark-row"><span>Invitation &amp; acquisition</span><span>€1,000</span></div>
+        <div class="benchmark-row"><span>Organisation &amp; tasting materials</span><span>€1,250</span></div>
+        <div class="benchmark-row"><span>Presentation &amp; hosting</span><span>€1,000</span></div>
+        <div class="benchmark-row"><span>Venue, kitchen &amp; logistics</span><span>€1,200</span></div>
+        <div class="benchmark-row total"><span>Per winery (6-way split)</span><span>≈ €740</span></div>
+        <p class="benchmark-note">Figures from the 2020 Düsseldorf pilot, shown for illustration. Your actual cost depends on city, venue, and guest count — apply to get a quote for your region.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+  <p class="eyebrow" style="color:rgba(247,243,238,0.5);justify-content:center"><span style="display:block;width:28px;height:1px;background:rgba(247,243,238,0.3)"></span>Wine Shows</p>
+  <h2>Ready to<br><em>fill the room?</em></h2>
+  <p class="cta-sub">Whether you're a winery with a story worth telling, or a buyer who wants first access to what's next — the next Wine Show starts with an application.</p>
+  <div class="cta-btns">
+    <a href="bottle-lobby-contact.html" class="btn btn-gold">Apply as a Winery →</a>
+    <a href="mailto:info@caracterwines.de?subject=Wine%20Show%20%E2%80%93%20Buyer%20Invitation%20Request" class="btn btn-outline" style="color:rgba(247,243,238,0.7);border-color:rgba(247,243,238,0.3)">Request an Invitation</a>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-brand">
+    <div class="footer-logo">Bottle<span>&nbsp;Lobby</span></div>
+    <p class="footer-copy">© 2026 Caracter Media GmbH</p>
+  </div>
+  <div class="footer-links">
+    <a href="bottle-lobby.html">Home</a>
+    <a href="bottle-lobby-why-join.html">Why Join</a>
+    <a href="bottle-lobby-about.html">About</a>
+    <a href="bottle-lobby-investor.html">Investors</a>
+    <a href="bottle-lobby-contact.html">Apply</a>
+    <a href="bottle-lobby-dashboard.html">Dashboard</a>
+    <a href="bottle-lobby-profile-demo.html">Public Profile</a>
+    <a href="bottle-lobby-contact-us.html">Imprint</a>
+  </div>
+</footer>
+
+<!-- FLOATING CTA -->
+<div class="floating-cta">
+  <a href="bottle-lobby-dashboard.html" class="btn btn-outline">Member Login</a>
+  <a href="bottle-lobby-contact.html" class="btn btn-gold">Join Now</a>
+</div>
+
+</body>
+</html>

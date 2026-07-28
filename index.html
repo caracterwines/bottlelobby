@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bottle Lobby — Private Preview</title>
+<meta name="robots" content="noindex, nofollow">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --ink: #0e0b0b; --paper: #f7f3ee; --wine: #6b1a1a; --gold: #b8975a;
+  }
+  html, body {
+    height: 100%;
+    font-family: 'Inter', sans-serif;
+    background: var(--ink);
+    color: var(--paper);
+    overflow: hidden;
+  }
+  body {
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+  }
+  .bg-texture {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(135deg, rgba(107,26,26,0.06) 1px, transparent 1px),
+      linear-gradient(45deg, rgba(184,151,90,0.03) 1px, transparent 1px);
+    background-size: 80px 80px, 140px 140px;
+  }
+  .glow {
+    position: absolute; top: 50%; left: 50%;
+    width: 700px; height: 700px;
+    transform: translate(-50%, -50%);
+    background: radial-gradient(circle, rgba(184,151,90,0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .gate {
+    position: relative;
+    width: 100%;
+    max-width: 400px;
+    padding: 0 2rem;
+    text-align: center;
+  }
+  .logo {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.6rem;
+    font-weight: 300;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--paper);
+    margin-bottom: 0.6rem;
+  }
+  .logo span { color: var(--gold); }
+  .tag {
+    font-size: 0.62rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: rgba(247,243,238,0.35);
+    margin-bottom: 3rem;
+  }
+  h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.9rem;
+    font-weight: 300;
+    line-height: 1.3;
+    margin-bottom: 0.8rem;
+  }
+  h1 em { font-style: italic; color: var(--gold); }
+  .sub {
+    font-size: 0.82rem;
+    color: rgba(247,243,238,0.5);
+    line-height: 1.7;
+    margin-bottom: 2.4rem;
+  }
+  form { position: relative; }
+  .field-wrap {
+    position: relative;
+    margin-bottom: 1.3rem;
+  }
+  input[type="password"] {
+    width: 100%;
+    background: rgba(247,243,238,0.04);
+    border: 1px solid rgba(247,243,238,0.15);
+    color: var(--paper);
+    font-family: 'Inter', sans-serif;
+    font-size: 0.85rem;
+    letter-spacing: 0.05em;
+    padding: 0.95rem 1.1rem;
+    border-radius: 2px;
+    text-align: center;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  input[type="password"]:focus {
+    outline: none;
+    border-color: var(--gold);
+    background: rgba(184,151,90,0.06);
+  }
+  input[type="password"]::placeholder { color: rgba(247,243,238,0.3); }
+  .btn-enter {
+    width: 100%;
+    background: var(--gold);
+    color: var(--ink);
+    border: none;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.72rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    font-weight: 500;
+    padding: 1rem 1.5rem;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+  .btn-enter:hover { opacity: 0.85; }
+  .error {
+    font-size: 0.72rem;
+    color: #d98c8c;
+    letter-spacing: 0.03em;
+    margin-top: 1rem;
+    height: 1rem;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .error.show { opacity: 1; }
+  .shake { animation: shake 0.4s; }
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-8px); }
+    40% { transform: translateX(8px); }
+    60% { transform: translateX(-6px); }
+    80% { transform: translateX(6px); }
+  }
+  .footer-note {
+    margin-top: 3rem;
+    font-size: 0.62rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(247,243,238,0.2);
+  }
+</style>
+</head>
+<body>
+
+<div class="bg-texture"></div>
+<div class="glow"></div>
+
+<div class="gate">
+  <div class="logo">Bottle<span>&nbsp;Lobby</span></div>
+  <div class="tag">B2B Wine Trade Platform</div>
+
+  <h1>This room is<br><em>invitation only.</em></h1>
+  <p class="sub">You're looking at a private preview of Bottle Lobby.<br>Enter your access code to continue.</p>
+
+  <form id="gate-form" autocomplete="off">
+    <div class="field-wrap">
+      <input type="password" id="password" placeholder="Access Code" autofocus>
+    </div>
+    <button type="submit" class="btn-enter">Enter the Lobby →</button>
+    <p class="error" id="error-msg">That code didn't work. Please try again.</p>
+  </form>
+
+  <p class="footer-note">Caracter Media GmbH · Karlsbad</p>
+</div>
+
+<script>
+  // ── Change your access code here ──
+  const SITE_PASSWORD = "Kongos88";
+  const ENTRY_PAGE = "bottle-lobby.html";
+
+  const form = document.getElementById('gate-form');
+  const input = document.getElementById('password');
+  const error = document.getElementById('error-msg');
+  const gate = document.querySelector('.gate');
+
+  // Skip the gate if already unlocked this session
+  if (sessionStorage.getItem('bl_unlocked') === '1') {
+    window.location.href = ENTRY_PAGE;
+  }
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    if (input.value.trim().toLowerCase() === SITE_PASSWORD.toLowerCase()) {
+      sessionStorage.setItem('bl_unlocked', '1');
+      window.location.href = ENTRY_PAGE;
+    } else {
+      error.classList.add('show');
+      gate.classList.remove('shake');
+      void gate.offsetWidth; // restart animation
+      gate.classList.add('shake');
+      input.value = '';
+      input.focus();
+    }
+  });
+</script>
+
+</body>
+</html>
