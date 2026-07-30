@@ -36,15 +36,30 @@ Kein Build-Command, Publish-Directory = Repo-Root.
   eigene Unterseite via `showDistributorView`, Reiterleiste bei Mehrfach-Gruppen, Preview nur
   auf My Profile); Anhang D um **D16** (Orders→Commerce), **D17** (Promotion→My Portfolio)
   und **D18** (Scrollseite→Unterseiten) ergaenzt
+- **Orders-Unteransicht fuer alle vier Rollen.** Statt vier Kopien ein Modul, parametrisiert
+  ueber `ORDER_ROLES` (Entitaet, ID-Praefix, Seite, Reiter, Marge-Flag); die Huelle baut
+  `orderShellHtml()`, deshalb waechst die Datei trotz drei neuer Auftragsverwaltungen kaum
+  (+305/−303 Zeilen). Reiter folgen der Position in der Lieferkette: Winery My Sales,
+  Restaurant/Retail My Purchases, Distributor beides. Kaeuferseite hat jetzt eigene KPIs
+  (In Transit / To Pay / Spend) und im Detail "Cancel Order" bzw. "Reorder". Die alten
+  Kartenlisten samt `orderCardHtml`/`paintOrders` sind raus, Badges und Uebersichts-Widgets
+  bleiben. Dokumente tragen den Briefkopf des jeweiligen Verkaeufers (`SELLER_PROFILES`).
+  Spec A14.8/A14.9 und B8 nachgezogen, Anhang D um **D19** ergaenzt.
 
 ---
 
 ## Offene Punkte
 
 ### Arbeit
-- **Winery-, Restaurant- und Retail-Dashboard** auf dieselbe Orders-Unteransicht heben,
-  die der Distributor jetzt hat. Aktuell haben sie nur die einfachen Karten-Sektionen.
-  Dabei auch die Sektions-Aufteilung und die "My ___"-Namenskonvention angleichen.
+- **Sidebar von Winery, Restaurant und Retail** an den Distributor angleichen — die
+  Orders-Unteransicht haben sie jetzt, der Rest fehlt noch: Sektions-Aufteilung
+  (statt einer gesammelten "Network"-Sektion), "My ___"-Namenskonvention fuer die
+  uebrigen Nav-Punkte, Commerce-Sektion nach oben, und die Profil-Nav-Punkte von
+  Scrollzielen auf echte Unterseiten umstellen (D18). Vorlage: `showDistributorView`
+  mit `D_SECTION_EL` / `D_NAV_EL` / `D_GROUPS`.
+- **Marge-Block fuer die Winery** bleibt bewusst aus (`ORDER_ROLES.winery.margin = false`):
+  es gibt kein Feld fuer Produktionskosten, eine geschaetzte Zahl waere ein A1-Verstoss.
+  Anschalten, sobald echte Kostendaten existieren.
 - **Datenarrays auslagern** nach `assets/bottle-lobby-data.js`, kommentiert als Schema-Vorlage
   fuer den Supabase-Bau. Bewusst noch nicht gemacht, damit Fehler eindeutig zuzuordnen bleiben.
 - **Bestandspruefung** im Auftragsdetail gegen das Wine Portfolio des Distributors
@@ -58,9 +73,10 @@ Kein Build-Command, Publish-Directory = Repo-Root.
 
 ## Hinweise fuer Claude
 
-- `bottle-lobby-dashboard.html` ist ~415 KB und **nicht pushbar**. Immer lokal bauen,
-  `node --check` auf den Script-Block, DOM-Stub-Harness fuer die Logik, dann als
-  einzelne Datei zur manuellen Uebergabe.
+- `bottle-lobby-dashboard.html` ist ~415 KB. Ueber **git push** ist das kein Problem —
+  die alte Notiz "nicht pushbar" galt dem MCP-Connector, der immer die ganze Datei
+  ersetzt. Immer lokal bauen und pruefen: `node --check` auf den extrahierten
+  Script-Block, dann das DOM-Stub-Harness fuer die Logik.
 - Vor jeder Uebergabe: div/tag-Balance UND Verschachtelung pruefen, doppelte IDs,
   onclick-Funktionen definiert, CSS-Klassen-Cross-Check.
 - Weinnamen muessen exakt zwischen `orders`, `promoMaterials` und `exclusiveDeals`

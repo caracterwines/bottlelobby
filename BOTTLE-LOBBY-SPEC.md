@@ -511,16 +511,25 @@ Wine-specific extras for the real build: excise duty number on documents, deposi
 
 ### A14.8 UI structure — non-negotiable
 
-**Orders is its own sub-view**, on the same level as Dashboard and My Profile. It is *not* a section of the profile page. Two levels:
+**Orders is its own sub-view**, on the same level as Dashboard and My Profile. It is *not* a section of the profile page. It exists for **all four roles** — one module, parameterised by role, never four copies. Two levels:
 
 **Level 1 — order list.**
-KPI row (open orders · awaiting payment with outstanding amount · ready to ship with bottle count · revenue), tabs (Incoming Orders · My Orders · Order History), status filter pills built from the stages actually present, and full-text search across order number, counterparty and wine. Each row carries a source chip, payment pill and stage pill.
+KPI row, tabs, status filter pills built from the stages actually present, and full-text search across order number, counterparty and wine. Each row carries a source chip, payment pill and stage pill.
+
+Tabs follow the role's position in the chain (A3): a producer sells only (**My Sales · Order History**), a restaurant and a retailer buy only (**My Purchases · Order History**), a distributor does both (**My Sales · My Purchases · Order History**).
+
+The KPI set follows the same split and is computed live (invariant 7), never stored:
+
+| Side | KPIs |
+|---|---|
+| Selling | Open Orders · Awaiting Payment (with outstanding amount) · Ready to Ship (with bottle count) · Revenue |
+| Buying | Open Orders · In Transit (with bottle count) · To Pay (with outstanding amount) · Spend |
 
 **Level 2 — order detail.** The working surface:
 
 | Block | Contents |
 |---|---|
-| Header | Order no., stage, payment status, action bar (Confirm · Decline · Mark Shipped · Mark Delivered · Cancel) |
+| Header | Order no., stage, payment status, action bar. Seller: Confirm · Decline · Mark Shipped · Mark Delivered · Cancel. Buyer: Cancel Order while `pending`, Reorder once closed |
 | Automatic flags | Promo due · deal free goods · deal discount — each with one-click apply |
 | Line items | Wine, winery, qty, unit price, line discount, line total; add/remove lines. **Editable only while `pending` or `accepted`** |
 | Totals | Net · order discount · shipping · VAT (switchable) · total |
@@ -528,7 +537,7 @@ KPI row (open orders · awaiting payment with outstanding amount · ready to shi
 | Customer / Supplier | Delivery address, invoice address, payment terms |
 | Payment | Status, method, received, outstanding, due date, record payment, require prepayment |
 | Shipping | Carrier, tracking, ETA, status incl. part-shipment |
-| Margin | Purchase cost vs net revenue vs gross margin — **seller-only, never visible to the buyer** |
+| Margin | Purchase cost vs net revenue vs gross margin — **seller-only, never visible to the buyer**, and only where a purchase cost actually exists (the distributor). A producer's cost of production is not held anywhere, so the block is off for that role rather than filled with an invented figure (A1) |
 | Internal note | Seller-only |
 | Activity | Append-only timeline |
 
@@ -537,9 +546,8 @@ KPI row (open orders · awaiting payment with outstanding amount · ready to shi
 ### A14.9 Still open
 
 - **Stock check** against the distributor's own portfolio, with an under-coverage warning linking to a restock order with the winery. Deliberately not built in the prototype: there is no stock data, and inventing a number would have violated A1.
-- **Winery, Restaurant and Retail dashboards** still use the simple card-list Orders sections. They must be brought onto the same two-level sub-view.
 
-**Prototype blueprint:** `bottle-lobby-dashboard.html` — `distributor-view-orders`, `dordState`, `showDistributorOrders()` / `renderDistributorOrders()` / `openOrderDetail()` / `renderOrderDetail()`, `normalizeOrder()`, the money chain `orderNet` → `orderDiscountAmt` → `orderSubtotal` → `orderVatAmt` → `orderGrand` plus `orderMargin`, `promoDueFor()` / `dealFreeGoodsFor()` / `applyFreeGoods()` / `applyDealDiscount()`, `DOC_TYPES` / `generateDoc()` / `openDocPreview()`, `openPayModal()` / `savePayment()`, `logEvent()`.
+**Prototype blueprint:** `bottle-lobby-dashboard.html` — `ORDER_ROLES` (the role registry: entity, id prefix, side, tabs, margin flag), `ordState` / `activeOrderRole`, `orderShellHtml()`, `showOrders()` / `renderOrders()` / `ordersForTab()` / `orderKpis()` / `openOrderDetail()` / `renderOrderDetail()`, `normalizeOrder()`, the money chain `orderNet` → `orderDiscountAmt` → `orderSubtotal` → `orderVatAmt` → `orderGrand` plus `orderMargin`, `promoDueFor()` / `dealFreeGoodsFor()` / `applyFreeGoods()` / `applyDealDiscount()`, `DOC_TYPES` / `generateDoc()` / `openDocPreview()`, `openPayModal()` / `savePayment()`, `logEvent()`.
 
 ---
 
@@ -893,7 +901,7 @@ Since the sidebar rebuild, every profile nav item opens its **own discrete sub-p
 
 **Real build:** one route per section, with the group as the parent route segment — `/dashboard/portfolio/wines`, `/dashboard/partners/requests`. The tab bar is the group's layout; the sections are its children.
 
-> ⚠️ This section-split, the naming convention and the Orders sub-view have **NOT** yet been applied to Winery, Restaurant and Retail dashboards. Those still show a single combined "Network" section, Promo Materials under the main profile nav, original unprefixed labels, and the simple card-list Orders sections. Bring them onto the distributor's structure.
+> ⚠️ Partly applied to Winery, Restaurant and Retail. **Done:** the Orders sub-view (A14.8) — all four roles now share one role-parameterised module, and their order nav items route into it. **Still open:** the section split and the "My ___" naming convention. Those dashboards still show a single combined "Network" section, Promo Materials under the main profile nav, original unprefixed labels elsewhere, and their profile nav items are still scroll targets rather than sub-pages (D18). Bring them onto the distributor's structure.
 
 ---
 
@@ -1090,6 +1098,7 @@ Diagnosed 30 July 2026 after repeated `403 Resource not accessible by integratio
 | D15 | Proposal to split `bottle-lobby-dashboard.html` into separate CSS and JS files so Claude could push it directly | **C3** — rejected after measuring | The file is ~170 KB markup, ~120 KB JS, ~43 KB CSS. Extracting CSS and JS leaves the HTML at ~170 KB — still unpushable. The refactor would have carried real risk for no gain. **Do not re-propose without measuring again.** |
 | D16 | Distributor sidebar had a fourth-position **"Orders"** section with items "Incoming Orders / My Orders / Order History" | **B8** — renamed **"Commerce"** and promoted to second position, directly under Overview; items renamed **My Sales / My Purchases / Order History** | "Orders" undersold the commercial core and sat too low in the sidebar. "Commerce" reads as the primary workspace, and the buyer/seller-neutral "My Sales / My Purchases" pair names each direction plainly. Routing into the Orders sub-view (A14.8) is unchanged. |
 | D17 | Distributor Promo Materials, Offers and Deals sat in their own **"Promotion"** nav section (the move recorded in D11) | **B8** — consolidated under the **"My Portfolio"** section, alongside My Wine Portfolio and My Labels | With Commerce promoted to the top, the remaining seller-owned instruments read more coherently as one "what I carry and how I promote it" group than as a thin standalone section. Supersedes the "Promotion" section named as the answer in D11; D11 remains valid history of the earlier My Profile → Promotion move. |
+| D19 | Winery, Restaurant and Retail read their orders in card-list sections inside the profile page (`wsection-orders-in`, `rsection-orders`, `tsection-orders` …); Restaurant and Retail called their nav item **"My Orders"** | **A14.8** — all four roles use the same two-level Orders sub-view, driven by the `ORDER_ROLES` registry; the buying roles' nav item is now **"My Purchases"** | The card list could show an order but not work one: no payment, documents, shipping or line editing. Parameterising the existing sub-view rather than copying it keeps one implementation for a model that is one record seen from two sides (invariant 8). "My Purchases" makes the same act carry the same name in every role — the distributor already used it for buying, and "My Orders" no longer denotes anything specific there (D16). |
 | D18 | Distributor dashboard profile was one long scrolling page; nav items were scroll targets to sections within it (the general case of D12, which covered Orders) | **B8** — every nav item opens its own discrete sub-page via `showDistributorView()`, showing exactly one section and hiding the rest; grouped views add an `.ord-tab` tab bar | A single scroll page made deep sections hard to reach and mixed unrelated content on screen at once. Discrete sub-pages give each area a clean working surface, consistent with the Orders sub-view (A14.8, D12). |
 
 ---
