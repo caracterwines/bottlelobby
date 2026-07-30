@@ -1124,30 +1124,27 @@ body {
     <div class="nav-section">
       <div class="nav-section-label">Overview</div>
       <div class="nav-item active" id="dnav-dashboard" onclick="showDistributorView('dashboard')" style="cursor:pointer"><span class="nav-icon">⬡</span> Dashboard</div>
+      <div class="nav-item" id="dnav-profile" onclick="showDistributorView('profile','basics')" style="cursor:pointer"><span class="nav-icon">◎</span> My Profile</div>
       <div class="nav-item" id="messages-distributor"><span class="nav-icon">✉</span> Messages <span class="nav-badge">3</span></div>
     </div>
     <div class="nav-section">
-      <div class="nav-section-label">My Profile</div>
-      <div class="nav-item" id="dnav-profile" onclick="showDistributorView('profile','basics')" style="cursor:pointer"><span class="nav-icon">◎</span> My Information</div>
+      <div class="nav-section-label">Commerce</div>
+      <div class="nav-item" id="dnav-orders-in" onclick="showDistributorOrders('incoming')" style="cursor:pointer"><span class="nav-icon">◐</span> My Sales <span class="nav-badge" id="dord-badge"></span></div>
+      <div class="nav-item" id="dnav-orders-out" onclick="showDistributorOrders('outgoing')" style="cursor:pointer"><span class="nav-icon">◈</span> My Purchases</div>
+      <div class="nav-item" id="dnav-orders-hist" onclick="showDistributorOrders('history')" style="cursor:pointer"><span class="nav-icon">↑</span> Order History</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">My Portfolio</div>
       <div class="nav-item" id="dnav-wines" onclick="showDistributorView('profile','wines')" style="cursor:pointer"><span class="nav-icon">◈</span> My Wine Portfolio</div>
       <div class="nav-item" id="dnav-partners" onclick="showDistributorView('profile','partners')" style="cursor:pointer"><span class="nav-icon">❖</span> My Labels</div>
-    </div>
-    <div class="nav-section">
-      <div class="nav-section-label">My Partners</div>
-      <div class="nav-item" id="dnav-network" onclick="showDistributorView('profile','network')" style="cursor:pointer"><span class="nav-icon">◉</span> My Partnerships</div>
-      <div class="nav-item" id="dnav-requests" onclick="showDistributorView('profile','requests')" style="cursor:pointer"><span class="nav-icon">✉</span> My Requests</div>
-    </div>
-    <div class="nav-section">
-      <div class="nav-section-label">Promotion</div>
       <div class="nav-item" id="dnav-promo" onclick="showDistributorView('profile','promo')" style="cursor:pointer"><span class="nav-icon">◁</span> My Promo Materials</div>
       <div class="nav-item" id="dnav-offers" onclick="showDistributorView('profile','offers')" style="cursor:pointer"><span class="nav-icon">✦</span> My Offers</div>
       <div class="nav-item" id="dnav-deals" onclick="showDistributorView('profile','deals')" style="cursor:pointer"><span class="nav-icon">%</span> My Deals</div>
     </div>
     <div class="nav-section">
-      <div class="nav-section-label">Orders</div>
-      <div class="nav-item" id="dnav-orders-in" onclick="showDistributorOrders('incoming')" style="cursor:pointer"><span class="nav-icon">◐</span> Incoming Orders <span class="nav-badge" id="dord-badge"></span></div>
-      <div class="nav-item" id="dnav-orders-out" onclick="showDistributorOrders('outgoing')" style="cursor:pointer"><span class="nav-icon">◈</span> My Orders</div>
-      <div class="nav-item" id="dnav-orders-hist" onclick="showDistributorOrders('history')" style="cursor:pointer"><span class="nav-icon">↑</span> Order History</div>
+      <div class="nav-section-label">My Partners</div>
+      <div class="nav-item" id="dnav-network" onclick="showDistributorView('profile','network')" style="cursor:pointer"><span class="nav-icon">◉</span> My Partnerships</div>
+      <div class="nav-item" id="dnav-requests" onclick="showDistributorView('profile','requests')" style="cursor:pointer"><span class="nav-icon">✉</span> My Requests</div>
     </div>
     <div class="nav-section">
       <div class="nav-section-label">Network</div>
@@ -2046,10 +2043,13 @@ With an annual production capacity of over 1.2 million bottles, Cantina Rossi is
       <div id="distributor-view-profile" style="display:none">
         <div style="padding:2rem;max-width:980px">
 
+          <!-- Tab bar, shown only for grouped sub-views (My Portfolio) -->
+          <div class="ord-tabs" id="dprofile-tabs" style="display:none"></div>
+
           <!-- BASIC INFO -->
           <div class="profile-section" id="dsection-basics">
             <div class="profile-section-header">
-              <div class="profile-section-title">My Information</div>
+              <div class="profile-section-title">My Profile</div>
               <button class="pencil-btn" id="dbasics-pencil" onclick="toggleDistributorSectionEdit('basics')">&#9998; Edit</button>
             </div>
 
@@ -4161,59 +4161,107 @@ renderPressList();
 /* ══════════════════════════════════════════════════════════════
    INLINE "MY PROFILE" VIEW (Distributor)
 ═══════════════════════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════════════════════════
+   DISTRIBUTOR VIEW ROUTING
+   ------------------------------------------------------------------
+   Every nav item is a real sub-page, not a scroll target. All profile
+   sections live in one container; the router shows exactly the one
+   that belongs to the chosen nav item and hides the rest.
+
+   Sections are organised into GROUPS. A group with more than one
+   member renders a tab bar above the content, the same pattern the
+   Commerce sub-view uses. Real build: one route per section, with the
+   group as the parent route segment.
+════════════════════════════════════════════════════════════════════ */
+const D_SECTION_EL = {
+  basics:'dsection-basics', wines:'dsection-wines', partners:'dsection-partners',
+  network:'dsection-active-partnerships', requests:'dsection-requests',
+  promo:'dsection-promo', offers:'dsection-offers', deals:'dsection-deals',
+  opportunities:'dsection-opportunities', winestars:'dsection-winestars', fans:'dsection-fans'
+};
+const D_NAV_EL = {
+  basics:'dnav-profile', wines:'dnav-wines', partners:'dnav-partners',
+  network:'dnav-network', requests:'dnav-requests',
+  promo:'dnav-promo', offers:'dnav-offers', deals:'dnav-deals',
+  opportunities:'dnav-opportunities', winestars:'dnav-winestars', fans:'dnav-fans'
+};
+const D_TITLES = {
+  dashboard:'Welcome back, Hawesko ✦', basics:'My Profile',
+  wines:'My Wine Portfolio', partners:'My Labels', promo:'My Promo Materials',
+  offers:'My Offers', deals:'My Deals', network:'My Partnerships', requests:'My Requests',
+  opportunities:'My Opportunities', winestars:'My Stars', fans:'My Fans'
+};
+/* Groups that render a tab bar. Single-member groups render none. */
+const D_GROUPS = [
+  { key:'portfolio', members:[
+      { s:'wines',    label:'My Wine Portfolio' },
+      { s:'partners', label:'My Labels' },
+      { s:'promo',    label:'My Promo Materials' },
+      { s:'offers',   label:'My Offers' },
+      { s:'deals',    label:'My Deals' } ] },
+  { key:'partners', members:[
+      { s:'network',  label:'My Partnerships' },
+      { s:'requests', label:'My Requests' } ] },
+  { key:'network', members:[
+      { s:'opportunities', label:'My Opportunities' },
+      { s:'winestars',     label:'My Stars' },
+      { s:'fans',          label:'My Fans' } ] }
+];
+function dGroupOf(section) {
+  return D_GROUPS.find(g => g.members.some(m => m.s === section)) || null;
+}
+
 function showDistributorView(view, section) {
   const dashEl = document.getElementById('distributor-view-dashboard');
   const profileEl = document.getElementById('distributor-view-profile');
   const ordersEl = document.getElementById('distributor-view-orders');
   const isProfile = view === 'profile';
+  if (isProfile && !section) section = 'basics';
+
   dashEl.style.display = isProfile ? 'none' : '';
   profileEl.style.display = isProfile ? '' : 'none';
   if (ordersEl) ordersEl.style.display = 'none';
+
   document.getElementById('distributor-topbar-actions-dashboard').style.display = isProfile ? 'none' : 'flex';
-  document.getElementById('distributor-topbar-actions-profile').style.display = isProfile ? 'flex' : 'none';
+  /* Preview Public Profile belongs to the My Profile sub-page only */
+  document.getElementById('distributor-topbar-actions-profile').style.display =
+    (isProfile && section === 'basics') ? 'flex' : 'none';
   const ordActs = document.getElementById('distributor-topbar-actions-orders');
   if (ordActs) ordActs.style.display = 'none';
 
-  const titles = { dashboard: 'Welcome back, Hawesko ✦', basics: 'My Information', wines: 'My Wine Portfolio', partners: 'My Labels', network: 'My Partnerships', requests: 'My Requests', opportunities: 'My Opportunities', promo: 'My Promo Materials', offers: 'My Offers', deals: 'My Deals', winestars: 'My Stars', fans: 'My Fans', 'orders-in': 'Incoming Orders', 'orders-out': 'My Orders', 'orders-hist': 'Order History' };
-  document.getElementById('distributor-topbar-title').textContent = isProfile ? titles[section || 'basics'] : titles.dashboard;
+  document.getElementById('distributor-topbar-title').textContent =
+    isProfile ? (D_TITLES[section] || 'My Profile') : D_TITLES.dashboard;
 
-  ['dnav-dashboard','dnav-profile','dnav-wines','dnav-partners','dnav-network','dnav-requests','dnav-opportunities','dnav-promo','dnav-offers','dnav-deals','dnav-winestars','dnav-fans','dnav-orders-in','dnav-orders-out','dnav-orders-hist'].forEach(id => { const e = document.getElementById(id); if (e) e.classList.remove('active'); });
-  if (!isProfile) {
-    document.getElementById('dnav-dashboard').classList.add('active');
-  } else if (section === 'wines') {
-    document.getElementById('dnav-wines').classList.add('active');
-  } else if (section === 'partners') {
-    document.getElementById('dnav-partners').classList.add('active');
-  } else if (section === 'network') {
-    document.getElementById('dnav-network').classList.add('active');
-  } else if (section === 'requests') {
-    document.getElementById('dnav-requests').classList.add('active');
-  } else if (section === 'opportunities') {
-    document.getElementById('dnav-opportunities').classList.add('active');
-  } else if (section === 'promo') {
-    document.getElementById('dnav-promo').classList.add('active');
-  } else if (section === 'offers') {
-    document.getElementById('dnav-offers').classList.add('active');
-  } else if (section === 'deals') {
-    document.getElementById('dnav-deals').classList.add('active');
-  } else if (section === 'winestars') {
-    document.getElementById('dnav-winestars').classList.add('active');
-  } else if (section === 'fans') {
-    document.getElementById('dnav-fans').classList.add('active');
-  } else if (section === 'orders-in') {
-    document.getElementById('dnav-orders-in').classList.add('active');
-  } else if (section === 'orders-out') {
-    document.getElementById('dnav-orders-out').classList.add('active');
-  } else if (section === 'orders-hist') {
-    document.getElementById('dnav-orders-hist').classList.add('active');
-  } else {
-    document.getElementById('dnav-profile').classList.add('active');
+  /* Sidebar active state */
+  ['dnav-dashboard','dnav-orders-in','dnav-orders-out','dnav-orders-hist']
+    .concat(Object.keys(D_NAV_EL).map(k => D_NAV_EL[k]))
+    .forEach(id => { const e = document.getElementById(id); if (e) e.classList.remove('active'); });
+  const activeNav = isProfile ? D_NAV_EL[section] : 'dnav-dashboard';
+  const ne = document.getElementById(activeNav);
+  if (ne) ne.classList.add('active');
+
+  /* Show exactly one section, hide the rest */
+  Object.keys(D_SECTION_EL).forEach(k => {
+    const el = document.getElementById(D_SECTION_EL[k]);
+    if (el) el.style.display = (isProfile && k === section) ? '' : 'none';
+  });
+
+  /* Tab bar for grouped sub-views */
+  const tabsEl = document.getElementById('dprofile-tabs');
+  if (tabsEl) {
+    const group = isProfile ? dGroupOf(section) : null;
+    if (group) {
+      tabsEl.style.display = '';
+      tabsEl.innerHTML = group.members.map(m =>
+        '<button class="ord-tab' + (m.s === section ? ' active' : '') +
+        '" onclick="showDistributorView(\'profile\',\'' + m.s + '\')">' + m.label + '</button>').join('');
+    } else {
+      tabsEl.style.display = 'none';
+      tabsEl.innerHTML = '';
+    }
   }
 
-  if (isProfile && section) {
-    const target = document.getElementById('dsection-' + (section === 'network' ? 'active-partnerships' : section));
-    if (target) setTimeout(() => target.scrollIntoView({ behavior: 'smooth', block: 'start' }), 30);
-  }
+  if (isProfile) window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function toggleDistributorSectionEdit(section) {
@@ -6665,14 +6713,14 @@ function showDistributorOrders(tab) {
   document.getElementById('distributor-topbar-actions-dashboard').style.display = 'none';
   document.getElementById('distributor-topbar-actions-profile').style.display = 'none';
   document.getElementById('distributor-topbar-actions-orders').style.display = 'flex';
-  const titles = { incoming:'Incoming Orders', outgoing:'My Orders', history:'Order History' };
+  const titles = { incoming:'My Sales', outgoing:'My Purchases', history:'Order History' };
   document.getElementById('distributor-topbar-title').textContent = titles[dordState.tab];
 
-  ['dnav-dashboard','dnav-profile','dnav-wines','dnav-partners','dnav-network','dnav-requests',
-   'dnav-opportunities','dnav-promo','dnav-offers','dnav-deals','dnav-winestars','dnav-fans',
-   'dnav-orders-in','dnav-orders-out','dnav-orders-hist'].forEach(id => {
-    const e = document.getElementById(id); if (e) e.classList.remove('active');
-  });
+  ['dnav-dashboard','dnav-orders-in','dnav-orders-out','dnav-orders-hist']
+    .concat(Object.keys(D_NAV_EL).map(k => D_NAV_EL[k]))
+    .forEach(id => { const e = document.getElementById(id); if (e) e.classList.remove('active'); });
+  const ptabs = document.getElementById('dprofile-tabs');
+  if (ptabs) ptabs.style.display = 'none';
   const navFor = { incoming:'dnav-orders-in', outgoing:'dnav-orders-out', history:'dnav-orders-hist' };
   const ne = document.getElementById(navFor[dordState.tab]); if (ne) ne.classList.add('active');
 
@@ -6692,8 +6740,8 @@ function ordersForTab(tab) {
 
 function renderDistributorOrders() {
   const tabs = [
-    { key:'incoming', label:'Incoming Orders' },
-    { key:'outgoing', label:'My Orders' },
+    { key:'incoming', label:'My Sales' },
+    { key:'outgoing', label:'My Purchases' },
     { key:'history',  label:'Order History' }
   ];
   document.getElementById('dord-tabs').innerHTML = tabs.map(t =>
