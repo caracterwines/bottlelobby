@@ -358,29 +358,6 @@
     line-height: 1.8;
   }
 
-  /* ── FOOTER STRIP ── */
-  .footer-strip {
-    border-top: 1px solid rgba(247,243,238,0.05);
-    padding: 2rem 3rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    max-width: 1100px;
-    margin: 0 auto;
-  }
-  .footer-strip p {
-    font-size: 0.7rem;
-    color: rgba(247,243,238,0.2);
-    letter-spacing: 0.05em;
-  }
-  .footer-strip a {
-    font-size: 0.7rem;
-    color: rgba(247,243,238,0.25);
-    text-decoration: none;
-    transition: color 0.2s;
-  }
-  .footer-strip a:hover { color: var(--gold); }
-
   /* ── RESPONSIVE ── */
   @media (max-width: 860px) {
     
@@ -390,7 +367,6 @@
     .role-selector { grid-template-columns: 1fr; }
     .form-group, .form-group.three { grid-template-columns: 1fr; }
     .form-submit { flex-direction: column; align-items: flex-start; }
-    .footer-strip { flex-direction: column; gap: 0.8rem; text-align: center; }
   }
   nav {
     position: fixed; top: 0; left: 0; right: 0; z-index: 100;
@@ -468,13 +444,85 @@
     .floating-cta { right: 1.2rem; bottom: 1.2rem; padding: 0.45rem; gap: 0.5rem; }
     .floating-cta .btn { padding: 0.5rem 1rem; font-size: 0.65rem; }
   }
-  footer { background: #070404; padding: 2.5rem 3rem; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--line); flex-wrap: wrap; gap: 1.5rem; }
-  .footer-logo { font-family: 'Cormorant Garamond', serif; font-size: 1rem; font-weight: 300; letter-spacing: 0.2em; text-transform: uppercase; color: rgba(247,243,238,0.25); }
+  /* ── FOOTER (canonical) ── */
+  footer {
+    background: #070404;
+    padding: 3rem 3rem 2.2rem;
+    border-top: 1px solid rgba(247,243,238,0.05);
+  }
+  .footer-top {
+    display: flex; justify-content: flex-start; align-items: flex-start;
+    max-width: 1400px; margin: 0 auto; gap: 2.5rem; flex-wrap: wrap;
+  }
+  .footer-divider { width: 1px; align-self: stretch; background: var(--gold); opacity: 0.4; }
+  .footer-logo {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.1rem;
+    font-weight: 300;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: rgba(247,243,238,0.3);
+  }
   .footer-logo span { color: var(--gold); }
-  .footer-links { display: flex; gap: 1.8rem; flex-wrap: wrap; }
-  .footer-links a { font-size: 0.65rem; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(247,243,238,0.2); text-decoration: none; transition: color 0.2s; }
-  .footer-links a:hover { color: var(--gold); }
-  .footer-copy { font-size: 0.65rem; color: rgba(247,243,238,0.15); }
+  .footer-brand { display:flex; flex-direction:column; gap:0.5px; }
+  .footer-copy {
+    font-size: 0.6336rem;
+    color: rgba(247,243,238,0.2);
+    letter-spacing: 0.05em;
+  }
+  .footer-tagline {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 0.85rem;
+    font-weight: 300;
+    color: rgba(247,243,238,0.35);
+    margin-top: 0.6rem;
+  }
+  .footer-tagline em { color: var(--gold); font-style: italic; }
+  .footer-mission {
+    font-size: 0.66rem;
+    color: rgba(247,243,238,0.25);
+    line-height: 1.6;
+    max-width: 340px;
+    margin-top: 0.5rem;
+  }
+  .footer-sitemap { display: flex; gap: 3.2rem; flex-wrap: wrap; }
+  .footer-col { display: flex; flex-direction: column; gap: 0.55rem; min-width: 110px; }
+  .footer-col-title { font-size: 0.6rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold); opacity: 0.75; margin-bottom: 0.2rem; }
+  .footer-col a {
+    font-size: 0.7rem;
+    letter-spacing: 0.04em;
+    color: rgba(247,243,238,0.35);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  .footer-col a:hover { color: rgba(247,243,238,0.7); }
+  @media (max-width: 900px) {
+    .footer-top { flex-direction: column; gap: 2rem; text-align: center; }
+    .footer-divider { display: none; }
+    .footer-brand { align-items: center; }
+    .footer-sitemap { justify-content: center; gap: 2rem; width: 100%; }
+    .footer-col { align-items: center; }
+  }
+  /* ── FLOATING CTA (canonical) ── */
+  .floating-cta {
+    position: fixed;
+    bottom: 2rem;
+    right: 3rem;
+    z-index: 150;
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    background: rgba(14,11,11,0.97);
+    backdrop-filter: blur(4px);
+    padding: 0.6rem;
+    border-radius: 8px;
+    border: 1px solid rgba(247,243,238,0.1);
+    box-shadow: 0 12px 32px rgba(0,0,0,0.4);
+  }
+  @media (max-width: 640px) {
+    .floating-cta { right: 1.2rem; bottom: 1.2rem; padding: 0.45rem; gap: 0.5rem; }
+    .floating-cta .btn { padding: 0.5rem 1rem; font-size: 0.65rem; }
+  }
 </style>
 </head>
 <body>
@@ -955,19 +1003,6 @@
 
 </div><!-- /form-section -->
 
-<!-- FOOTER STRIP -->
-<div class="footer-strip">
-  <p>© 2026 Caracter Media GmbH</p>
-  <a href="mailto:info@caracterwines.de">info@caracterwines.de</a>
-  <a href="bottle-lobby.html">← Home</a>
-  <a href="bottle-lobby-why-join.html">Why Join</a>
-  <a href="bottle-lobby-about.html">About</a>
-  <a href="bottle-lobby-profile-demo.html">Public Profile</a>
-  <a href="bottle-lobby-investor.html">Investor Pitch →</a>
-  <a href="bottle-lobby-dashboard.html">Preview Dashboard →</a>
-  <a href="bottle-lobby-contact-us.html">Imprint</a>
-</div>
-
 <script>
   function switchRole(role, btn) {
     // Update buttons
@@ -989,6 +1024,46 @@
     window.scrollTo({ top: document.querySelector('.role-section').offsetTop - 100, behavior: 'smooth' });
   }
 </script>
+<footer>
+  <div class="footer-top">
+    <div class="footer-brand">
+      <div class="footer-logo">Bottle<span>&nbsp;Lobby</span></div>
+      <p class="footer-copy">© 2026 Caracter Media GmbH</p>
+      <p class="footer-tagline">Where great wines find their <em>market.</em></p>
+      <p class="footer-mission">We are redefining how wine crosses borders<br>bringing efficiency, exclusivity, and profitability<br>to every glass poured.</p>
+    </div>
+    <div class="footer-divider"></div>
+    <div class="footer-sitemap">
+      <div class="footer-col">
+        <div class="footer-col-title">Platform</div>
+        <a href="bottle-lobby-wine-guide.html">Wine Guide</a>
+        <a href="bottle-lobby-wine-shows.html">Wine Shows</a>
+        <a href="bottle-lobby-own-label.html">Own Label</a>
+        <a href="bottle-lobby-app.html">The App</a>
+      </div>
+      <div class="footer-col">
+        <div class="footer-col-title">Company</div>
+        <a href="bottle-lobby-market.html">Market</a>
+        <a href="bottle-lobby-platform.html">The Lobby</a>
+        <a href="bottle-lobby-about.html">About</a>
+        <a href="bottle-lobby-why-join.html">Why Join</a>
+      </div>
+      <div class="footer-col">
+        <div class="footer-col-title">Account</div>
+        <a href="bottle-lobby-dashboard.html">Dashboard</a>
+        <a href="bottle-lobby-profile-demo.html">Public Profile</a>
+        <a href="bottle-lobby-contact.html">Apply</a>
+      </div>
+      <div class="footer-col">
+        <div class="footer-col-title">Contact</div>
+        <a href="bottle-lobby-contact-us.html">Contact Us</a>
+        <a href="bottle-lobby-investor.html">Partners</a>
+        <a href="bottle-lobby-contact-us.html">Imprint</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
 <!-- FLOATING CTA -->
 <div class="floating-cta">
   <a href="bottle-lobby-dashboard.html" class="btn btn-outline">Member Login</a>
