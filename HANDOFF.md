@@ -31,19 +31,13 @@ Kein Build-Command, Publish-Directory = Repo-Root.
   Anhang D (ueberholte Entscheidungen) und Anhang E (Ablagen) angelegt
 - Distributor-Sidebar: Orders-Sektion nach oben zwischen "Overview" und "My Profile" verschoben,
   umbenannt in **Commerce**; "Incoming Orders" → **My Sales**, "My Orders" → **My Purchases**
+- Spec B8 auf die reale 8-Sektionen-Distributor-Sidebar synchronisiert (Commerce statt Orders,
+  My Portfolio statt Promotion); Anhang D um **D16** (Orders→Commerce) und **D17**
+  (Promotion→My Portfolio) ergaenzt
 
 ---
 
 ## Offene Punkte
-
-### Muss in die Spec, sobald die naechste Spec-Auslieferung ansteht
-- **B8 ist veraltet:** Der Abschnitt beschreibt die Distributor-Sidebar noch mit der
-  Orders-Sektion an vierter Stelle und mit den alten Bezeichnungen. Richtig ist jetzt:
-  Overview → **Commerce** (My Sales / My Purchases / Order History) → My Profile →
-  My Partners → Promotion → Network → Intelligence → Events → Account.
-  Beim naechsten Spec-Update einarbeiten und eine Zeile in Anhang D ergaenzen.
-  Bewusst nicht sofort ausgeliefert, um nicht zweimal kurz hintereinander eine 58-KB-Datei
-  zu erzeugen — die Angleichung der uebrigen Dashboards aendert B8 ohnehin nochmal.
 
 ### Arbeit
 - **Winery-, Restaurant- und Retail-Dashboard** auf dieselbe Orders-Unteransicht heben,
