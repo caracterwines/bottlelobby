@@ -91,6 +91,9 @@ never a sync step. `order_events` is append-only and is the audit trail.
 - Conversation with Serge: **German**
 - Company name is always **Caracter Media GmbH** (never "Caracter Wines GmbH")
 - Commit messages: short, English, conventional-commit style (`feat:`, `fix:`, `chore:`)
+- In Claude Code, push via **git** (`gh auth login` is set up) — never the GitHub MCP
+  connector. The connector is the fallback for Claude in chat, where no local repo exists;
+  it always replaces the whole file and is therefore many times more expensive.
 
 ---
 
