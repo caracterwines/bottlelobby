@@ -881,6 +881,16 @@ Both sub-groups use the `.wn-group-title` gold-caps label style rather than thei
 
 **"My ___" naming convention** applies to every Distributor-only nav item — and to any new ones added. Rename **both** the nav label AND the corresponding `profile-section-title` / topbar-title together (including the `titles` map inside `showDistributorView()`).
 
+### Nav items are sub-pages, not scroll targets
+
+Since the sidebar rebuild, every profile nav item opens its **own discrete sub-page**; there is no long scrolling profile page. `showDistributorView(view, section)` swaps the profile view in, hides the Dashboard and Orders views, then shows exactly the one section matching `section` and hides all others (`D_SECTION_EL` map), and scrolls to top (D18).
+
+**Grouped sub-views render a tab bar; single-member ones don't.** `D_GROUPS` defines the three grouped views — **My Portfolio** (Wine Portfolio · Labels · Promo Materials · Offers · Deals), **My Partners** (Partnerships · Requests) and **Network** (Opportunities · Stars · Fans). When the active section belongs to a group (`dGroupOf()`), a tab strip renders above the content in `#dprofile-tabs` using the **same `.ord-tab` styling as the Commerce (Orders) view**, with the current member marked active. Single-member sections (My Profile) render no tab bar. Matchmaking is not a group member — it is a non-functional demo nav item (A8), not a real section.
+
+**"Preview Public Profile" appears on the My-Profile sub-page only** (`section === 'basics'`): its topbar action group (`distributor-topbar-actions-profile`) is shown there and hidden on every other sub-page.
+
+**Prototype blueprint:** `showDistributorView()`, the `D_SECTION_EL` / `D_NAV_EL` / `D_TITLES` maps, `D_GROUPS` + `dGroupOf()`, `#dprofile-tabs`, `openDistributorPublicPreview()` — all in `bottle-lobby-dashboard.html`.
+
 > ⚠️ This section-split, the naming convention and the Orders sub-view have **NOT** yet been applied to Winery, Restaurant and Retail dashboards. Those still show a single combined "Network" section, Promo Materials under the main profile nav, original unprefixed labels, and the simple card-list Orders sections. Bring them onto the distributor's structure.
 
 ---
@@ -1078,6 +1088,7 @@ Diagnosed 30 July 2026 after repeated `403 Resource not accessible by integratio
 | D15 | Proposal to split `bottle-lobby-dashboard.html` into separate CSS and JS files so Claude could push it directly | **C3** — rejected after measuring | The file is ~170 KB markup, ~120 KB JS, ~43 KB CSS. Extracting CSS and JS leaves the HTML at ~170 KB — still unpushable. The refactor would have carried real risk for no gain. **Do not re-propose without measuring again.** |
 | D16 | Distributor sidebar had a fourth-position **"Orders"** section with items "Incoming Orders / My Orders / Order History" | **B8** — renamed **"Commerce"** and promoted to second position, directly under Overview; items renamed **My Sales / My Purchases / Order History** | "Orders" undersold the commercial core and sat too low in the sidebar. "Commerce" reads as the primary workspace, and the buyer/seller-neutral "My Sales / My Purchases" pair names each direction plainly. Routing into the Orders sub-view (A14.8) is unchanged. |
 | D17 | Distributor Promo Materials, Offers and Deals sat in their own **"Promotion"** nav section (the move recorded in D11) | **B8** — consolidated under the **"My Portfolio"** section, alongside My Wine Portfolio and My Labels | With Commerce promoted to the top, the remaining seller-owned instruments read more coherently as one "what I carry and how I promote it" group than as a thin standalone section. Supersedes the "Promotion" section named as the answer in D11; D11 remains valid history of the earlier My Profile → Promotion move. |
+| D18 | Distributor dashboard profile was one long scrolling page; nav items were scroll targets to sections within it (the general case of D12, which covered Orders) | **B8** — every nav item opens its own discrete sub-page via `showDistributorView()`, showing exactly one section and hiding the rest; grouped views add an `.ord-tab` tab bar | A single scroll page made deep sections hard to reach and mixed unrelated content on screen at once. Discrete sub-pages give each area a clean working surface, consistent with the Orders sub-view (A14.8, D12). |
 
 ---
 

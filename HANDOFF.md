@@ -32,8 +32,10 @@ Kein Build-Command, Publish-Directory = Repo-Root.
 - Distributor-Sidebar: Orders-Sektion nach oben zwischen "Overview" und "My Profile" verschoben,
   umbenannt in **Commerce**; "Incoming Orders" → **My Sales**, "My Orders" → **My Purchases**
 - Spec B8 auf die reale 8-Sektionen-Distributor-Sidebar synchronisiert (Commerce statt Orders,
-  My Portfolio statt Promotion); Anhang D um **D16** (Orders→Commerce) und **D17**
-  (Promotion→My Portfolio) ergaenzt
+  My Portfolio statt Promotion) und um die Sub-Page-Mechanik ergaenzt (jeder Nav-Punkt eine
+  eigene Unterseite via `showDistributorView`, Reiterleiste bei Mehrfach-Gruppen, Preview nur
+  auf My Profile); Anhang D um **D16** (Orders→Commerce), **D17** (Promotion→My Portfolio)
+  und **D18** (Scrollseite→Unterseiten) ergaenzt
 
 ---
 
