@@ -874,6 +874,136 @@ body {
 .ship-field input, .ship-field select { background:#0e0b0b; border:1px solid rgba(247,243,238,0.12); color:var(--paper); font-family:'Inter',sans-serif; font-size:0.85rem; padding:0.7rem 0.9rem; outline:none; }
 .ship-field input:focus, .ship-field select:focus { border-color:var(--gold); }
 .ship-field select option { background:#1a0f0f; }
+
+/* ══ ORDER MANAGEMENT (Distributor sub-view) ══════════════════ */
+.ord-tabs { display:flex; gap:0; border-bottom:1px solid var(--line); margin:1.6rem 0 1.4rem; }
+.ord-tab { background:none; border:none; border-bottom:2px solid transparent; margin-bottom:-1px;
+  font-family:'Inter',sans-serif; font-size:0.7rem; letter-spacing:0.12em; text-transform:uppercase;
+  color:var(--dim); padding:0.8rem 1.4rem; cursor:pointer; transition:color .15s; }
+.ord-tab:hover { color:var(--paper); }
+.ord-tab.active { color:var(--gold); border-bottom-color:var(--gold); }
+.ord-tab .cnt { font-size:0.62rem; opacity:0.7; margin-left:0.35rem; }
+.ord-toolbar { display:flex; gap:1rem; align-items:center; justify-content:space-between; margin-bottom:1.4rem; flex-wrap:wrap; }
+
+/* list table */
+.otbl { border:1px solid var(--line); }
+.otbl-head, .otbl-row { display:grid; grid-template-columns:104px 88px 1.4fr 60px 96px 118px 118px 26px; gap:0.9rem;
+  align-items:center; padding:0.85rem 1.2rem; }
+.otbl-head { background:#0b0808; border-bottom:1px solid var(--line);
+  font-size:0.58rem; letter-spacing:0.14em; text-transform:uppercase; color:var(--dim); }
+.otbl-row { background:#110d0d; border-bottom:1px solid rgba(247,243,238,0.05); cursor:pointer; transition:background .15s; }
+.otbl-row:last-child { border-bottom:none; }
+.otbl-row:hover { background:#161010; }
+.otbl-id { font-size:0.74rem; color:var(--gold); letter-spacing:0.04em; }
+.otbl-cust { font-size:0.82rem; color:var(--paper); }
+.otbl-cust em { font-style:normal; display:block; font-size:0.66rem; color:var(--dim); margin-top:0.12rem; }
+.otbl-dim { font-size:0.72rem; color:var(--dim); }
+.otbl-sum { font-size:0.8rem; color:var(--paper); text-align:right; }
+.otbl-arrow { color:var(--dim); text-align:right; font-size:0.8rem; }
+.otbl-empty { background:#110d0d; padding:2.4rem; text-align:center; color:var(--dim); font-size:0.82rem; }
+
+/* source / flag chips */
+.ord-chip { display:inline-block; font-size:0.54rem; letter-spacing:0.09em; text-transform:uppercase;
+  padding:0.16rem 0.5rem; border-radius:2px; margin-right:0.3rem; white-space:nowrap; }
+.chip-deal  { background:rgba(184,151,90,0.16); color:var(--gold); }
+.chip-offer { background:rgba(127,170,240,0.15); color:#7faaf0; }
+.chip-promo { background:rgba(76,175,125,0.15); color:#4caf7d; }
+.chip-reorder { background:rgba(247,243,238,0.07); color:var(--dim); }
+.chip-manual  { background:rgba(247,243,238,0.05); color:rgba(247,243,238,0.35); }
+
+/* payment pills */
+.pay-pill { font-size:0.56rem; letter-spacing:0.1em; text-transform:uppercase; padding:0.22rem 0.55rem; border-radius:2px; }
+.pay-not_invoiced { background:rgba(247,243,238,0.06); color:var(--dim); }
+.pay-invoiced { background:rgba(127,170,240,0.15); color:#7faaf0; }
+.pay-partial  { background:rgba(184,151,90,0.16); color:var(--gold); }
+.pay-paid     { background:rgba(76,175,125,0.15); color:#4caf7d; }
+.pay-overdue  { background:rgba(107,26,26,0.32); color:#e08585; }
+
+/* detail */
+.odt-back { background:none; border:none; color:var(--dim); font-family:'Inter',sans-serif; font-size:0.72rem;
+  letter-spacing:0.06em; cursor:pointer; padding:0 0 1rem; }
+.odt-back:hover { color:var(--gold); }
+.odt-head { display:flex; align-items:flex-start; gap:1.2rem; flex-wrap:wrap;
+  padding-bottom:1.3rem; border-bottom:1px solid var(--line); margin-bottom:1.6rem; }
+.odt-title { font-family:'Cormorant Garamond',serif; font-size:1.9rem; font-weight:300; color:var(--paper); line-height:1; }
+.odt-sub { font-size:0.74rem; color:var(--dim); margin-top:0.45rem; }
+.odt-head-right { margin-left:auto; display:flex; gap:0.5rem; flex-wrap:wrap; justify-content:flex-end; }
+.odt-grid { display:grid; grid-template-columns:1.75fr 1fr; gap:1.6rem; align-items:start; }
+.odt-box { background:#110d0d; border:1px solid var(--line); margin-bottom:1.4rem; }
+.odt-box-head { padding:0.85rem 1.2rem; border-bottom:1px solid var(--line);
+  font-size:0.6rem; letter-spacing:0.15em; text-transform:uppercase; color:var(--dim);
+  display:flex; align-items:center; gap:0.7rem; }
+.odt-box-head .right { margin-left:auto; display:flex; gap:0.4rem; }
+.odt-box-body { padding:1.2rem; }
+.odt-kv { display:flex; justify-content:space-between; gap:1rem; padding:0.45rem 0; font-size:0.78rem;
+  border-bottom:1px solid rgba(247,243,238,0.04); }
+.odt-kv:last-child { border-bottom:none; }
+.odt-kv span:first-child { color:var(--dim); }
+.odt-kv span:last-child { color:var(--paper); text-align:right; }
+
+/* line items */
+.oli-head, .oli-row { display:grid; grid-template-columns:1.7fr 74px 92px 84px 92px 28px; gap:0.7rem; align-items:center; }
+.oli-head { font-size:0.56rem; letter-spacing:0.13em; text-transform:uppercase; color:var(--dim);
+  padding-bottom:0.6rem; border-bottom:1px solid var(--line); }
+.oli-row { padding:0.7rem 0; border-bottom:1px solid rgba(247,243,238,0.04); font-size:0.78rem; }
+.oli-row:last-of-type { border-bottom:none; }
+.oli-name { color:var(--paper); }
+.oli-name em { font-style:normal; display:block; font-size:0.66rem; color:var(--dim); margin-top:0.12rem; }
+.oli-in { background:#0e0b0b; border:1px solid rgba(247,243,238,0.12); color:var(--paper);
+  font-family:'Inter',sans-serif; font-size:0.76rem; padding:0.32rem 0.45rem; width:100%; text-align:right; outline:none; }
+.oli-in:focus { border-color:var(--gold); }
+.oli-in:disabled { border-color:transparent; background:transparent; color:var(--dim); }
+.oli-sum { text-align:right; color:var(--paper); }
+.oli-del { background:none; border:none; color:rgba(247,243,238,0.3); cursor:pointer; font-size:0.85rem; }
+.oli-del:hover { color:#e08585; }
+.oli-free { color:#4caf7d; font-size:0.62rem; letter-spacing:0.08em; text-transform:uppercase; }
+.odt-sums { margin-top:1.1rem; padding-top:1rem; border-top:1px solid var(--line); }
+.odt-sum-row { display:flex; justify-content:flex-end; gap:1.4rem; font-size:0.78rem; color:var(--dim); padding:0.25rem 0; }
+.odt-sum-row span:last-child { width:110px; text-align:right; color:var(--paper); }
+.odt-sum-row.total { font-size:0.9rem; padding-top:0.6rem; margin-top:0.4rem; border-top:1px solid rgba(247,243,238,0.08); }
+.odt-sum-row.total span:last-child { font-family:'Cormorant Garamond',serif; font-size:1.4rem; font-weight:400; }
+
+/* alerts (promo due / deal free goods / stock) */
+.odt-alert { display:flex; gap:0.85rem; align-items:flex-start; padding:0.95rem 1.15rem; margin-bottom:1px;
+  font-size:0.78rem; line-height:1.7; }
+.alert-promo { background:rgba(76,175,125,0.08); border-left:2px solid rgba(76,175,125,0.5); color:#bfe6d1; }
+.alert-deal  { background:rgba(184,151,90,0.08); border-left:2px solid rgba(184,151,90,0.5); color:#e4d3ae; }
+.alert-stock { background:rgba(107,26,26,0.14); border-left:2px solid rgba(107,26,26,0.6); color:#e8b4b4; }
+.odt-alert b { color:#fff; font-weight:500; }
+
+/* documents */
+.doc-row { display:flex; align-items:center; gap:0.8rem; padding:0.6rem 0; border-bottom:1px solid rgba(247,243,238,0.04); font-size:0.78rem; }
+.doc-row:last-child { border-bottom:none; }
+.doc-name { color:var(--paper); flex:1; }
+.doc-name em { font-style:normal; display:block; font-size:0.66rem; color:var(--dim); margin-top:0.1rem; }
+.doc-missing { color:var(--dim); }
+
+/* timeline */
+.tl-item { display:flex; gap:0.8rem; padding:0.5rem 0; font-size:0.74rem; }
+.tl-dot { width:6px; height:6px; border-radius:50%; background:var(--gold); margin-top:0.45rem; flex-shrink:0; }
+.tl-text { color:rgba(247,243,238,0.7); flex:1; }
+.tl-when { color:var(--dim); font-size:0.66rem; white-space:nowrap; }
+
+/* document sheet (preview modal) */
+.doc-sheet { background:#f7f3ee; color:#1a1414; padding:2.4rem 2.6rem; font-family:'Inter',sans-serif; font-size:0.78rem; line-height:1.65; }
+.doc-sheet h1 { font-family:'Cormorant Garamond',serif; font-size:1.7rem; font-weight:400; margin-bottom:0.2rem; }
+.doc-sheet .doc-meta { display:flex; justify-content:space-between; gap:2rem; margin:1.6rem 0; }
+.doc-sheet .doc-block strong { display:block; font-size:0.62rem; letter-spacing:0.13em; text-transform:uppercase; color:#8a7a5f; margin-bottom:0.35rem; }
+.doc-sheet table { width:100%; border-collapse:collapse; margin:1.4rem 0 0.6rem; }
+.doc-sheet th { text-align:left; font-size:0.6rem; letter-spacing:0.12em; text-transform:uppercase; color:#8a7a5f;
+  border-bottom:1px solid #d8cfc1; padding:0.5rem 0; }
+.doc-sheet td { padding:0.5rem 0; border-bottom:1px solid #e6dfd3; vertical-align:top; }
+.doc-sheet td.num, .doc-sheet th.num { text-align:right; }
+.doc-sheet .doc-tot { display:flex; justify-content:flex-end; gap:1.6rem; padding:0.22rem 0; }
+.doc-sheet .doc-tot span:last-child { width:120px; text-align:right; }
+.doc-sheet .doc-tot.grand { font-weight:600; border-top:1px solid #d8cfc1; margin-top:0.4rem; padding-top:0.55rem; }
+.doc-sheet .doc-foot { margin-top:1.8rem; padding-top:1rem; border-top:1px solid #d8cfc1; font-size:0.68rem; color:#6d6155; }
+
+@media (max-width: 1100px) {
+  .odt-grid { grid-template-columns:1fr; }
+  .otbl-head, .otbl-row { grid-template-columns:1fr 1fr; gap:0.4rem; }
+  .otbl-head { display:none; }
+}
 </style>
 </head>
 <body>
@@ -1015,9 +1145,9 @@ body {
     </div>
     <div class="nav-section">
       <div class="nav-section-label">Orders</div>
-      <div class="nav-item" id="dnav-orders-in" onclick="showDistributorView('profile','orders-in')" style="cursor:pointer"><span class="nav-icon">◐</span> Incoming Orders <span class="nav-badge" id="dord-badge"></span></div>
-      <div class="nav-item" id="dnav-orders-out" onclick="showDistributorView('profile','orders-out')" style="cursor:pointer"><span class="nav-icon">◈</span> My Orders</div>
-      <div class="nav-item" id="dnav-orders-hist" onclick="showDistributorView('profile','orders-hist')" style="cursor:pointer"><span class="nav-icon">↑</span> Order History</div>
+      <div class="nav-item" id="dnav-orders-in" onclick="showDistributorOrders('incoming')" style="cursor:pointer"><span class="nav-icon">◐</span> Incoming Orders <span class="nav-badge" id="dord-badge"></span></div>
+      <div class="nav-item" id="dnav-orders-out" onclick="showDistributorOrders('outgoing')" style="cursor:pointer"><span class="nav-icon">◈</span> My Orders</div>
+      <div class="nav-item" id="dnav-orders-hist" onclick="showDistributorOrders('history')" style="cursor:pointer"><span class="nav-icon">↑</span> Order History</div>
     </div>
     <div class="nav-section">
       <div class="nav-section-label">Network</div>
@@ -1713,6 +1843,10 @@ With an annual production capacity of over 1.2 million bottles, Cantina Rossi is
         <div class="topbar-actions" id="distributor-topbar-actions-profile" style="display:none">
           <button class="btn-sm btn-outline" onclick="openDistributorPublicPreview()">👁 Preview Public Profile</button>
         </div>
+        <div class="topbar-actions" id="distributor-topbar-actions-orders" style="display:none">
+          <button class="btn-sm btn-outline" onclick="exportOrdersStub()">⇩ Export</button>
+          <button class="btn-sm btn-gold" onclick="openNewOrderDraft()">+ New Order</button>
+        </div>
       </div>
       <div style="padding:2rem" id="distributor-view-dashboard">
 
@@ -1864,6 +1998,51 @@ With an annual production capacity of over 1.2 million bottles, Cantina Rossi is
       <!-- ══════════════════════════════════════════════════════════════
            MY PROFILE — inline, per-section editable (Distributor)
       ═══════════════════════════════════════════════════════════════ -->
+
+      <!-- ══════════════════════════════════════════════════════════════
+           ORDERS — own sub-view, on the same level as Dashboard and
+           My Profile. Two panes: list (level 1) and detail (level 2).
+      ═══════════════════════════════════════════════════════════════ -->
+      <div id="distributor-view-orders" style="display:none;padding:2rem">
+
+        <!-- ── LEVEL 1: ORDER LIST ── -->
+        <div id="dord-list-pane">
+          <div class="stats-row">
+            <div class="stat-card">
+              <div class="stat-card-label">Open Orders</div>
+              <div class="stat-card-value" id="dkpi-open">0<span></span></div>
+              <div class="stat-card-delta" id="dkpi-open-sub">&nbsp;</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-card-label">Awaiting Payment</div>
+              <div class="stat-card-value" id="dkpi-unpaid">0<span></span></div>
+              <div class="stat-card-delta" id="dkpi-unpaid-sub">&nbsp;</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-card-label">Ready to Ship</div>
+              <div class="stat-card-value" id="dkpi-ship">0<span></span></div>
+              <div class="stat-card-delta" id="dkpi-ship-sub">&nbsp;</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-card-label">Revenue This Month</div>
+              <div class="stat-card-value" id="dkpi-rev">0<span></span></div>
+              <div class="stat-card-delta" id="dkpi-rev-sub">&nbsp;</div>
+            </div>
+          </div>
+
+          <div class="ord-tabs" id="dord-tabs"></div>
+          <div class="ord-toolbar">
+            <div class="stf-filter" id="dord-status-filter" style="margin-bottom:0"></div>
+            <input class="aw-search" id="dord-search" style="margin-bottom:0;max-width:260px"
+                   placeholder="Search order no., customer or wine…" oninput="renderDistributorOrders()">
+          </div>
+          <div id="dord-table"></div>
+        </div>
+
+        <!-- ── LEVEL 2: ORDER DETAIL ── -->
+        <div id="dord-detail-pane" style="display:none"></div>
+      </div>
+
       <div id="distributor-view-profile" style="display:none">
         <div style="padding:2rem;max-width:980px">
 
@@ -2178,30 +2357,6 @@ With an annual production capacity of over 1.2 million bottles, Cantina Rossi is
             <div id="dfans-list"></div>
           </div>
 
-
-          <div class="profile-section" id="dsection-orders-in">
-            <div class="profile-section-header">
-              <div class="profile-section-title">Incoming Orders <span class="profile-section-count" id="dord-in-count"></span></div>
-            </div>
-            <div class="edit-section-sub" style="margin-top:-0.8rem">Orders your restaurant and retail partners have placed with you. Accept an order to confirm it, then mark it as shipped and add a tracking code &mdash; your customer sees each step live.</div>
-            <div id="dord-in-list"></div>
-          </div>
-
-          <div class="profile-section" id="dsection-orders-out">
-            <div class="profile-section-header">
-              <div class="profile-section-title">My Orders <span class="profile-section-count" id="dord-out-count"></span></div>
-            </div>
-            <div class="edit-section-sub" style="margin-top:-0.8rem">Orders you have placed with your winery partners to restock your portfolio. The winery accepts, ships and adds the tracking code on their side; you see it here the moment they do.</div>
-            <div id="dord-out-list"></div>
-          </div>
-
-          <div class="profile-section" id="dsection-orders-hist">
-            <div class="profile-section-header">
-              <div class="profile-section-title">Order History <span class="profile-section-count" id="dord-hist-count"></span></div>
-            </div>
-            <div class="edit-section-sub" style="margin-top:-0.8rem">Completed and declined orders in both directions &mdash; what you sold, and what you bought.</div>
-            <div id="dord-hist-list"></div>
-          </div>
 
         </div>
       </div>
@@ -4009,11 +4164,15 @@ renderPressList();
 function showDistributorView(view, section) {
   const dashEl = document.getElementById('distributor-view-dashboard');
   const profileEl = document.getElementById('distributor-view-profile');
+  const ordersEl = document.getElementById('distributor-view-orders');
   const isProfile = view === 'profile';
   dashEl.style.display = isProfile ? 'none' : '';
   profileEl.style.display = isProfile ? '' : 'none';
+  if (ordersEl) ordersEl.style.display = 'none';
   document.getElementById('distributor-topbar-actions-dashboard').style.display = isProfile ? 'none' : 'flex';
   document.getElementById('distributor-topbar-actions-profile').style.display = isProfile ? 'flex' : 'none';
+  const ordActs = document.getElementById('distributor-topbar-actions-orders');
+  if (ordActs) ordActs.style.display = 'none';
 
   const titles = { dashboard: 'Welcome back, Hawesko ✦', basics: 'My Information', wines: 'My Wine Portfolio', partners: 'My Labels', network: 'My Partnerships', requests: 'My Requests', opportunities: 'My Opportunities', promo: 'My Promo Materials', offers: 'My Offers', deals: 'My Deals', winestars: 'My Stars', fans: 'My Fans', 'orders-in': 'Incoming Orders', 'orders-out': 'My Orders', 'orders-hist': 'Order History' };
   document.getElementById('distributor-topbar-title').textContent = isProfile ? titles[section || 'basics'] : titles.dashboard;
@@ -5977,11 +6136,11 @@ if (!hashRole) {
 const wineUnitPrice = {
   'Sauvignon Blanc — Sancerre': 14.90,
   'Chardonnay — Chablis Premier Cru': 21.50,
-  'Riesling Spätlese Mosel': 16.80,
+  'Riesling Spätlese — Mosel': 16.80,
   'Primitivo Sicilia IGT': 11.20,
   "Nero d'Avola Sicilia DOC": 9.80,
   'Catarratto Biologico': 8.40,
-  'Merlot Bordeaux Supérieur': 12.60,
+  'Merlot — Bordeaux Supérieur': 12.60,
   'Baglio Rosso': 13.40,
   'Pouilly-Fumé': 17.20,
   'Costa Bianca': 10.60,
@@ -6006,8 +6165,8 @@ function wineryOfWine(name) {
     'Sauvignon Blanc — Sancerre': 'Henri Dubois Domaine',
     'Pouilly-Fumé': 'Henri Dubois Domaine',
     'Chardonnay — Chablis Premier Cru': 'Domaine Lefèvre',
-    'Riesling Spätlese Mosel': 'Weingut Schmitt',
-    'Merlot Bordeaux Supérieur': 'Château Belrieu'
+    'Riesling Spätlese — Mosel': 'Weingut Schmitt',
+    'Merlot — Bordeaux Supérieur': 'Château Belrieu'
   };
   return known[name] || 'Cantina Rossi';
 }
@@ -6019,14 +6178,21 @@ function todayISO() { return new Date().toISOString().slice(0, 10); }
 let orders = [
   /* ── Restaurant / Retail  →  Distributor ─────────────────────── */
   { id:'ORD-2041', placed:'2026-07-27', buyer:'Bistro Laurent', buyerType:'restaurant',
-    seller:'Hawesko GmbH', sellerType:'distributor', stage:'pending', note:'Autumn list refresh',
-    items:[ orderItemRaw('Sauvignon Blanc — Sancerre','Henri Dubois Domaine',24,14.90),
+    seller:'Hawesko GmbH', sellerType:'distributor', stage:'pending', source:'manual', note:'Autumn list refresh',
+    items:[ orderItemRaw('Sauvignon Blanc — Sancerre','Henri Dubois Domaine',60,14.90),
             orderItemRaw('Chardonnay — Chablis Premier Cru','Domaine Lefèvre',12,21.50) ] },
+
+  /* Placed straight off an Exclusive Deal — the 120-bottle Merlot threshold,
+     so the detail view flags the 25% entitlement automatically. */
+  { id:'ORD-2037', placed:'2026-07-28', buyer:'Weinhaus Müller', buyerType:'retail',
+    seller:'Hawesko GmbH', sellerType:'distributor', stage:'pending', source:'deal',
+    note:'Exclusive Deal — Buy 120 bottles of Merlot — Bordeaux Supérieur → 25% off',
+    items:[ orderItemRaw('Merlot — Bordeaux Supérieur','Château Belrieu',120,12.60) ] },
 
   { id:'ORD-2038', placed:'2026-07-21', buyer:'Bistro Laurent', buyerType:'restaurant',
     seller:'Hawesko GmbH', sellerType:'distributor', stage:'shipped',
     carrier:'DHL Freight', tracking:'00340434161094042557', eta:'2026-08-04',
-    items:[ orderItemRaw('Riesling Spätlese Mosel','Weingut Schmitt',12,16.80) ] },
+    items:[ orderItemRaw('Riesling Spätlese — Mosel','Weingut Schmitt',12,16.80) ] },
 
   { id:'ORD-2033', placed:'2026-06-30', buyer:'Bistro Laurent', buyerType:'restaurant',
     seller:'Hawesko GmbH', sellerType:'distributor', stage:'delivered',
@@ -6034,18 +6200,18 @@ let orders = [
     items:[ orderItemRaw('Primitivo Sicilia IGT','Cantina Rossi',24,11.20) ] },
 
   { id:'ORD-2040', placed:'2026-07-25', buyer:'Weinhaus Müller', buyerType:'retail',
-    seller:'Hawesko GmbH', sellerType:'distributor', stage:'accepted', note:'Mediterranean range',
+    seller:'Hawesko GmbH', sellerType:'distributor', stage:'accepted', source:'offer', note:'Exclusive Offer — 20% off Nero d\'Avola Sicilia DOC',
     items:[ orderItemRaw("Nero d'Avola Sicilia DOC",'Cantina Rossi',60,9.80),
             orderItemRaw('Catarratto Biologico','Cantina Rossi',24,8.40) ] },
 
   { id:'ORD-2035', placed:'2026-07-02', buyer:'Weinhaus Müller', buyerType:'retail',
     seller:'Hawesko GmbH', sellerType:'distributor', stage:'delivered',
     carrier:'GLS', tracking:'ZX8841007723DE', eta:'2026-07-11',
-    items:[ orderItemRaw('Merlot Bordeaux Supérieur','Château Belrieu',36,12.60) ] },
+    items:[ orderItemRaw('Merlot — Bordeaux Supérieur','Château Belrieu',36,12.60) ] },
 
   /* ── Distributor  →  Winery  (the other half of the chain) ───── */
   { id:'ORD-2042', placed:'2026-07-29', buyer:'Hawesko GmbH', buyerType:'distributor',
-    seller:'Cantina Rossi', sellerType:'winery', stage:'pending', note:'Q3 restock, own-label run',
+    seller:'Cantina Rossi', sellerType:'winery', stage:'pending', source:'manual', note:'Q3 restock, own-label run',
     items:[ orderItemRaw('Primitivo Sicilia IGT','Cantina Rossi',600,6.40),
             orderItemRaw("Nero d'Avola Sicilia DOC",'Cantina Rossi',300,5.90) ] },
 
@@ -6061,7 +6227,7 @@ let orders = [
 
   { id:'ORD-2039', placed:'2026-07-23', buyer:'Hawesko GmbH', buyerType:'distributor',
     seller:'Weingut Schmitt', sellerType:'winery', stage:'accepted',
-    items:[ orderItemRaw('Riesling Spätlese Mosel','Weingut Schmitt',240,7.90) ] }
+    items:[ orderItemRaw('Riesling Spätlese — Mosel','Weingut Schmitt',240,7.90) ] }
 ];
 function orderItemRaw(wine, winery, qty, unit) { return { wine, winery, qty, unit }; }
 
@@ -6071,7 +6237,7 @@ const orderStageLabel = { pending:'Pending', accepted:'In Progress', shipped:'Sh
 const orderStageCls   = { pending:'os-pending', accepted:'os-accepted', shipped:'os-shipped', delivered:'os-delivered', declined:'os-declined', cancelled:'os-declined' };
 const ORDER_CLOSED    = ['delivered', 'declined', 'cancelled'];
 
-function orderTotal(o) { return o.items.reduce((sum, i) => sum + i.qty * i.unit, 0); }
+function orderTotal(o) { return orderGrand(o); }
 function eur(n) { return '€' + n.toLocaleString('en-GB', { minimumFractionDigits:2, maximumFractionDigits:2 }); }
 function orderDate(iso) {
   if (!iso) return '—';
@@ -6181,20 +6347,7 @@ function renderAllOrders() {
     'No completed orders yet.');
   setOrderBadge('word-badge', orders.filter(o => o.seller === 'Cantina Rossi' && o.stage === 'pending').length);
 
-  /* Distributor — seller to restaurant/retail, buyer from wineries */
-  paintOrders(ordersAsSeller('Hawesko GmbH', true), 'seller', 'dord-in-list', 'dord-in-count',
-    'No open customer orders right now.');
-  paintOrders(ordersAsBuyer('Hawesko GmbH', true), 'buyer', 'dord-out-list', 'dord-out-count',
-    'You have no open orders with your winery partners.');
-  const dHist = orders.filter(o => (o.seller === 'Hawesko GmbH' || o.buyer === 'Hawesko GmbH') && ORDER_CLOSED.indexOf(o.stage) !== -1);
-  const dEl = document.getElementById('dord-hist-list');
-  if (dEl) {
-    dEl.innerHTML = dHist.length
-      ? dHist.map(o => orderCardHtml(o, o.seller === 'Hawesko GmbH' ? 'seller' : 'buyer')).join('')
-      : '<div class="ord-empty">No completed orders yet.</div>';
-    const dc = document.getElementById('dord-hist-count');
-    if (dc) dc.textContent = dHist.length ? '(' + dHist.length + ')' : '';
-  }
+  /* Distributor — has its own Orders sub-view; only the badge here */
   setOrderBadge('dord-badge', orders.filter(o => o.seller === 'Hawesko GmbH' && o.stage === 'pending').length);
 
   /* Restaurant — buyer */
@@ -6330,6 +6483,631 @@ function reorder(id) {
 }
 
 renderAllOrders();
+
+
+/* ══════════════════════════════════════════════════════════════════
+   ORDER MANAGEMENT — Distributor sub-view
+   ------------------------------------------------------------------
+   Orders get their own view, on the same level as Dashboard and My
+   Profile, with two levels: a filterable order list and a full order
+   detail workspace (confirm, amend, price, invoice, collect payment,
+   ship, track). Same single `orders` array as before — this is only a
+   richer lens on the same records.
+
+   Real build: the extra fields map to
+     orders(source, tax_mode, vat_rate, discount_pct, shipping_cost,
+            internal_note, ship_status, carrier, tracking, eta)
+     order_items(cost_price, discount_pct, is_free)
+     order_documents(order_id FK, type, number, issued_at)
+     order_payments(order_id FK, amount, method, received_at)
+     order_events(order_id FK, at, text)   ← the timeline
+   Promo/deal flags are NEVER stored: they are computed live from
+   promo_materials / exclusive_deals against the order and the
+   customer's cumulative volume, exactly as below.
+════════════════════════════════════════════════════════════════════ */
+
+const addressBook = {
+  'Bistro Laurent':  { ship:'Bockenheimer Landstr. 12<br>60323 Frankfurt am Main<br>Germany',
+                       bill:'Bistro Laurent GmbH<br>Bockenheimer Landstr. 12<br>60323 Frankfurt am Main<br>VAT DE812447901' },
+  'Weinhaus Müller': { ship:'Reichenbachstr. 30<br>80469 München<br>Germany',
+                       bill:'Weinhaus Müller e.K.<br>Reichenbachstr. 30<br>80469 München<br>VAT DE119338204' },
+  'Hawesko GmbH':    { ship:'Zentrallager Tor 4<br>Hamburger Str. 14<br>25436 Tornesch<br>Germany',
+                       bill:'Hawesko GmbH<br>Hamburger Str. 14<br>25436 Tornesch<br>VAT DE118801093' }
+};
+
+const SELLER_PROFILE = {
+  name: 'Hawesko GmbH',
+  addr: 'Hamburger Str. 14 · 25436 Tornesch · Germany',
+  extra: 'VAT DE118801093 · Excise no. DE0084417 · IBAN DE44 2005 0550 1234 5678 90'
+};
+
+/* ── Normalisation: fills every field the detail view needs ─────── */
+function normalizeOrder(o) {
+  if (o.__norm) return o;
+  o.source      = o.source || (o.note && /deal/i.test(o.note) ? 'deal'
+                    : o.note && /offer/i.test(o.note) ? 'offer'
+                    : o.note && /promo/i.test(o.note) ? 'promo'
+                    : o.note && /reorder/i.test(o.note) ? 'reorder' : 'manual');
+  o.taxMode     = o.taxMode || 'net';
+  o.vatRate     = (o.vatRate == null) ? 19 : o.vatRate;
+  o.discountPct = o.discountPct || 0;
+  o.shippingCost = (o.shippingCost == null) ? 0 : o.shippingCost;
+  o.items.forEach(i => {
+    if (i.cost == null) i.cost = +(i.unit * 0.62).toFixed(2);
+    if (i.discount == null) i.discount = 0;
+    i.free = !!i.free;
+  });
+  o.payment = o.payment || {
+    status: (o.stage === 'delivered' ? 'paid' : 'not_invoiced'),
+    method: 'Bank transfer', terms: '30 days net', paid: 0, dueDate: null, prepayment: false
+  };
+  if (o.payment.status === 'paid' && !o.payment.paid) o.payment.paid = null; /* filled lazily */
+  o.documents = o.documents || (o.stage === 'delivered'
+    ? [ { key:'invoice', no:'IN-' + o.id.slice(4), date:o.placed },
+        { key:'delivery', no:'DN-' + o.id.slice(4), date:o.eta || o.placed } ] : []);
+  o.shipStatus = o.shipStatus || (o.stage === 'delivered' ? 'delivered'
+                    : o.stage === 'shipped' ? 'in_transit' : 'not_shipped');
+  o.internalNote = o.internalNote || '';
+  o.addresses = o.addresses || addressBook[o.buyer] || { ship:'—', bill:'—' };
+  o.log = o.log || buildInitialLog(o);
+  o.__norm = true;
+  return o;
+}
+function buildInitialLog(o) {
+  const l = [{ at:o.placed, text:'Order placed by ' + o.buyer }];
+  if (['accepted','shipped','delivered'].indexOf(o.stage) !== -1) l.push({ at:o.placed, text:'Order confirmed by ' + o.seller });
+  if (['shipped','delivered'].indexOf(o.stage) !== -1 && o.tracking) l.push({ at:o.placed, text:'Shipped via ' + o.carrier + ' — ' + o.tracking });
+  if (o.stage === 'delivered') l.push({ at:o.eta || o.placed, text:'Delivery confirmed' });
+  return l;
+}
+function logEvent(o, text) {
+  o.log = o.log || [];
+  o.log.push({ at: todayISO(), text: text });
+}
+
+/* ── Money ──────────────────────────────────────────────────────── */
+function lineNet(i) { return i.free ? 0 : i.qty * i.unit * (1 - (i.discount || 0) / 100); }
+function orderNet(o) { return o.items.reduce((s, i) => s + lineNet(i), 0); }
+function orderDiscountAmt(o) { return orderNet(o) * (o.discountPct || 0) / 100; }
+function orderSubtotal(o) { return orderNet(o) - orderDiscountAmt(o) + (o.shippingCost || 0); }
+function orderVatAmt(o) { return o.taxMode === 'vat' ? orderSubtotal(o) * (o.vatRate || 0) / 100 : 0; }
+function orderGrand(o) { return orderSubtotal(o) + orderVatAmt(o); }
+function orderMargin(o) {
+  const cost = o.items.reduce((s, i) => s + i.qty * (i.cost || 0), 0);
+  const net = orderNet(o) - orderDiscountAmt(o);
+  return { cost: cost, net: net, abs: net - cost, pct: net ? (net - cost) / net * 100 : 0 };
+}
+
+/* ── Status vocabulary ──────────────────────────────────────────── */
+const PAY_LABEL = { not_invoiced:'Not invoiced', invoiced:'Invoiced', partial:'Partly paid', paid:'Paid', overdue:'Overdue' };
+const SHIP_LABEL = { not_shipped:'Not shipped', packing:'Packing', in_transit:'In transit', partial:'Partly shipped', delivered:'Delivered' };
+const SRC_LABEL = { manual:'Manual', reorder:'Reorder', deal:'Deal', offer:'Offer', promo:'Promo' };
+
+function srcChip(o) {
+  return '<span class="ord-chip chip-' + o.source + '">' + (SRC_LABEL[o.source] || o.source) + '</span>';
+}
+
+/* ── Live promo / deal detection — never stored ─────────────────── */
+function promoDueFor(o) {
+  if (o.sellerType !== 'distributor') return [];
+  const prog = o.buyerType === 'restaurant' ? (typeof rPromoProgress !== 'undefined' ? rPromoProgress : null)
+             : o.buyerType === 'retail'     ? (typeof tPromoProgress !== 'undefined' ? tPromoProgress : null) : null;
+  if (!prog || typeof promoMaterials === 'undefined') return [];
+  const due = [];
+  promoMaterials.forEach(m => {
+    if (m.condType === 'volume') {
+      const inThis = o.items.filter(i => i.wine === m.wineName).reduce((s, i) => s + i.qty, 0);
+      if (!inThis) return;
+      if (m.orderMode === 'single') {
+        if (inThis >= m.bottlesRequired) due.push({ m:m, why:'single order of ' + inThis + ' bottles' });
+      } else {
+        const cum = prog.bottleCounts[m.wineName] || 0;
+        if (cum >= m.bottlesRequired) due.push({ m:m, why:'cumulative total of ' + cum + ' bottles reached' });
+      }
+    } else if (m.condType === 'ordervalue') {
+      if (orderGrand(o) >= m.orderValue) due.push({ m:m, why:'order value above ' + eur(m.orderValue) });
+    } else if (m.condType === 'newlisting') {
+      if (o.items.some(i => i.wine === m.wineName)) due.push({ m:m, why:'new listing of ' + m.wineName });
+    }
+  });
+  return due;
+}
+
+function dealFreeGoodsFor(o) {
+  if (o.sellerType !== 'distributor' || typeof exclusiveDeals === 'undefined') return [];
+  const out = [];
+  exclusiveDeals.forEach(d => {
+    const names = d.wineNames || [d.wineName];
+    const qty = o.items.filter(i => !i.free && names.indexOf(i.wine) !== -1).reduce((s, i) => s + i.qty, 0);
+    if (!qty) return;
+    if (d.dealType === 'freegoods') {
+      const parts = String(d.ratio).split(':').map(Number);
+      const times = Math.floor(qty / parts[0]);
+      if (times > 0) {
+        const already = o.items.filter(i => i.free && names.indexOf(i.wine) !== -1).reduce((s, i) => s + i.qty, 0);
+        out.push({ deal:d, names:names, free:times * parts[1], basis:qty, applied:already > 0 });
+      }
+    } else if (d.dealType === 'discount' && qty >= d.minQty) {
+      out.push({ deal:d, names:names, discount:d.discountPct, basis:qty, applied:o.discountPct >= d.discountPct });
+    }
+  });
+  return out;
+}
+
+function applyFreeGoods(id, dealId) {
+  const o = normalizeOrder(orders.find(x => x.id === id));
+  const info = dealFreeGoodsFor(o).find(f => f.deal.id === dealId && f.free);
+  if (!info) return;
+  const target = info.names[0];
+  o.items.push({ wine:target, winery:info.deal.winery, qty:info.free, unit:0, cost:wineUnitPrice[target] ? +(wineUnitPrice[target]*0.62).toFixed(2) : 0, discount:0, free:true });
+  logEvent(o, 'Free goods applied: ' + info.free + ' × ' + target + ' (deal ' + info.deal.ratio + ')');
+  renderOrderDetail(id);
+  showToast('✓ ' + info.free + ' free bottles added to ' + o.id);
+}
+function applyDealDiscount(id, dealId) {
+  const o = normalizeOrder(orders.find(x => x.id === id));
+  const info = dealFreeGoodsFor(o).find(f => f.deal.id === dealId && f.discount);
+  if (!info) return;
+  o.discountPct = info.discount;
+  logEvent(o, 'Deal discount applied: ' + info.discount + '% (' + info.basis + ' bottles)');
+  renderOrderDetail(id);
+  showToast('✓ ' + info.discount + '% deal discount applied to ' + o.id);
+}
+
+/* ══ VIEW SWITCHING ══════════════════════════════════════════════ */
+let dordState = { tab:'incoming', status:'all', openId:null };
+
+function showDistributorOrders(tab) {
+  if (tab) { dordState.tab = tab; dordState.status = 'all'; dordState.openId = null; }
+  document.getElementById('distributor-view-dashboard').style.display = 'none';
+  document.getElementById('distributor-view-profile').style.display = 'none';
+  document.getElementById('distributor-view-orders').style.display = '';
+  document.getElementById('distributor-topbar-actions-dashboard').style.display = 'none';
+  document.getElementById('distributor-topbar-actions-profile').style.display = 'none';
+  document.getElementById('distributor-topbar-actions-orders').style.display = 'flex';
+  const titles = { incoming:'Incoming Orders', outgoing:'My Orders', history:'Order History' };
+  document.getElementById('distributor-topbar-title').textContent = titles[dordState.tab];
+
+  ['dnav-dashboard','dnav-profile','dnav-wines','dnav-partners','dnav-network','dnav-requests',
+   'dnav-opportunities','dnav-promo','dnav-offers','dnav-deals','dnav-winestars','dnav-fans',
+   'dnav-orders-in','dnav-orders-out','dnav-orders-hist'].forEach(id => {
+    const e = document.getElementById(id); if (e) e.classList.remove('active');
+  });
+  const navFor = { incoming:'dnav-orders-in', outgoing:'dnav-orders-out', history:'dnav-orders-hist' };
+  const ne = document.getElementById(navFor[dordState.tab]); if (ne) ne.classList.add('active');
+
+  document.getElementById('dord-list-pane').style.display = '';
+  document.getElementById('dord-detail-pane').style.display = 'none';
+  renderDistributorOrders();
+  window.scrollTo({ top:0, behavior:'smooth' });
+}
+
+/* ══ LEVEL 1 — LIST ══════════════════════════════════════════════ */
+function ordersForTab(tab) {
+  orders.forEach(normalizeOrder);
+  if (tab === 'incoming') return orders.filter(o => o.seller === 'Hawesko GmbH' && ORDER_CLOSED.indexOf(o.stage) === -1);
+  if (tab === 'outgoing') return orders.filter(o => o.buyer === 'Hawesko GmbH' && ORDER_CLOSED.indexOf(o.stage) === -1);
+  return orders.filter(o => (o.seller === 'Hawesko GmbH' || o.buyer === 'Hawesko GmbH') && ORDER_CLOSED.indexOf(o.stage) !== -1);
+}
+
+function renderDistributorOrders() {
+  const tabs = [
+    { key:'incoming', label:'Incoming Orders' },
+    { key:'outgoing', label:'My Orders' },
+    { key:'history',  label:'Order History' }
+  ];
+  document.getElementById('dord-tabs').innerHTML = tabs.map(t =>
+    '<button class="ord-tab' + (dordState.tab === t.key ? ' active' : '') + '" onclick="showDistributorOrders(\'' + t.key + '\')">' +
+    t.label + '<span class="cnt">(' + ordersForTab(t.key).length + ')</span></button>').join('');
+
+  let list = ordersForTab(dordState.tab);
+
+  /* status filter pills, built from what is actually there */
+  const stages = [];
+  list.forEach(o => { if (stages.indexOf(o.stage) === -1) stages.push(o.stage); });
+  const pills = [{ k:'all', l:'All' }].concat(stages.map(st => ({ k:st, l:orderStageLabel[st] })));
+  document.getElementById('dord-status-filter').innerHTML = pills.map(p =>
+    '<button class="stf-pill' + (dordState.status === p.k ? ' active' : '') +
+    '" onclick="dordState.status=\'' + p.k + '\';renderDistributorOrders()">' + p.l + '</button>').join('');
+  if (dordState.status !== 'all') list = list.filter(o => o.stage === dordState.status);
+
+  const term = (document.getElementById('dord-search').value || '').toLowerCase().trim();
+  if (term) {
+    list = list.filter(o => (o.id + ' ' + o.buyer + ' ' + o.seller + ' ' +
+      o.items.map(i => i.wine).join(' ')).toLowerCase().indexOf(term) !== -1);
+  }
+
+  /* KPIs — always over the distributor's selling side */
+  const sell = orders.filter(o => o.seller === 'Hawesko GmbH');
+  const open = sell.filter(o => ORDER_CLOSED.indexOf(o.stage) === -1);
+  const unpaid = sell.filter(o => ['invoiced','partial','overdue'].indexOf(o.payment.status) !== -1);
+  const toShip = sell.filter(o => o.stage === 'accepted');
+  const revMonth = sell.filter(o => ORDER_CLOSED.indexOf(o.stage) === -1 || o.stage === 'delivered')
+                       .reduce((s, o) => s + orderGrand(o), 0);
+  document.getElementById('dkpi-open').innerHTML = open.length + '<span></span>';
+  document.getElementById('dkpi-open-sub').textContent = open.filter(o => o.stage === 'pending').length + ' awaiting confirmation';
+  document.getElementById('dkpi-unpaid').innerHTML = unpaid.length + '<span></span>';
+  document.getElementById('dkpi-unpaid-sub').textContent = eur(unpaid.reduce((s, o) => s + orderGrand(o) - (o.payment.paid || 0), 0)) + ' outstanding';
+  document.getElementById('dkpi-ship').innerHTML = toShip.length + '<span></span>';
+  document.getElementById('dkpi-ship-sub').textContent = toShip.reduce((s, o) => s + orderBottles(o), 0) + ' bottles to pick';
+  document.getElementById('dkpi-rev').innerHTML = Math.round(revMonth / 1000) + '<span>k</span>';
+  document.getElementById('dkpi-rev-sub').textContent = 'across ' + sell.length + ' orders';
+
+  const head = '<div class="otbl-head"><span>Order</span><span>Date</span><span>' +
+    (dordState.tab === 'outgoing' ? 'Supplier' : 'Customer') +
+    '</span><span>Btl</span><span style="text-align:right">Total</span><span>Payment</span><span>Status</span><span></span></div>';
+
+  const rows = list.map(o => {
+    const party = o.seller === 'Hawesko GmbH' ? o.buyer : o.seller;
+    const role  = o.seller === 'Hawesko GmbH' ? o.buyerType : o.sellerType;
+    return '<div class="otbl-row" onclick="openOrderDetail(\'' + o.id + '\')">' +
+      '<span class="otbl-id">' + o.id + '</span>' +
+      '<span class="otbl-dim">' + orderDate(o.placed) + '</span>' +
+      '<span class="otbl-cust">' + party + '<em>' + srcChip(o) + (role || '') + '</em></span>' +
+      '<span class="otbl-dim">' + orderBottles(o) + '</span>' +
+      '<span class="otbl-sum">' + eur(orderGrand(o)) + '</span>' +
+      '<span><span class="pay-pill pay-' + o.payment.status + '">' + PAY_LABEL[o.payment.status] + '</span></span>' +
+      '<span><span class="ord-stage ' + orderStageCls[o.stage] + '">' + orderStageLabel[o.stage] + '</span></span>' +
+      '<span class="otbl-arrow">›</span>' +
+    '</div>';
+  }).join('');
+
+  document.getElementById('dord-table').innerHTML = list.length
+    ? '<div class="otbl">' + head + rows + '</div>'
+    : '<div class="otbl"><div class="otbl-empty">No orders match this filter.</div></div>';
+}
+
+/* ══ LEVEL 2 — DETAIL ════════════════════════════════════════════ */
+function openOrderDetail(id) {
+  dordState.openId = id;
+  document.getElementById('dord-list-pane').style.display = 'none';
+  document.getElementById('dord-detail-pane').style.display = '';
+  renderOrderDetail(id);
+  window.scrollTo({ top:0, behavior:'smooth' });
+}
+function closeOrderDetail() {
+  dordState.openId = null;
+  document.getElementById('dord-detail-pane').style.display = 'none';
+  document.getElementById('dord-list-pane').style.display = '';
+  renderDistributorOrders();
+  renderAllOrders();
+}
+
+function renderOrderDetail(id) {
+  const o = normalizeOrder(orders.find(x => x.id === id));
+  if (!o) return;
+  const isSeller = o.seller === 'Hawesko GmbH';
+  const party = isSeller ? o.buyer : o.seller;
+  const editable = isSeller && ['pending','accepted'].indexOf(o.stage) !== -1;
+
+  /* ── action bar ── */
+  let acts = '';
+  if (isSeller) {
+    if (o.stage === 'pending') {
+      acts = '<button class="btn-accept" onclick="confirmOrder(\'' + id + '\')">✓ Confirm Order</button>' +
+             '<button class="btn-decl" onclick="declineOrder(\'' + id + '\')">Decline</button>';
+    } else if (o.stage === 'accepted') {
+      acts = '<button class="btn-accept" onclick="openShipModal(\'' + id + '\')">Mark as Shipped</button>' +
+             '<button class="btn-decl" onclick="cancelOrder(\'' + id + '\')">Cancel</button>';
+    } else if (o.stage === 'shipped') {
+      acts = '<button class="btn-accept" onclick="markDelivered(\'' + id + '\')">Mark as Delivered</button>' +
+             '<button class="icon-btn" onclick="openShipModal(\'' + id + '\')">Edit tracking</button>';
+    }
+  }
+
+  /* ── automatic flags ── */
+  let alerts = '';
+  dealFreeGoodsFor(o).forEach(f => {
+    if (f.free) {
+      alerts += '<div class="odt-alert alert-deal"><span>🎁</span><div>Deal condition met — <b>' + f.basis +
+        ' bottles</b> of ' + f.names.join(' + ') + ' at ratio ' + f.deal.ratio + '. Customer is entitled to <b>' +
+        f.free + ' free bottles</b>.' + (f.applied ? ' <em style="color:#4caf7d">Already added.</em>' :
+        ' <button class="icon-btn" style="margin-left:0.5rem" onclick="applyFreeGoods(\'' + id + '\',' + f.deal.id + ')">Add free goods</button>') +
+        '</div></div>';
+    }
+    if (f.discount) {
+      alerts += '<div class="odt-alert alert-deal"><span>%</span><div>Deal threshold reached — <b>' + f.basis +
+        ' bottles</b> of ' + f.names.join(' + ') + ' qualifies for <b>' + f.discount + '% off</b>.' +
+        (f.applied ? ' <em style="color:#4caf7d">Already applied.</em>' :
+        ' <button class="icon-btn" style="margin-left:0.5rem" onclick="applyDealDiscount(\'' + id + '\',' + f.deal.id + ')">Apply discount</button>') +
+        '</div></div>';
+    }
+  });
+  promoDueFor(o).forEach(p => {
+    alerts += '<div class="odt-alert alert-promo"><span>' + (p.m.icon || '🎉') + '</span><div>Promo material due — <b>' +
+      p.m.name + '</b> (' + p.m.qty + '). Triggered by ' + p.why + '. Include it with this delivery.</div></div>';
+  });
+  if (alerts) alerts = '<div style="margin-bottom:1.4rem">' + alerts + '</div>';
+
+  /* ── line items ── */
+  const lines = o.items.map((i, idx) =>
+    '<div class="oli-row">' +
+      '<span class="oli-name">' + i.wine + (i.free ? ' <span class="oli-free">free</span>' : '') + '<em>' + i.winery + '</em></span>' +
+      '<span><input class="oli-in" type="number" min="1" value="' + i.qty + '"' + (editable ? '' : ' disabled') +
+        ' onchange="setLineQty(\'' + id + '\',' + idx + ',this.value)"></span>' +
+      '<span><input class="oli-in" type="number" step="0.01" min="0" value="' + i.unit.toFixed(2) + '"' + (editable ? '' : ' disabled') +
+        ' onchange="setLineUnit(\'' + id + '\',' + idx + ',this.value)"></span>' +
+      '<span><input class="oli-in" type="number" min="0" max="100" value="' + (i.discount || 0) + '"' + (editable ? '' : ' disabled') +
+        ' onchange="setLineDiscount(\'' + id + '\',' + idx + ',this.value)"></span>' +
+      '<span class="oli-sum">' + eur(lineNet(i)) + '</span>' +
+      '<span>' + (editable ? '<button class="oli-del" onclick="removeLine(\'' + id + '\',' + idx + ')" title="Remove line">✕</button>' : '') + '</span>' +
+    '</div>').join('');
+
+  const m = orderMargin(o);
+  const sums =
+    '<div class="odt-sums">' +
+      '<div class="odt-sum-row"><span>Net</span><span>' + eur(orderNet(o)) + '</span></div>' +
+      (o.discountPct ? '<div class="odt-sum-row"><span>Order discount ' + o.discountPct + '%</span><span>− ' + eur(orderDiscountAmt(o)) + '</span></div>' : '') +
+      '<div class="odt-sum-row"><span>Shipping</span><span>' + eur(o.shippingCost || 0) + '</span></div>' +
+      (o.taxMode === 'vat'
+        ? '<div class="odt-sum-row"><span>VAT ' + o.vatRate + '%</span><span>' + eur(orderVatAmt(o)) + '</span></div>'
+        : '<div class="odt-sum-row"><span>VAT</span><span style="color:var(--dim)">reverse charge</span></div>') +
+      '<div class="odt-sum-row total"><span>Total</span><span>' + eur(orderGrand(o)) + '</span></div>' +
+    '</div>';
+
+  /* ── documents ── */
+  const docRows = DOC_TYPES.map(t => {
+    const have = o.documents.filter(d => d.key === t.key);
+    if (have.length) {
+      return have.map(d => '<div class="doc-row"><span class="doc-name">' + t.label + '<em>' + d.no + ' · ' + orderDate(d.date) + '</em></span>' +
+        '<button class="icon-btn" onclick="openDocPreview(\'' + id + '\',\'' + t.key + '\',\'' + d.no + '\')">View</button></div>').join('');
+    }
+    return '<div class="doc-row"><span class="doc-name doc-missing">' + t.label + '</span>' +
+      (isSeller ? '<button class="icon-btn" onclick="generateDoc(\'' + id + '\',\'' + t.key + '\')">Generate</button>' : '') + '</div>';
+  }).join('');
+
+  const outstanding = orderGrand(o) - (o.payment.paid || 0);
+
+  /* ── assemble ── */
+  document.getElementById('dord-detail-pane').innerHTML =
+  '<button class="odt-back" onclick="closeOrderDetail()">← Back to orders</button>' +
+  '<div class="odt-head">' +
+    '<div>' +
+      '<div class="odt-title">' + o.id + '</div>' +
+      '<div class="odt-sub">' + srcChip(o) + (isSeller ? 'Ordered by ' : 'Ordered from ') + '<strong style="color:var(--paper)">' + party +
+        '</strong> · ' + orderDate(o.placed) + ' · ' + orderBottles(o) + ' bottles</div>' +
+    '</div>' +
+    '<div class="odt-head-right">' +
+      '<span class="ord-stage ' + orderStageCls[o.stage] + '" style="align-self:center">' + orderStageLabel[o.stage] + '</span>' +
+      '<span class="pay-pill pay-' + o.payment.status + '" style="align-self:center">' + PAY_LABEL[o.payment.status] + '</span>' +
+      acts +
+    '</div>' +
+  '</div>' +
+  alerts +
+  '<div class="odt-grid"><div>' +
+
+    '<div class="odt-box"><div class="odt-box-head">Line Items' +
+      '<div class="right">' + (editable ? '<button class="icon-btn" onclick="addLine(\'' + id + '\')">+ Add line</button>' : '') +
+      '<button class="icon-btn" onclick="toggleTaxMode(\'' + id + '\')">' + (o.taxMode === 'vat' ? 'Switch to net' : 'Add VAT') + '</button></div></div>' +
+      '<div class="odt-box-body">' +
+        '<div class="oli-head"><span>Wine</span><span style="text-align:right">Qty</span><span style="text-align:right">Unit €</span><span style="text-align:right">Disc %</span><span style="text-align:right">Line total</span><span></span></div>' +
+        lines + sums +
+        (isSeller ? '<div style="margin-top:1rem;display:flex;gap:0.6rem;align-items:center;flex-wrap:wrap">' +
+          '<span style="font-size:0.66rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--dim)">Order discount %</span>' +
+          '<input class="oli-in" style="width:70px" type="number" min="0" max="100" value="' + o.discountPct + '"' + (editable ? '' : ' disabled') +
+            ' onchange="setOrderDiscount(\'' + id + '\',this.value)">' +
+          '<span style="font-size:0.66rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--dim);margin-left:0.8rem">Shipping €</span>' +
+          '<input class="oli-in" style="width:80px" type="number" step="0.01" min="0" value="' + (o.shippingCost || 0).toFixed(2) + '"' + (editable ? '' : ' disabled') +
+            ' onchange="setShippingCost(\'' + id + '\',this.value)">' +
+        '</div>' : '') +
+      '</div>' +
+    '</div>' +
+
+    '<div class="odt-box"><div class="odt-box-head">Documents</div><div class="odt-box-body">' + docRows + '</div></div>' +
+
+    '<div class="odt-box"><div class="odt-box-head">Activity</div><div class="odt-box-body">' +
+      (o.log || []).map(e => '<div class="tl-item"><span class="tl-dot"></span><span class="tl-text">' + e.text +
+        '</span><span class="tl-when">' + orderDate(e.at) + '</span></div>').join('') +
+    '</div></div>' +
+
+  '</div><div>' +
+
+    '<div class="odt-box"><div class="odt-box-head">' + (isSeller ? 'Customer' : 'Supplier') + '</div><div class="odt-box-body">' +
+      '<div style="font-size:0.9rem;color:var(--paper);margin-bottom:0.8rem">' + party + '</div>' +
+      '<div class="odt-kv"><span>Delivery</span><span>' + o.addresses.ship + '</span></div>' +
+      '<div class="odt-kv"><span>Invoice</span><span>' + o.addresses.bill + '</span></div>' +
+      '<div class="odt-kv"><span>Terms</span><span>' + o.payment.terms + '</span></div>' +
+    '</div></div>' +
+
+    '<div class="odt-box"><div class="odt-box-head">Payment</div><div class="odt-box-body">' +
+      '<div class="odt-kv"><span>Status</span><span><span class="pay-pill pay-' + o.payment.status + '">' + PAY_LABEL[o.payment.status] + '</span></span></div>' +
+      '<div class="odt-kv"><span>Method</span><span>' + o.payment.method + '</span></div>' +
+      '<div class="odt-kv"><span>Received</span><span>' + eur(o.payment.paid || 0) + '</span></div>' +
+      '<div class="odt-kv"><span>Outstanding</span><span>' + eur(outstanding > 0 ? outstanding : 0) + '</span></div>' +
+      (o.payment.dueDate ? '<div class="odt-kv"><span>Due</span><span>' + orderDate(o.payment.dueDate) + '</span></div>' : '') +
+      (isSeller ? '<div style="margin-top:0.9rem;display:flex;gap:0.5rem;flex-wrap:wrap">' +
+        '<button class="icon-btn" onclick="openPayModal(\'' + id + '\')">Record payment</button>' +
+        '<button class="icon-btn" onclick="togglePrepayment(\'' + id + '\')">' + (o.payment.prepayment ? 'Prepayment: on' : 'Require prepayment') + '</button>' +
+      '</div>' : '') +
+    '</div></div>' +
+
+    '<div class="odt-box"><div class="odt-box-head">Shipping</div><div class="odt-box-body">' +
+      '<div class="odt-kv"><span>Status</span><span>' + SHIP_LABEL[o.shipStatus] + '</span></div>' +
+      '<div class="odt-kv"><span>Carrier</span><span>' + (o.carrier || '—') + '</span></div>' +
+      '<div class="odt-kv"><span>Tracking</span><span>' + (o.tracking || '—') + '</span></div>' +
+      '<div class="odt-kv"><span>Est. delivery</span><span>' + (o.eta ? orderDate(o.eta) : '—') + '</span></div>' +
+      (isSeller ? '<div style="margin-top:0.9rem;display:flex;gap:0.5rem;flex-wrap:wrap">' +
+        '<button class="icon-btn" onclick="openShipModal(\'' + id + '\')">Enter / edit shipment</button>' +
+        '<button class="icon-btn" onclick="setShipStatus(\'' + id + '\',\'packing\')">Set: packing</button>' +
+        '<button class="icon-btn" onclick="setShipStatus(\'' + id + '\',\'partial\')">Set: partly shipped</button>' +
+      '</div>' : '') +
+    '</div></div>' +
+
+    (isSeller ? '<div class="odt-box"><div class="odt-box-head">Margin</div><div class="odt-box-body">' +
+      '<div class="odt-kv"><span>Purchase cost</span><span>' + eur(m.cost) + '</span></div>' +
+      '<div class="odt-kv"><span>Net revenue</span><span>' + eur(m.net) + '</span></div>' +
+      '<div class="odt-kv"><span>Gross margin</span><span style="color:' + (m.pct >= 30 ? '#4caf7d' : 'var(--gold)') + '">' +
+        eur(m.abs) + ' · ' + m.pct.toFixed(1) + '%</span></div>' +
+      '<div style="font-size:0.66rem;color:var(--dim);margin-top:0.7rem;line-height:1.6">Purchase cost comes from your own winery orders. Only you see this block.</div>' +
+    '</div></div>' : '') +
+
+    '<div class="odt-box"><div class="odt-box-head">Internal Note</div><div class="odt-box-body">' +
+      '<textarea class="oli-in" style="width:100%;text-align:left;min-height:70px;resize:vertical" placeholder="Not visible to the customer…" ' +
+      'onchange="setInternalNote(\'' + id + '\',this.value)">' + (o.internalNote || '') + '</textarea>' +
+    '</div></div>' +
+
+  '</div></div>';
+}
+
+/* ══ EDIT ACTIONS ════════════════════════════════════════════════ */
+function _o(id) { return normalizeOrder(orders.find(x => x.id === id)); }
+function setLineQty(id, idx, v) { const o = _o(id); o.items[idx].qty = Math.max(1, parseInt(v) || 1); logEvent(o, 'Quantity changed on ' + o.items[idx].wine); renderOrderDetail(id); }
+function setLineUnit(id, idx, v) { const o = _o(id); o.items[idx].unit = Math.max(0, parseFloat(v) || 0); logEvent(o, 'Unit price changed on ' + o.items[idx].wine); renderOrderDetail(id); }
+function setLineDiscount(id, idx, v) { const o = _o(id); o.items[idx].discount = Math.min(100, Math.max(0, parseFloat(v) || 0)); renderOrderDetail(id); }
+function removeLine(id, idx) { const o = _o(id); const n = o.items[idx].wine; if (o.items.length === 1) return showToast('An order needs at least one line.'); o.items.splice(idx, 1); logEvent(o, 'Line removed: ' + n); renderOrderDetail(id); }
+function addLine(id) {
+  const o = _o(id);
+  const pool = (typeof currentWinePortfolio !== 'undefined' ? currentWinePortfolio : []).map(w => w.name)
+    .concat(Object.keys(wineUnitPrice)).filter((v, i, a) => v && a.indexOf(v) === i);
+  const name = prompt('Add wine to ' + o.id + ':\n\n' + pool.slice(0, 12).join('\n'), pool[0] || '');
+  if (!name) return;
+  o.items.push(orderItem(name.trim(), 12));
+  logEvent(o, 'Line added: ' + name.trim());
+  renderOrderDetail(id);
+}
+function setOrderDiscount(id, v) { const o = _o(id); o.discountPct = Math.min(100, Math.max(0, parseFloat(v) || 0)); logEvent(o, 'Order discount set to ' + o.discountPct + '%'); renderOrderDetail(id); }
+function setShippingCost(id, v) { const o = _o(id); o.shippingCost = Math.max(0, parseFloat(v) || 0); renderOrderDetail(id); }
+function toggleTaxMode(id) { const o = _o(id); o.taxMode = o.taxMode === 'vat' ? 'net' : 'vat'; logEvent(o, 'Tax mode: ' + (o.taxMode === 'vat' ? 'VAT ' + o.vatRate + '%' : 'net / reverse charge')); renderOrderDetail(id); }
+function setInternalNote(id, v) { const o = _o(id); o.internalNote = v; showToast('✓ Internal note saved'); }
+function togglePrepayment(id) { const o = _o(id); o.payment.prepayment = !o.payment.prepayment; logEvent(o, o.payment.prepayment ? 'Prepayment required' : 'Prepayment requirement removed'); renderOrderDetail(id); }
+function setShipStatus(id, st) { const o = _o(id); o.shipStatus = st; logEvent(o, 'Shipping status: ' + SHIP_LABEL[st]); renderOrderDetail(id); showToast('✓ ' + o.id + ' — ' + SHIP_LABEL[st]); }
+
+function confirmOrder(id) {
+  const o = _o(id);
+  o.stage = 'accepted';
+  o.shipStatus = 'packing';
+  logEvent(o, 'Order confirmed by ' + o.seller);
+  renderAllOrders();
+  renderOrderDetail(id);
+  showToast('✓ ' + o.id + ' confirmed — ' + o.buyer + ' has been notified');
+}
+function exportOrdersStub() { showToast('Export as CSV — available in the real build'); }
+function openNewOrderDraft() { showToast('Manual order entry — available in the real build'); }
+
+/* ══ DOCUMENTS ═══════════════════════════════════════════════════ */
+const DOC_TYPES = [
+  { key:'quote',    label:'Quotation',          prefix:'QU' },
+  { key:'proforma', label:'Proforma Invoice',   prefix:'PF' },
+  { key:'prepay',   label:'Prepayment Invoice', prefix:'PP' },
+  { key:'invoice',  label:'Invoice',            prefix:'IN' },
+  { key:'delivery', label:'Delivery Note',      prefix:'DN' },
+  { key:'credit',   label:'Credit Note',        prefix:'CN' }
+];
+let docSeq = 4100;
+function generateDoc(id, key) {
+  const o = _o(id);
+  const t = DOC_TYPES.find(x => x.key === key);
+  const no = t.prefix + '-' + (++docSeq);
+  o.documents.push({ key:key, no:no, date:todayISO() });
+  logEvent(o, t.label + ' ' + no + ' issued');
+  if (key === 'invoice' || key === 'prepay') {
+    o.payment.status = 'invoiced';
+    const d = new Date(); d.setDate(d.getDate() + 30);
+    o.payment.dueDate = d.toISOString().slice(0, 10);
+  }
+  renderOrderDetail(id);
+  showToast('✓ ' + t.label + ' ' + no + ' generated and sent to ' + o.buyer);
+}
+
+function openDocPreview(id, key, no) {
+  const o = _o(id);
+  const t = DOC_TYPES.find(x => x.key === key);
+  const doc = o.documents.find(d => d.no === no) || { no:no, date:todayISO() };
+  document.getElementById('doc-modal-title').textContent = t.label + ' ' + doc.no;
+
+  const rows = o.items.map(i =>
+    '<tr><td>' + i.wine + '<br><span style="color:#8a7a5f;font-size:0.68rem">' + i.winery + '</span></td>' +
+    '<td class="num">' + i.qty + '</td>' +
+    '<td class="num">' + (i.free ? '0.00' : i.unit.toFixed(2)) + '</td>' +
+    '<td class="num">' + (i.discount || 0) + '%</td>' +
+    '<td class="num">' + lineNet(i).toFixed(2) + '</td></tr>').join('');
+
+  const isCredit = key === 'credit';
+  document.getElementById('doc-sheet').innerHTML =
+    '<h1>' + t.label + '</h1>' +
+    '<div style="color:#8a7a5f;font-size:0.72rem">' + doc.no + ' · ' + orderDate(doc.date) + ' · Order ' + o.id + '</div>' +
+    '<div class="doc-meta">' +
+      '<div class="doc-block"><strong>From</strong>' + SELLER_PROFILE.name + '<br>' +
+        SELLER_PROFILE.addr + '<br><span style="font-size:0.68rem;color:#6d6155">' + SELLER_PROFILE.extra + '</span></div>' +
+      '<div class="doc-block"><strong>' + (key === 'delivery' ? 'Deliver to' : 'Bill to') + '</strong>' +
+        (key === 'delivery' ? o.addresses.ship : o.addresses.bill) + '</div>' +
+    '</div>' +
+    '<table><thead><tr><th>Wine</th><th class="num">Qty</th><th class="num">Unit €</th><th class="num">Disc</th><th class="num">Total €</th></tr></thead>' +
+    '<tbody>' + rows + '</tbody></table>' +
+    (key === 'delivery' ? '' :
+      '<div class="doc-tot"><span>Net</span><span>' + orderNet(o).toFixed(2) + '</span></div>' +
+      (o.discountPct ? '<div class="doc-tot"><span>Discount ' + o.discountPct + '%</span><span>− ' + orderDiscountAmt(o).toFixed(2) + '</span></div>' : '') +
+      '<div class="doc-tot"><span>Shipping</span><span>' + (o.shippingCost || 0).toFixed(2) + '</span></div>' +
+      (o.taxMode === 'vat'
+        ? '<div class="doc-tot"><span>VAT ' + o.vatRate + '%</span><span>' + orderVatAmt(o).toFixed(2) + '</span></div>'
+        : '<div class="doc-tot"><span>VAT</span><span>0.00</span></div>') +
+      '<div class="doc-tot grand"><span>' + (isCredit ? 'Credit total' : 'Total due') + '</span><span>' + orderGrand(o).toFixed(2) + ' €</span></div>') +
+    '<div class="doc-foot">' +
+      (key === 'quote' ? 'This quotation is valid for 30 days. Prices are per bottle, excluding deposit.' :
+       key === 'proforma' ? 'Proforma invoice — not a request for payment. Issued for customs and internal approval purposes.' :
+       key === 'prepay' ? 'Prepayment invoice. Goods are dispatched once payment has been received in full.' :
+       key === 'delivery' ? 'Please check the delivery for breakage on receipt and report any damage within 48 hours.' :
+       key === 'credit' ? 'Credit note. The amount shown will be offset against your next invoice.' :
+       'Payment terms: ' + o.payment.terms + '. ' + (o.payment.dueDate ? 'Due ' + orderDate(o.payment.dueDate) + '. ' : '')) +
+      (o.taxMode === 'net' ? '<br>Reverse charge — VAT to be accounted for by the recipient.' : '') +
+      '<br>All wines supplied under Bottle Lobby platform terms.' +
+    '</div>';
+
+  document.getElementById('doc-modal').classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+function closeDocPreview() {
+  document.getElementById('doc-modal').classList.remove('active');
+  document.body.style.overflow = '';
+}
+
+/* ══ PAYMENT ═════════════════════════════════════════════════════ */
+let payingOrderId = null;
+function openPayModal(id) {
+  const o = _o(id);
+  payingOrderId = id;
+  const outstanding = Math.max(0, orderGrand(o) - (o.payment.paid || 0));
+  document.getElementById('pay-lead').innerHTML = 'Order <strong style="color:#f7f3ee">' + o.id + '</strong> — total ' +
+    eur(orderGrand(o)) + ', outstanding <strong style="color:#f7f3ee">' + eur(outstanding) + '</strong>.';
+  document.getElementById('pay-amount').value = outstanding.toFixed(2);
+  document.getElementById('pay-date').value = todayISO();
+  document.getElementById('pay-method').value = o.payment.method;
+  document.getElementById('pay-modal').classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+function closePayModal() {
+  document.getElementById('pay-modal').classList.remove('active');
+  document.body.style.overflow = '';
+  payingOrderId = null;
+}
+function savePayment() {
+  const o = _o(payingOrderId);
+  if (!o) return closePayModal();
+  const amt = parseFloat(document.getElementById('pay-amount').value) || 0;
+  o.payment.method = document.getElementById('pay-method').value;
+  o.payment.paid = (o.payment.paid || 0) + amt;
+  o.payment.status = o.payment.paid >= orderGrand(o) - 0.01 ? 'paid' : 'partial';
+  logEvent(o, 'Payment received: ' + eur(amt) + ' via ' + o.payment.method);
+  const id = o.id;
+  closePayModal();
+  renderOrderDetail(id);
+  renderDistributorOrders();
+  showToast('✓ ' + eur(amt) + ' recorded on ' + id + ' — ' + PAY_LABEL[o.payment.status]);
+}
+
+/* keep the detail view in sync whenever the shared array changes */
+const _renderAllOrdersBase = renderAllOrders;
+renderAllOrders = function () {
+  _renderAllOrdersBase();
+  const orderView = document.getElementById('distributor-view-orders');
+  if (orderView && orderView.style.display !== 'none') {
+    if (dordState.openId) renderOrderDetail(dordState.openId);
+    else renderDistributorOrders();
+  }
+};
+
+orders.forEach(normalizeOrder);
+renderAllOrders();
 </script>
 
 <!-- ══ SHIP ORDER MODAL — seller marks an order as shipped ══ -->
@@ -6363,6 +7141,54 @@ renderAllOrders();
       <div class="pr-foot">
         <button class="pr-btn pr-cancel" onclick="closeShipModal()">Cancel</button>
         <button class="pr-btn pr-confirm" id="ship-confirm" disabled onclick="confirmShip()">Confirm Shipment</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ DOCUMENT PREVIEW ══ -->
+<div class="pr-overlay" id="doc-modal" onclick="if(event.target===this) closeDocPreview()">
+  <div class="pr-panel" style="max-width:760px">
+    <div class="pr-head">
+      <div class="pr-title" id="doc-modal-title">Document</div>
+      <div style="display:flex;gap:0.5rem;align-items:center">
+        <button class="icon-btn" onclick="window.print()">Print</button>
+        <button class="pr-close" onclick="closeDocPreview()">✕</button>
+      </div>
+    </div>
+    <div class="pr-body"><div class="doc-sheet" id="doc-sheet"></div></div>
+  </div>
+</div>
+
+<!-- ══ RECORD PAYMENT ══ -->
+<div class="pr-overlay" id="pay-modal" onclick="if(event.target===this) closePayModal()">
+  <div class="pr-panel" style="max-width:480px">
+    <div class="pr-head">
+      <div class="pr-title">Record <span>Payment</span></div>
+      <button class="pr-close" onclick="closePayModal()">✕</button>
+    </div>
+    <div class="pr-body">
+      <p class="pr-lead" id="pay-lead"></p>
+      <div class="ship-field">
+        <label for="pay-amount">Amount received (€)</label>
+        <input id="pay-amount" type="number" step="0.01" min="0">
+      </div>
+      <div class="ship-field">
+        <label for="pay-date">Date received</label>
+        <input id="pay-date" type="date">
+      </div>
+      <div class="ship-field">
+        <label for="pay-method">Method</label>
+        <select id="pay-method">
+          <option>Bank transfer</option>
+          <option>SEPA direct debit</option>
+          <option>Credit card</option>
+          <option>Cash on delivery</option>
+        </select>
+      </div>
+      <div class="pr-foot">
+        <button class="pr-btn pr-cancel" onclick="closePayModal()">Cancel</button>
+        <button class="pr-btn pr-confirm" onclick="savePayment()">Record Payment</button>
       </div>
     </div>
   </div>
