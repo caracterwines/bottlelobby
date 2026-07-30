@@ -891,6 +891,8 @@ Since the sidebar rebuild, every profile nav item opens its **own discrete sub-p
 
 **Prototype blueprint:** `showDistributorView()`, the `D_SECTION_EL` / `D_NAV_EL` / `D_TITLES` maps, `D_GROUPS` + `dGroupOf()`, `#dprofile-tabs`, `openDistributorPublicPreview()` — all in `bottle-lobby-dashboard.html`.
 
+**Real build:** one route per section, with the group as the parent route segment — `/dashboard/portfolio/wines`, `/dashboard/partners/requests`. The tab bar is the group's layout; the sections are its children.
+
 > ⚠️ This section-split, the naming convention and the Orders sub-view have **NOT** yet been applied to Winery, Restaurant and Retail dashboards. Those still show a single combined "Network" section, Promo Materials under the main profile nav, original unprefixed labels, and the simple card-list Orders sections. Bring them onto the distributor's structure.
 
 ---
