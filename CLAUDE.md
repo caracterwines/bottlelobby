@@ -1,7 +1,8 @@
 # Bottle Lobby — Project Instructions
 
-B2B SaaS platform for the wine trade, by Caracter Media GmbH.
-Four stakeholder types: **Wineries · Distributors · Restaurants · Retail**.
+B2B SaaS platform for the drinks trade, by Caracter Media GmbH.
+Four stakeholder types: **Producers · Distributors · Restaurants · Retail**.
+Wine is the launch category; the model must support other beverage categories (see below).
 
 ---
 
@@ -36,40 +37,49 @@ relevant functions.
 
 **1. Single source of truth.**
 Whatever a stakeholder enters lives in exactly ONE place, owned by whoever entered it.
-Everywhere else references it live. Never store a copy — not of wines, awards, press,
+Everywhere else references it live. Never store a copy — not of products, awards, press,
 reviews, media, or free text. An edit at the source updates everything, immediately,
 with no separate action anywhere.
 
-**2. Wines belong to the winery.**
-Distributors, restaurants and retailers get a foreign-key relation to the winery's wine
-record. They never create or own wine data. `order_items.wine_id` is a reference,
-never a copy.
+**2. Products belong to the producer.**
+Distributors, restaurants and retailers get a foreign-key relation to the producer's
+product record. They never create or own product data. `order_items.product_id` is a
+reference, never a copy.
 
 **3. The supply chain has no shortcuts.**
-`Winery → Distributor → Restaurant / Retail`.
+`Producer → Distributor → Restaurant / Retail`.
 Restaurants and Retail source **exclusively** via a Distributor partner. Direct
-winery-to-restaurant sourcing does not exist in this model. Their "add wine" action is
-a picker over a connected distributor's portfolio — never a creation form.
+producer-to-restaurant sourcing does not exist in this model. Their "add product" action
+is a picker over a connected distributor's portfolio — never a creation form.
 
 **4. Master data is never free text.**
-Vintage, Grape Variety, Country, Region, Appellation, Aging Duration and Aging Method
-come from centrally maintained tables. Country → Region → Appellation cascades.
-Every cross-feature match depends on wines being the same *record*, not the same string.
+Every product attribute comes from centrally maintained tables, per category, with
+cascades where the domain cascades (Country → Region → Appellation). Every cross-feature
+match depends on products being the same *record*, not the same string.
 
-**5. Partnership activation is admin-gated.**
+**5. Build category-capable from day one.** *(spec A15)*
+`producers.producer_type` (winery, distillery, brewery …), `categories`, per-category
+`attribute_defs`, and `product_components` with an optional percentage — grape varieties,
+grain bills, botanicals and base fruits are ONE concept, not four.
+**Ship the interface wine-only.** Enabling spirits later must be inserting rows and
+unhiding a filter, never a migration. Do NOT hard-wire "wine" into schema, queries or
+routes — but do keep the visible labels ("Wine Guide", "Wine Shows", "Own Label")
+wine-specific until the business decides otherwise.
+
+**6. Partnership activation is admin-gated.**
 `sent → accepted → contract_pending → active`. The final step is a manual confirmation
 by Bottle Lobby staff after both signed contracts are received. This cannot be
 automated away — it is the control point that enforces the exclusivity model.
 An active partnership gates everything commercial, including the ability to order.
 
-**6. Derived state is computed, never stored.**
-Promo unlock status, deal free-goods entitlement, deal discount thresholds, Wine Guide
-facet counts, variety hub statistics — all computed live from the underlying tables.
+**7. Derived state is computed, never stored.**
+Promo unlock status, deal free-goods entitlement, deal discount thresholds, Guide
+facet counts, component hub statistics — all computed live from the underlying tables.
 A stored flag goes stale the moment an input changes.
 The one deliberate exception: an **issued invoice PDF is frozen and archived**, because
 it is a legal record.
 
-**7. One order record, two perspectives.**
+**8. One order record, two perspectives.**
 Buyer and seller read the same row and render it from their own side. Never two copies,
 never a sync step. `order_events` is append-only and is the audit trail.
 
@@ -94,3 +104,7 @@ never a sync step. `order_events` is append-only and is the audit trail.
 **Appendix D of the spec lists superseded decisions.** Those are history, not
 instructions — never reintroduce them. If something in Appendix D looks like a good
 idea, read why it was dropped before proposing it again.
+
+**Sections A1–A14 are written in wine vocabulary** because wine is the launch category.
+A15 defines how "winery" generalises to *producer* and "wine" to *product*. Build the
+schema per A15; read the rest with that mapping in mind.
