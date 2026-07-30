@@ -1,8 +1,8 @@
 # HANDOFF — Sitzungsstand
 
 > Nur das, was Git nicht selbst weiss: offene Punkte, naechste Schritte, laufende Entscheidungen.
-> Dateiliste, Dateianzahl und Aenderungshistorie stehen im Repo bzw. in der Git-Historie — nicht hier.
-> Dauerhafte Regeln stehen in `BOTTLE-LOBBY-SPEC.md` (Projektwissen), nicht hier.
+> Dateiliste, Dateianzahl und Aenderungshistorie stehen in der Git-Historie — nicht hier.
+> Dauerhafte Regeln stehen in `BOTTLE-LOBBY-SPEC.md`, kurze Invarianten in `CLAUDE.md` — nicht hier.
 
 **Letzte Aktualisierung:** 30. Juli 2026
 
@@ -15,7 +15,7 @@
 | Repo | `caracterwines/bottlelobby`, Branch `main` |
 | Hosting | Netlify-Projekt `bottlelobby` |
 | Live | https://bottlelobby.netlify.app |
-| Deploy | automatisch bei jedem Push auf `main` (~7 s) |
+| Deploy | automatisch bei jedem Push auf `main` (~5 s) |
 
 Kein Build-Command, Publish-Directory = Repo-Root.
 
@@ -23,51 +23,49 @@ Kein Build-Command, Publish-Directory = Repo-Root.
 
 ## Zuletzt abgeschlossen
 
-- Migration von ZIP-Workflow auf GitHub + Netlify
-- GitHub-App `claude-github-mcp-connector` installiert, Schreibzugriff auf `bottlelobby` bestaetigt
-- Kompletter Projektstand ins Repo hochgeladen, Netlify-Auto-Deploy verifiziert
-- **Bestellsystem (Orders) gebaut** — siehe unten
-
----
-
-## Bestellsystem — Stand
-
-Gebaut in `bottle-lobby-dashboard.html`: ein gemeinsames `orders`-Array als einzige Wahrheit,
-beide Haelften der Lieferkette (Winery <- Distributor <- Restaurant/Retail).
-Lebenszyklus `pending -> accepted -> shipped (+Trackingcode) -> delivered`,
-plus Seitenzweige `declined` (Verkaeufer) und `cancelled` (Kaeufer).
-Request-Buttons bei Exclusive Offers, Deals und Promo Materials erzeugen echte Pending-Orders.
-
-Geprueft per Node-Harness: Statuswechsel, profiluebergreifende Sichtbarkeit,
-Tracking-Durchreichung an den Kaeufer, Reorder, Badges.
-
-**Noch nicht visuell im Browser gegengeprueft** — Serge prueft live.
+- Migration von ZIP-Workflow auf GitHub + Netlify; Schreibzugriff des Connectors eingerichtet
+- Bestellsystem gebaut: gemeinsames `orders`-Modell ueber beide Haelften der Lieferkette
+- Auftragsverwaltung als eigene Unteransicht im Distributor-Dashboard (Liste + Detail,
+  Dokumente, Zahlung, Versand, Marge, automatische Deal-/Promo-Erkennung)
+- Dokumentationsstruktur konsolidiert: Spec im Repo + Projektwissen, `CLAUDE.md` im Repo-Root,
+  Anhang D (ueberholte Entscheidungen) und Anhang E (Ablagen) angelegt
+- Distributor-Sidebar: Orders-Sektion nach oben zwischen "Overview" und "My Profile" verschoben,
+  umbenannt in **Commerce**; "Incoming Orders" → **My Sales**, "My Orders" → **My Purchases**
 
 ---
 
 ## Offene Punkte
 
-- **Datenarrays auslagern:** Bewusst NICHT im selben Durchgang wie das Bestellsystem gemacht, damit ein
-  eventueller Fehler eindeutig zuzuordnen bleibt. Geplant: alle Demo-Datenarrays aus
-  `bottle-lobby-dashboard.html` nach `assets/bottle-lobby-data.js`, kommentiert als Schema-Vorlage
-  fuer den echten Supabase-Bau. Naechster eigener Arbeitsschritt.
-- **Dashboard-Groesse:** `bottle-lobby-dashboard.html` ist ~365 KB und damit zu gross, als dass Claude sie
-  direkt pushen koennte — Aenderungen daran gehen ueber lokalen Bau + manuellen Upload dieser einen Datei.
-  Die Groessentabelle in der Spec (C3) nannte faelschlich 64 KB; das war der veraltete Repo-Stand.
-- **Domain:** `caracterwines.de` als Domain/E-Mail steht noch, obwohl die Firma korrekt "Caracter Media GmbH" heisst.
-- **Dashboard-Konsistenz:** Die Vier-Sektionen-Aufteilung der Sidebar und die "My ___"-Namenskonvention
-  gibt es bisher nur im Distributor-Dashboard.
-- **Matchmaking:** In Restaurant- und Retail-Dashboards nur ein nicht funktionaler Platzhalter-Tab.
-- **Membership-Gate:** Restaurant- und Retailer-Profile im Wine Guide sind im Prototyp fuer alle sichtbar.
-  Im echten Build hinter die Mitgliedschaft (Spec A10).
-- **Uebersichts-Widgets:** Winery- und Distributor-Dashboard haben noch kein Orders-Widget auf der
-  Startuebersicht (Restaurant und Retail schon). Bewusst ausgelassen, um die dichten Grid-Layouts
-  nicht anzufassen.
+### Muss in die Spec, sobald die naechste Spec-Auslieferung ansteht
+- **B8 ist veraltet:** Der Abschnitt beschreibt die Distributor-Sidebar noch mit der
+  Orders-Sektion an vierter Stelle und mit den alten Bezeichnungen. Richtig ist jetzt:
+  Overview → **Commerce** (My Sales / My Purchases / Order History) → My Profile →
+  My Partners → Promotion → Network → Intelligence → Events → Account.
+  Beim naechsten Spec-Update einarbeiten und eine Zeile in Anhang D ergaenzen.
+  Bewusst nicht sofort ausgeliefert, um nicht zweimal kurz hintereinander eine 58-KB-Datei
+  zu erzeugen — die Angleichung der uebrigen Dashboards aendert B8 ohnehin nochmal.
+
+### Arbeit
+- **Winery-, Restaurant- und Retail-Dashboard** auf dieselbe Orders-Unteransicht heben,
+  die der Distributor jetzt hat. Aktuell haben sie nur die einfachen Karten-Sektionen.
+  Dabei auch die Sektions-Aufteilung und die "My ___"-Namenskonvention angleichen.
+- **Datenarrays auslagern** nach `assets/bottle-lobby-data.js`, kommentiert als Schema-Vorlage
+  fuer den Supabase-Bau. Bewusst noch nicht gemacht, damit Fehler eindeutig zuzuordnen bleiben.
+- **Bestandspruefung** im Auftragsdetail gegen das Wine Portfolio des Distributors
+  (Spec A14.9) — braucht zuerst ein Lagerbestandsfeld; eine erfundene Zahl waere ein
+  Verstoss gegen A1.
+- **Uebersichts-Widgets:** Winery und Distributor haben auf ihrer Startuebersicht noch
+  kein Orders-Widget (Restaurant und Retail schon).
+- **Domain:** `caracterwines.de` steht noch, obwohl die Firma korrekt "Caracter Media GmbH" heisst.
 
 ---
 
 ## Hinweise fuer Claude
 
-- Vor jedem Push: div/tag-Balance UND Verschachtelung pruefen, CSS-Klassen-Cross-Check laufen lassen.
-- Bei `bottle-lobby-dashboard.html`: immer lokal bauen, `node --check` auf den Script-Block,
-  dann als einzelne Datei zur Uebergabe.
+- `bottle-lobby-dashboard.html` ist ~415 KB und **nicht pushbar**. Immer lokal bauen,
+  `node --check` auf den Script-Block, DOM-Stub-Harness fuer die Logik, dann als
+  einzelne Datei zur manuellen Uebergabe.
+- Vor jeder Uebergabe: div/tag-Balance UND Verschachtelung pruefen, doppelte IDs,
+  onclick-Funktionen definiert, CSS-Klassen-Cross-Check.
+- Weinnamen muessen exakt zwischen `orders`, `promoMaterials` und `exclusiveDeals`
+  uebereinstimmen, sonst greifen die automatischen Erkennungen stillschweigend nicht.
