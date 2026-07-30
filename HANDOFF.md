@@ -45,6 +45,10 @@ Kein Build-Command, Publish-Directory = Repo-Root.
   Kartenlisten samt `orderCardHtml`/`paintOrders` sind raus, Badges und Uebersichts-Widgets
   bleiben. Dokumente tragen den Briefkopf des jeweiligen Verkaeufers (`SELLER_PROFILES`).
   Spec A14.8/A14.9 und B8 nachgezogen, Anhang D um **D19** ergaenzt.
+- **Orders-Widget auf der Startuebersicht von Winery und Distributor** ("Open Sales",
+  ueber der ersten Widget-Reihe). `orderWidgetRow` ist jetzt perspektivabhaengig:
+  Verkaeufer sehen "Ordered by {Kunde}", Kaeufer weiterhin "Via {Lieferant}".
+  Sortierung zeigt offene Bestaetigungen zuerst, maximal drei Zeilen.
 
 ---
 
@@ -65,8 +69,6 @@ Kein Build-Command, Publish-Directory = Repo-Root.
 - **Bestandspruefung** im Auftragsdetail gegen das Wine Portfolio des Distributors
   (Spec A14.9) — braucht zuerst ein Lagerbestandsfeld; eine erfundene Zahl waere ein
   Verstoss gegen A1.
-- **Uebersichts-Widgets:** Winery und Distributor haben auf ihrer Startuebersicht noch
-  kein Orders-Widget (Restaurant und Retail schon).
 - **Domain:** `caracterwines.de` steht noch, obwohl die Firma korrekt "Caracter Media GmbH" heisst.
 
 ---

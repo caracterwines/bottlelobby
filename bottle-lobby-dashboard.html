@@ -1309,6 +1309,17 @@ body {
           </div>
         </div>
 
+        <!-- Open Sales — same records as the Orders sub-view (A14.8) -->
+        <div style="margin-bottom:1.5rem">
+          <div class="widget">
+            <div class="widget-header">
+              <span class="widget-title">Open Sales</span>
+              <button class="widget-action" onclick="showOrders('winery','incoming')">View All &rarr;</button>
+            </div>
+            <div class="widget-body" id="word-widget"></div>
+          </div>
+        </div>
+
         <div class="grid-31">
           <!-- Distributor Matches -->
           <div class="widget">
@@ -1854,6 +1865,17 @@ With an annual production capacity of over 1.2 million bottles, Cantina Rossi is
             <div class="stat-card-label">Restaurant Clients</div>
             <div class="stat-card-value">850<span>+</span></div>
             <div class="stat-card-delta">↑ +85 this quarter</div>
+          </div>
+        </div>
+
+        <!-- Open Sales — same records as the Orders sub-view (A14.8) -->
+        <div style="margin-bottom:1.5rem">
+          <div class="widget">
+            <div class="widget-header">
+              <span class="widget-title">Open Sales</span>
+              <button class="widget-action" onclick="showOrders('distributor','incoming')">View All &rarr;</button>
+            </div>
+            <div class="widget-body" id="dord-widget"></div>
           </div>
         </div>
 
@@ -6213,6 +6235,10 @@ function orderDate(iso) {
 function orderBottles(o) { return o.items.reduce((sum, i) => sum + i.qty, 0); }
 
 /* ── Selectors ────────────────────────────────────────────────── */
+function ordersAsSeller(entity, openOnly) {
+  return orders.filter(o => o.seller === entity &&
+    (openOnly ? ORDER_CLOSED.indexOf(o.stage) === -1 : ORDER_CLOSED.indexOf(o.stage) !== -1));
+}
 function ordersAsBuyer(entity, openOnly) {
   return orders.filter(o => o.buyer === entity &&
     (openOnly ? ORDER_CLOSED.indexOf(o.stage) === -1 : ORDER_CLOSED.indexOf(o.stage) !== -1));
@@ -6240,32 +6266,47 @@ function renderAllOrders() {
   renderOrderWidgets();
 }
 
-/* Compact dashboard-overview widgets */
-function orderWidgetRow(o) {
+/* Compact dashboard-overview widgets — the same order rows the Orders
+   sub-view lists, cut down to the three that need attention first.
+   Deliberately registry-free: renderAllOrders() runs once while this
+   file is still being evaluated, before ORDER_ROLES exists. */
+function orderWidgetRow(o, perspective) {
   const first = o.items[0];
   const more = o.items.length > 1 ? ' +' + (o.items.length - 1) + ' more' : '';
+  const sub = perspective === 'seller'
+    ? 'Ordered by ' + o.buyer + ' · ' + orderDate(o.placed)
+    : 'Via ' + o.seller + (o.eta ? ' · Est. delivery ' + orderDate(o.eta) : ' · ' + o.id);
   return '<div class="list-item">' +
     '<div class="list-dot list-dot-gold"></div>' +
     '<div class="list-item-main">' +
       '<div class="list-item-title">' + first.wine + ' · ' + orderBottles(o) + ' btl' + more + '</div>' +
-      '<div class="list-item-sub">Via ' + o.seller + (o.eta ? ' · Est. delivery ' + orderDate(o.eta) : ' · ' + o.id) + '</div>' +
+      '<div class="list-item-sub">' + sub + '</div>' +
     '</div>' +
     '<div class="list-item-right"><span class="tag tag-gold">' + orderStageLabel[o.stage] + '</span></div>' +
   '</div>';
 }
+
+/* What still needs doing comes first: pending before anything else. */
+function orderWidgetList(list) {
+  return list.slice().sort((a, b) =>
+    (a.stage === 'pending' ? 0 : 1) - (b.stage === 'pending' ? 0 : 1)).slice(0, 3);
+}
+
+function paintOrderWidget(elId, list, perspective, emptyMsg) {
+  const el = document.getElementById(elId);
+  if (!el) return;
+  el.innerHTML = list.length
+    ? orderWidgetList(list).map(o => orderWidgetRow(o, perspective)).join('')
+    : '<div style="padding:0.4rem 0;font-size:0.78rem;color:var(--dim)">' + emptyMsg + '</div>';
+}
+
 function renderOrderWidgets() {
-  const r = document.getElementById('rord-widget');
-  if (r) {
-    const list = ordersAsBuyer('Bistro Laurent', true);
-    r.innerHTML = list.length ? list.slice(0, 3).map(orderWidgetRow).join('')
-      : '<div style="padding:0.4rem 0;font-size:0.78rem;color:var(--dim)">No open orders.</div>';
-  }
-  const t = document.getElementById('tord-widget');
-  if (t) {
-    const list = ordersAsBuyer('Weinhaus Müller', true);
-    t.innerHTML = list.length ? list.slice(0, 3).map(orderWidgetRow).join('')
-      : '<div style="padding:0.4rem 0;font-size:0.78rem;color:var(--dim)">No open orders.</div>';
-  }
+  /* Sellers see the orders waiting on them … */
+  paintOrderWidget('word-widget', ordersAsSeller('Cantina Rossi', true), 'seller', 'No open sales.');
+  paintOrderWidget('dord-widget', ordersAsSeller('Hawesko GmbH', true), 'seller', 'No open sales.');
+  /* … buyers see what they have running. */
+  paintOrderWidget('rord-widget', ordersAsBuyer('Bistro Laurent', true), 'buyer', 'No open orders.');
+  paintOrderWidget('tord-widget', ordersAsBuyer('Weinhaus Müller', true), 'buyer', 'No open orders.');
 }
 
 /* ── Actions ──────────────────────────────────────────────────── */
