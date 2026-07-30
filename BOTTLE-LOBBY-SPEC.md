@@ -92,7 +92,7 @@ This applies to **everything**:
 ## A3. The Supply Chain Model
 
 ```
-WINERY ──────────► DISTRIBUTOR ──────────► RESTAURANT
+WINERY ─────────► DISTRIBUTOR ─────────► RESTAURANT
                                     └────► RETAIL
 ```
 
@@ -860,13 +860,18 @@ A wine's `distributor` field in `bottle-lobby-wine-guide.html` is **always an ar
 
 ## B8. Distributor Dashboard Sidebar
 
-The distributor sidebar is split into **five labelled nav-sections** in this order:
+The distributor sidebar is split into **eight labelled nav-sections** in this order. This mirrors the live `#sidebar-distributor` markup in `bottle-lobby-dashboard.html` — the source of truth:
 
-**1. My Profile** — My Information · My Wine Portfolio · My Labels
-**2. My Partners** — My Partnerships (→ `dsection-active-partnerships`, grouped by region) · My Requests (→ `dsection-requests`)
-**3. Promotion** — My Promo Materials · My Offers · My Deals
-**4. Orders** — Incoming Orders · My Orders · Order History → all three open the **Orders sub-view** (A14.8), never a profile section
+**1. Overview** — Dashboard · My Profile · Messages
+**2. Commerce** — My Sales · My Purchases · Order History → all three open the **Orders sub-view** (A14.8) via `showDistributorOrders('incoming'|'outgoing'|'history')`, never a profile section
+**3. My Portfolio** — My Wine Portfolio · My Labels · My Promo Materials · My Offers · My Deals
+**4. My Partners** — My Partnerships (→ `dsection-active-partnerships`, grouped by region) · My Requests (→ `dsection-requests`)
 **5. Network** — Matchmaking · My Opportunities · My Stars · My Fans
+**6. Intelligence** — Trend Analytics · Portfolio Gaps · Market Reports
+**7. Events** — Wine Shows · Client Events
+**8. Account** — Settings
+
+> **Commerce** is the renamed, promoted former "Orders" section: it now sits directly below Overview (previously fourth), and its two order-list items were renamed — **Incoming Orders → My Sales**, **My Orders → My Purchases** (Order History unchanged). Routing into the Orders sub-view (A14.8) is unchanged. See Appendix D (D16). Promo Materials, Offers and Deals no longer form a standalone "Promotion" section; they now sit under **My Portfolio** next to Wine Portfolio and Labels (D17).
 
 Within **My Requests**, a single "Requests" heading holds both directions stacked vertically:
 1. **Incoming Requests** first (`stf-incoming` filter pills, `ir-list`)
@@ -1071,6 +1076,8 @@ Diagnosed 30 July 2026 after repeated `403 Resource not accessible by integratio
 | D13 | Handover was a full ZIP of every file after each change, uploaded manually to Netlify | **Part C** — GitHub → Netlify pipeline, Claude pushes directly | Two manual steps became none for most files. The ZIP survives only as an explicit fallback for the oversized files (C3). |
 | D14 | `HANDOFF.md` carried file lists, file counts and change history | **C2** — only open items, next steps and reasoning | Git already knows the rest, and duplicated inventories go stale silently. |
 | D15 | Proposal to split `bottle-lobby-dashboard.html` into separate CSS and JS files so Claude could push it directly | **C3** — rejected after measuring | The file is ~170 KB markup, ~120 KB JS, ~43 KB CSS. Extracting CSS and JS leaves the HTML at ~170 KB — still unpushable. The refactor would have carried real risk for no gain. **Do not re-propose without measuring again.** |
+| D16 | Distributor sidebar had a fourth-position **"Orders"** section with items "Incoming Orders / My Orders / Order History" | **B8** — renamed **"Commerce"** and promoted to second position, directly under Overview; items renamed **My Sales / My Purchases / Order History** | "Orders" undersold the commercial core and sat too low in the sidebar. "Commerce" reads as the primary workspace, and the buyer/seller-neutral "My Sales / My Purchases" pair names each direction plainly. Routing into the Orders sub-view (A14.8) is unchanged. |
+| D17 | Distributor Promo Materials, Offers and Deals sat in their own **"Promotion"** nav section (the move recorded in D11) | **B8** — consolidated under the **"My Portfolio"** section, alongside My Wine Portfolio and My Labels | With Commerce promoted to the top, the remaining seller-owned instruments read more coherently as one "what I carry and how I promote it" group than as a thin standalone section. Supersedes the "Promotion" section named as the answer in D11; D11 remains valid history of the earlier My Profile → Promotion move. |
 
 ---
 
