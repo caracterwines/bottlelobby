@@ -785,6 +785,13 @@ Declining a *product* never ends the participation: the producer stays a
 confirmed exhibitor and is asked for another wine. Only declining the
 *invitation* removes them.
 
+**A product the other side turned down is used up** and is not offered
+again. A product the producer merely swapped away from is not — that was
+the host's own suggestion, so coming back to it is reasonable. Which of
+the two a `declined` row is follows from `proposed_by`: only the host
+answers a producer's proposal, and only the producer replaces the host's.
+Declined rows stay in the table as history; they are never deleted.
+
 A producer cannot take a place on a show without naming a product. There
 is no state in which somebody is exhibiting but presenting nothing — the
 acceptance and the product choice are one act. See Appendix D (D23).

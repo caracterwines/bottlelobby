@@ -101,6 +101,31 @@ Kein Build-Command, Publish-Directory = Repo-Root.
 ## Offene Punkte
 
 ### Arbeit
+- **CACHE: Netlify liefert nach einem Push weiter die alte Fassung.** Im Browsertest
+  kam auch bei frischem Aufruf noch die vorherige `bottle-lobby-dashboard.html`;
+  erst `?cb=1` holte die neue. Das war rueckblickend auch die Ursache des zunaechst
+  als Bug gemeldeten leeren "Exhibitors & Wines".
+  **Vor jedem Investorengespraech: Hard Reload (Cmd-Shift-R).**
+  Dauerhafte Loesung ist ein Cache-Header. `netlify.toml` liegt jetzt im Repo und
+  hat noch keinen `[[headers]]`-Block — dort gehoert er hin, etwa
+  `Cache-Control: public, max-age=0, must-revalidate` fuer `/*.html`. Bewusst noch
+  nicht gesetzt, weil es das Auslieferungsverhalten der ganzen Seite aendert.
+- **LATENT: `exhibitorTurn()` kuerzt bei mehreren Weinen ab.** Die Funktion sagt
+  "irgendein `confirmed` Wein → niemand am Zug". Liegt neben einem bestaetigten Wein
+  ein weiterer Vorschlag, ist der fuer beide Seiten unsichtbar — kein Kasten, kein
+  Chip, kein Badge. Heute nicht erreichbar, weil ein Aussteller genau einen Wein
+  fuehrt und der Winzer nach der Einigung keinen Knopf mehr hat.
+  **Wird erreichbar, sobald ein Aussteller mehrere Weine praesentieren kann** — und
+  das sieht A16.4 ausdruecklich vor ("three wineries with two wines each"). Dann muss
+  `exhibitorTurn` pro Wein statt pro Aussteller antworten, und die Kaesten muessen
+  mehrere offene Vorschlaege zeigen koennen. Nicht vergessen, wenn der Mehr-Wein-Fall
+  gebaut wird.
+- **OEFFENTLICH: Spec, HANDOFF und CLAUDE.md sind unter der Demo-Domain abrufbar**
+  (`bottlelobby.netlify.app/BOTTLE-LOBBY-SPEC.md` → 200), weil das Publish-Directory
+  das Repo-Root ist. Das GitHub-Repo ist ohnehin oeffentlich, eine Netlify-Sperre
+  gewinnt also wenig — trotzdem eine bewusste Entscheidung wert, weil dort das
+  vollstaendige Geschaeftsmodell steht. `netlify.toml` koennte sie mit derselben
+  Redirect-Regel wie `/tests/*` ausschliessen.
 - **Kein Rueckweg aus `planning`.** Wird ein bereits beidseitig bestaetigter Wein
   spaeter abgelehnt, faellt `showReadiness` auf `false`, die Show bleibt aber in
   `planning` und rutscht nicht nach `draft` zurueck. A16.2 kennt keinen Rueckweg,

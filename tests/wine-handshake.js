@@ -264,6 +264,14 @@ else {
 w.openCounterModal(RT);
 if (!d.getElementById('cf-title').textContent.includes('Another Wine')) bad('modal title not adapted to the retry state');
 else ok('modal reads "Propose Another Wine"');
+// a wine the HOST turned down is used up and must not be offered again
+{
+  const offered = [...d.getElementById('cf-product').options].map(o => o.value);
+  if (offered.includes('Rosato di Sicilia 2023'))
+    bad('the host-declined wine is offered again: ' + offered.slice(0,4));
+  else ok('host-declined wine no longer offered');
+  if (!offered.length) bad('picker is empty');
+}
 d.getElementById('cf-product').value = 'Catarratto Biologico 2023';
 w.saveCounter();
 rt = EX(RT,'Cantina Rossi');
@@ -297,5 +305,39 @@ const trail = S(RT).events.map(e => e.text).join(' | ');
 ok('every step written to the append-only trail');
 
 if (errs.length) { console.log('\nJSDOM ERRORS:'); errs.forEach(x => console.log('  ' + x.split('\n')[0])); fail += errs.length; }
+/* The mirror case: a wine the PRODUCER swapped away from was the host's
+   own suggestion, so it must stay offerable. */
+console.log('\n── a wine the producer swapped away from stays offerable');
+{
+  w.showWineShows('distributor','current');
+  w.openShowModal();
+  d.getElementById('sf-title').value = 'Swap Back';
+  d.getElementById('sf-date').value  = '2027-10-10';
+  d.getElementById('sf-city').value  = 'Kiel';
+  w.saveShow();
+  const SB = w.eval('wineShows')[0].id;
+  w.openInviteModal(SB);
+  d.getElementById('if-producer').value = 'Cantina Rossi'; w.onInviteProducerChange();
+  d.getElementById('if-product').value = 'Primitivo Riserva 2020';   // host's suggestion
+  w.saveInvite();
+  w.showWineShows('winery','current');
+  w.openShowDetail(SB);
+  w.openCounterModal(SB);
+  d.getElementById('cf-product').value = 'Grillo Sicilia DOC 2023';  // producer swaps away
+  w.saveCounter();
+  // host declines the producer's pick, producer reopens the picker
+  w.showWineShows('distributor','current'); w.openShowDetail(SB);
+  w.hostRespondToProduct(SB,'Cantina Rossi','decline');
+  w.showWineShows('winery','current'); w.openShowDetail(SB);
+  w.openCounterModal(SB);
+  const offered = [...d.getElementById('cf-product').options].map(o => o.value);
+  if (!offered.includes('Primitivo Riserva 2020'))
+    bad("the host's own earlier suggestion should stay offerable: " + offered.slice(0,4));
+  else ok("host's own suggestion still offerable after the producer swapped away");
+  if (offered.includes('Grillo Sicilia DOC 2023'))
+    bad('the host-declined wine is offered again');
+  else ok('host-declined wine excluded');
+}
+
 console.log(fail ? `\n✗ ${fail} failure(s)` : '\n✓ all checks passed');
 process.exit(fail ? 1 : 0);

@@ -8278,9 +8278,18 @@ function openCounterModal(id) {
   counterShowId = id;
   const role = activeShowRole, s = wineShows.find(x => x.id === id); if (!s) return;
   const me = myExhibitor(role, s); if (!me) return;
-  const already = me.products.filter(p => p.status !== 'declined').map(p => p.name);
+  /* What is no longer offerable, derived rather than stored:
+     - anything still on the table (proposed or confirmed)
+     - a wine the HOST turned down — that proposal is used up
+     A wine the producer merely swapped away from stays available: it
+     was the host's own suggestion, so re-proposing it is reasonable.
+     Who declined follows from proposedBy — only the host answers a
+     producer's proposal, and only the producer replaces the host's. */
+  const spent = me.products
+    .filter(p => p.status !== 'declined' || p.proposedBy === 'producer')
+    .map(p => p.name);
   const mine = partnerWinesPool.filter(w =>
-    w.winery === SHOW_ROLES[role].entity && already.indexOf(w.name + ' ' + w.vintage) === -1);
+    w.winery === SHOW_ROLES[role].entity && spent.indexOf(w.name + ' ' + w.vintage) === -1);
   const hostWine = me.products.find(p => p.status === 'proposed' && p.proposedBy === 'host');
   const rejected = me.products.filter(p => p.status === 'declined' && p.proposedBy === 'producer').slice(-1)[0];
 
