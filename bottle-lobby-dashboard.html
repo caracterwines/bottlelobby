@@ -7503,6 +7503,9 @@ let wineShows = [
     exhibitors:[
       { producer:'Bodegas Ruiz', status:'confirmed', source:'invitation',
         products:[ { name:'Rioja Reserva 2019', proposedBy:'host', status:'confirmed' } ] },
+      /* Producer proposed, host has not answered — the host is at turn. */
+      { producer:'Weingut Schmitt', status:'confirmed', source:'invitation',
+        products:[ { name:'Spätburgunder — Mosel 2022', proposedBy:'producer', status:'proposed' } ] },
       { producer:'Cantina Rossi', status:'invited', source:'invitation',
         products:[ { name:'Primitivo Riserva 2020', proposedBy:'host', status:'proposed' } ] }
     ],
@@ -7510,7 +7513,10 @@ let wineShows = [
       { at:'12 Jul 2026', actor:'Hawesko GmbH', text:'Show created as a draft' },
       { at:'14 Jul 2026', actor:'Hawesko GmbH', text:'Bodegas Ruiz invited with Rioja Reserva 2019' },
       { at:'17 Jul 2026', actor:'Bodegas Ruiz', text:'Confirmed with Rioja Reserva 2019' },
+      { at:'17 Jul 2026', actor:'Hawesko GmbH', text:'Confirmed Rioja Reserva 2019 for Bodegas Ruiz' },
       { at:'17 Jul 2026', actor:'Bottle Lobby', text:'Venue, exhibitor and product confirmed — show moved to Planning' },
+      { at:'24 Jul 2026', actor:'Hawesko GmbH', text:'Weingut Schmitt invited — no wine proposed' },
+      { at:'26 Jul 2026', actor:'Weingut Schmitt', text:'Proposed Spätburgunder — Mosel 2022' },
       { at:'28 Jul 2026', actor:'Hawesko GmbH', text:'Cantina Rossi invited with Primitivo Riserva 2020' } ] },
 
   { id:'WS-2602', title:'Nordic Selection', date:'22 Jan 2027', city:'Copenhagen',
@@ -7579,7 +7585,9 @@ const SHOW_ROLES = {
     tabs:[ { key:'current', label:'My Shows' }, { key:'history', label:'Past Shows' } ]
   },
   winery: {
-    entity:'Cantina Rossi', side:'exhibitor', prefix:'wshow',
+    /* `side` must use the same vocabulary as exhibitorTurn()'s return
+       value — 'host' | 'producer' — because the two are compared. */
+    entity:'Cantina Rossi', side:'producer', prefix:'wshow',
     view:'winery-view-shows', dashboardView:'winery-view-dashboard',
     profileView:'winery-view-profile', ordersView:'winery-view-orders',
     topbarTitle:'winery-topbar-title',
@@ -7607,27 +7615,51 @@ function showsForTab(role, tab) {
   const list = showsForRole(role).filter(s =>
     tab === 'history' ? SHOW_PAST_STAGES.indexOf(s.stage) !== -1
                       : SHOW_PAST_STAGES.indexOf(s.stage) === -1);
-  /* Invitations awaiting this producer's answer sort to the top — the
-     reason the winery opens this view at all. */
-  return list.slice().sort((a, b) =>
-    (myInvitePending(role, b) ? 1 : 0) - (myInvitePending(role, a) ? 1 : 0));
+  /* Anything waiting on this role sorts to the top — the reason either
+     side opens this view at all. */
+  const side = SHOW_ROLES[role].side;
+  const waits = s => s.exhibitors.some(e => exhibitorTurn(s, e) === side &&
+    (side === 'host' || e.producer === SHOW_ROLES[role].entity)) ? 1 : 0;
+  return list.slice().sort((a, b) => waits(b) - waits(a));
 }
 function myExhibitor(role, show) {
   return show.exhibitors.find(e => e.producer === SHOW_ROLES[role].entity) || null;
 }
-function myInvitePending(role, show) {
-  if (SHOW_ROLES[role].side !== 'exhibitor') return false;
-  const e = myExhibitor(role, show);
-  return !!e && e.status === 'invited';
-}
-function pendingInviteCount(role) {
-  return showsForRole(role).filter(s => myInvitePending(role, s)).length;
-}
 function awaitingReleaseCount(role) {
   return showsForRole(role).filter(s => s.stage === 'pending_approval').length;
 }
+/* What the sidebar badge counts: shows that cannot move without this
+   role doing something. Both sides read it from the same records. */
+function actionCount(role) {
+  const side = SHOW_ROLES[role].side;
+  const waiting = showsAwaiting(role, side).length;
+  return side === 'host' ? waiting + awaitingReleaseCount(role) : waiting;
+}
 
 /* ══ COMPUTED, NEVER STORED (A16.10) ═════════════════════════════ */
+/* Which side has to act next, derived from `proposedBy` + `status` on
+   the wine — never a stored "whose turn" marker. A wine is agreed only
+   when the side that did NOT propose it has said yes (A16.4, D23). */
+function exhibitorTurn(show, e) {
+  if (e.status === 'declined') return null;
+  if (e.status === 'invited')  return 'producer';   // invitation unanswered
+  if (e.products.some(p => p.status === 'confirmed')) return null;
+  const open = e.products.find(p => p.status === 'proposed');
+  if (!open) return 'producer';                     // nothing on the table — producer proposes
+  return open.proposedBy === 'host' ? 'producer' : 'host';
+}
+/* The wine a given side is being asked about, if any. */
+function openProposalFor(show, e, side) {
+  if (exhibitorTurn(show, e) !== side) return null;
+  return e.products.find(p => p.status === 'proposed') || null;
+}
+function showsAwaiting(role, side) {
+  return showsForRole(role).filter(s =>
+    SHOW_PAST_STAGES.indexOf(s.stage) === -1 &&
+    s.exhibitors.some(e => exhibitorTurn(s, e) === side &&
+      (side === 'host' || e.producer === SHOW_ROLES[role].entity)));
+}
+
 /* Whether a draft may move to `planning` is derived from the show's
    own relations every time it is asked — there is no readiness flag. */
 function showReadiness(show) {
@@ -7722,14 +7754,14 @@ function showKpis(role) {
   if (cfg.side === 'host') {
     return [
       { label:'Active Shows',   value:live.length,                     sub:'in planning or published' },
-      { label:'Awaiting Release', value:awaitingReleaseCount(role),    sub:'with Bottle Lobby' },
+      { label:'Awaiting You',   value:showsAwaiting(role,'host').length, sub:'a wine needs your yes' },
       { label:'Exhibitors',     value:live.reduce((n,s)=>n+confirmedExhibitors(s).length,0), sub:'confirmed across all shows' },
       { label:'Products',       value:live.reduce((n,s)=>n+showProductCount(s),0), sub:'presented' }
     ];
   }
   const confirmed = live.filter(s => { const e = myExhibitor(role, s); return e && e.status === 'confirmed'; });
   return [
-    { label:'Open Invitations', value:pendingInviteCount(role), sub:'awaiting your answer' },
+    { label:'Awaiting You',     value:showsAwaiting(role,'producer').length, sub:'invitation or wine to answer' },
     { label:'Confirmed',        value:confirmed.length,         sub:'you are exhibiting' },
     { label:'Wines Presented',  value:confirmed.reduce((n,s) => {
         const e = myExhibitor(role, s);
@@ -7767,13 +7799,14 @@ function renderWineShows(role) {
     '<span>Wines</span><span>Stage</span><span></span></div>';
 
   const rows = list.map(s => {
-    const pending = myInvitePending(role, s);
+    const waitingOnMe = s.exhibitors.some(e => exhibitorTurn(s, e) === cfg.side &&
+      (cfg.side === 'host' || e.producer === cfg.entity));
     return '<div class="otbl-row" style="grid-template-columns:104px 104px 1.5fr 1.1fr 74px 136px 26px" ' +
       'onclick="openShowDetail(\'' + s.id + '\')">' +
       '<span class="otbl-id">' + s.id + '</span>' +
       '<span class="otbl-dim">' + s.date + '</span>' +
       '<span class="otbl-cust">' + s.title +
-        '<em>' + (pending ? '<span class="ord-chip chip-offer">Invitation</span>' : '') +
+        '<em>' + (waitingOnMe ? '<span class="ord-chip chip-offer">Awaiting you</span>' : '') +
         s.focus + '</em></span>' +
       '<span class="otbl-cust">' + s.city + '<em>' + showVenueLabel(s, role) + '</em></span>' +
       '<span class="otbl-dim">' + showProductCount(s) + '</span>' +
@@ -7790,7 +7823,7 @@ function renderWineShows(role) {
 
   const badge = document.getElementById(cfg.badge);
   if (badge) {
-    const n = cfg.side === 'host' ? awaitingReleaseCount(role) : pendingInviteCount(role);
+    const n = actionCount(role);
     badge.textContent = n || '';
     badge.style.display = n ? '' : 'none';
   }
@@ -7873,17 +7906,50 @@ function renderShowDetail(id) {
       '<div class="ord-item">' +
         '<span class="ord-item-name">' + p.name + '</span>' +
         '<span class="ord-stage wse-' + p.status + '">' + p.status + '</span>' +
-        (p.proposedBy === 'producer'
-          ? '<span class="otbl-dim" style="font-size:0.66rem">proposed by the producer</span>' : '') +
+        '<span class="otbl-dim" style="font-size:0.66rem">by the ' +
+          (p.proposedBy === 'producer' ? 'producer' : 'host') + '</span>' +
       '</div>').join('') || '<div class="ord-item"><span class="otbl-dim">No wine named yet</span></div>';
+    /* Who is holding this up — computed, so both sides read the same answer */
+    const turn = exhibitorTurn(s, e);
+    const turnChip = turn === null ? ''
+      : '<span class="ord-chip ' + (turn === cfg.side ? 'chip-deal' : 'chip-manual') + '">' +
+        (turn === cfg.side ? 'Awaiting you' : 'Awaiting ' + (turn === 'host' ? s.leadHost : e.producer)) + '</span>';
     return '<div style="padding:0.9rem 0;border-bottom:1px solid rgba(247,243,238,0.05)">' +
       '<div style="display:flex;align-items:center;gap:0.7rem">' +
         '<span style="font-size:0.86rem;color:var(--paper);flex:1">' + e.producer + '</span>' +
+        turnChip +
         '<span class="ord-stage wse-' + e.status + '">' + e.status + '</span>' +
       '</div>' +
       '<div class="ord-items" style="margin-top:0.5rem">' + prods + '</div>' +
     '</div>';
   }).join('') : '<div class="otbl-dim" style="padding:0.6rem 0">No exhibitors invited yet.</div>';
+
+  /* ── host: wines a producer has put forward and that need an answer ── */
+  let hostProposalBox = '';
+  if (isHost) {
+    const waiting = s.exhibitors.filter(e => exhibitorTurn(s, e) === 'host');
+    if (waiting.length) {
+      hostProposalBox =
+        '<div class="odt-box"><div class="odt-box-head">Wines Awaiting Your Confirmation</div><div class="odt-box-body">' +
+          '<div class="edit-section-sub" style="margin:0 0 0.9rem">These producers have put a wine forward. ' +
+          'A wine counts towards the show only once both sides have agreed it — declining one keeps the producer ' +
+          'on the show and asks them for another.</div>' +
+          waiting.map(e => {
+            const p = openProposalFor(s, e, 'host');
+            return '<div style="padding:0.75rem 0;border-bottom:1px solid rgba(247,243,238,0.05)">' +
+              '<div style="font-size:0.84rem;color:var(--paper)">' + e.producer + '</div>' +
+              '<div class="otbl-dim" style="font-size:0.74rem;margin-top:0.2rem">' + p.name + '</div>' +
+              '<div class="ord-actions" style="margin-top:0.6rem">' +
+                '<button class="btn-sm btn-gold" onclick="hostRespondToProduct(\'' + s.id + '\',\'' +
+                  e.producer.replace(/'/g, "\\'") + '\',\'confirm\')">Confirm this wine</button>' +
+                '<button class="btn-sm btn-outline" onclick="hostRespondToProduct(\'' + s.id + '\',\'' +
+                  e.producer.replace(/'/g, "\\'") + '\',\'decline\')">Decline</button>' +
+              '</div>' +
+            '</div>';
+          }).join('') +
+        '</div></div>';
+    }
+  }
 
   /* ── readiness checklist — A16.10, recomputed on every render ── */
   const checkRow = (met, label) =>
@@ -7928,20 +7994,49 @@ function renderShowDetail(id) {
     '</div></div>';
   }
 
-  /* ── exhibitor actions ── */
+  /* ── producer: one box, four states, driven by exhibitorTurn ── */
   let exhActions = '';
-  if (!isHost && me && me.status === 'invited') {
-    exhActions =
-      '<div class="odt-box"><div class="odt-box-head">Your Invitation</div><div class="odt-box-body">' +
-        '<div class="edit-section-sub" style="margin:0 0 0.9rem">' + s.leadHost + ' has invited you to exhibit' +
-          (me.products.length ? ' with <strong style="color:var(--paper)">' + me.products.map(p=>p.name).join(', ') + '</strong>' : '') +
-          '. The wine is a proposal, not an instruction — you can present a different one.</div>' +
-        '<div class="ord-actions">' +
-          '<button class="btn-sm btn-gold" onclick="respondToInvite(\'' + s.id + '\',\'confirm\')">Confirm</button>' +
-          '<button class="btn-sm btn-outline" onclick="openCounterModal(\'' + s.id + '\')">Confirm with a different wine</button>' +
-          '<button class="btn-sm btn-outline" onclick="respondToInvite(\'' + s.id + '\',\'decline\')">Decline</button>' +
-        '</div>' +
+  if (!isHost && me && me.status !== 'declined') {
+    const turn = exhibitorTurn(s, me);
+    const hostWine = me.products.find(p => p.status === 'proposed' && p.proposedBy === 'host');
+    const mine     = me.products.find(p => p.status === 'proposed' && p.proposedBy === 'producer');
+    const agreed   = me.products.find(p => p.status === 'confirmed');
+    const rejected = me.products.filter(p => p.status === 'declined' && p.proposedBy === 'producer').slice(-1)[0];
+    const declineBtn = '<button class="btn-sm btn-outline" onclick="respondToInvite(\'' + s.id + '\',\'decline\')">Decline</button>';
+    let head = '', body = '', acts = '';
+
+    if (turn === 'producer' && hostWine) {
+      head = 'Your Invitation';
+      body = s.leadHost + ' has invited you to exhibit with <strong style="color:var(--paper)">' + hostWine.name +
+             '</strong>. The wine is a proposal, not an instruction — you can present a different one.';
+      acts = '<button class="btn-sm btn-gold" onclick="respondToInvite(\'' + s.id + '\',\'confirm\')">Confirm</button>' +
+             '<button class="btn-sm btn-outline" onclick="openCounterModal(\'' + s.id + '\')">Confirm with a different wine</button>' +
+             declineBtn;
+    } else if (turn === 'producer' && rejected) {
+      head = 'Your Turn';
+      body = s.leadHost + ' declined <strong style="color:var(--paper)">' + rejected.name +
+             '</strong>. You are still on the show — put another wine forward.';
+      acts = '<button class="btn-sm btn-gold" onclick="openCounterModal(\'' + s.id + '\')">Propose another wine</button>' + declineBtn;
+    } else if (turn === 'producer') {
+      head = 'Your Invitation';
+      body = s.leadHost + ' has invited you to exhibit without naming a wine. Pick the one you want to present — ' +
+             'that both takes your place and puts the wine to ' + s.leadHost + ' for confirmation.';
+      acts = '<button class="btn-sm btn-gold" onclick="openCounterModal(\'' + s.id + '\')">Choose a wine &amp; confirm</button>' + declineBtn;
+    } else if (turn === 'host' && mine) {
+      head = 'Waiting for ' + s.leadHost;
+      body = 'You proposed <strong style="color:var(--paper)">' + mine.name + '</strong>. ' + s.leadHost +
+             ' still has to confirm it — a wine counts towards the show only once both sides have agreed it.';
+    } else if (agreed) {
+      head = 'You Are Exhibiting';
+      body = '<strong style="color:var(--paper)">' + agreed.name + '</strong> is agreed by both sides.';
+    }
+
+    if (head) {
+      exhActions = '<div class="odt-box"><div class="odt-box-head">' + head + '</div><div class="odt-box-body">' +
+        '<div class="edit-section-sub" style="margin:0' + (acts ? ' 0 0.9rem' : '') + '">' + body + '</div>' +
+        (acts ? '<div class="ord-actions">' + acts + '</div>' : '') +
       '</div></div>';
+    }
   }
 
   const trail = s.events.slice().reverse().map(e =>
@@ -7959,7 +8054,7 @@ function renderShowDetail(id) {
     '</div>' +
     '<div class="odt-grid">' +
       '<div>' +
-        exhActions + readinessBox + gateBox +
+        exhActions + hostProposalBox + readinessBox + gateBox +
         '<div class="odt-box"><div class="odt-box-head">Exhibitors &amp; Wines' +
           (hostActions ? '<span class="right">' + hostActions + '</span>' : '') +
         '</div><div class="odt-box-body">' + exhRows +
@@ -7999,7 +8094,7 @@ function refreshShows() {
     if (!showState[r].built) {
       const cfg = SHOW_ROLES[r], badge = document.getElementById(cfg.badge);
       if (badge) {
-        const n = cfg.side === 'host' ? awaitingReleaseCount(r) : pendingInviteCount(r);
+        const n = actionCount(r);
         badge.textContent = n || ''; badge.style.display = n ? '' : 'none';
       }
     } else if (r !== role) renderWineShows(r);
@@ -8025,9 +8120,16 @@ function simulateStaffRelease(id) {
   showToast('✓ Released — the show is now fully public');
 }
 
+/* ── PRODUCER SIDE ──────────────────────────────────────────────
+   "Confirm" accepts the wine the HOST proposed, which settles it: the
+   host named it, the producer said yes. It is offered only when such a
+   proposal exists — a producer can never confirm a place without a
+   named wine, which is what used to leave `products` empty and pin the
+   show in `draft` for good (D23). */
 function respondToInvite(id, action) {
   const role = activeShowRole, s = wineShows.find(x => x.id === id); if (!s) return;
   const me = myExhibitor(role, s); if (!me) return;
+
   if (action === 'decline') {
     if (!confirm('Decline this invitation to exhibit at ' + s.title + '?')) return;
     me.status = 'declined';
@@ -8037,12 +8139,40 @@ function respondToInvite(id, action) {
     showToast('Invitation declined');
     return;
   }
+
+  const proposal = me.products.find(p => p.status === 'proposed' && p.proposedBy === 'host');
+  if (!proposal) { showToast('✗ Pick the wine you want to present first'); return; }
   me.status = 'confirmed';
-  me.products.forEach(p => { if (p.status === 'proposed') p.status = 'confirmed'; });
-  logShow(s, me.producer, 'Confirmed with ' + (me.products.map(p => p.name).join(', ') || 'no wine named yet'));
+  proposal.status = 'confirmed';
+  logShow(s, me.producer, 'Accepted ' + proposal.name + ' — the wine is agreed by both sides');
   promoteIfReady(s);
   refreshShows();
-  showToast('✓ Confirmed — you are exhibiting at ' + s.title);
+  showToast('✓ Confirmed — you are exhibiting ' + proposal.name);
+}
+
+/* ── HOST SIDE ──────────────────────────────────────────────────
+   The mirror image: the host answers a wine the producer proposed.
+   Declining a wine never ends the participation — the producer stays
+   confirmed and is asked for another. */
+function hostRespondToProduct(showId, producer, action) {
+  const s = wineShows.find(x => x.id === showId); if (!s) return;
+  const e = s.exhibitors.find(x => x.producer === producer); if (!e) return;
+  const proposal = e.products.find(p => p.status === 'proposed' && p.proposedBy === 'producer');
+  if (!proposal) return;
+
+  if (action === 'decline') {
+    if (!confirm('Decline ' + proposal.name + ' for ' + producer + '? They stay on the show and can propose another wine.')) return;
+    proposal.status = 'declined';
+    logShow(s, s.leadHost, 'Declined ' + proposal.name + ' — ' + producer + ' can propose another wine');
+    refreshShows();
+    showToast('Wine declined — ' + producer + ' has been asked for another');
+    return;
+  }
+  proposal.status = 'confirmed';
+  logShow(s, s.leadHost, 'Confirmed ' + proposal.name + ' for ' + producer + ' — the wine is agreed by both sides');
+  promoteIfReady(s);
+  refreshShows();
+  showToast('✓ ' + proposal.name + ' confirmed for ' + producer);
 }
 
 /* ══ MODAL — host a show ═════════════════════════════════════════ */
@@ -8148,34 +8278,57 @@ function openCounterModal(id) {
   counterShowId = id;
   const role = activeShowRole, s = wineShows.find(x => x.id === id); if (!s) return;
   const me = myExhibitor(role, s); if (!me) return;
-  const mine = partnerWinesPool.filter(w => w.winery === SHOW_ROLES[role].entity);
+  const already = me.products.filter(p => p.status !== 'declined').map(p => p.name);
+  const mine = partnerWinesPool.filter(w =>
+    w.winery === SHOW_ROLES[role].entity && already.indexOf(w.name + ' ' + w.vintage) === -1);
+  const hostWine = me.products.find(p => p.status === 'proposed' && p.proposedBy === 'host');
+  const rejected = me.products.filter(p => p.status === 'declined' && p.proposedBy === 'producer').slice(-1)[0];
+
+  /* The modal serves three entry points; the wording follows the state. */
+  document.getElementById('cf-title').innerHTML = hostWine
+    ? 'Present a <span>Different Wine</span>'
+    : (rejected ? 'Propose <span>Another Wine</span>' : 'Choose Your <span>Wine</span>');
   document.getElementById('cf-show').textContent = s.title + ' · ' + s.date + ' · ' + s.city;
-  document.getElementById('cf-proposed').textContent = me.products.length
-    ? me.products.map(p => p.name).join(', ') : 'no wine proposed';
-  document.getElementById('cf-product').innerHTML =
-    mine.map(w => '<option value="' + w.name + ' ' + w.vintage + '">' + w.name + ' ' + w.vintage + ' · ' + w.type + '</option>').join('');
+  document.getElementById('cf-intro').innerHTML = hostWine
+    ? 'Proposed by the host: <strong style="color:var(--paper)">' + hostWine.name + '</strong>. Pick the wine you would rather present — ' +
+      s.leadHost + ' confirms it, and only then does it count towards the show.'
+    : (rejected
+      ? s.leadHost + ' declined <strong style="color:var(--paper)">' + rejected.name + '</strong>. Pick another — ' +
+        s.leadHost + ' confirms it, and only then does it count towards the show.'
+      : s.leadHost + ' has not named a wine. Pick the one you want to present — this takes your place on the show, and ' +
+        s.leadHost + ' then confirms the wine itself.');
+  document.getElementById('cf-product').innerHTML = mine.length
+    ? mine.map(w => '<option value="' + w.name + ' ' + w.vintage + '">' + w.name + ' ' + w.vintage + ' · ' + w.type + '</option>').join('')
+    : '<option value="">No other wine left to propose</option>';
+  document.getElementById('cf-save').textContent = hostWine || rejected ? 'Propose This Wine →' : 'Confirm With This Wine →';
   document.getElementById('show-product-modal').classList.add('active');
 }
 function closeCounterModal() { document.getElementById('show-product-modal').classList.remove('active'); }
+/* A wine the producer puts forward is a proposal like any other — the
+   host has to say yes to it. It is NOT confirmed here (D23). */
 function saveCounter() {
   const role = activeShowRole, s = wineShows.find(x => x.id === counterShowId); if (!s) return;
   const me = myExhibitor(role, s); if (!me) return;
   const product = document.getElementById('cf-product').value;
   if (!product) { showToast('✗ Pick a wine first'); return; }
+  const hadProposal = me.products.some(p => p.status === 'proposed' && p.proposedBy === 'host');
+  /* The producer's place is taken; only the wine is still open. */
   me.status = 'confirmed';
-  me.products = [ { name: product, proposedBy:'producer', status:'confirmed' } ];
-  logShow(s, me.producer, 'Confirmed with ' + product + ' instead of the proposed wine');
-  promoteIfReady(s);
+  me.products.forEach(p => { if (p.status === 'proposed') p.status = 'declined'; });
+  me.products.push({ name: product, proposedBy:'producer', status:'proposed' });
+  logShow(s, me.producer, hadProposal
+    ? 'Proposed ' + product + ' instead of the wine ' + s.leadHost + ' suggested'
+    : 'Proposed ' + product);
   closeCounterModal();
   refreshShows();
-  showToast('✓ Confirmed with ' + product);
+  showToast('✓ ' + product + ' proposed — waiting for ' + s.leadHost + ' to confirm');
 }
 
 /* Initial badge state, before either sub-view has been opened. */
 Object.keys(SHOW_ROLES).forEach(r => {
   const cfg = SHOW_ROLES[r], badge = document.getElementById(cfg.badge);
   if (badge) {
-    const n = cfg.side === 'host' ? awaitingReleaseCount(r) : pendingInviteCount(r);
+    const n = actionCount(r);
     badge.textContent = n || ''; badge.style.display = n ? '' : 'none';
   }
 });
@@ -8357,12 +8510,12 @@ Object.keys(SHOW_ROLES).forEach(r => {
 <div class="modal-overlay" id="show-product-modal">
   <div class="modal-panel" style="max-width:620px">
     <div class="modal-header">
-      <div class="modal-title">Present a <span>Different Wine</span></div>
+      <div class="modal-title" id="cf-title">Present a <span>Different Wine</span></div>
       <button class="modal-close" onclick="closeCounterModal()">✕</button>
     </div>
     <div class="modal-body">
       <div class="ord-track" style="margin-top:0"><b id="cf-show"></b></div>
-      <div class="edit-section-sub">Proposed by the host: <strong style="color:var(--paper)" id="cf-proposed"></strong>. Pick the wine you would rather present — confirming with a different wine still confirms your place.</div>
+      <div class="edit-section-sub" id="cf-intro"></div>
 
       <div class="form-row full">
         <div class="form-field"><div class="field-label">Your wine</div>
@@ -8372,7 +8525,7 @@ Object.keys(SHOW_ROLES).forEach(r => {
     </div>
     <div class="modal-footer">
       <button class="btn-sm btn-outline" onclick="closeCounterModal()">Cancel</button>
-      <button class="btn-sm btn-gold" onclick="saveCounter()">Confirm with This Wine →</button>
+      <button class="btn-sm btn-gold" id="cf-save" onclick="saveCounter()">Propose This Wine →</button>
     </div>
   </div>
 </div>

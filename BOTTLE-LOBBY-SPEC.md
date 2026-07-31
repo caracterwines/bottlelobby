@@ -765,7 +765,29 @@ Exhibitors are **producers** (A15). A distributor gets them two ways:
 
 **Direct invitation** to a specific producer, optionally naming a wanted
 product. The producer confirms, declines, or **confirms with a different
-product** — the selection is a proposal, not an instruction.
+product**.
+
+**Naming a product is a proposal in either direction, never an
+instruction — and the other side always confirms it.** Whoever puts a
+product forward does not get to settle it alone:
+
+| Who proposes | Who confirms | If they decline |
+|---|---|---|
+| Host names a wanted product in the invitation | **Producer** | Producer counter-proposes, or declines the invitation outright |
+| Host invites without naming one | Producer proposes → **Host** confirms | Back to the producer, who proposes another |
+| Producer counter-proposes instead of the host's choice | **Host** | Back to the producer, who proposes another |
+
+A product counts towards the show only once **both** sides have agreed
+it — that is what `wine_show_products.status = 'confirmed'` means, and
+it is why `proposed_by` and `status` are two separate fields (A16.9).
+
+Declining a *product* never ends the participation: the producer stays a
+confirmed exhibitor and is asked for another wine. Only declining the
+*invitation* removes them.
+
+A producer cannot take a place on a show without naming a product. There
+is no state in which somebody is exhibiting but presenting nothing — the
+acceptance and the product choice are one act. See Appendix D (D23).
 
 **Open call** to a filtered set of the distributor's partnered producers.
 Filters, all drawn from existing master data (A4, A15):
@@ -902,6 +924,13 @@ row. It is what makes a disputed show reconstructable.
 
 - **Whether a show may enter `planning`** — derived live from venue,
   exhibitor and product confirmations, not a flag someone sets.
+- **Which side has to act next** — derived from `proposed_by` and
+  `status` on the product together with the exhibitor's own status. A
+  product proposed by the host waits on the producer, one proposed by
+  the producer waits on the host, and a confirmed one waits on nobody
+  (A16.4). Never store a "whose turn" marker: it would be a second
+  source for something the two existing fields already answer, and it
+  would go stale the moment either side acts.
 - **A producer's catering share** — `catering_total × (own products ÷ all
   products)`, recomputed whenever the line-up changes.
 - **Waitlist position** — derived from request order and current capacity.
@@ -927,10 +956,14 @@ level)` + `publicLevelFor(show)` for the two visibility levels of A16.6,
 and the `wine-show-modal` / `show-invite-modal` / `show-product-modal`
 trio. All in `bottle-lobby-dashboard.html`.
 
-**Built in the first pass:** hosting a show, inviting an exhibitor with an
-optional wanted wine, the producer's confirm / decline / counter-propose,
-the lifecycle stages, the computed readiness checklist, and both visibility
-levels side by side.
+**Built so far:** hosting a show, inviting an exhibitor with an optional
+wanted wine, the full two-sided wine handshake of A16.4 — the producer
+answers the host's proposal, the host answers the producer's, and either
+may decline a wine without ending the participation — the lifecycle
+stages, the computed readiness checklist, and both visibility levels side
+by side. `exhibitorTurn(show, exhibitor)` is the single computed answer to
+"who is at turn"; both dashboards, the sidebar badges, the list sort and
+the per-exhibitor chips read it, so the two sides can never disagree.
 
 **Not built yet** — each its own later pass, none of them blocked by
 anything above: open calls with master-data filters (A16.4), venue requests
@@ -1409,6 +1442,7 @@ Diagnosed 30 July 2026 after repeated `403 Resource not accessible by integratio
 | D20 | The follow feature carried a different label per role: the winery showed **"Wine Fans"** and no follow list at all, Restaurant and Retail showed **"Wine Stars"** and no fan list, and only the distributor used **My Stars / My Fans**. The "My ___" convention was declared **Distributor-only** | **A7** — one uniform pair, **My Stars / My Fans**, in all four roles, both directions always shown; the "My ___" convention now applies everywhere (B8) | The follow graph is a single symmetric relation between any two stakeholder types (A7). Three names for two directions made it read as three separate features, and hiding one direction per role hid data that already existed — a winery follows accounts, a restaurant has followers. Wine-themed labels also tied a category-neutral relation to wine, against invariant 5. Note the direction of travel: the *convention* generalised, the *exception* did not survive. |
 | D21 | Winery, Restaurant and Retail sidebars had one combined **"Network"** section, unprefixed labels (Basic Information, Wine Portfolio, Active Distributors, Distributor Requests …), an Orders section low in the list, and profile nav items that were scroll targets rather than sub-pages | **B8** — the same eight-section structure, the same "My ___" convention and the same sub-page mechanics as the distributor, minus whatever a role has nothing for | Four dashboards that behaved differently taught the user four navigations for one product, and the divergence was accidental — the distributor was simply rebuilt first (D16, D17, D18). Merging the two request directions into one **My Requests** section per role also removed a real inconsistency: the same partnership record was reachable under two different section names depending on who sent it. |
 | D22 | C3 stated flatly that `bottle-lobby-dashboard.html` **"cannot be pushed at all"**, with a file-size table measured before the Wine Shows pass | **C3** — the limit belongs to the MCP connector, not to the repo. From Claude Code `git push` handles the file like any other; the whole-file constraint and the size table apply to **chat sessions only** | The unqualified wording pushed work onto the manual-upload route even where a local clone was available — slower, and it needs a step from Serge for no reason. The sizes were stale too: the dashboard had grown from ~415 KB to ~473 KB, and the recorded composition was wrong (D15). |
+| D23 | A product named on a Wine Show was settled by **one side alone**: the prototype's `saveCounter` wrote `status:'confirmed'` for a wine the producer chose, and the producer's `Confirm` accepted the host's wine without the host ever being asked again. Accepting an invitation was also possible **without naming a product** | **A16.4** — whoever proposes a product, the *other* side confirms it; `confirmed` means both sides agreed. Accepting a place and naming a product are one act, so a confirmed exhibitor always has a product on the table | The one-sided version contradicted the sentence directly above it in A16.4 — that a named product is a proposal, not an instruction — and it only held that view in the host→producer direction. It also carried a real defect: inviting without a wine and then confirming left `products` empty, so `showReadiness` never saw a confirmed product and the show sat in `draft` for good with no way out. `proposed_by` and `status` were already two separate fields (A16.9); the fix was to start reading them together rather than to change the schema. |
 
 ---
 

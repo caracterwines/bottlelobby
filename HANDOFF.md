@@ -78,6 +78,19 @@ Kein Build-Command, Publish-Directory = Repo-Root.
   My Stars bei der Winery, My Fans bei Restaurant und Retail; alle vier Rollen rufen jetzt
   beide generischen Renderer. Spec A7 auf eine einheitliche Tabelle umgestellt,
   Anhang D um **D20** ergaenzt.
+- **Weinwahl auf einer Show ist beidseitig** (A16.4, Anhang D **D23**). Wer einen Wein
+  vorschlaegt, die andere Seite bestaetigt ihn — in beide Richtungen. `saveCounter`
+  schrieb bisher einseitig `confirmed`, der Host wurde nie gefragt. Neu: der Host hat
+  einen eigenen Kasten "Wines Awaiting Your Confirmation" mit Confirm/Decline, der
+  Winzer einen zustandsabhaengigen Kasten (Einladung / eigener Vorschlag wartet /
+  Host hat abgelehnt / beidseitig einig). Eine Weinablehnung beendet nie die Teilnahme.
+  Wer am Zug ist, berechnet `exhibitorTurn()` aus `proposedBy` + `status` — Badges,
+  Sortierung, Listen-Chip und Aussteller-Chips lesen alle dieselbe Funktion, damit
+  beide Seiten nie widersprechen (A16.10).
+  **Miterledigt:** die Sackgasse, dass ein Winzer ohne benannten Wein bestaetigen
+  konnte — `products` blieb leer, `showReadiness` sah nie einen Wein, die Show hing
+  dauerhaft in `draft`. Es gibt jetzt keinen "Confirm"-Knopf ohne Wein mehr, sondern
+  "Choose a wine & confirm"; Zusage und Weinwahl sind ein Schritt.
 - **Spec-Pflege 31.07.:** C3 unterscheidet jetzt die beiden Push-Kanaele (git aus Claude Code
   ohne Groessengrenze, MCP-Connector mit) statt pauschal "nicht pushbar"; Dateigroessen neu
   gemessen; Anhang D nach D18/D19 sortiert und um **D22** ergaenzt; der ueberholte
@@ -88,32 +101,12 @@ Kein Build-Command, Publish-Directory = Repo-Root.
 ## Offene Punkte
 
 ### Arbeit
-- **UNGEKLAERT: Aussteller-Einladung greift im Browser moeglicherweise nicht.**
-  Beim Durchklicken der Live-Seite blieb "Exhibitors & Wines" nach `saveInvite()`
-  leer. Weder im jsdom-Harness noch beim statischen Lesen des Codes reproduzierbar.
-
-  **Geprueft und ausgeschlossen — nicht erneut abklopfen:**
-  - Alle drei Klickpfade im Harness bis auf DOM-Ebene: der Aussteller steht danach
-    im Datensatz UND im gerenderten Kasten.
-  - *Leeres Producer-Dropdown* (frueherer Verdacht 3): **widerlegt.** 5 Winery-Partner,
-    jede der fuenf Shows hat noch 3-5 einladbare uebrig. Der Toast "Pick a producer
-    first" kann gar nicht ausgeloest werden.
-  - *Modal-Klasse*: alle sechs Aufrufe schalten `active`, `.modal-overlay.active
-    { display:flex }` existiert, konsistent mit allen 42 Modal-Schaltungen der Datei.
-  - *CSS*: alle im Aussteller-Kasten benutzten Klassen sind definiert, keine mit
-    `display:none`. Relevant, weil jsdom kein CSS auswertet — ein gruenes Harness
-    schliesst eine reine Sichtbarkeitsursache nicht aus.
-
-  **Kontext zum Klickpfad:** Von den fuenf Demo-Shows ist nur WS-2604 "Sicilia Prima"
-  (`draft`) ohne Aussteller, und sie steht ganz oben — nur dort erscheint ueberhaupt
-  "No exhibitors invited yet". Der `+ Invite Exhibitor`-Knopf existiert nur bei
-  `draft`, `planning` und `changes_requested`.
-
-  **Naechster Schritt:** Hard Reload (Cmd-Shift-R), einladen, dann in der Konsole:
-  `({rolle: activeShowRole, offen: showState[activeShowRole].openId, eingeladenAuf: inviteShowId, daten: wineShows.map(s => s.id+' '+s.stage+' ['+s.exhibitors.map(e=>e.producer+':'+e.status).join(' | ')+']')})`
-  Steht der Aussteller in `daten`, der Kasten bleibt aber leer -> Render-Problem.
-  Steht er nicht drin -> `saveInvite` laeuft nicht durch. Damit ist es in einem
-  Durchgang eingegrenzt.
+- **Kein Rueckweg aus `planning`.** Wird ein bereits beidseitig bestaetigter Wein
+  spaeter abgelehnt, faellt `showReadiness` auf `false`, die Show bleibt aber in
+  `planning` und rutscht nicht nach `draft` zurueck. A16.2 kennt keinen Rueckweg,
+  und einen zu erfinden waere ueber den Auftrag hinausgegangen. Entweder A16.2 um
+  eine Ruecknahme ergaenzen oder bewusst festhalten, dass `planning` einmal erreicht
+  bestehen bleibt — offene Entscheidung, kein Fehler.
 - **`.wse-applied` ist nicht definiert** — es gibt nur `wse-invited`, `-confirmed`,
   `-declined`, `-proposed`. Folgenlos, bis A16.4 (Open Call) den Status `applied`
   einfuehrt. Der Klassen-Cross-Check hatte `.ws-*` geprueft und das Praefix `wse-`
