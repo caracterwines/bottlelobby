@@ -84,6 +84,25 @@ Kein Build-Command, Publish-Directory = Repo-Root.
 ## Offene Punkte
 
 ### Arbeit
+- **UNGEKLAERT: Aussteller-Einladung greift im Browser moeglicherweise nicht.**
+  Beim Durchklicken der Live-Seite blieb "Exhibitors & Wines" nach `saveInvite()`
+  leer. Im jsdom-Harness ist es **nicht reproduzierbar** — geprueft wurden alle drei
+  Wege, jeweils bis auf DOM-Ebene: Einladung auf einer bestehenden Draft-Show,
+  Einladung direkt nach dem Anlegen ueber das Modal, und Einladung bei geschlossenem
+  Detail mit anschliessendem Oeffnen. In allen dreien steht der Aussteller danach
+  im Datensatz **und** im gerenderten Kasten.
+  jsdom ist kein Browser, damit ist eine browserspezifische Ursache nicht
+  ausgeschlossen. Beim naechsten Mal zuerst diese Verdachtsmomente pruefen:
+  1. **Stand der Seite** — das Modul war frisch deployt; ein Hard Reload
+     (Cmd-Shift-R) vor dem Test schliesst eine alte gecachte Fassung aus.
+  2. **Welche Show war offen** — der Kasten zeigt immer die Aussteller der
+     *gerade geoeffneten* Show. Nach einem Wechsel auf eine andere Show ist er
+     zu Recht leer.
+  3. **Konsole** — ob `saveInvite` ueberhaupt laeuft, oder ob vorher der Toast
+     "Pick a producer first" kommt (dann war die Producer-Auswahl leer, weil alle
+     Partner-Wineries bereits auf der Show stehen).
+  Wenn es wieder auftritt: Show-ID, Rolle und Konsolenausgabe festhalten, das
+  grenzt es sofort ein.
 - **Wine Shows — die naechsten Durchgaenge.** Der erste ist gebaut (siehe unten),
   der Rest steht noch aus, jeder als eigener Schritt und keiner vom anderen blockiert:
   Open Call mit Master-Data-Filtern (A16.4), Location-Anfrage an Restaurant/Retail
