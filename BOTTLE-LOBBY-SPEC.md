@@ -209,9 +209,11 @@ Bottle Lobby sends **two contracts**, one to each side. Both must be completed, 
 
 | Role | Sections in their dashboard |
 |---|---|
-| Winery | **Requests** (incoming, accept/decline + clause modal) · **Active Partners** (confirmed, grouped by region, showing partner role and how many of the winery's wines they list) |
+| Winery | **My Distributors** (confirmed, grouped by region, showing how many of the winery's wines they list) · **My Requests** (incoming + outgoing stacked in one section, incoming first; incoming carries accept/decline + clause modal) |
 | Distributor | **My Partnerships** (grouped by region) · **My Requests** (incoming + outgoing stacked in one section, incoming first) |
-| Restaurant / Retail | **Active Distributors** · **Distributor Requests** (outgoing) · **Incoming Requests** |
+| Restaurant / Retail | **My Distributors** · **My Requests** (incoming + outgoing stacked in one section, incoming first) |
+
+All four roles use the same two-item **My Partners** sidebar section (B8). The distributor's first item is called *My Partnerships* because it partners with three role types; the other three partner only with distributors, so the more specific *My Distributors* is kept.
 
 Each of these carries the same four-stage progress indicator, so both sides always see the identical stage of the identical request record.
 
@@ -219,27 +221,27 @@ Each of these carries the same four-stage progress indicator, so both sides alwa
 
 ---
 
-## A7. Follow Feature (Wine Stars / Fans)
+## A7. Follow Feature (My Stars / My Fans)
 
 Following works between **any two stakeholder types** — not just Restaurant/Retail → Winery. Every public profile of all four types has a "🔖 Save & Follow" button.
 
-**Semantics:** A follow adds the target to the follower's own "Wine Stars" list AND adds the follower to the target's "Fans" list, generically across all pairings. The followed party gets a "X started following you" dashboard notification.
+**Semantics:** A follow adds the target to the follower's own "My Stars" list AND adds the follower to the target's "My Fans" list, generically across all pairings. The followed party gets a "X started following you" dashboard notification.
 
 This follow/fan graph is the **core data signal for Matchmaking**.
 
 ### Naming per role
 
-The two directions carry different labels depending on whose dashboard they appear in — keep this in the real build, it is deliberate:
+Both directions carry the same label in every role — the follow graph is one symmetric relation, and naming it differently per dashboard obscured that:
 
 | Role | "who I follow" | "who follows me" |
 |---|---|---|
-| Winery | *(not shown)* | **Wine Fans** |
+| Winery | **My Stars** | **My Fans** |
 | Distributor | **My Stars** | **My Fans** |
-| Restaurant / Retail | **Wine Stars** | *(not shown)* |
+| Restaurant / Retail | **My Stars** | **My Fans** |
 
-The distributor uses the "My ___" convention (B8); the other three keep the unprefixed wine-themed labels.
+Every role shows **both** directions. The earlier per-role labels ("Wine Stars", "Wine Fans") and the hidden cells are gone — see Appendix D (D20).
 
-**Prototype blueprint:** shared `wineFollowGraph` array in `bottle-lobby-dashboard.html`; generic renderers `renderFansFor(entityName, listId, countId, emptyMsg)` and `renderWineStarsFor(followerName, listId, countId)`; shared `roleAv` / `roleTag` / `followRoleLabel` maps covering all 4 types, plus a `wn-av-winery` / `rt-winery` CSS pair for the winery role.
+**Prototype blueprint:** shared `wineFollowGraph` array in `bottle-lobby-dashboard.html`; generic renderers `renderFansFor(entityName, listId, countId, emptyMsg)` and `renderWineStarsFor(followerName, listId, countId)` — **all four roles now call both**, with only the entity name differing; shared `roleAv` / `roleTag` / `followRoleLabel` maps covering all 4 types, plus a `wn-av-winery` / `rt-winery` CSS pair for the winery role.
 
 > ⚠️ **Field-naming debt to fix in the real build:** in the prototype the *followed entity* field is still called `winery`, with an optional `followedType` that defaults to `'winery'` when omitted. That was backward compatibility with the first version, when only wineries could be followed. In the real build name it properly — `followed_id` / `followed_type` — and drop the default.
 
@@ -679,7 +681,7 @@ category facet hidden in the UI. Enabling spirits later is inserting rows and un
 filter — not a migration.
 
 **Brand vocabulary stays wine-flavoured while wine is the only live category.** "Wine Guide",
-"Wine Shows", "Wine Stars", "Own Label" are product names, not schema. When a second category
+"Wine Shows", "Wine List", "Own Label" are product names, not schema. When a second category
 goes live, these need neutral equivalents decided deliberately — it is a naming exercise, not
 a refactor. Keep the *database* neutral from day one; keep the *labels* wine-specific until
 the business decides otherwise.
@@ -866,7 +868,13 @@ A wine's `distributor` field in `bottle-lobby-wine-guide.html` is **always an ar
 
 ---
 
-## B8. Distributor Dashboard Sidebar
+## B8. Dashboard Sidebar (all four roles)
+
+**All four dashboards share one sidebar structure.** The distributor is the reference implementation and is specified in full below; Winery, Restaurant and Retail follow the same section order and the same sub-page mechanics, and simply omit the sections they have nothing for — the order of the remaining ones never changes:
+
+`Overview → Commerce → My Portfolio → My Partners → Network → [role-specific] → Events / Tools → Account`
+
+### The distributor sidebar
 
 The distributor sidebar is split into **eight labelled nav-sections** in this order. This mirrors the live `#sidebar-distributor` markup in `bottle-lobby-dashboard.html` — the source of truth:
 
@@ -887,21 +895,61 @@ Within **My Requests**, a single "Requests" heading holds both directions stacke
 
 Both sub-groups use the `.wn-group-title` gold-caps label style rather than their own full `profile-section-title`, so they read as one section.
 
-**"My ___" naming convention** applies to every Distributor-only nav item — and to any new ones added. Rename **both** the nav label AND the corresponding `profile-section-title` / topbar-title together (including the `titles` map inside `showDistributorView()`).
+### The "My ___" naming convention
+
+**It applies in every role**, not just the distributor, and to any new nav item added anywhere. Rename **both** the nav label AND the corresponding `profile-section-title` / topbar-title together (including the role's `*_TITLES` map).
+
+**It applies to nav items that address the role's *own* holdings.** Instruments that belong to somebody else stay unprefixed: the Exclusive Offers, Exclusive Deals and Promo Materials a Restaurant or Retailer sees are the *distributor's*, published to them (A2, A9) — calling them "My Offers" there would assert an ownership the model places elsewhere. The distributor sidebar already observes this distinction: Matchmaking, Trend Analytics, Wine Shows and Settings carry no "My" either.
+
+The one deliberate near-collision: the Restaurant's **My Wine List** and the Retailer's **My Wine Selection**. The *list* is theirs; the wines on it are not — they are references into a distributor's portfolio (A3, invariant 2). The noun carries that distinction, which is why neither is called "My Wines".
 
 ### Nav items are sub-pages, not scroll targets
 
-Since the sidebar rebuild, every profile nav item opens its **own discrete sub-page**; there is no long scrolling profile page. `showDistributorView(view, section)` swaps the profile view in, hides the Dashboard and Orders views, then shows exactly the one section matching `section` and hides all others (`D_SECTION_EL` map), and scrolls to top (D18).
+Since the sidebar rebuild, every profile nav item opens its **own discrete sub-page**; there is no long scrolling profile page anywhere. `showDistributorView(view, section)` swaps the profile view in, hides the Dashboard and Orders views, then shows exactly the one section matching `section` and hides all others (`D_SECTION_EL` map), and scrolls to top (D18). `showWineryView` / `showRestaurantView` / `showRetailView` are the same function over the role's own maps (D21).
 
-**Grouped sub-views render a tab bar; single-member ones don't.** `D_GROUPS` defines the three grouped views — **My Portfolio** (Wine Portfolio · Labels · Promo Materials · Offers · Deals), **My Partners** (Partnerships · Requests) and **Network** (Opportunities · Stars · Fans). When the active section belongs to a group (`dGroupOf()`), a tab strip renders above the content in `#dprofile-tabs` using the **same `.ord-tab` styling as the Commerce (Orders) view**, with the current member marked active. Single-member sections (My Profile) render no tab bar. Matchmaking is not a group member — it is a non-functional demo nav item (A8), not a real section.
+**Grouped sub-views render a tab bar; single-member ones don't.** Each role has its own `*_GROUPS` array. `D_GROUPS` defines the distributor's three grouped views — **My Portfolio** (Wine Portfolio · Labels · Promo Materials · Offers · Deals), **My Partners** (Partnerships · Requests) and **Network** (Opportunities · Stars · Fans). When the active section belongs to a group (`dGroupOf()`), a tab strip renders above the content in `#dprofile-tabs` using the **same `.ord-tab` styling as the Commerce (Orders) view**, with the current member marked active. Single-member sections (My Profile) render no tab bar. Matchmaking is not a group member — it is a non-functional demo nav item (A8), not a real section.
 
-**"Preview Public Profile" appears on the My-Profile sub-page only** (`section === 'basics'`): its topbar action group (`distributor-topbar-actions-profile`) is shown there and hidden on every other sub-page.
+**"Preview Public Profile" appears on the My-Profile sub-page only** (`section === 'basics'`): the role's `*-topbar-actions-profile` group is shown there and hidden on every other sub-page. This holds for all four roles.
 
-**Prototype blueprint:** `showDistributorView()`, the `D_SECTION_EL` / `D_NAV_EL` / `D_TITLES` maps, `D_GROUPS` + `dGroupOf()`, `#dprofile-tabs`, `openDistributorPublicPreview()` — all in `bottle-lobby-dashboard.html`.
+**Prototype blueprint:** `showDistributorView()`, the `D_SECTION_EL` / `D_NAV_EL` / `D_TITLES` maps, `D_GROUPS` + `dGroupOf()`, `#dprofile-tabs`, `openDistributorPublicPreview()` — all in `bottle-lobby-dashboard.html`. The other three roles carry the identical set under their own prefix: `W_*` / `#wprofile-tabs`, `R_*` / `#rprofile-tabs`, `T_*` / `#tprofile-tabs`, each with a `wGroupOf` / `rGroupOf` / `tGroupOf` lookup.
 
 **Real build:** one route per section, with the group as the parent route segment — `/dashboard/portfolio/wines`, `/dashboard/partners/requests`. The tab bar is the group's layout; the sections are its children.
 
-> ⚠️ Partly applied to Winery, Restaurant and Retail. **Done:** the Orders sub-view (A14.8) — all four roles now share one role-parameterised module, and their order nav items route into it. **Still open:** the section split and the "My ___" naming convention. Those dashboards still show a single combined "Network" section, Promo Materials under the main profile nav, original unprefixed labels elsewhere, and their profile nav items are still scroll targets rather than sub-pages (D18). Bring them onto the distributor's structure.
+### The Winery sidebar
+
+| # | Section | Nav items |
+|---|---|---|
+| 1 | Overview | Dashboard · My Profile · Messages |
+| 2 | Commerce | My Sales · Order History |
+| 3 | My Portfolio | My Wine Portfolio · My Press & Recognition |
+| 4 | My Partners | My Distributors · My Requests |
+| 5 | Network | Matchmaking · My Stars · My Fans |
+| 6 | Market | Trend Reports · Consumer Data |
+| 7 | Events | Wine Shows |
+| 8 | Account | Settings |
+
+**No "My Purchases"** — in this model a winery buys nothing on the platform (A3), so Commerce has two items, not three. **No Promo Materials / Offers / Deals** — those are distributor instruments aimed at restaurants and retailers (A9), not producer content. Branding & PR and Import Support keep their own **Services** section between Events and Account.
+
+### The Restaurant sidebar
+
+| # | Section | Nav items |
+|---|---|---|
+| 1 | Overview | Dashboard · My Profile · Messages |
+| 2 | Commerce | My Purchases · Order History |
+| 3 | My Portfolio | My Wine List |
+| 4 | My Partners | My Distributors · My Requests |
+| 5 | Network | Matchmaking · My Stars · My Fans |
+| 6 | Discover | Browse Wines · Exclusive Offers · Exclusive Deals · Promo Materials |
+| 7 | Tools | Wine List Builder · Food Pairing |
+| 8 | Account | Settings |
+
+**No "My Sales"** — a restaurant sells to guests, not on the platform. My Portfolio holds a single item and therefore renders no tab bar.
+
+### The Retail sidebar
+
+Identical to Restaurant, with three differences: **My Wine Selection** instead of My Wine List; **no Tools section**; and an own **Events** section holding **My Events** in position 7, ahead of Account.
+
+> **"My Events" and "Wine Shows" are different things and must stay separate nav items.** Wine Shows are trade fairs; My Events are the retailer's own in-store occasions (an in-store tasting, a wine dinner with a restaurant, an oenologist evening). The distributor already draws this line with *Wine Shows* vs *Client Events*. A future spec section will make Wine Shows a first-class feature — created by a distributor, producers joining as exhibitors, restaurants and retailers as venue or attendee, released by Bottle Lobby staff. Keep the two nav items apart so that section has a clean place to dock.
 
 ---
 
@@ -1100,6 +1148,8 @@ Diagnosed 30 July 2026 after repeated `403 Resource not accessible by integratio
 | D17 | Distributor Promo Materials, Offers and Deals sat in their own **"Promotion"** nav section (the move recorded in D11) | **B8** — consolidated under the **"My Portfolio"** section, alongside My Wine Portfolio and My Labels | With Commerce promoted to the top, the remaining seller-owned instruments read more coherently as one "what I carry and how I promote it" group than as a thin standalone section. Supersedes the "Promotion" section named as the answer in D11; D11 remains valid history of the earlier My Profile → Promotion move. |
 | D19 | Winery, Restaurant and Retail read their orders in card-list sections inside the profile page (`wsection-orders-in`, `rsection-orders`, `tsection-orders` …); Restaurant and Retail called their nav item **"My Orders"** | **A14.8** — all four roles use the same two-level Orders sub-view, driven by the `ORDER_ROLES` registry; the buying roles' nav item is now **"My Purchases"** | The card list could show an order but not work one: no payment, documents, shipping or line editing. Parameterising the existing sub-view rather than copying it keeps one implementation for a model that is one record seen from two sides (invariant 8). "My Purchases" makes the same act carry the same name in every role — the distributor already used it for buying, and "My Orders" no longer denotes anything specific there (D16). |
 | D18 | Distributor dashboard profile was one long scrolling page; nav items were scroll targets to sections within it (the general case of D12, which covered Orders) | **B8** — every nav item opens its own discrete sub-page via `showDistributorView()`, showing exactly one section and hiding the rest; grouped views add an `.ord-tab` tab bar | A single scroll page made deep sections hard to reach and mixed unrelated content on screen at once. Discrete sub-pages give each area a clean working surface, consistent with the Orders sub-view (A14.8, D12). |
+| D20 | The follow feature carried a different label per role: the winery showed **"Wine Fans"** and no follow list at all, Restaurant and Retail showed **"Wine Stars"** and no fan list, and only the distributor used **My Stars / My Fans**. The "My ___" convention was declared **Distributor-only** | **A7** — one uniform pair, **My Stars / My Fans**, in all four roles, both directions always shown; the "My ___" convention now applies everywhere (B8) | The follow graph is a single symmetric relation between any two stakeholder types (A7). Three names for two directions made it read as three separate features, and hiding one direction per role hid data that already existed — a winery follows accounts, a restaurant has followers. Wine-themed labels also tied a category-neutral relation to wine, against invariant 5. Note the direction of travel: the *convention* generalised, the *exception* did not survive. |
+| D21 | Winery, Restaurant and Retail sidebars had one combined **"Network"** section, unprefixed labels (Basic Information, Wine Portfolio, Active Distributors, Distributor Requests …), an Orders section low in the list, and profile nav items that were scroll targets rather than sub-pages | **B8** — the same eight-section structure, the same "My ___" convention and the same sub-page mechanics as the distributor, minus whatever a role has nothing for | Four dashboards that behaved differently taught the user four navigations for one product, and the divergence was accidental — the distributor was simply rebuilt first (D16, D17, D18). Merging the two request directions into one **My Requests** section per role also removed a real inconsistency: the same partnership record was reachable under two different section names depending on who sent it. |
 
 ---
 

@@ -1071,24 +1071,29 @@ body {
     <div class="nav-section">
       <div class="nav-section-label">Overview</div>
       <div class="nav-item active" id="wnav-dashboard" onclick="showWineryView('dashboard')" style="cursor:pointer"><span class="nav-icon">⬡</span> Dashboard</div>
+      <div class="nav-item" id="wnav-profile" onclick="showWineryView('profile','basics')" style="cursor:pointer"><span class="nav-icon">◎</span> My Profile</div>
       <div class="nav-item" id="messages"><span class="nav-icon">✉</span> Messages <span class="nav-badge">2</span></div>
     </div>
     <div class="nav-section">
-      <div class="nav-section-label">My Profile</div>
-      <div class="nav-item" id="wnav-profile" onclick="showWineryView('profile','basics')" style="cursor:pointer"><span class="nav-icon">◎</span> Basic Information</div>
-      <div class="nav-item" id="wnav-wines" onclick="showWineryView('profile','wines')" style="cursor:pointer"><span class="nav-icon">◈</span> Wine Portfolio</div>
-      <div class="nav-item" id="wnav-press" onclick="showWineryView('profile','press')" style="cursor:pointer"><span class="nav-icon">❖</span> Press & Recognition</div>
+      <div class="nav-section-label">Commerce</div>
+      <div class="nav-item" id="wnav-orders-in" onclick="showOrders('winery','incoming')" style="cursor:pointer"><span class="nav-icon">◐</span> My Sales <span class="nav-badge" id="word-badge"></span></div>
+      <div class="nav-item" id="wnav-orders-hist" onclick="showOrders('winery','history')" style="cursor:pointer"><span class="nav-icon">↑</span> Order History</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">My Portfolio</div>
+      <div class="nav-item" id="wnav-wines" onclick="showWineryView('profile','wines')" style="cursor:pointer"><span class="nav-icon">◈</span> My Wine Portfolio</div>
+      <div class="nav-item" id="wnav-press" onclick="showWineryView('profile','press')" style="cursor:pointer"><span class="nav-icon">❖</span> My Press & Recognition</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">My Partners</div>
+      <div class="nav-item" id="wnav-network" onclick="showWineryView('profile','network')" style="cursor:pointer"><span class="nav-icon">◉</span> My Distributors</div>
+      <div class="nav-item" id="wnav-requests" onclick="showWineryView('profile','requests')" style="cursor:pointer"><span class="nav-icon">✉</span> My Requests</div>
     </div>
     <div class="nav-section">
       <div class="nav-section-label">Network</div>
       <div class="nav-item"><span class="nav-icon">◇</span> Matchmaking <span class="nav-badge">4</span></div>
-      <div class="nav-item" id="wnav-network" onclick="showWineryView('profile','network')" style="cursor:pointer"><span class="nav-icon">◉</span> My Distributors</div>
-      <div class="nav-item" id="wnav-fans" onclick="showWineryView('profile','fans')" style="cursor:pointer"><span class="nav-icon">♥</span> Wine Fans</div>
-    </div>
-    <div class="nav-section">
-      <div class="nav-section-label">Orders</div>
-      <div class="nav-item" id="wnav-orders-in" onclick="showOrders('winery','incoming')" style="cursor:pointer"><span class="nav-icon">◐</span> My Sales <span class="nav-badge" id="word-badge"></span></div>
-      <div class="nav-item" id="wnav-orders-hist" onclick="showOrders('winery','history')" style="cursor:pointer"><span class="nav-icon">↑</span> Order History</div>
+      <div class="nav-item" id="wnav-winestars" onclick="showWineryView('profile','winestars')" style="cursor:pointer"><span class="nav-icon">♥</span> My Stars</div>
+      <div class="nav-item" id="wnav-fans" onclick="showWineryView('profile','fans')" style="cursor:pointer"><span class="nav-icon">♥</span> My Fans</div>
     </div>
     <div class="nav-section">
       <div class="nav-section-label">Market</div>
@@ -1103,6 +1108,9 @@ body {
       <div class="nav-section-label">Services</div>
       <div class="nav-item"><span class="nav-icon">◁</span> Branding & PR</div>
       <div class="nav-item"><span class="nav-icon">⬤</span> Import Support</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">Account</div>
       <div class="nav-item"><span class="nav-icon">◌</span> Settings</div>
     </div>
   </aside>
@@ -1187,18 +1195,28 @@ body {
     <div class="nav-section">
       <div class="nav-section-label">Overview</div>
       <div class="nav-item active" id="rnav-dashboard" onclick="showRestaurantView('dashboard')" style="cursor:pointer"><span class="nav-icon">⬡</span> Dashboard</div>
+      <div class="nav-item" id="rnav-profile" onclick="showRestaurantView('profile','basics')" style="cursor:pointer"><span class="nav-icon">◎</span> My Profile</div>
       <div class="nav-item" id="messages-restaurant"><span class="nav-icon">✉</span> Messages <span class="nav-badge" id="rmsg-badge">1</span></div>
     </div>
     <div class="nav-section">
-      <div class="nav-section-label">My Profile</div>
-      <div class="nav-item" id="rnav-profile" onclick="showRestaurantView('profile','basics')" style="cursor:pointer"><span class="nav-icon">◎</span> Basic Information</div>
-      <div class="nav-item" id="rnav-wines" onclick="showRestaurantView('profile','wines')" style="cursor:pointer"><span class="nav-icon">◈</span> Wine List</div>
+      <div class="nav-section-label">Commerce</div>
+      <div class="nav-item" id="rnav-orders" onclick="showOrders('restaurant','outgoing')" style="cursor:pointer"><span class="nav-icon">◐</span> My Purchases <span class="nav-badge" id="rord-badge"></span></div>
+      <div class="nav-item" id="rnav-orders-hist" onclick="showOrders('restaurant','history')" style="cursor:pointer"><span class="nav-icon">↑</span> Order History</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">My Portfolio</div>
+      <div class="nav-item" id="rnav-wines" onclick="showRestaurantView('profile','wines')" style="cursor:pointer"><span class="nav-icon">◈</span> My Wine List</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">My Partners</div>
+      <div class="nav-item" id="rnav-network" onclick="showRestaurantView('profile','network')" style="cursor:pointer"><span class="nav-icon">◉</span> My Distributors</div>
+      <div class="nav-item" id="rnav-requests" onclick="showRestaurantView('profile','requests')" style="cursor:pointer"><span class="nav-icon">✉</span> My Requests</div>
     </div>
     <div class="nav-section">
       <div class="nav-section-label">Network</div>
       <div class="nav-item"><span class="nav-icon">◇</span> Matchmaking <span class="nav-badge">3</span></div>
-      <div class="nav-item" id="rnav-network" onclick="showRestaurantView('profile','network')" style="cursor:pointer"><span class="nav-icon">◉</span> My Distributors</div>
-      <div class="nav-item" id="rnav-winestars" onclick="showRestaurantView('profile','winestars')" style="cursor:pointer"><span class="nav-icon">♥</span> Wine Stars</div>
+      <div class="nav-item" id="rnav-winestars" onclick="showRestaurantView('profile','winestars')" style="cursor:pointer"><span class="nav-icon">♥</span> My Stars</div>
+      <div class="nav-item" id="rnav-fans" onclick="showRestaurantView('profile','fans')" style="cursor:pointer"><span class="nav-icon">♥</span> My Fans</div>
     </div>
     <div class="nav-section">
       <div class="nav-section-label">Discover</div>
@@ -1206,11 +1224,6 @@ body {
       <div class="nav-item" id="rnav-offers" onclick="showRestaurantView('profile','offers')" style="cursor:pointer"><span class="nav-icon">✦</span> Exclusive Offers</div>
       <div class="nav-item" id="rnav-deals" onclick="showRestaurantView('profile','deals')" style="cursor:pointer"><span class="nav-icon">✂</span> Exclusive Deals</div>
       <div class="nav-item" id="rnav-promo" onclick="showRestaurantView('profile','promo')" style="cursor:pointer"><span class="nav-icon">◁</span> Promo Materials</div>
-    </div>
-    <div class="nav-section">
-      <div class="nav-section-label">Orders</div>
-      <div class="nav-item" id="rnav-orders" onclick="showOrders('restaurant','outgoing')" style="cursor:pointer"><span class="nav-icon">◐</span> My Purchases <span class="nav-badge" id="rord-badge"></span></div>
-      <div class="nav-item" id="rnav-orders-hist" onclick="showOrders('restaurant','history')" style="cursor:pointer"><span class="nav-icon">↑</span> Order History</div>
     </div>
     <div class="nav-section">
       <div class="nav-section-label">Tools</div>
@@ -1237,31 +1250,39 @@ body {
     <div class="nav-section">
       <div class="nav-section-label">Overview</div>
       <div class="nav-item active" id="tnav-dashboard" onclick="showRetailView('dashboard')" style="cursor:pointer"><span class="nav-icon">⬡</span> Dashboard</div>
+      <div class="nav-item" id="tnav-profile" onclick="showRetailView('profile','basics')" style="cursor:pointer"><span class="nav-icon">◎</span> My Profile</div>
       <div class="nav-item" id="messages-retail"><span class="nav-icon">✉</span> Messages <span class="nav-badge" id="tmsg-badge">1</span></div>
     </div>
     <div class="nav-section">
-      <div class="nav-section-label">My Profile</div>
-      <div class="nav-item" id="tnav-profile" onclick="showRetailView('profile','basics')" style="cursor:pointer"><span class="nav-icon">◎</span> Basic Information</div>
-      <div class="nav-item" id="tnav-wines" onclick="showRetailView('profile','wines')" style="cursor:pointer"><span class="nav-icon">◈</span> Wine Selection</div>
+      <div class="nav-section-label">Commerce</div>
+      <div class="nav-item" id="tnav-orders" onclick="showOrders('retail','outgoing')" style="cursor:pointer"><span class="nav-icon">◐</span> My Purchases <span class="nav-badge" id="tord-badge"></span></div>
+      <div class="nav-item" id="tnav-orders-hist" onclick="showOrders('retail','history')" style="cursor:pointer"><span class="nav-icon">↑</span> Order History</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">My Portfolio</div>
+      <div class="nav-item" id="tnav-wines" onclick="showRetailView('profile','wines')" style="cursor:pointer"><span class="nav-icon">◈</span> My Wine Selection</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">My Partners</div>
+      <div class="nav-item" id="tnav-network" onclick="showRetailView('profile','network')" style="cursor:pointer"><span class="nav-icon">◉</span> My Distributors</div>
+      <div class="nav-item" id="tnav-requests" onclick="showRetailView('profile','requests')" style="cursor:pointer"><span class="nav-icon">✉</span> My Requests</div>
     </div>
     <div class="nav-section">
       <div class="nav-section-label">Network</div>
       <div class="nav-item"><span class="nav-icon">◇</span> Matchmaking <span class="nav-badge">2</span></div>
-      <div class="nav-item" id="tnav-network" onclick="showRetailView('profile','network')" style="cursor:pointer"><span class="nav-icon">◉</span> My Distributors</div>
-      <div class="nav-item" id="tnav-winestars" onclick="showRetailView('profile','winestars')" style="cursor:pointer"><span class="nav-icon">♥</span> Wine Stars</div>
+      <div class="nav-item" id="tnav-winestars" onclick="showRetailView('profile','winestars')" style="cursor:pointer"><span class="nav-icon">♥</span> My Stars</div>
+      <div class="nav-item" id="tnav-fans" onclick="showRetailView('profile','fans')" style="cursor:pointer"><span class="nav-icon">♥</span> My Fans</div>
     </div>
     <div class="nav-section">
       <div class="nav-section-label">Discover</div>
       <div class="nav-item"><span class="nav-icon">◇</span> Browse Wines <span class="nav-badge">New</span></div>
-      <div class="nav-item"><span class="nav-icon">✦</span> Events</div>
       <div class="nav-item" id="tnav-offers" onclick="showRetailView('profile','offers')" style="cursor:pointer"><span class="nav-icon">✦</span> Exclusive Offers</div>
       <div class="nav-item" id="tnav-deals" onclick="showRetailView('profile','deals')" style="cursor:pointer"><span class="nav-icon">✂</span> Exclusive Deals</div>
       <div class="nav-item" id="tnav-promo" onclick="showRetailView('profile','promo')" style="cursor:pointer"><span class="nav-icon">◁</span> Promo Materials</div>
     </div>
     <div class="nav-section">
-      <div class="nav-section-label">Orders</div>
-      <div class="nav-item" id="tnav-orders" onclick="showOrders('retail','outgoing')" style="cursor:pointer"><span class="nav-icon">◐</span> My Purchases <span class="nav-badge" id="tord-badge"></span></div>
-      <div class="nav-item" id="tnav-orders-hist" onclick="showOrders('retail','history')" style="cursor:pointer"><span class="nav-icon">↑</span> Order History</div>
+      <div class="nav-section-label">Events</div>
+      <div class="nav-item"><span class="nav-icon">✦</span> My Events</div>
     </div>
     <div class="nav-section">
       <div class="nav-section-label">Account</div>
@@ -1480,17 +1501,21 @@ body {
       <div id="winery-view-orders" style="display:none;padding:2rem"></div>
 
       <!-- ══════════════════════════════════════════════════════════════
-           MY PROFILE — inline, per-section editable (pilot: Winery role)
-           No separate page navigation: Basic Info / Wine Portfolio /
-           Press & Recognition are each viewed and edited right here.
+           MY PROFILE — one sub-page per nav item (B8, D21)
+           Every section below is its own sub-page; showWineryView()
+           shows exactly one and hides the rest. Each is edited inline
+           via its own pencil icon or per-row Edit button.
       ═══════════════════════════════════════════════════════════════ -->
       <div id="winery-view-profile" style="display:none">
         <div style="padding:2rem;max-width:980px">
 
+          <!-- Tab bar, shown only for grouped sub-views -->
+          <div class="ord-tabs" id="wprofile-tabs" style="display:none"></div>
+
           <!-- BASIC INFO -->
           <div class="profile-section" id="wsection-basics">
             <div class="profile-section-header">
-              <div class="profile-section-title">Basic Information</div>
+              <div class="profile-section-title">My Profile</div>
               <button class="pencil-btn" id="wbasics-pencil" onclick="toggleSectionEdit('basics')">&#9998; Edit</button>
             </div>
 
@@ -1638,7 +1663,7 @@ With an annual production capacity of over 1.2 million bottles, Cantina Rossi is
           <!-- WINE PORTFOLIO -->
           <div class="profile-section" id="wsection-wines">
             <div class="profile-section-header">
-              <div class="profile-section-title">Wine Portfolio <span class="profile-section-count">(11)</span></div>
+              <div class="profile-section-title">My Wine Portfolio <span class="profile-section-count">(11)</span></div>
             </div>
             <div class="edit-section-sub" style="margin-top:-0.8rem">Add and manage your wines. Own-Label wines appear in distributor searches and the Bottle Lobby wine guide.</div>
             <div class="wine-edit-list" id="wportfolio-list">
@@ -1770,28 +1795,34 @@ With an annual production capacity of over 1.2 million bottles, Cantina Rossi is
           <!-- PRESS & RECOGNITION -->
           <div class="profile-section" id="wsection-press">
             <div class="profile-section-header">
-              <div class="profile-section-title">Press &amp; Recognition</div>
+              <div class="profile-section-title">My Press &amp; Recognition</div>
             </div>
             <div class="edit-section-sub" style="margin-top:-0.8rem">Magazine features and wine-guide mentions. Once published, they appear on your public profile automatically.</div>
             <div class="wine-edit-list" id="press-edit-list"></div>
             <button class="add-btn" onclick="openPressModal(null)">+ Add Press Coverage</button>
           </div>
 
-          <!-- ACTIVE DISTRIBUTORS -->
+          <!-- MY DISTRIBUTORS -->
           <div class="profile-section" id="wsection-active-distributors">
             <div class="profile-section-header">
-              <div class="profile-section-title">Active Distributors</div>
+              <div class="profile-section-title">My Distributors</div>
             </div>
             <div class="edit-section-sub" style="margin-top:-0.8rem">Confirmed partnerships, grouped by region. These distributors see your full profile and can list your wines. Everyone else only sees your public summary until a partnership is confirmed.</div>
             <div id="wn-partners-list"></div>
           </div>
 
-          <!-- DISTRIBUTOR REQUESTS (outgoing) -->
-          <div class="profile-section" id="wsection-distributor-requests">
+          <!-- MY REQUESTS (Incoming above Outgoing, one section — same shape as the distributor's) -->
+          <div class="profile-section" id="wsection-requests">
             <div class="profile-section-header">
-              <div class="profile-section-title">Distributor Requests</div>
+              <div class="profile-section-title">My Requests</div>
             </div>
-            <div class="edit-section-sub" style="margin-top:-0.8rem">Partnership requests you have sent to distributors, and where each one stands. Every partnership needs two signed contracts — yours and the distributor's — before Bottle&nbsp;Lobby confirms it.</div>
+
+            <div class="wn-group-title" style="margin-top:0">Incoming Requests</div>
+            <div class="edit-section-sub" style="margin-top:-0.6rem">Distributors who want to work with you. Accepting a request commits both sides to Bottle&nbsp;Lobby's exclusivity terms — we then send you the contract, and confirm the partnership once it is signed.</div>
+            <div id="wn-requests-list"></div>
+
+            <div class="wn-group-title">Outgoing Requests</div>
+            <div class="edit-section-sub" style="margin-top:-0.6rem">Partnership requests you have sent to distributors, and where each one stands. Every partnership needs two signed contracts — yours and the distributor's — before Bottle&nbsp;Lobby confirms it.</div>
             <div id="wn-outgoing-list"></div>
             <div style="margin-top:1.5rem;padding:1.3rem 1.5rem;background:rgba(184,151,90,0.06);border:1px solid rgba(184,151,90,0.2);border-radius:2px">
               <div style="font-size:0.68rem;color:var(--gold);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:0.6rem">How a partnership is formed</div>
@@ -1799,26 +1830,27 @@ With an annual production capacity of over 1.2 million bottles, Cantina Rossi is
                 1. You send a request from the distributor's public profile and accept the exclusivity terms.<br>
                 2. The distributor reviews your request and accepts the same terms on their side.<br>
                 3. Bottle&nbsp;Lobby sends <strong style="color:var(--paper)">two contracts</strong> — one to you, one to the distributor. Both must be signed and returned.<br>
-                4. Once both signed contracts are with us, Bottle&nbsp;Lobby confirms the partnership and the distributor moves to <strong style="color:var(--paper)">Active Distributors</strong>.
+                4. Once both signed contracts are with us, Bottle&nbsp;Lobby confirms the partnership and the distributor moves to <strong style="color:var(--paper)">My Distributors</strong>.
               </div>
             </div>
           </div>
 
-          <!-- INCOMING REQUESTS -->
+          <!-- MY STARS -->
+          <div class="profile-section" id="wsection-winestars">
+            <div class="profile-section-header">
+              <div class="profile-section-title">My Stars <span class="profile-section-count" id="wstars-count"></span></div>
+            </div>
+            <div class="edit-section-sub" style="margin-top:-0.8rem">Distributors, restaurants and retailers you follow — a way to bookmark accounts you like, want to remember, or are considering for a future partnership.</div>
+            <div id="wstars-list"></div>
+          </div>
+
+          <!-- MY FANS -->
           <div class="profile-section" id="wsection-fans">
             <div class="profile-section-header">
-              <div class="profile-section-title">Wine Fans <span class="profile-section-count" id="wfans-count"></span></div>
+              <div class="profile-section-title">My Fans <span class="profile-section-count" id="wfans-count"></span></div>
             </div>
             <div class="edit-section-sub" style="margin-top:-0.8rem">Restaurants and retailers who follow your winery. Anyone who already lists your wines through a distributor partner can request a tasting directly — this list is also visible to your distributor partners under their own "Opportunities" section.</div>
             <div id="wfans-list"></div>
-          </div>
-
-          <div class="profile-section" id="wsection-incoming-requests">
-            <div class="profile-section-header">
-              <div class="profile-section-title">Incoming Requests</div>
-            </div>
-            <div class="edit-section-sub" style="margin-top:-0.8rem">Distributors who want to work with you. Accepting a request commits both sides to Bottle&nbsp;Lobby's exclusivity terms — we then send you the contract, and confirm the partnership once it is signed.</div>
-            <div id="wn-requests-list"></div>
           </div>
 
 
@@ -2510,10 +2542,13 @@ With an annual production capacity of over 1.2 million bottles, Cantina Rossi is
       <div id="restaurant-view-profile" style="display:none">
         <div style="padding:2rem;max-width:980px">
 
+          <!-- Tab bar, shown only for grouped sub-views -->
+          <div class="ord-tabs" id="rprofile-tabs" style="display:none"></div>
+
           <!-- BASIC INFO -->
           <div class="profile-section" id="rsection-basics">
             <div class="profile-section-header">
-              <div class="profile-section-title">Basic Information</div>
+              <div class="profile-section-title">My Profile</div>
               <button class="pencil-btn" id="rbasics-pencil" onclick="toggleRestaurantSectionEdit('basics')">&#9998; Edit</button>
             </div>
 
@@ -2606,7 +2641,7 @@ With an annual production capacity of over 1.2 million bottles, Cantina Rossi is
           <!-- WINE LIST -->
           <div class="profile-section" id="rsection-wines">
             <div class="profile-section-header">
-              <div class="profile-section-title">Wine List <span class="profile-section-count">(3)</span></div>
+              <div class="profile-section-title">My Wine List <span class="profile-section-count">(3)</span></div>
             </div>
             <div class="edit-sub" style="margin-top:-0.8rem">Wines pulled from your active distributor partner's Wine Portfolio — restaurants source exclusively through a distributor, never directly from a winery. Mark a wine Exclusive once no other restaurant in your city carries it.</div>
             <div class="list-edit" id="rwinelist-list">
@@ -2641,20 +2676,27 @@ With an annual production capacity of over 1.2 million bottles, Cantina Rossi is
             <button class="add-btn" onclick="openAddWineModal()">+ Add Wine to List</button>
           </div>
 
-          <!-- NETWORK -->
+          <!-- MY DISTRIBUTORS -->
           <div class="profile-section" id="rsection-active-distributors">
             <div class="profile-section-header">
-              <div class="profile-section-title">Active Distributors</div>
+              <div class="profile-section-title">My Distributors</div>
             </div>
             <div class="edit-sub" style="margin-top:-0.8rem">Distributors you have a confirmed, Bottle&nbsp;Lobby-approved partnership with. Only a distributor's full profile, direct contact and their wine portfolio are open to you.</div>
             <div id="rpn-active-list"></div>
           </div>
 
-          <div class="profile-section" id="rsection-distributor-requests">
+          <!-- MY REQUESTS (Incoming above Outgoing, one section) -->
+          <div class="profile-section" id="rsection-requests">
             <div class="profile-section-header">
-              <div class="profile-section-title">Outgoing Requests</div>
+              <div class="profile-section-title">My Requests</div>
             </div>
-            <div class="edit-sub" style="margin-top:-0.8rem">Partnership requests you have sent to distributors, and where each one stands.</div>
+
+            <div class="wn-group-title" style="margin-top:0">Incoming Requests</div>
+            <div class="edit-sub" style="margin-top:-0.6rem">Distributors who have asked to partner with you. Accepting commits both sides to Bottle&nbsp;Lobby's exclusivity terms.</div>
+            <div id="r-ir-list"></div>
+
+            <div class="wn-group-title">Outgoing Requests</div>
+            <div class="edit-sub" style="margin-top:-0.6rem">Partnership requests you have sent to distributors, and where each one stands.</div>
             <div id="rpn-request-list"></div>
             <div style="margin-top:1.5rem;padding:1.3rem 1.5rem;background:rgba(184,151,90,0.06);border:1px solid rgba(184,151,90,0.2);border-radius:2px">
               <div style="font-size:0.68rem;color:var(--gold);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:0.6rem">How a partnership is formed</div>
@@ -2662,25 +2704,25 @@ With an annual production capacity of over 1.2 million bottles, Cantina Rossi is
                 1. You send a request from the distributor's public profile — shown on every wine's article page under "View Distributors" — and accept the exclusivity terms.<br>
                 2. The distributor reviews your request and accepts the same terms on their side.<br>
                 3. Bottle&nbsp;Lobby sends <strong style="color:var(--paper)">two contracts</strong>. Both must be signed and returned.<br>
-                4. Once confirmed, the distributor moves to <strong style="color:var(--paper)">Active Distributors</strong>.
+                4. Once confirmed, the distributor moves to <strong style="color:var(--paper)">My Distributors</strong>.
               </div>
             </div>
           </div>
 
-          <div class="profile-section" id="rsection-incoming-requests">
-            <div class="profile-section-header">
-              <div class="profile-section-title">Incoming Requests</div>
-            </div>
-            <div class="edit-sub" style="margin-top:-0.8rem">Distributors who have asked to partner with you. Accepting commits both sides to Bottle&nbsp;Lobby's exclusivity terms.</div>
-            <div id="r-ir-list"></div>
-          </div>
-
           <div class="profile-section" id="rsection-winestars">
             <div class="profile-section-header">
-              <div class="profile-section-title">Wine Stars <span class="profile-section-count" id="rstars-count"></span></div>
+              <div class="profile-section-title">My Stars <span class="profile-section-count" id="rstars-count"></span></div>
             </div>
-            <div class="edit-sub" style="margin-top:-0.8rem">Wineries you follow — a way to bookmark producers you like, want to remember, or already list through your distributor and want to flag as a favourite.</div>
+            <div class="edit-sub" style="margin-top:-0.8rem">Wineries, distributors and other accounts you follow — a way to bookmark producers you like, want to remember, or already list through your distributor and want to flag as a favourite.</div>
             <div id="rstars-list"></div>
+          </div>
+
+          <div class="profile-section" id="rsection-fans">
+            <div class="profile-section-header">
+              <div class="profile-section-title">My Fans <span class="profile-section-count" id="rfans-count"></span></div>
+            </div>
+            <div class="edit-sub" style="margin-top:-0.8rem">Wineries, distributors and retailers who follow you — a signal of interest you can use to reach out and start a conversation.</div>
+            <div id="rfans-list"></div>
           </div>
 
           <div class="profile-section" id="rsection-offers">
@@ -2884,10 +2926,13 @@ With an annual production capacity of over 1.2 million bottles, Cantina Rossi is
       <div id="retail-view-profile" style="display:none">
         <div style="padding:2rem;max-width:980px">
 
+          <!-- Tab bar, shown only for grouped sub-views -->
+          <div class="ord-tabs" id="tprofile-tabs" style="display:none"></div>
+
           <!-- BASIC INFO -->
           <div class="profile-section" id="tsection-basics">
             <div class="profile-section-header">
-              <div class="profile-section-title">Basic Information</div>
+              <div class="profile-section-title">My Profile</div>
               <button class="pencil-btn" id="tbasics-pencil" onclick="toggleRetailSectionEdit('basics')">&#9998; Edit</button>
             </div>
 
@@ -2980,7 +3025,7 @@ With an annual production capacity of over 1.2 million bottles, Cantina Rossi is
           <!-- WINE SELECTION -->
           <div class="profile-section" id="tsection-wines">
             <div class="profile-section-header">
-              <div class="profile-section-title">Wine Selection <span class="profile-section-count">(3)</span></div>
+              <div class="profile-section-title">My Wine Selection <span class="profile-section-count">(3)</span></div>
             </div>
             <div class="edit-sub" style="margin-top:-0.8rem">Wines pulled from your active distributor partner's Wine Portfolio — retailers source exclusively through a distributor, never directly from a winery. Mark a wine Exclusive once no other retailer in your city carries it.</div>
             <div class="list-edit" id="tselection-list">
@@ -3015,20 +3060,27 @@ With an annual production capacity of over 1.2 million bottles, Cantina Rossi is
             <button class="add-btn" onclick="openAddWineModalT()">+ Add Wine to Selection</button>
           </div>
 
-          <!-- NETWORK -->
+          <!-- MY DISTRIBUTORS -->
           <div class="profile-section" id="tsection-active-distributors">
             <div class="profile-section-header">
-              <div class="profile-section-title">Active Distributors</div>
+              <div class="profile-section-title">My Distributors</div>
             </div>
             <div class="edit-sub" style="margin-top:-0.8rem">Distributors you have a confirmed, Bottle&nbsp;Lobby-approved partnership with. Only a distributor's full profile, direct contact and their wine portfolio are open to you.</div>
             <div id="tpn-active-list"></div>
           </div>
 
-          <div class="profile-section" id="tsection-distributor-requests">
+          <!-- MY REQUESTS (Incoming above Outgoing, one section) -->
+          <div class="profile-section" id="tsection-requests">
             <div class="profile-section-header">
-              <div class="profile-section-title">Outgoing Requests</div>
+              <div class="profile-section-title">My Requests</div>
             </div>
-            <div class="edit-sub" style="margin-top:-0.8rem">Partnership requests you have sent to distributors, and where each one stands.</div>
+
+            <div class="wn-group-title" style="margin-top:0">Incoming Requests</div>
+            <div class="edit-sub" style="margin-top:-0.6rem">Distributors who have asked to partner with you. Accepting commits both sides to Bottle&nbsp;Lobby's exclusivity terms.</div>
+            <div id="t-ir-list"></div>
+
+            <div class="wn-group-title">Outgoing Requests</div>
+            <div class="edit-sub" style="margin-top:-0.6rem">Partnership requests you have sent to distributors, and where each one stands.</div>
             <div id="tpn-request-list"></div>
             <div style="margin-top:1.5rem;padding:1.3rem 1.5rem;background:rgba(184,151,90,0.06);border:1px solid rgba(184,151,90,0.2);border-radius:2px">
               <div style="font-size:0.68rem;color:var(--gold);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:0.6rem">How a partnership is formed</div>
@@ -3036,25 +3088,25 @@ With an annual production capacity of over 1.2 million bottles, Cantina Rossi is
                 1. You send a request from the distributor's public profile — shown on every wine's article page under "View Distributors" — and accept the exclusivity terms.<br>
                 2. The distributor reviews your request and accepts the same terms on their side.<br>
                 3. Bottle&nbsp;Lobby sends <strong style="color:var(--paper)">two contracts</strong>. Both must be signed and returned.<br>
-                4. Once confirmed, the distributor moves to <strong style="color:var(--paper)">Active Distributors</strong>.
+                4. Once confirmed, the distributor moves to <strong style="color:var(--paper)">My Distributors</strong>.
               </div>
             </div>
           </div>
 
-          <div class="profile-section" id="tsection-incoming-requests">
-            <div class="profile-section-header">
-              <div class="profile-section-title">Incoming Requests</div>
-            </div>
-            <div class="edit-sub" style="margin-top:-0.8rem">Distributors who have asked to partner with you. Accepting commits both sides to Bottle&nbsp;Lobby's exclusivity terms.</div>
-            <div id="t-ir-list"></div>
-          </div>
-
           <div class="profile-section" id="tsection-winestars">
             <div class="profile-section-header">
-              <div class="profile-section-title">Wine Stars <span class="profile-section-count" id="tstars-count"></span></div>
+              <div class="profile-section-title">My Stars <span class="profile-section-count" id="tstars-count"></span></div>
             </div>
-            <div class="edit-sub" style="margin-top:-0.8rem">Wineries you follow — a way to bookmark producers you like, want to remember, or already list through your distributor and want to flag as a favourite.</div>
+            <div class="edit-sub" style="margin-top:-0.8rem">Wineries, distributors and other accounts you follow — a way to bookmark producers you like, want to remember, or already list through your distributor and want to flag as a favourite.</div>
             <div id="tstars-list"></div>
+          </div>
+
+          <div class="profile-section" id="tsection-fans">
+            <div class="profile-section-header">
+              <div class="profile-section-title">My Fans <span class="profile-section-count" id="tfans-count"></span></div>
+            </div>
+            <div class="edit-sub" style="margin-top:-0.8rem">Wineries, distributors and restaurants who follow you — a signal of interest you can use to reach out and start a conversation.</div>
+            <div id="tfans-list"></div>
           </div>
 
           <div class="profile-section" id="tsection-offers">
@@ -3763,49 +3815,94 @@ With an annual production capacity of over 1.2 million bottles, Cantina Rossi is
 
 <script>
 
-/* ══════════════════════════════════════════════════════════════
-   INLINE "MY PROFILE" VIEW (Winery pilot)
-   ──────────────────────────────────────────────────────────────
-   Switches between the Dashboard overview and the merged Profile
-   view (Basic Info / Wine Portfolio / Press & Recognition) inside
-   the SAME page — no navigation to a separate file. Each section
-   is edited inline via its own pencil icon (Basic Info) or its
-   own per-row Edit button (Wines, Press).
-═══════════════════════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════════════════════════
+   WINERY VIEW ROUTING
+   ------------------------------------------------------------------
+   Same mechanics as showDistributorView (B8, D21): every nav item is
+   a real sub-page, not a scroll target. All profile sections live in
+   one container; the router shows exactly the one that belongs to the
+   chosen nav item and hides the rest. Sections are organised into
+   GROUPS; a group with more than one member renders a tab bar.
+════════════════════════════════════════════════════════════════════ */
+const W_SECTION_EL = {
+  basics:'wsection-basics', wines:'wsection-wines', press:'wsection-press',
+  network:'wsection-active-distributors', requests:'wsection-requests',
+  winestars:'wsection-winestars', fans:'wsection-fans'
+};
+const W_NAV_EL = {
+  basics:'wnav-profile', wines:'wnav-wines', press:'wnav-press',
+  network:'wnav-network', requests:'wnav-requests',
+  winestars:'wnav-winestars', fans:'wnav-fans'
+};
+const W_TITLES = {
+  dashboard:'Good morning, Cantina Rossi ✦', basics:'My Profile',
+  wines:'My Wine Portfolio', press:'My Press & Recognition',
+  network:'My Distributors', requests:'My Requests',
+  winestars:'My Stars', fans:'My Fans'
+};
+/* Groups that render a tab bar. Single-member groups render none. */
+const W_GROUPS = [
+  { key:'portfolio', members:[
+      { s:'wines', label:'My Wine Portfolio' },
+      { s:'press', label:'My Press & Recognition' } ] },
+  { key:'partners', members:[
+      { s:'network',  label:'My Distributors' },
+      { s:'requests', label:'My Requests' } ] },
+  { key:'network', members:[
+      { s:'winestars', label:'My Stars' },
+      { s:'fans',      label:'My Fans' } ] }
+];
+function wGroupOf(section) {
+  return W_GROUPS.find(g => g.members.some(m => m.s === section)) || null;
+}
+
 function showWineryView(view, section) {
   const dashEl = document.getElementById('winery-view-dashboard');
   const profileEl = document.getElementById('winery-view-profile');
   const isProfile = view === 'profile';
+  if (isProfile && !section) section = 'basics';
+
   dashEl.style.display = isProfile ? 'none' : '';
   profileEl.style.display = isProfile ? '' : 'none';
   hideOrdersView('winery');
+
   document.getElementById('winery-topbar-actions-dashboard').style.display = isProfile ? 'none' : 'flex';
-  document.getElementById('winery-topbar-actions-profile').style.display = isProfile ? 'flex' : 'none';
+  /* Preview Public Profile belongs to the My Profile sub-page only */
+  document.getElementById('winery-topbar-actions-profile').style.display =
+    (isProfile && section === 'basics') ? 'flex' : 'none';
 
-  const titles = { dashboard: 'Good morning, Cantina Rossi ✦', basics: 'Basic Information', wines: 'Wine Portfolio', press: 'Press & Recognition', network: 'My Distributors', fans: 'Wine Fans' };
-  document.getElementById('winery-topbar-title').textContent = isProfile ? titles[section || 'basics'] : titles.dashboard;
+  document.getElementById('winery-topbar-title').textContent =
+    isProfile ? (W_TITLES[section] || 'My Profile') : W_TITLES.dashboard;
 
-  // Sidebar active-state
-  ['wnav-dashboard','wnav-profile','wnav-wines','wnav-press','wnav-network','wnav-fans','wnav-orders-in','wnav-orders-hist'].forEach(id => { const e = document.getElementById(id); if (e) e.classList.remove('active'); });
-  if (!isProfile) {
-    document.getElementById('wnav-dashboard').classList.add('active');
-  } else if (section === 'wines') {
-    document.getElementById('wnav-wines').classList.add('active');
-  } else if (section === 'press') {
-    document.getElementById('wnav-press').classList.add('active');
-  } else if (section === 'network') {
-    document.getElementById('wnav-network').classList.add('active');
-  } else if (section === 'fans') {
-    document.getElementById('wnav-fans').classList.add('active');
-  } else {
-    document.getElementById('wnav-profile').classList.add('active');
+  /* Sidebar active state */
+  ['wnav-dashboard','wnav-orders-in','wnav-orders-hist']
+    .concat(Object.keys(W_NAV_EL).map(k => W_NAV_EL[k]))
+    .forEach(id => { const e = document.getElementById(id); if (e) e.classList.remove('active'); });
+  const ne = document.getElementById(isProfile ? W_NAV_EL[section] : 'wnav-dashboard');
+  if (ne) ne.classList.add('active');
+
+  /* Show exactly one section, hide the rest */
+  Object.keys(W_SECTION_EL).forEach(k => {
+    const el = document.getElementById(W_SECTION_EL[k]);
+    if (el) el.style.display = (isProfile && k === section) ? '' : 'none';
+  });
+
+  /* Tab bar for grouped sub-views */
+  const tabsEl = document.getElementById('wprofile-tabs');
+  if (tabsEl) {
+    const group = isProfile ? wGroupOf(section) : null;
+    if (group) {
+      tabsEl.style.display = '';
+      tabsEl.innerHTML = group.members.map(m =>
+        '<button class="ord-tab' + (m.s === section ? ' active' : '') +
+        '" onclick="showWineryView(\'profile\',\'' + m.s + '\')">' + m.label + '</button>').join('');
+    } else {
+      tabsEl.style.display = 'none';
+      tabsEl.innerHTML = '';
+    }
   }
 
-  if (isProfile && section) {
-    const target = document.getElementById('wsection-' + (section === 'network' ? 'active-distributors' : section));
-    if (target) setTimeout(() => target.scrollIntoView({ behavior: 'smooth', block: 'start' }), 30);
-  }
-  if (isProfile) renderPressList();
+  if (isProfile) { renderPressList(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
 }
 
 /* ── Per-section inline edit toggle (pencil icon), used by Basic Info ── */
@@ -4729,45 +4826,91 @@ function declineIncoming(id) {
 }
 renderIncomingRequests();
 
-/* ══════════════════════════════════════════════════════════════
-   INLINE "MY PROFILE" VIEW (Restaurant)
-═══════════════════════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════════════════════════
+   RESTAURANT VIEW ROUTING — same mechanics as the distributor (B8, D21)
+════════════════════════════════════════════════════════════════════ */
+const R_SECTION_EL = {
+  basics:'rsection-basics', wines:'rsection-wines',
+  network:'rsection-active-distributors', requests:'rsection-requests',
+  winestars:'rsection-winestars', fans:'rsection-fans',
+  offers:'rsection-offers', deals:'rsection-deals', promo:'rsection-promo'
+};
+const R_NAV_EL = {
+  basics:'rnav-profile', wines:'rnav-wines',
+  network:'rnav-network', requests:'rnav-requests',
+  winestars:'rnav-winestars', fans:'rnav-fans',
+  offers:'rnav-offers', deals:'rnav-deals', promo:'rnav-promo'
+};
+const R_TITLES = {
+  dashboard:'Welcome, Bistro Laurent ✦', basics:'My Profile', wines:'My Wine List',
+  network:'My Distributors', requests:'My Requests',
+  winestars:'My Stars', fans:'My Fans',
+  offers:'Exclusive Offers', deals:'Exclusive Deals', promo:'Promo Materials'
+};
+/* My Wine List is a single-member section and renders no tab bar. */
+const R_GROUPS = [
+  { key:'partners', members:[
+      { s:'network',  label:'My Distributors' },
+      { s:'requests', label:'My Requests' } ] },
+  { key:'network', members:[
+      { s:'winestars', label:'My Stars' },
+      { s:'fans',      label:'My Fans' } ] },
+  { key:'discover', members:[
+      { s:'offers', label:'Exclusive Offers' },
+      { s:'deals',  label:'Exclusive Deals' },
+      { s:'promo',  label:'Promo Materials' } ] }
+];
+function rGroupOf(section) {
+  return R_GROUPS.find(g => g.members.some(m => m.s === section)) || null;
+}
+
 function showRestaurantView(view, section) {
   const dashEl = document.getElementById('restaurant-view-dashboard');
   const profileEl = document.getElementById('restaurant-view-profile');
   const isProfile = view === 'profile';
+  if (isProfile && !section) section = 'basics';
+
   dashEl.style.display = isProfile ? 'none' : '';
   profileEl.style.display = isProfile ? '' : 'none';
   hideOrdersView('restaurant');
+
   document.getElementById('restaurant-topbar-actions-dashboard').style.display = isProfile ? 'none' : 'flex';
-  document.getElementById('restaurant-topbar-actions-profile').style.display = isProfile ? 'flex' : 'none';
+  /* Preview Public Profile belongs to the My Profile sub-page only */
+  document.getElementById('restaurant-topbar-actions-profile').style.display =
+    (isProfile && section === 'basics') ? 'flex' : 'none';
 
-  const titles = { dashboard: 'Welcome, Bistro Laurent ✦', basics: 'Basic Information', wines: 'Wine List', network: 'My Distributors', winestars: 'Wine Stars', offers: 'Exclusive Offers', deals: 'Exclusive Deals', promo: 'Promo Materials' };
-  document.getElementById('restaurant-topbar-title').textContent = isProfile ? titles[section || 'basics'] : titles.dashboard;
+  document.getElementById('restaurant-topbar-title').textContent =
+    isProfile ? (R_TITLES[section] || 'My Profile') : R_TITLES.dashboard;
 
-  ['rnav-dashboard','rnav-profile','rnav-wines','rnav-network','rnav-winestars','rnav-offers','rnav-deals','rnav-promo','rnav-orders','rnav-orders-hist'].forEach(id => { const e = document.getElementById(id); if (e) e.classList.remove('active'); });
-  if (!isProfile) {
-    document.getElementById('rnav-dashboard').classList.add('active');
-  } else if (section === 'wines') {
-    document.getElementById('rnav-wines').classList.add('active');
-  } else if (section === 'network') {
-    document.getElementById('rnav-network').classList.add('active');
-  } else if (section === 'winestars') {
-    document.getElementById('rnav-winestars').classList.add('active');
-  } else if (section === 'offers') {
-    document.getElementById('rnav-offers').classList.add('active');
-  } else if (section === 'deals') {
-    document.getElementById('rnav-deals').classList.add('active');
-  } else if (section === 'promo') {
-    document.getElementById('rnav-promo').classList.add('active');
-  } else {
-    document.getElementById('rnav-profile').classList.add('active');
+  /* Sidebar active state */
+  ['rnav-dashboard','rnav-orders','rnav-orders-hist']
+    .concat(Object.keys(R_NAV_EL).map(k => R_NAV_EL[k]))
+    .forEach(id => { const e = document.getElementById(id); if (e) e.classList.remove('active'); });
+  const ne = document.getElementById(isProfile ? R_NAV_EL[section] : 'rnav-dashboard');
+  if (ne) ne.classList.add('active');
+
+  /* Show exactly one section, hide the rest */
+  Object.keys(R_SECTION_EL).forEach(k => {
+    const el = document.getElementById(R_SECTION_EL[k]);
+    if (el) el.style.display = (isProfile && k === section) ? '' : 'none';
+  });
+
+  /* Tab bar for grouped sub-views */
+  const tabsEl = document.getElementById('rprofile-tabs');
+  if (tabsEl) {
+    const group = isProfile ? rGroupOf(section) : null;
+    if (group) {
+      tabsEl.style.display = '';
+      tabsEl.innerHTML = group.members.map(m =>
+        '<button class="ord-tab' + (m.s === section ? ' active' : '') +
+        '" onclick="showRestaurantView(\'profile\',\'' + m.s + '\')">' + m.label + '</button>').join('');
+    } else {
+      tabsEl.style.display = 'none';
+      tabsEl.innerHTML = '';
+    }
   }
 
-  if (isProfile && section) {
-    const target = document.getElementById('rsection-' + (section === 'network' ? 'active-distributors' : section));
-    if (target) setTimeout(() => target.scrollIntoView({ behavior: 'smooth', block: 'start' }), 30);
-  }
+  if (isProfile) window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function toggleRestaurantSectionEdit(section) {
@@ -5062,45 +5205,91 @@ function declineIncomingR(id) {
 }
 renderIncomingRequestsR();
 
-/* ══════════════════════════════════════════════════════════════
-   INLINE "MY PROFILE" VIEW (Retail)
-═══════════════════════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════════════════════════
+   RETAIL VIEW ROUTING — same mechanics as the distributor (B8, D21)
+════════════════════════════════════════════════════════════════════ */
+const T_SECTION_EL = {
+  basics:'tsection-basics', wines:'tsection-wines',
+  network:'tsection-active-distributors', requests:'tsection-requests',
+  winestars:'tsection-winestars', fans:'tsection-fans',
+  offers:'tsection-offers', deals:'tsection-deals', promo:'tsection-promo'
+};
+const T_NAV_EL = {
+  basics:'tnav-profile', wines:'tnav-wines',
+  network:'tnav-network', requests:'tnav-requests',
+  winestars:'tnav-winestars', fans:'tnav-fans',
+  offers:'tnav-offers', deals:'tnav-deals', promo:'tnav-promo'
+};
+const T_TITLES = {
+  dashboard:'Welcome, Weinhaus Müller ✦', basics:'My Profile', wines:'My Wine Selection',
+  network:'My Distributors', requests:'My Requests',
+  winestars:'My Stars', fans:'My Fans',
+  offers:'Exclusive Offers', deals:'Exclusive Deals', promo:'Promo Materials'
+};
+/* My Wine Selection is a single-member section and renders no tab bar. */
+const T_GROUPS = [
+  { key:'partners', members:[
+      { s:'network',  label:'My Distributors' },
+      { s:'requests', label:'My Requests' } ] },
+  { key:'network', members:[
+      { s:'winestars', label:'My Stars' },
+      { s:'fans',      label:'My Fans' } ] },
+  { key:'discover', members:[
+      { s:'offers', label:'Exclusive Offers' },
+      { s:'deals',  label:'Exclusive Deals' },
+      { s:'promo',  label:'Promo Materials' } ] }
+];
+function tGroupOf(section) {
+  return T_GROUPS.find(g => g.members.some(m => m.s === section)) || null;
+}
+
 function showRetailView(view, section) {
   const dashEl = document.getElementById('retail-view-dashboard');
   const profileEl = document.getElementById('retail-view-profile');
   const isProfile = view === 'profile';
+  if (isProfile && !section) section = 'basics';
+
   dashEl.style.display = isProfile ? 'none' : '';
   profileEl.style.display = isProfile ? '' : 'none';
   hideOrdersView('retail');
+
   document.getElementById('retail-topbar-actions-dashboard').style.display = isProfile ? 'none' : 'flex';
-  document.getElementById('retail-topbar-actions-profile').style.display = isProfile ? 'flex' : 'none';
+  /* Preview Public Profile belongs to the My Profile sub-page only */
+  document.getElementById('retail-topbar-actions-profile').style.display =
+    (isProfile && section === 'basics') ? 'flex' : 'none';
 
-  const titles = { dashboard: 'Welcome, Weinhaus Müller ✦', basics: 'Basic Information', wines: 'Wine Selection', network: 'My Distributors', winestars: 'Wine Stars', offers: 'Exclusive Offers', deals: 'Exclusive Deals', promo: 'Promo Materials' };
-  document.getElementById('retail-topbar-title').textContent = isProfile ? titles[section || 'basics'] : titles.dashboard;
+  document.getElementById('retail-topbar-title').textContent =
+    isProfile ? (T_TITLES[section] || 'My Profile') : T_TITLES.dashboard;
 
-  ['tnav-dashboard','tnav-profile','tnav-wines','tnav-network','tnav-winestars','tnav-offers','tnav-deals','tnav-promo','tnav-orders','tnav-orders-hist'].forEach(id => { const e = document.getElementById(id); if (e) e.classList.remove('active'); });
-  if (!isProfile) {
-    document.getElementById('tnav-dashboard').classList.add('active');
-  } else if (section === 'wines') {
-    document.getElementById('tnav-wines').classList.add('active');
-  } else if (section === 'network') {
-    document.getElementById('tnav-network').classList.add('active');
-  } else if (section === 'winestars') {
-    document.getElementById('tnav-winestars').classList.add('active');
-  } else if (section === 'offers') {
-    document.getElementById('tnav-offers').classList.add('active');
-  } else if (section === 'deals') {
-    document.getElementById('tnav-deals').classList.add('active');
-  } else if (section === 'promo') {
-    document.getElementById('tnav-promo').classList.add('active');
-  } else {
-    document.getElementById('tnav-profile').classList.add('active');
+  /* Sidebar active state */
+  ['tnav-dashboard','tnav-orders','tnav-orders-hist']
+    .concat(Object.keys(T_NAV_EL).map(k => T_NAV_EL[k]))
+    .forEach(id => { const e = document.getElementById(id); if (e) e.classList.remove('active'); });
+  const ne = document.getElementById(isProfile ? T_NAV_EL[section] : 'tnav-dashboard');
+  if (ne) ne.classList.add('active');
+
+  /* Show exactly one section, hide the rest */
+  Object.keys(T_SECTION_EL).forEach(k => {
+    const el = document.getElementById(T_SECTION_EL[k]);
+    if (el) el.style.display = (isProfile && k === section) ? '' : 'none';
+  });
+
+  /* Tab bar for grouped sub-views */
+  const tabsEl = document.getElementById('tprofile-tabs');
+  if (tabsEl) {
+    const group = isProfile ? tGroupOf(section) : null;
+    if (group) {
+      tabsEl.style.display = '';
+      tabsEl.innerHTML = group.members.map(m =>
+        '<button class="ord-tab' + (m.s === section ? ' active' : '') +
+        '" onclick="showRetailView(\'profile\',\'' + m.s + '\')">' + m.label + '</button>').join('');
+    } else {
+      tabsEl.style.display = 'none';
+      tabsEl.innerHTML = '';
+    }
   }
 
-  if (isProfile && section) {
-    const target = document.getElementById('tsection-' + (section === 'network' ? 'active-distributors' : section));
-    if (target) setTimeout(() => target.scrollIntoView({ behavior: 'smooth', block: 'start' }), 30);
-  }
+  if (isProfile) window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function toggleRetailSectionEdit(section) {
@@ -5421,7 +5610,10 @@ const wineFollowGraph = [
   /* Wine Stars of the Distributor (Hawesko GmbH): the distributor follows a winery, a retailer and a restaurant */
   { follower:'Hawesko GmbH', followerType:'distributor', avatar:'HW', location:'Hamburg, Germany', winery:'Henri Dubois Domaine', followedType:'winery', url:'bottle-lobby-winery-henri-dubois-domaine.html' },
   { follower:'Hawesko GmbH', followerType:'distributor', avatar:'HW', location:'Hamburg, Germany', winery:'Weinhaus Müller', followedType:'retail', url:'bottle-lobby-retail-weinhaus-mueller.html' },
-  { follower:'Hawesko GmbH', followerType:'distributor', avatar:'HW', location:'Hamburg, Germany', winery:'Osteria Marconi', followedType:'restaurant', url:'bottle-lobby-restaurant-osteria-marconi.html' }
+  { follower:'Hawesko GmbH', followerType:'distributor', avatar:'HW', location:'Hamburg, Germany', winery:'Osteria Marconi', followedType:'restaurant', url:'bottle-lobby-restaurant-osteria-marconi.html' },
+  /* A winery following a restaurant — the pairing that gives Bistro Laurent
+     a non-empty "My Fans" list and Cantina Rossi a second "My Stars" entry. */
+  { follower:'Cantina Rossi', followerType:'winery', avatar:'CR', location:'Sicily, Italy', winery:'Bistro Laurent', followedType:'restaurant', url:'bottle-lobby-winery-cantina-rossi.html' }
 ];
 const followRoleLabel = { distributor:'Distributor', restaurant:'Restaurant', retail:'Retail', winery:'Winery' };
 
@@ -5447,6 +5639,8 @@ function renderFansFor(entityName, listId, countId, emptyMsg) {
 }
 function renderWineryFans() { renderFansFor('Cantina Rossi', 'wfans-list', 'wfans-count', 'No fans yet — once a restaurant or retailer follows you, they\'ll show up here.'); }
 function renderDistributorFans() { renderFansFor('Hawesko GmbH', 'dfans-list', 'dfans-count', 'No fans yet — once a winery, restaurant or retailer follows you, they\'ll show up here.'); }
+function renderRestaurantFans() { renderFansFor('Bistro Laurent', 'rfans-list', 'rfans-count', 'No fans yet — once a winery, distributor or retailer follows you, they\'ll show up here.'); }
+function renderRetailFans() { renderFansFor('Weinhaus Müller', 'tfans-list', 'tfans-count', 'No fans yet — once a winery, distributor or restaurant follows you, they\'ll show up here.'); }
 renderWineryFans();
 
 /* ── DISTRIBUTOR: Opportunities ── */
@@ -5524,10 +5718,15 @@ function renderWineStarsFor(followerName, listId, countId) {
 function renderRestaurantWineStars() { renderWineStarsFor('Bistro Laurent', 'rstars-list', 'rstars-count'); }
 function renderRetailWineStars() { renderWineStarsFor('Weinhaus Müller', 'tstars-list', 'tstars-count'); }
 function renderDistributorWineStars() { renderWineStarsFor('Hawesko GmbH', 'dstars-list', 'dstars-count'); }
+function renderWineryWineStars() { renderWineStarsFor('Cantina Rossi', 'wstars-list', 'wstars-count'); }
 renderRestaurantWineStars();
 renderRetailWineStars();
 renderDistributorFans();
 renderDistributorWineStars();
+/* My Stars / My Fans exist in all four roles (A7, D20) */
+renderWineryWineStars();
+renderRestaurantFans();
+renderRetailFans();
 
 /* ══════════════════════════════════════════════════════════════════
    PROMO MATERIALS — created by Distributor, unlocked by their
@@ -6606,7 +6805,9 @@ const ORDER_ROLES = {
     view:'winery-view-orders', dashboardView:'winery-view-dashboard', profileView:'winery-view-profile',
     topbarTitle:'winery-topbar-title',
     topbarGroups:['winery-topbar-actions-dashboard','winery-topbar-actions-profile'],
-    navIds:['wnav-dashboard','wnav-profile','wnav-wines','wnav-press','wnav-network','wnav-fans','wnav-orders-in','wnav-orders-hist'],
+    profileTabs:'wprofile-tabs',
+    profileNavEl:W_NAV_EL,
+    navIds:['wnav-dashboard','wnav-orders-in','wnav-orders-hist'],
     tabs:[ { key:'incoming', label:'My Sales',      nav:'wnav-orders-in' },
            { key:'history',  label:'Order History', nav:'wnav-orders-hist' } ]
   },
@@ -6617,6 +6818,7 @@ const ORDER_ROLES = {
     topbarGroups:['distributor-topbar-actions-dashboard','distributor-topbar-actions-profile'],
     ordersGroup:'distributor-topbar-actions-orders',
     profileTabs:'dprofile-tabs',
+    profileNavEl:D_NAV_EL,
     navIds:['dnav-dashboard','dnav-orders-in','dnav-orders-out','dnav-orders-hist'],
     tabs:[ { key:'incoming', label:'My Sales',      nav:'dnav-orders-in' },
            { key:'outgoing', label:'My Purchases',  nav:'dnav-orders-out' },
@@ -6627,7 +6829,9 @@ const ORDER_ROLES = {
     view:'restaurant-view-orders', dashboardView:'restaurant-view-dashboard', profileView:'restaurant-view-profile',
     topbarTitle:'restaurant-topbar-title',
     topbarGroups:['restaurant-topbar-actions-dashboard','restaurant-topbar-actions-profile'],
-    navIds:['rnav-dashboard','rnav-profile','rnav-wines','rnav-network','rnav-winestars','rnav-offers','rnav-deals','rnav-promo','rnav-orders','rnav-orders-hist'],
+    profileTabs:'rprofile-tabs',
+    profileNavEl:R_NAV_EL,
+    navIds:['rnav-dashboard','rnav-orders','rnav-orders-hist'],
     tabs:[ { key:'outgoing', label:'My Purchases',  nav:'rnav-orders' },
            { key:'history',  label:'Order History', nav:'rnav-orders-hist' } ]
   },
@@ -6636,7 +6840,9 @@ const ORDER_ROLES = {
     view:'retail-view-orders', dashboardView:'retail-view-dashboard', profileView:'retail-view-profile',
     topbarTitle:'retail-topbar-title',
     topbarGroups:['retail-topbar-actions-dashboard','retail-topbar-actions-profile'],
-    navIds:['tnav-dashboard','tnav-profile','tnav-wines','tnav-network','tnav-winestars','tnav-offers','tnav-deals','tnav-promo','tnav-orders','tnav-orders-hist'],
+    profileTabs:'tprofile-tabs',
+    profileNavEl:T_NAV_EL,
+    navIds:['tnav-dashboard','tnav-orders','tnav-orders-hist'],
     tabs:[ { key:'outgoing', label:'My Purchases',  nav:'tnav-orders' },
            { key:'history',  label:'Order History', nav:'tnav-orders-hist' } ]
   }
@@ -6693,7 +6899,7 @@ function showOrders(role, tab) {
   document.getElementById(cfg.topbarTitle).textContent = activeTab.label;
 
   /* Sidebar active state — clear every nav item of this role, then set one */
-  const navIds = cfg.navIds.concat(role === 'distributor' ? Object.keys(D_NAV_EL).map(k => D_NAV_EL[k]) : []);
+  const navIds = cfg.navIds.concat(cfg.profileNavEl ? Object.keys(cfg.profileNavEl).map(k => cfg.profileNavEl[k]) : []);
   navIds.forEach(id => { const e = document.getElementById(id); if (e) e.classList.remove('active'); });
   const ne = document.getElementById(activeTab.nav); if (ne) ne.classList.add('active');
   if (cfg.profileTabs) {
