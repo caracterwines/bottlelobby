@@ -132,10 +132,18 @@ Kein Build-Command, Publish-Directory = Repo-Root.
   und einen zu erfinden waere ueber den Auftrag hinausgegangen. Entweder A16.2 um
   eine Ruecknahme ergaenzen oder bewusst festhalten, dass `planning` einmal erreicht
   bestehen bleibt — offene Entscheidung, kein Fehler.
-- **`.wse-applied` ist nicht definiert** — es gibt nur `wse-invited`, `-confirmed`,
-  `-declined`, `-proposed`. Folgenlos, bis A16.4 (Open Call) den Status `applied`
-  einfuehrt. Der Klassen-Cross-Check hatte `.ws-*` geprueft und das Praefix `wse-`
-  dabei nicht erfasst.
+- **Zwei tote CSS-Klassen: `.profile-badge` und `.badge-own-label`.** Beide werden
+  im Markup benutzt (17 bzw. 10 Elemente), sind aber nirgends definiert — Reste der
+  Vor-B9-Konvention, als `.profile-badge` noch der Name fuer das war, was heute
+  `.badge` heisst. **Kein sichtbarer Defekt:** alle betroffenen Elemente setzen
+  `background`, `color` und `font-size` inline, sehen also richtig aus.
+  Zum Aufraeumen sind zwei Entscheidungen noetig, und beide sind optisch, deshalb
+  liegen sie bei euch: bleiben die Inline-Styles und die Klassennamen fallen
+  ersatzlos weg, oder wandern die Werte in echte Regeln und die Inline-Styles raus?
+  17 Elemente sind betroffen, das Ergebnis ist in der Demo sichtbar.
+  Solange nichts entschieden ist, verwaltet `check-static.js` sie in
+  `KNOWN_UNSTYLED` — mit Pruefung in beide Richtungen, die Liste kann das Problem
+  also nicht ueberleben.
 - **Wine Shows — die naechsten Durchgaenge.** Der erste ist gebaut (siehe unten),
   der Rest steht noch aus, jeder als eigener Schritt und keiner vom anderen blockiert:
   Open Call mit Master-Data-Filtern (A16.4), Location-Anfrage an Restaurant/Retail

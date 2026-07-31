@@ -58,16 +58,20 @@ side, which leaves the other untested for the wrong reason.
 
 ## Known and tolerated
 
-`check-static.js` carries two short allowlists, each with the reason inline:
+`check-static.js` carries one short allowlist, with the reason inline:
 
 - `KNOWN_UNSTYLED` — `profile-badge` and `badge-own-label` are leftovers of the
   pre-B9 naming convention. Every element carrying them styles itself inline,
-  so there is no visual defect, but the class names are dead weight.
-- `KNOWN_MISSING` — `.wse-applied` has no rule because the `applied` state only
-  becomes reachable with the Open Call (A16.4), which is not built.
+  so there is no visual defect, but the class names are dead weight. Removing
+  them is a visual decision across 17 elements; tracked in HANDOFF.
 
-Both lists are checked in **both** directions: an entry that no longer applies
-fails the run, so the allowlist cannot quietly outlive the problem.
+It is checked in **both** directions: an entry that no longer applies fails the
+run, so the allowlist cannot quietly outlive the problem.
+
+Enum-driven class names carry no allowlist. Every state in `SHOW_STAGES` and
+`PARTY_STATES` must have a rule even when the state is not reachable through
+the UI yet — an unstyled pill otherwise reveals itself the first time the state
+occurs, which is the worst moment to find out.
 
 ## Verifying the checks themselves
 

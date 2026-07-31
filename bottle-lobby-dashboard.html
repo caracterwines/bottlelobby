@@ -886,8 +886,12 @@ body {
 .ws-completed        { background:rgba(247,243,238,0.05); color:rgba(247,243,238,0.4); }
 .ws-cancelled        { background:rgba(107,26,26,0.3); color:#d88; }
 .ws-rescheduled      { background:rgba(184,151,90,0.22); color:#e0c07a; }
-/* exhibitor / product response states */
-.wse-invited   { background:rgba(184,151,90,0.14); color:var(--gold); }
+/* exhibitor / product response states.
+   `applied` shares the `invited` styling on purpose: both mean "on the
+   table, nobody has decided yet" — only the direction differs, the host
+   asked or the producer offered. It arrives with the Open Call (A16.4). */
+.wse-invited,
+.wse-applied   { background:rgba(184,151,90,0.14); color:var(--gold); }
 .wse-confirmed { background:rgba(76,175,125,0.15); color:#4caf7d; }
 .wse-declined  { background:rgba(107,26,26,0.3); color:#d88; }
 .wse-proposed  { background:rgba(127,170,240,0.15); color:#7faaf0; }

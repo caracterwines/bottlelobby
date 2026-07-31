@@ -187,23 +187,18 @@ console.log('\n── enum-driven class names');
     else ok('stage list matches SHOW_STAGE_LABEL (' + inCode.length + ')');
   }
 
-  /* `applied` only becomes reachable with the Open Call (A16.4), which
-     is not built. Known and tracked in HANDOFF — drop from this list
-     when the class is added. */
-  const KNOWN_MISSING = ['wse-applied'];
-
+  /* Every state in both enums must have a rule — including states that
+     are not reachable through the UI yet. A pill only reveals itself as
+     unstyled once the state first occurs, which is the worst moment to
+     find out. */
   const has = cls => new RegExp('\\.' + cls + '[\\s,{:.]').test(style);
   const report = (label, names, prefix) => {
     const missing = names.map(s => prefix + s).filter(c => !has(c));
-    const unexpected = missing.filter(c => !KNOWN_MISSING.includes(c));
-    if (unexpected.length) bad('no CSS for ' + label + ': ' + unexpected.map(c => '.' + c).join(', '));
-    else ok('all ' + names.length + ' ' + label + ' styled' +
-            (missing.length ? ' except the known ' + missing.map(c => '.' + c).join(', ') : ''));
+    if (missing.length) bad('no CSS for ' + label + ': ' + missing.map(c => '.' + c).join(', '));
+    else ok('all ' + names.length + ' ' + label + ' styled');
   };
   report('stage pills', SHOW_STAGES, 'ws-');
   report('exhibitor/product state pills', PARTY_STATES, 'wse-');
-  const resolved = KNOWN_MISSING.filter(c => has(c));
-  if (resolved.length) bad('KNOWN_MISSING lists classes that now exist — drop them: ' + resolved.join(', '));
 }
 
 console.log(fail ? `\n✗ ${fail} failure(s)` : '\n✓ all checks passed');
