@@ -78,6 +78,10 @@ Kein Build-Command, Publish-Directory = Repo-Root.
   My Stars bei der Winery, My Fans bei Restaurant und Retail; alle vier Rollen rufen jetzt
   beide generischen Renderer. Spec A7 auf eine einheitliche Tabelle umgestellt,
   Anhang D um **D20** ergaenzt.
+- **Spec-Pflege 31.07.:** C3 unterscheidet jetzt die beiden Push-Kanaele (git aus Claude Code
+  ohne Groessengrenze, MCP-Connector mit) statt pauschal "nicht pushbar"; Dateigroessen neu
+  gemessen; Anhang D nach D18/D19 sortiert und um **D22** ergaenzt; der ueberholte
+  Vorwaertsverweis in B8 zeigt jetzt auf A16.
 
 ---
 
@@ -86,23 +90,34 @@ Kein Build-Command, Publish-Directory = Repo-Root.
 ### Arbeit
 - **UNGEKLAERT: Aussteller-Einladung greift im Browser moeglicherweise nicht.**
   Beim Durchklicken der Live-Seite blieb "Exhibitors & Wines" nach `saveInvite()`
-  leer. Im jsdom-Harness ist es **nicht reproduzierbar** — geprueft wurden alle drei
-  Wege, jeweils bis auf DOM-Ebene: Einladung auf einer bestehenden Draft-Show,
-  Einladung direkt nach dem Anlegen ueber das Modal, und Einladung bei geschlossenem
-  Detail mit anschliessendem Oeffnen. In allen dreien steht der Aussteller danach
-  im Datensatz **und** im gerenderten Kasten.
-  jsdom ist kein Browser, damit ist eine browserspezifische Ursache nicht
-  ausgeschlossen. Beim naechsten Mal zuerst diese Verdachtsmomente pruefen:
-  1. **Stand der Seite** — das Modul war frisch deployt; ein Hard Reload
-     (Cmd-Shift-R) vor dem Test schliesst eine alte gecachte Fassung aus.
-  2. **Welche Show war offen** — der Kasten zeigt immer die Aussteller der
-     *gerade geoeffneten* Show. Nach einem Wechsel auf eine andere Show ist er
-     zu Recht leer.
-  3. **Konsole** — ob `saveInvite` ueberhaupt laeuft, oder ob vorher der Toast
-     "Pick a producer first" kommt (dann war die Producer-Auswahl leer, weil alle
-     Partner-Wineries bereits auf der Show stehen).
-  Wenn es wieder auftritt: Show-ID, Rolle und Konsolenausgabe festhalten, das
-  grenzt es sofort ein.
+  leer. Weder im jsdom-Harness noch beim statischen Lesen des Codes reproduzierbar.
+
+  **Geprueft und ausgeschlossen — nicht erneut abklopfen:**
+  - Alle drei Klickpfade im Harness bis auf DOM-Ebene: der Aussteller steht danach
+    im Datensatz UND im gerenderten Kasten.
+  - *Leeres Producer-Dropdown* (frueherer Verdacht 3): **widerlegt.** 5 Winery-Partner,
+    jede der fuenf Shows hat noch 3-5 einladbare uebrig. Der Toast "Pick a producer
+    first" kann gar nicht ausgeloest werden.
+  - *Modal-Klasse*: alle sechs Aufrufe schalten `active`, `.modal-overlay.active
+    { display:flex }` existiert, konsistent mit allen 42 Modal-Schaltungen der Datei.
+  - *CSS*: alle im Aussteller-Kasten benutzten Klassen sind definiert, keine mit
+    `display:none`. Relevant, weil jsdom kein CSS auswertet — ein gruenes Harness
+    schliesst eine reine Sichtbarkeitsursache nicht aus.
+
+  **Kontext zum Klickpfad:** Von den fuenf Demo-Shows ist nur WS-2604 "Sicilia Prima"
+  (`draft`) ohne Aussteller, und sie steht ganz oben — nur dort erscheint ueberhaupt
+  "No exhibitors invited yet". Der `+ Invite Exhibitor`-Knopf existiert nur bei
+  `draft`, `planning` und `changes_requested`.
+
+  **Naechster Schritt:** Hard Reload (Cmd-Shift-R), einladen, dann in der Konsole:
+  `({rolle: activeShowRole, offen: showState[activeShowRole].openId, eingeladenAuf: inviteShowId, daten: wineShows.map(s => s.id+' '+s.stage+' ['+s.exhibitors.map(e=>e.producer+':'+e.status).join(' | ')+']')})`
+  Steht der Aussteller in `daten`, der Kasten bleibt aber leer -> Render-Problem.
+  Steht er nicht drin -> `saveInvite` laeuft nicht durch. Damit ist es in einem
+  Durchgang eingegrenzt.
+- **`.wse-applied` ist nicht definiert** — es gibt nur `wse-invited`, `-confirmed`,
+  `-declined`, `-proposed`. Folgenlos, bis A16.4 (Open Call) den Status `applied`
+  einfuehrt. Der Klassen-Cross-Check hatte `.ws-*` geprueft und das Praefix `wse-`
+  dabei nicht erfasst.
 - **Wine Shows — die naechsten Durchgaenge.** Der erste ist gebaut (siehe unten),
   der Rest steht noch aus, jeder als eigener Schritt und keiner vom anderen blockiert:
   Open Call mit Master-Data-Filtern (A16.4), Location-Anfrage an Restaurant/Retail
@@ -131,10 +146,13 @@ Kein Build-Command, Publish-Directory = Repo-Root.
 
 ## Hinweise fuer Claude
 
-- `bottle-lobby-dashboard.html` ist ~415 KB. Ueber **git push** ist das kein Problem —
-  die alte Notiz "nicht pushbar" galt dem MCP-Connector, der immer die ganze Datei
-  ersetzt. Immer lokal bauen und pruefen: `node --check` auf den extrahierten
-  Script-Block, dann das DOM-Stub-Harness fuer die Logik.
+- `bottle-lobby-dashboard.html` ist ~473 KB (31.07. nachgemessen). Ueber **git push**
+  ist das kein Problem — die Groessengrenze gilt allein dem MCP-Connector, der immer
+  die ganze Datei ersetzt. Spec C3 unterscheidet die beiden Kanaele jetzt sauber.
+  Immer lokal bauen und pruefen: `node --check` auf den extrahierten Script-Block,
+  dann das DOM-Stub-Harness fuer die Logik.
+- **`.ws-*` und `.wse-*` sind zwei verschiedene Praefixe.** Der Klassen-Cross-Check
+  muss beide erfassen — sonst faellt eine fehlende Statusklasse durch (siehe oben).
 - Vor jeder Uebergabe: div/tag-Balance UND Verschachtelung pruefen, doppelte IDs,
   onclick-Funktionen definiert, CSS-Klassen-Cross-Check.
 - Weinnamen muessen exakt zwischen `orders`, `promoMaterials` und `exclusiveDeals`
