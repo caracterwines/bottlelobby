@@ -609,6 +609,8 @@ body {
 .field-select option { background:#1a0f0f; }
 .form-block-title { font-size:0.65rem; letter-spacing:0.2em; text-transform:uppercase; color:var(--dim); padding:1.5rem 0 0.8rem; display:flex; align-items:center; gap:1rem; }
 .form-block-title::after { content:''; flex:1; height:1px; background:var(--line); }
+/* Hero image preview in the create-show modal (A16.9 hero_image_url). */
+.sf-hero-preview { display:block; width:100%; height:150px; object-fit:cover; border:1px solid var(--line); margin-top:0.4rem; }
 .checkbox-group-edit { display:grid; grid-template-columns:repeat(2,1fr); gap:0.5rem 2rem; padding:1.2rem 1.4rem; background:var(--ink); border:1px solid var(--line); margin-bottom:1px; }
 .cb-item { display:flex; align-items:center; gap:0.6rem; cursor:pointer; }
 .cb-item input[type="checkbox"] { width:13px; height:13px; appearance:none; -webkit-appearance:none; border:1px solid rgba(247,243,238,0.2); background:transparent; border-radius:1px; cursor:pointer; flex-shrink:0; position:relative; transition:all 0.15s; }
@@ -3863,6 +3865,24 @@ With an annual production capacity of over 1.2 million bottles, Cantina Rossi is
 
 <!-- Toast for section saves -->
 <div class="save-toast" id="save-toast"></div>
+
+<!-- ══ SHARED ASSETS ══════════════════════════════════════════════
+     Loaded before the page's own block and in this order: the data
+     first, then the public renderer that reads it. Both are classic
+     scripts on purpose — the prototype is opened over file:// as well
+     as over http, and file:// blocks modules.
+
+     These same two files are what the public Wine Shows page and the
+     public profiles will load, so a show exists exactly once (A16.7,
+     invariant 1).
+
+     NOTE FOR THE TEST HARNESSES: jsdom does not fetch <script src> by
+     default, so an external file is silently absent unless the harness
+     inlines it. tests/load-dashboard.js does that, and check-static.js
+     fails the run if either asset is missing or empty. See tests/README.
+-->
+<script src="assets/bottle-lobby-data.js"></script>
+<script src="assets/bottle-lobby-public-shows.js"></script>
 
 <script>
 
@@ -7491,88 +7511,9 @@ const SHOW_STAGE_LABEL = {
 /* Which stages count as "still running" vs history, per role tab. */
 const SHOW_PAST_STAGES = ['completed','cancelled'];
 
-let wineShows = [
-  { id:'WS-2604', title:'Sicilia Prima', date:'14 Mar 2027', city:'Hamburg',
-    focus:'Sicilian indigenous varieties for the on-trade',
-    stage:'draft', leadHost:'Hawesko GmbH',
-    venueType:'host_premises', venueName:'Hawesko Tasting Loft, Hamburg',
-    capacity:60, exhibitors:[],
-    events:[ { at:'30 Jul 2026', actor:'Hawesko GmbH', text:'Show created as a draft' } ] },
-
-  { id:'WS-2601', title:'Grande Rioja', date:'05 Dec 2026', city:'Düsseldorf',
-    focus:'Premium reds from Rioja and Sicily',
-    stage:'planning', leadHost:'Hawesko GmbH',
-    venueType:'host_premises', venueName:'Hawesko Tasting Loft, Hamburg',
-    capacity:80,
-    exhibitors:[
-      { producer:'Bodegas Ruiz', status:'confirmed', source:'invitation',
-        products:[ { name:'Rioja Reserva 2019', proposedBy:'host', status:'confirmed' } ] },
-      /* Producer proposed, host has not answered — the host is at turn. */
-      { producer:'Weingut Schmitt', status:'confirmed', source:'invitation',
-        products:[ { name:'Spätburgunder — Mosel 2022', proposedBy:'producer', status:'proposed' } ] },
-      { producer:'Cantina Rossi', status:'invited', source:'invitation',
-        products:[ { name:'Primitivo Riserva 2020', proposedBy:'host', status:'proposed' } ] }
-    ],
-    events:[
-      { at:'12 Jul 2026', actor:'Hawesko GmbH', text:'Show created as a draft' },
-      { at:'14 Jul 2026', actor:'Hawesko GmbH', text:'Bodegas Ruiz invited with Rioja Reserva 2019' },
-      { at:'17 Jul 2026', actor:'Bodegas Ruiz', text:'Confirmed with Rioja Reserva 2019' },
-      { at:'17 Jul 2026', actor:'Hawesko GmbH', text:'Confirmed Rioja Reserva 2019 for Bodegas Ruiz' },
-      { at:'17 Jul 2026', actor:'Bottle Lobby', text:'Venue, exhibitor and product confirmed — show moved to Planning' },
-      { at:'24 Jul 2026', actor:'Hawesko GmbH', text:'Weingut Schmitt invited — no wine proposed' },
-      { at:'26 Jul 2026', actor:'Weingut Schmitt', text:'Proposed Spätburgunder — Mosel 2022' },
-      { at:'28 Jul 2026', actor:'Hawesko GmbH', text:'Cantina Rossi invited with Primitivo Riserva 2020' } ] },
-
-  { id:'WS-2602', title:'Nordic Selection', date:'22 Jan 2027', city:'Copenhagen',
-    focus:'Mediterranean whites for Scandinavian kitchens',
-    stage:'pending_approval', leadHost:'Hawesko GmbH',
-    venueType:'host_premises', venueName:'Hawesko Nordic Office, Copenhagen',
-    capacity:50,
-    exhibitors:[
-      { producer:'Cantina Rossi', status:'confirmed', source:'invitation',
-        products:[ { name:'Grillo Sicilia DOC 2023', proposedBy:'producer', status:'confirmed' } ] },
-      { producer:'Henri Dubois Domaine', status:'confirmed', source:'invitation',
-        products:[ { name:'Pouilly-Fumé 2023', proposedBy:'host', status:'confirmed' } ] }
-    ],
-    events:[
-      { at:'02 Jul 2026', actor:'Hawesko GmbH', text:'Show created as a draft' },
-      { at:'08 Jul 2026', actor:'Cantina Rossi', text:'Confirmed with Grillo Sicilia DOC 2023 instead of the proposed wine' },
-      { at:'09 Jul 2026', actor:'Henri Dubois Domaine', text:'Confirmed with Pouilly-Fumé 2023' },
-      { at:'21 Jul 2026', actor:'Hawesko GmbH', text:'Submitted to Bottle Lobby for release' } ] },
-
-  { id:'WS-2603', title:'Loire & Mosel', date:'18 Sep 2026', city:'Hamburg',
-    focus:'Cool-climate whites, two rivers',
-    stage:'published', leadHost:'Hawesko GmbH',
-    venueType:'host_premises', venueName:'Hawesko Tasting Loft, Hamburg',
-    capacity:70,
-    exhibitors:[
-      { producer:'Henri Dubois Domaine', status:'confirmed', source:'invitation',
-        products:[ { name:'Sancerre Rouge 2022', proposedBy:'host', status:'confirmed' } ] },
-      { producer:'Weingut Schmitt', status:'confirmed', source:'invitation',
-        products:[ { name:'Müller-Thurgau — Mosel 2023', proposedBy:'host', status:'confirmed' } ] }
-    ],
-    events:[
-      { at:'20 May 2026', actor:'Hawesko GmbH', text:'Show created as a draft' },
-      { at:'02 Jun 2026', actor:'Weingut Schmitt', text:'Confirmed with Müller-Thurgau — Mosel 2023' },
-      { at:'04 Jun 2026', actor:'Henri Dubois Domaine', text:'Confirmed with Sancerre Rouge 2022' },
-      { at:'11 Jun 2026', actor:'Hawesko GmbH', text:'Submitted to Bottle Lobby for release' },
-      { at:'15 Jun 2026', actor:'Bottle Lobby', text:'Released — full details are now public' } ] },
-
-  { id:'WS-2599', title:'Primavera Italiana', date:'12 Apr 2026', city:'Munich',
-    focus:'Italian spring releases',
-    stage:'completed', leadHost:'Hawesko GmbH',
-    venueType:'host_premises', venueName:'Hawesko Süd, Munich',
-    capacity:65,
-    exhibitors:[
-      { producer:'Cantina Rossi', status:'confirmed', source:'invitation',
-        products:[ { name:"Nero d'Avola Sicilia DOC 2022", proposedBy:'host', status:'confirmed' } ] }
-    ],
-    events:[
-      { at:'02 Feb 2026', actor:'Hawesko GmbH', text:'Show created as a draft' },
-      { at:'19 Feb 2026', actor:'Cantina Rossi', text:"Confirmed with Nero d'Avola Sicilia DOC 2022" },
-      { at:'01 Mar 2026', actor:'Bottle Lobby', text:'Released — full details are now public' },
-      { at:'13 Apr 2026', actor:'Bottle Lobby', text:'Show completed' } ] }
-];
+/* `wineShows` now lives in assets/bottle-lobby-data.js, loaded ahead
+   of this block. It is shared with the public pages: one record,
+   referenced everywhere, never copied (invariant 1). */
 
 /* One registry entry per role that has a Wine Shows sub-view. Restaurant
    and Retail join once venue requests and attendees exist (A16.5). */
@@ -7691,9 +7632,7 @@ function logShow(show, actor, text) {
 function showProductCount(show) {
   return show.exhibitors.reduce((n, e) => n + e.products.filter(p => p.status !== 'declined').length, 0);
 }
-function confirmedExhibitors(show) {
-  return show.exhibitors.filter(e => e.status === 'confirmed');
-}
+/* confirmedExhibitors() moved to assets/bottle-lobby-public-shows.js. */
 
 /* ══ VIEW SWITCHING ══════════════════════════════════════════════ */
 /* Same two-level shell as the Orders sub-view (A14.8): one list pane,
@@ -7839,39 +7778,11 @@ function showVenueLabel(show, role) {
   return show.venueType === 'host_premises' ? show.venueName : show.venueName + ' (partner venue)';
 }
 
-/* ══ THE TWO VISIBILITY LEVELS (A16.6) ═══════════════════════════ */
-/* One function, two levels, computed from the single show record —
-   never two stored versions (A16.10). */
-function publicShowCard(show, level) {
-  const head =
-    '<div class="ws-public-date">' + show.date + ' · ' + show.city + '</div>' +
-    '<div class="ws-public-title">' + show.title + '</div>' +
-    '<div class="ws-public-focus">' + show.focus + '</div>';
-
-  if (level === 'anonymised') {
-    return '<div class="ws-public">' + head +
-      '<div class="ws-public-hidden">Exhibitors, their wines and the exact venue stay hidden until Bottle&nbsp;Lobby releases the show. ' +
-      'An invited producer must not appear in public before accepting — a later decline would read as a withdrawal.</div>' +
-    '</div>';
-  }
-
-  const exh = confirmedExhibitors(show);
-  const lines = exh.length
-    ? exh.map(e => '<div class="ws-public-line"><b>' + e.producer + '</b> — ' +
-        (e.products.filter(p => p.status === 'confirmed').map(p => p.name).join(', ') || 'wines to be announced') +
-      '</div>').join('')
-    : '<div class="ws-public-line">Exhibitors to be announced.</div>';
-
-  return '<div class="ws-public">' + head +
-    '<div class="ws-public-line" style="margin-top:0.9rem"><b>Venue</b> · ' + show.venueName + '</div>' +
-    '<div class="ws-public-line"><b>Capacity</b> · ' + show.capacity + ' guests</div>' +
-    '<div style="margin-top:0.9rem;padding-top:0.8rem;border-top:1px solid rgba(247,243,238,0.08)">' + lines + '</div>' +
-  '</div>';
-}
-/* The level a real visitor would get right now, from the stage alone. */
-function publicLevelFor(show) {
-  return (show.stage === 'published' || show.stage === 'completed') ? 'full' : 'anonymised';
-}
+/* The two visibility levels of A16.6 now live in
+   assets/bottle-lobby-public-shows.js, together with
+   confirmedExhibitors() and showHeroImage(). The public Wine Shows
+   page and the public profiles render that same publicShowCard() —
+   one renderer, or the two levels drift apart (A16.7). */
 function toggleShowVisPreview(level) {
   showState[activeShowRole].visPreview = level;
   renderShowDetail(showState[activeShowRole].openId);
@@ -8186,7 +8097,17 @@ function openShowModal() {
   document.getElementById('sf-capacity').value = '60';
   document.getElementById('sf-venue-type').value = 'host_premises';
   onShowVenueTypeChange();
+  const hero = document.getElementById('sf-hero');
+  hero.innerHTML = SHOW_HERO_IMAGES
+    .map(h => '<option value="' + h.file + '">' + h.label + '</option>').join('');
+  hero.value = SHOW_HERO_FALLBACK;
+  onShowHeroChange();
   document.getElementById('wine-show-modal').classList.add('active');
+}
+/* The field is not write-only: what you pick is what the card will
+   lead with, so show it straight away. */
+function onShowHeroChange() {
+  document.getElementById('sf-hero-preview').src = document.getElementById('sf-hero').value;
 }
 function closeShowModal() { document.getElementById('wine-show-modal').classList.remove('active'); }
 
@@ -8217,6 +8138,7 @@ function saveShow() {
     id: 'WS-' + (2605 + wineShows.length),
     title: title, date: showFormatDate(date), city: city,
     focus: document.getElementById('sf-focus').value.trim() || 'Focus to be announced',
+    heroImage: document.getElementById('sf-hero').value || SHOW_HERO_FALLBACK,
     stage: 'draft', leadHost: SHOW_ROLES.distributor.entity,
     venueType: vType, venueName: vName,
     capacity: parseInt(document.getElementById('sf-capacity').value, 10) || 60,
@@ -8481,6 +8403,16 @@ Object.keys(SHOW_ROLES).forEach(r => {
         </div>
       </div>
       <div class="edit-section-sub" id="sf-venue-note" style="display:none;margin-top:-0.4rem">Recording the choice only. Sending the venue request and having the partner confirm it comes in a later step.</div>
+
+      <!-- A16.9 hero_image_url. A real host uploads; a static mockup has
+           no server, so this picks from the photography in images/. -->
+      <div class="form-block-title">Hero Image</div>
+      <div class="form-row full">
+        <div class="form-field"><div class="field-label">The photo the public card leads with</div>
+          <select class="field-input" id="sf-hero" onchange="onShowHeroChange()"></select>
+        </div>
+      </div>
+      <img class="sf-hero-preview" id="sf-hero-preview" alt="Selected hero image">
 
     </div>
     <div class="modal-footer">

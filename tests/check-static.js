@@ -7,6 +7,7 @@
 const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
+const { loadDashboard } = require('./load-dashboard');
 
 /* Defaults to the dashboard; an explicit path lets you check a variant
    without touching the real file — used to verify that these checks
@@ -14,7 +15,48 @@ const vm = require('vm');
 const FILE = process.argv[2]
   ? path.resolve(process.argv[2])
   : path.join(__dirname, '..', 'bottle-lobby-dashboard.html');
-const src = fs.readFileSync(FILE, 'utf8');
+
+let fail = 0;
+const bad = m => { console.log('  ✗ ' + m); fail++; };
+const ok  = m => console.log('  ✓ ' + m);
+
+/* ── 0. External assets ──────────────────────────────────────────── */
+/* The page's data and its public renderer live in assets/ so the
+   dashboard and the public pages cannot drift apart. jsdom does not
+   fetch <script src>, so a missing or empty asset is invisible to every
+   other check in this file and to all four behaviour harnesses — the
+   page just runs without those globals. This check is the reason that
+   cannot happen quietly. It runs first and stops the run, because every
+   check below would otherwise report on a page missing half its code. */
+console.log('── external assets');
+let loaded;
+try {
+  loaded = loadDashboard(FILE);
+} catch (e) {
+  bad(e.message);
+  console.log('\n✗ 1 failure(s)');
+  process.exit(1);
+}
+{
+  const declared = [...fs.readFileSync(FILE, 'utf8')
+    .matchAll(/<script\s+src="([^"]+)"/g)].map(m => m[1]);
+  if (!declared.length) ok('none declared');
+  else {
+    ok(loaded.externals.length + ' of ' + declared.length + ' inlined: ' +
+       loaded.externals.map(e => e.src + ' (' + Math.round(e.code.length / 1024) + ' KB)').join(', '));
+    /* Order is a contract, not a detail: the renderer reads the data. */
+    const order = loaded.externals.map(e => e.src);
+    const data = order.indexOf('assets/bottle-lobby-data.js');
+    const pub  = order.indexOf('assets/bottle-lobby-public-shows.js');
+    if (data !== -1 && pub !== -1 && data > pub)
+      bad('bottle-lobby-data.js must be loaded before bottle-lobby-public-shows.js');
+    else if (data !== -1) ok('data asset loads before the renderer that reads it');
+  }
+}
+
+/* Everything below reads the page WITH its assets inlined, so an
+   extracted function is checked exactly like one that never moved. */
+const src = loaded.html;
 const scripts = [...src.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m => m[1]);
 const js = scripts.join('\n');
 /* Markup only. Nearly every false positive in earlier ad-hoc runs came
@@ -22,12 +64,8 @@ const js = scripts.join('\n');
 const markup = src.replace(/<script>[\s\S]*?<\/script>/g, '');
 const style = src.split('</style>')[0];
 
-let fail = 0;
-const bad = m => { console.log('  ✗ ' + m); fail++; };
-const ok  = m => console.log('  ✓ ' + m);
-
 /* ── 1. JS syntax — the `node --check` step ──────────────────────── */
-console.log('── JS syntax');
+console.log('\n── JS syntax');
 try {
   new vm.Script(js, { filename: 'dashboard-scripts.js' });
   ok(scripts.length + ' script block(s), ' + Math.round(js.length / 1024) + ' KB, parse clean');

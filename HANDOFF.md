@@ -91,6 +91,16 @@ Kein Build-Command, Publish-Directory = Repo-Root.
   konnte — `products` blieb leer, `showReadiness` sah nie einen Wein, die Show hing
   dauerhaft in `draft`. Es gibt jetzt keinen "Confirm"-Knopf ohne Wein mehr, sondern
   "Choose a wine & confirm"; Zusage und Weinwahl sind ein Schritt.
+- **A16.7, Durchgang 0 — Datenauslagerung.** `wineShows` und der oeffentliche
+  Renderer liegen jetzt in `assets/bottle-lobby-data.js` und
+  `assets/bottle-lobby-public-shows.js`; das Dashboard laedt sie als klassische
+  Scripts (keine Module — `file://` blockt die). Sichtbar aendert sich nichts
+  ausser dem neuen Hero-Bild-Feld im Create-Show-Modal (`heroImage`, A16.9,
+  Auswahl ueber `images/` mit Vorschau). Damit koennen die oeffentlichen Seiten
+  in den naechsten Durchgaengen dieselben Datensaetze und **denselben**
+  `publicShowCard()` lesen, statt sie 21-fach zu kopieren.
+  **Der riskante Teil war die Testinfrastruktur** — siehe unten.
+  Spec A16.7 und A16.12 nachgezogen.
 - **Spec-Pflege 31.07.:** C3 unterscheidet jetzt die beiden Push-Kanaele (git aus Claude Code
   ohne Groessengrenze, MCP-Connector mit) statt pauschal "nicht pushbar"; Dateigroessen neu
   gemessen; Anhang D nach D18/D19 sortiert und um **D22** ergaenzt; der ueberholte
@@ -161,8 +171,11 @@ Kein Build-Command, Publish-Directory = Repo-Root.
 - **Marge-Block fuer die Winery** bleibt bewusst aus (`ORDER_ROLES.winery.margin = false`):
   es gibt kein Feld fuer Produktionskosten, eine geschaetzte Zahl waere ein A1-Verstoss.
   Anschalten, sobald echte Kostendaten existieren.
-- **Datenarrays auslagern** nach `assets/bottle-lobby-data.js`, kommentiert als Schema-Vorlage
-  fuer den Supabase-Bau. Bewusst noch nicht gemacht, damit Fehler eindeutig zuzuordnen bleiben.
+- **Datenarrays auslagern — angefangen, nicht fertig.** `wineShows` liegt in
+  `assets/bottle-lobby-data.js`, weil A16.7 es brauchte. Alle uebrigen Arrays
+  stehen weiter im Dashboard. Der Weg ist jetzt gebahnt und getestet
+  (`tests/load-dashboard.js`), das naechste Array ist also billig — aber
+  jeweils ein eigener Durchgang, damit Fehler zuzuordnen bleiben.
 - **Bestandspruefung** im Auftragsdetail gegen das Wine Portfolio des Distributors
   (Spec A14.9) — braucht zuerst ein Lagerbestandsfeld; eine erfundene Zahl waere ein
   Verstoss gegen A1.
@@ -189,6 +202,19 @@ Kein Build-Command, Publish-Directory = Repo-Root.
   dann das DOM-Stub-Harness fuer die Logik.
 - **`.ws-*` und `.wse-*` sind zwei verschiedene Praefixe.** Der Klassen-Cross-Check
   muss beide erfassen — sonst faellt eine fehlende Statusklasse durch (siehe oben).
+- **jsdom laedt `<script src>` nicht.** Mit den Optionen, die alle Harnesses
+  benutzen, wird ein externes Script geparst und **nie ausgefuehrt** — ohne
+  Warnung. Deshalb lesen alle Harnesses die Seite jetzt ueber
+  `tests/load-dashboard.js`, das die Assets in Dokumentreihenfolge einsetzt.
+  `check-static.js` sah davor gar nichts: sein Regex traf nur nacktes
+  `<script>`, ausgelagerter Code fiel also aus jeder Strukturpruefung heraus.
+  **Jede kuenftige Auslagerung muss ueber diesen Loader gehen.** Ausfuehrlich
+  in `tests/README.md`.
+- **Zwei Vorschaeden in `invite-render.js` mitrepariert:** die Datei rief nie
+  `process.exit(fail ? 1 : 0)` und wertete gesammelte jsdom-Fehler nicht aus.
+  Sie ist seit jeher mit 0 beendet worden, egal was sie fand — jede Zusicherung
+  darin war fuer `npm test` folgenlos, nur ein echter Absturz kam durch.
+  Falls jemand eine dortige Pruefung fuer bestanden hielt: das war sie nicht.
 - Vor jeder Uebergabe: div/tag-Balance UND Verschachtelung pruefen, doppelte IDs,
   onclick-Funktionen definiert, CSS-Klassen-Cross-Check.
 - Weinnamen muessen exakt zwischen `orders`, `promoMaterials` und `exclusiveDeals`

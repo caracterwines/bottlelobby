@@ -872,6 +872,18 @@ graph a distribution channel, not just a matchmaking signal.
 Wine Shows page as cards with the hero image the distributor uploads when
 creating the show, plus date, title and city, linking to a full listing.
 
+That listing is **its own route, `/wine-show/{slug}`** — a show is a thing
+people forward, and a shared link has to survive leaving the page it was
+found on, exactly as A11 requires for profiles and A12 for varieties. The
+route renders at whichever visibility level A16.6 grants; it does not become
+a second, more generous surface.
+
+> **Prototype deviation, deliberate.** The static mockup has no router, and
+> one hand-maintained file per show is precisely the duplication A12 warns
+> about. It therefore renders the full listing as an expanding layer on the
+> Wine Shows page itself. Same data, same renderer, no URL — the one thing
+> the real build must add back.
+
 ### A16.8 Own events
 
 Any of the four roles creates and manages these freely — no approval.
@@ -954,14 +966,30 @@ row. It is what makes a disputed show reconstructable.
 
 ### A16.12 Prototype state
 
-**Prototype blueprint:** `wineShows` (one record per show, exhibitors and
-products nested as relations), the `SHOW_ROLES` registry — same shape as
+**Prototype blueprint:** the `SHOW_ROLES` registry — same shape as
 `ORDER_ROLES` (A14.8) — `showWineShows()` / `renderWineShows()` /
 `renderShowDetail()` for the two-level list-and-detail sub-view,
-`showReadiness()` + `promoteIfReady()` for A16.10, `publicShowCard(show,
-level)` + `publicLevelFor(show)` for the two visibility levels of A16.6,
-and the `wine-show-modal` / `show-invite-modal` / `show-product-modal`
-trio. All in `bottle-lobby-dashboard.html`.
+`showReadiness()` + `promoteIfReady()` for A16.10, and the
+`wine-show-modal` / `show-invite-modal` / `show-product-modal` trio. All in
+`bottle-lobby-dashboard.html`.
+
+**Shared, because the public surfaces need the same records (A16.7):**
+
+| File | Holds |
+|---|---|
+| `assets/bottle-lobby-data.js` | `wineShows` — one record per show, exhibitors and products nested as relations. Also `SHOW_HERO_IMAGES` / `SHOW_HERO_FALLBACK`. Read it as the draft schema for the Supabase build. |
+| `assets/bottle-lobby-public-shows.js` | `publicShowCard(show, level)`, `publicLevelFor(show)`, `confirmedExhibitors()`, `showHeroImage()` — the two visibility levels of A16.6. |
+
+The dashboard, the public Wine Shows page and the public profiles load
+these two files rather than carrying their own copy. A second renderer
+would be a second answer to "what may this visitor see", and the whole
+point of A16.6 is that there is one. Both are **classic scripts, not
+modules** — the prototype is opened over `file://` as well as over http,
+and `file://` blocks modules. Load order is the only contract: data first.
+
+`hero_image_url` exists as `heroImage` on every record. A real host
+uploads; a static mockup has no server, so the create-show modal picks
+from the photography in `images/`. Same field, same rendering.
 
 **Built so far:** hosting a show, inviting an exhibitor with an optional
 wanted wine, the full two-sided wine handshake of A16.4 — the producer
@@ -975,8 +1003,15 @@ the per-exhibitor chips read it, so the two sides can never disagree.
 **Not built yet** — each its own later pass, none of them blocked by
 anything above: open calls with master-data filters (A16.4), venue requests
 to restaurants and retailers (A16.5), the catering split, attendee
-invitations and the waitlist, own events (A16.8), and how shows surface on
-public profiles and the website (A16.7).
+invitations and the waitlist, and own events (A16.8).
+
+**A16.7 is being built in three passes**, the shared assets above being the
+first and now done. Still open: the Upcoming Shows section on the public
+Wine Shows page with its expanding full listing, the Wine Shows tab on the
+public winery and distributor profiles, and the follow graph as the
+announcement channel. Restaurant and Retail profiles stay on their present
+empty state until A16.5 and the attendee lists exist — they appear in A16.7
+as venue and attendee, and neither relation is modelled yet.
 
 > ⚠️ The prototype carries a **`Simulate Bottle Lobby release (demo)`**
 > button on `pending_approval`, labelled as a demo shortcut and sitting next

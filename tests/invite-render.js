@@ -1,8 +1,9 @@
 const path = require('path');
+const { loadDashboard } = require('./load-dashboard');
 const DASHBOARD = path.join(__dirname, '..', 'bottle-lobby-dashboard.html');
 const { JSDOM, VirtualConsole } = require('jsdom');
 const fs = require('fs');
-const html = fs.readFileSync(DASHBOARD,'utf8');
+const html = loadDashboard().html;   // inlines <script src> — see load-dashboard.js
 const errs = [];
 const vc = new VirtualConsole().on('jsdomError', e => errs.push(e.message));
 const dom = new JSDOM(html, { runScripts:'dangerously', pretendToBeVisual:true, virtualConsole:vc });
@@ -67,5 +68,18 @@ t = exhibitorPaneText();
 if (!t.includes('Bodegas Ruiz')) bad('second exhibitor missing after reopening detail');
 else ok('second exhibitor present after reopening the detail');
 
-if (errs.length) { console.log('\nJSDOM ERRORS:'); errs.forEach(e => console.log('  ' + e.split('\n')[0])); }
+/* A script error is a failure, not a footnote. This file used to print
+   the jsdom errors and exit 0 anyway, so a page that threw on load
+   could still report PASS as long as the assertions below happened to
+   survive it. The other three harnesses guard on this before they
+   assert anything; this one now agrees with them. */
+if (errs.length) {
+  console.log('\nJSDOM ERRORS:');
+  errs.forEach(e => bad('script error on load: ' + e.split('\n')[0]));
+}
 console.log(fail ? `\n✗ ${fail} failure(s)` : '\n✓ all paths render the exhibitor');
+/* This line was missing. Without it the file exited 0 whatever it
+   found, so every assertion in it was decorative: run-all.js reads the
+   exit code, and only an outright crash ever reached it. The other
+   three harnesses have always ended this way. */
+process.exit(fail ? 1 : 0);

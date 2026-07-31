@@ -1,8 +1,9 @@
 const path = require('path');
+const { loadDashboard } = require('./load-dashboard');
 const DASHBOARD = path.join(__dirname, '..', 'bottle-lobby-dashboard.html');
 const { JSDOM, VirtualConsole } = require('jsdom');
 const fs = require('fs');
-const html = fs.readFileSync(DASHBOARD,'utf8');
+const html = loadDashboard().html;   // inlines <script src> — see load-dashboard.js
 const errs = [];
 const dom = new JSDOM(html, { runScripts:'dangerously', pretendToBeVisual:true,
   virtualConsole: new VirtualConsole().on('jsdomError', e => errs.push(e.message)) });

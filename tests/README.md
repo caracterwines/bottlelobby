@@ -36,7 +36,44 @@ treat the site as a Node project.
 | `wine-shows.js` | The Wine Shows sub-view end to end (A16): view isolation against dashboard/profile/orders, runtime id uniqueness with both shells live, per-role lists, the two visibility levels of A16.6, the computed readiness checklist of A16.10, invite → counter-propose → host confirm → auto-promotion, the approval gate and its demo-labelled release button, the decline path, and that every show product resolves to a wine in `partnerWinesPool` rather than being a copy. |
 | `wine-handshake.js` | The two-sided wine confirmation (A16.4, D23). Both sides of every path, including the full round trip `host declines → producer proposes again → host confirms → planning`. Contains the regression test for the dead end where a producer could confirm without naming a wine, leaving the show stuck in `draft`. |
 | `invite-render.js` | That `saveInvite()` actually renders. Three entry paths down to the DOM, after a reported case where "Exhibitors & Wines" looked empty. |
-| `check-static.js` | Structure rather than behaviour, and runs first: JS syntax (the `node --check` step), duplicate ids, `getElementById` targets that exist, div balance and — via jsdom — that children have not escaped their container (B10), `onclick` handlers defined, CSS classes used in the markup defined, and that enum-driven class names like `ws-<stage>` cover the whole enum. Takes an optional file argument so a variant can be checked without touching the real file. |
+| `check-static.js` | Structure rather than behaviour, and runs first: external assets present, non-empty and in the right order, JS syntax (the `node --check` step), duplicate ids, `getElementById` targets that exist, div balance and — via jsdom — that children have not escaped their container (B10), `onclick` handlers defined, CSS classes used in the markup defined, and that enum-driven class names like `ws-<stage>` cover the whole enum. Takes an optional file argument so a variant can be checked without touching the real file. |
+| `load-dashboard.js` | Not a harness — the shared loader every harness reads the page through. See the section below; it is excluded from `run-all.js` on purpose, because a module that does nothing exits 0 and would read as a passing check. |
+
+## The pitfall: jsdom does not fetch `<script src>`
+
+**Read this before extracting anything else out of the dashboard.**
+
+With the options every harness here uses —
+
+```js
+new JSDOM(html, { runScripts: 'dangerously' })
+```
+
+— an external script is parsed, left in the DOM, and **never executed**.
+jsdom only fetches subresources when told to (`resources: 'usable'`), and that
+loads asynchronously, which would force all four harnesses to become async.
+
+So the harnesses read the page through `loadDashboard()`, which resolves every
+`<script src>` against the file's own directory and splices the contents in as
+an inline block at the position the tag occupied. Document order is preserved —
+that is the whole contract, since `bottle-lobby-data.js` must run before the
+block that reads it. A missing or empty asset throws there instead of surfacing
+later as an unexplained `undefined`.
+
+What the failure actually looks like, measured rather than assumed:
+
+| Surface | Without the loader |
+|---|---|
+| `check-static.js` | **Saw nothing at all.** Its script regex matched a bare `<script>` only, so the extracted code fell outside every structural check — syntax, `onclick`, `getElementById`, CSS classes — with no signal of any kind. |
+| The four behaviour harnesses | Loud, not silent: the page throws `ReferenceError: wineShows is not defined` on load. Three of them guard on `jsdomError` before asserting and stop there. |
+
+The dangerous half was `check-static.js`. It is now the check that closes the
+hole: it fails the run if a declared asset is missing, empty, or loaded after
+the file that reads it.
+
+**Any future extraction must go through `loadDashboard()`.** A new harness that
+calls `fs.readFileSync` on the dashboard directly is testing a page with holes
+in it.
 
 ## Two assertions worth keeping
 
@@ -82,3 +119,20 @@ class, renamed `onclick` target, syntax error, and the `side` vocabulary
 mismatch. Do the same when adding a check: mutate a copy, confirm it fails.
 
     node check-static.js /tmp/mutant.html
+
+The asset checks were verified the same way, against three mutations:
+
+| Mutation | Caught by |
+|---|---|
+| Asset file deleted | `check-static.js` by name; all five harnesses fail |
+| Asset file emptied | `check-static.js` by name; all five harnesses fail |
+| Asset present and parsing, but throwing at run time | The four behaviour harnesses. `check-static.js` passes, correctly — nothing is statically wrong with it |
+
+That third row is the division of labour working: a static check should not
+claim to know what a file does when it runs.
+
+**One repair fell out of this.** `invite-render.js` never called
+`process.exit(fail ? 1 : 0)`, so it exited 0 whatever it found. Every assertion
+in it was decorative — `run-all.js` reads the exit code, and only an outright
+crash ever reached it. It also collected `jsdomError`s and merely printed them.
+Both are fixed; the file now ends like the other three.
