@@ -164,13 +164,15 @@ Kein Build-Command, Publish-Directory = Repo-Root.
 
 ## Hinweise fuer Claude
 
-- **Die jsdom-Harnesses liegen in `tests/`** und brauchen einmalig
-  `cd tests && npm install` (nur jsdom). Danach `npm test` — ein Lauf ueber alle
-  vier, eine Zeile pro Datei. `tests/node_modules/` ist git-ignoriert, und
-  `netlify.toml` sperrt `/tests/*` auf der Live-Seite, weil das Publish-Directory
-  das Repo-Root ist. Neue Zusicherungen gehoeren dorthin, nicht in den Scratchpad
-  (Spec C7). Die Struktur-Pruefungen (doppelte IDs, div-Balance, onclick,
-  CSS-Cross-Check, `node --check`) sind noch NICHT dort und laufen weiter von Hand.
+- **Alle Pruefungen liegen in `tests/`** und brauchen einmalig
+  `cd tests && npm install` (nur jsdom). Danach ist **`npm test` der komplette
+  Durchlauf** — `check-static.js` zuerst (Syntax, doppelte IDs, div-Balance und
+  Verschachtelung, onclick, CSS-Cross-Check, Enum-Klassen), dann die vier
+  Verhaltens-Harnesses. Nichts davon muss noch von Hand nachgebaut werden.
+  `tests/node_modules/` ist git-ignoriert, `netlify.toml` sperrt `/tests/*` auf
+  der Live-Seite. Neue Zusicherungen gehoeren dorthin, nicht in den Scratchpad
+  (Spec C7) — und eine neue Pruefung erst als fertig melden, wenn sie an einer
+  absichtlich kaputten Kopie auch wirklich fehlschlaegt.
 
 - `bottle-lobby-dashboard.html` ist ~473 KB (31.07. nachgemessen). Ueber **git push**
   ist das kein Problem — die Groessengrenze gilt allein dem MCP-Connector, der immer

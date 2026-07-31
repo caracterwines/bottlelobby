@@ -1410,8 +1410,8 @@ Diagnosed 30 July 2026 after repeated `403 Resource not accessible by integratio
 | Version control + deploy | GitHub MCP connector → Netlify auto-deploy |
 | Image generation | OpenArt (`gpt-image-2`, poll with `openart_creation_get` + `historyId`) |
 | Multi-file changes | Python scripting in the container, then push |
-| JS verification | `node --check` on the extracted script block, plus a DOM harness for logic tests |
-| Test harnesses | `tests/` in the repo root — `cd tests && npm install && npm test` (jsdom) |
+| JS verification | `cd tests && npm test` — structural checks and DOM harnesses in one run (jsdom) |
+| Test harnesses | `tests/` in the repo root |
 
 **Harnesses live in `tests/`, never in a scratchpad.** They load the real
 `bottle-lobby-dashboard.html`, run its scripts and drive the actual functions.
@@ -1432,6 +1432,23 @@ copying when a similar situation arises:
 - **Fixture-reachability tests.** Assert that the demo data actually exercises
   each branch a contract covers. A contract can hold while the fixtures only
   ever reach one side of it.
+
+`tests/check-static.js` carries the structural half — the `node --check` step,
+duplicate ids, div balance, `onclick` handlers, CSS cross-check — so the whole
+of the "usual checks" is one command and nothing is re-derived by hand.
+
+> **B10 needs a parser, not a counter.** A balanced div count does not prove
+> correct nesting, and neither does a depth check: a closing pair that shuts a
+> child *and* its container leaves both intact while the following siblings
+> land outside. `check-static.js` therefore parses the markup and asserts that
+> known children still resolve to their container via `closest()`. Add a pair
+> whenever a new container carries layout its children depend on.
+
+> **Verify a new check by breaking the file on purpose.** Copy it, introduce
+> the exact fault, and confirm the check fails — `node check-static.js
+> <copy>`. A check that has never failed is an assumption, not a guarantee;
+> two of the checks here only became trustworthy after a mutation exposed that
+> they did not fire.
 
 `tests/` is excluded from the deployed site in `netlify.toml` — the publish
 directory is the repo root, so everything committed is served unless blocked.

@@ -36,6 +36,7 @@ treat the site as a Node project.
 | `wine-shows.js` | The Wine Shows sub-view end to end (A16): view isolation against dashboard/profile/orders, runtime id uniqueness with both shells live, per-role lists, the two visibility levels of A16.6, the computed readiness checklist of A16.10, invite → counter-propose → host confirm → auto-promotion, the approval gate and its demo-labelled release button, the decline path, and that every show product resolves to a wine in `partnerWinesPool` rather than being a copy. |
 | `wine-handshake.js` | The two-sided wine confirmation (A16.4, D23). Both sides of every path, including the full round trip `host declines → producer proposes again → host confirms → planning`. Contains the regression test for the dead end where a producer could confirm without naming a wine, leaving the show stuck in `draft`. |
 | `invite-render.js` | That `saveInvite()` actually renders. Three entry paths down to the DOM, after a reported case where "Exhibitors & Wines" looked empty. |
+| `check-static.js` | Structure rather than behaviour, and runs first: JS syntax (the `node --check` step), duplicate ids, `getElementById` targets that exist, div balance and — via jsdom — that children have not escaped their container (B10), `onclick` handlers defined, CSS classes used in the markup defined, and that enum-driven class names like `ws-<stage>` cover the whole enum. Takes an optional file argument so a variant can be checked without touching the real file. |
 
 ## Two assertions worth keeping
 
@@ -55,9 +56,25 @@ The same file also asserts that the **demo fixtures reach both sides** of the
 handshake. A contract can hold while the fixtures only ever exercise one
 side, which leaves the other untested for the wrong reason.
 
-## Still ad hoc
+## Known and tolerated
 
-The structural checks are not in here yet — duplicate ids, div balance and
-nesting, `onclick` handlers defined, CSS class cross-check, and `node --check`
-on the extracted script block. They are run by hand each session and are the
-remaining half of the C3 gap.
+`check-static.js` carries two short allowlists, each with the reason inline:
+
+- `KNOWN_UNSTYLED` — `profile-badge` and `badge-own-label` are leftovers of the
+  pre-B9 naming convention. Every element carrying them styles itself inline,
+  so there is no visual defect, but the class names are dead weight.
+- `KNOWN_MISSING` — `.wse-applied` has no rule because the `applied` state only
+  becomes reachable with the Open Call (A16.4), which is not built.
+
+Both lists are checked in **both** directions: an entry that no longer applies
+fails the run, so the allowlist cannot quietly outlive the problem.
+
+## Verifying the checks themselves
+
+A check that never fails is worse than no check. Both `check-static.js` and the
+vocabulary contract in `wine-handshake.js` were verified by re-introducing the
+faults they are meant to catch — duplicate id, escaped container, missing CSS
+class, renamed `onclick` target, syntax error, and the `side` vocabulary
+mismatch. Do the same when adding a check: mutate a copy, confirm it fails.
+
+    node check-static.js /tmp/mutant.html

@@ -5,9 +5,11 @@ const { execFileSync } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 
+/* Static checks first: if the file is structurally broken, that is the
+   more useful message than a cascade of harness failures. */
 const files = fs.readdirSync(__dirname)
   .filter(f => f.endsWith('.js') && f !== 'run-all.js')
-  .sort();
+  .sort((a, b) => (a === 'check-static.js' ? -1 : b === 'check-static.js' ? 1 : a.localeCompare(b)));
 
 let failed = 0;
 for (const f of files) {
