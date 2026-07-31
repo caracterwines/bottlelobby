@@ -624,6 +624,7 @@ html.embed-preview nav { display:none !important; }
 html.embed-preview .preview-banner { display:flex !important; }
 html.embed-preview .floating-cta { display:none !important; }
 </style>
+<link rel="stylesheet" href="assets/bottle-lobby-public-shows.css">
 </head>
 <body>
 <script>if(new URLSearchParams(location.search).get('preview')==='embed'){document.documentElement.classList.add('embed-preview');}</script>
@@ -840,12 +841,11 @@ html.embed-preview .floating-cta { display:none !important; }
 
       <!-- SHOWS -->
       <div class="tab-content" id="tab-shows">
-        <div style="display:flex;flex-direction:column;gap:1rem"><div style="background:#110d0d;border:1px solid var(--line);padding:1.4rem">
-            <div style="font-size:0.62rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--gold);margin-bottom:0.4rem">Oct 3, 2026 · Hamburg</div>
-            <div style="font-family:'Cormorant Garamond',serif;font-size:1.2rem;color:var(--paper);margin-bottom:0.3rem">French Whites Showcase — Hawesko × Bottle Lobby</div>
-            <div style="font-size:0.78rem;color:var(--dim);margin-bottom:0.8rem">52 clients invited · Tasting dinner at Restaurant Nord</div>
-            <span class="profile-badge badge-verified">✓ Confirmed</span>
-          </div></div>
+        <!-- Rendered from the shared records by
+             assets/bottle-lobby-profile-shows.js. The page declares who it
+             is and nothing else; which shows may be named here, and at what
+             level, is decided in one place for every surface (A16.6/A16.7). -->
+        <div class="ws-profile-shows" data-entity="Domaine Lefèvre"></div>
       </div>
     </div>
 
@@ -1048,6 +1048,14 @@ function showFollowToast(msg) {
   <a href="bottle-lobby-dashboard.html" class="btn btn-outline">Member Login</a>
   <a href="bottle-lobby-contact.html" class="btn btn-gold">Join Now</a>
 </div>
+
+<!-- Shared show data, the public renderer, and the profile tab that
+     uses them. Same files as the dashboard and the Wine Shows page:
+     a show exists exactly once (A16.7). Classic scripts — these pages
+     are opened over file:// as well as over http. -->
+<script src="assets/bottle-lobby-data.js"></script>
+<script src="assets/bottle-lobby-public-shows.js"></script>
+<script src="assets/bottle-lobby-profile-shows.js"></script>
 
 </body>
 </html>

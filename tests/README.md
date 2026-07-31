@@ -38,6 +38,7 @@ treat the site as a Node project.
 | `invite-render.js` | That `saveInvite()` actually renders. Three entry paths down to the DOM, after a reported case where "Exhibitors & Wines" looked empty. |
 | `check-static.js` | Structure rather than behaviour, and runs first: external assets present, non-empty and in the right order, JS syntax (the `node --check` step), duplicate ids, `getElementById` targets that exist, div balance and — via jsdom — that children have not escaped their container (B10), `onclick` handlers defined, CSS classes used in the markup defined, and that enum-driven class names like `ws-<stage>` cover the whole enum. Takes an optional file argument so a variant can be checked without touching the real file. |
 | `public-shows-page.js` | `bottle-lobby-wine-shows.html` — the public face of A16.7, and the first public page with any coverage at all. That the section renders matters less than that it renders **less** than the dashboard: no `draft` or `pending_approval` show is listed, and a `planning` show names none of its exhibitors, none of their wines and not the venue, while still showing date, city and focus. Also the expanding listing (closed on load, independent per card, `aria-expanded` in step) and that every hero image exists in the repo. |
+| `profile-shows.js` | The Wine Shows tab on all fifteen public winery and distributor profiles (A16.7). Every page is loaded and driven, not sampled. Checks that each account is listed at exactly the shows A16.6 permits naming it at — host from `planning`, exhibitor only from `published` — that the role chip matches, that pages with nothing show the empty state, and that no page names an exhibitor, wine or venue of a still-anonymised show. Also re-checks the structure of these pages, since they were rewritten by script: div balance, duplicate ids, and no show titles left hard-coded. |
 | `load-dashboard.js` | Not a harness — the shared loader every harness reads the page through. See the section below; it is excluded from `run-all.js` on purpose, because a module that does nothing exits 0 and would read as a passing check. |
 
 ## The pitfall: jsdom does not fetch `<script src>`
@@ -146,6 +147,26 @@ and `.git`, with `node_modules` symlinked back in:
 Mutating a copy is the better habit: the mutation cannot survive a crashed
 run or a forgotten restore, and the working tree is never in a state where an
 interrupted session would leave something broken behind.
+
+The profile tab added three more, again on a copy:
+
+| Mutation | Caught by |
+|---|---|
+| Exhibitors made visible from `planning` | `profile-shows.js`: Bodegas Ruiz and Weingut Schmitt list *Grande Rioja* without hosting it |
+| One `data-entity` misspelt | `profile-shows.js`: *data-entity "Bodegas Ruis" but the page is about "Bodegas Ruiz"* |
+| A hand-written show left in a profile's markup | `profile-shows.js`: *show titles hard-coded — Primavera Italiana* |
+
+Two assertions in `profile-shows.js` were wrong before they were right, and
+both errors are worth knowing about. The first tried to validate
+`data-entity` against the names appearing in the show records — but an
+account with no shows is legitimately absent from them, so nine correct
+pages failed. There is no account registry in the prototype; the check now
+compares against the page's own `<title>`, which catches the realistic fault
+(a mangled name) without pretending to validate against something that does
+not exist. The second forbade naming any exhibitor of an anonymised show
+anywhere on a page, which broke on Weingut Schmitt — anonymous at Grande
+Rioja and rightly named at Loire & Mosel, on the same profile. The
+assertion is now scoped to the anonymised show's own card.
 
 **One repair fell out of this.** `invite-render.js` never called
 `process.exit(fail ? 1 : 0)`, so it exited 0 whatever it found. Every assertion

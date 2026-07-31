@@ -14,6 +14,24 @@
    assumes them rather than redeclaring them.
 ════════════════════════════════════════════════════════════════════ */
 
+/* ── The grid the cards sit in ───────────────────────────────────
+   Shared, because mountShowCards() emits the cells: the Wine Shows
+   page and all fifteen public profiles lay them out identically, and
+   a per-page copy would drift the moment one of them was adjusted. */
+.ws-grid { display:grid; grid-template-columns:repeat(2, 1fr); gap:1.6rem; align-items:start; }
+.ws-cell { display:block; }
+@media (max-width: 800px) { .ws-grid { grid-template-columns:1fr; } }
+
+/* On a profile, past participation sits under its own heading. */
+.ws-profile-past-head { font-size:0.6rem; letter-spacing:0.2em; text-transform:uppercase;
+  color:var(--dim); margin:2.2rem 0 1.2rem; display:flex; align-items:center; gap:1rem; }
+.ws-profile-past-head::after { content:''; flex:1; height:1px; background:var(--line); }
+/* An account with no public participation says so, rather than
+   showing an empty frame. Matches what Restaurant and Retail
+   profiles already displayed by hand. */
+.ws-empty { background:#110d0d; border:1px dashed var(--line); padding:2rem;
+  text-align:center; color:var(--dim); font-size:0.82rem; }
+
 /* ── The card (A16.7) ────────────────────────────────────────────
    Hero image, date, title, city. Shown for `planning` and
    `published` alike: none of it is protected by A16.6. */
@@ -22,6 +40,8 @@
   font-family:'Inter',sans-serif; transition:border-color 0.2s; }
 .ws-teaser:hover { border-color:rgba(184,151,90,0.5); }
 .ws-teaser-hero { display:block; width:100%; height:190px; object-fit:cover; }
+/* What this account did at the show — only ever set on a profile. */
+.ws-teaser-role { float:right; color:var(--dim); letter-spacing:0.12em; }
 .ws-teaser-body { padding:1.1rem 1.2rem; }
 .ws-teaser-foot { display:flex; align-items:center; justify-content:space-between;
   gap:1rem; margin-top:0.9rem; padding-top:0.8rem; border-top:1px solid rgba(247,243,238,0.08); }

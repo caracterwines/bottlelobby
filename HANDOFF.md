@@ -114,6 +114,22 @@ Kein Build-Command, Publish-Directory = Repo-Root.
   **und** Listing, also genau das, was die oeffentliche Seite baut.
   Neues Harness `tests/public-shows-page.js` — die erste oeffentliche Seite
   ueberhaupt mit Pruefungen. Gegen vier Mutationen verifiziert.
+- **A16.7, Durchgang 2 — der Wine-Shows-Reiter auf 15 oeffentlichen Profilen.**
+  Winery- und Distributor-Seiten trugen dort erfundene Veranstaltungen; jetzt
+  steht in jeder Datei nur noch `<div class="ws-profile-shows"
+  data-entity="…">`, alles andere kommt aus den geteilten Assets.
+  **Die inhaltliche Entscheidung des Durchgangs:** ab wann ein Beteiligter
+  genannt werden darf. Der Host ab `planning` — er kuendigt die Show an, und
+  A16.6 schuetzt Produzenten, Weine und Location, nicht den Ankuendiger. Der
+  Aussteller erst ab `published`, **auch wenn er laengst zugesagt hat**: die
+  anonymisierte Show ist oeffentlich gelistet, und stuende ihr Titel auch auf
+  dem Profil des Produzenten, verriete das Zusammenlesen beider Seiten genau
+  das, was A16.6 zurueckhaelt. Ergebnis in der Demo: Bodegas Ruiz und Weingut
+  Schmitt sind bei Grande Rioja bestaetigt und erscheinen dort nirgends.
+  Sechs Profile listen Shows, neun zeigen den Leerzustand — denselben, den
+  Restaurant und Retail schon hatten. A16.7 um die Rollentabelle ergaenzt.
+  Neues Harness `tests/profile-shows.js` faehrt alle 15 Seiten. Gegen drei
+  Mutationen verifiziert.
 - **Spec-Pflege 31.07.:** C3 unterscheidet jetzt die beiden Push-Kanaele (git aus Claude Code
   ohne Groessengrenze, MCP-Connector mit) statt pauschal "nicht pushbar"; Dateigroessen neu
   gemessen; Anhang D nach D18/D19 sortiert und um **D22** ergaenzt; der ueberholte
@@ -169,14 +185,16 @@ Kein Build-Command, Publish-Directory = Repo-Root.
   Solange nichts entschieden ist, verwaltet `check-static.js` sie in
   `KNOWN_UNSTYLED` — mit Pruefung in beide Richtungen, die Liste kann das Problem
   also nicht ueberleben.
-- **Wine Shows — die naechsten Durchgaenge.** Der erste ist gebaut (siehe unten),
-  der Rest steht noch aus, jeder als eigener Schritt und keiner vom anderen blockiert:
-  Open Call mit Master-Data-Filtern (A16.4), Location-Anfrage an Restaurant/Retail
-  samt Bestaetigung (A16.5), Catering-Aufteilung, Teilnehmer-Einladungen und Warteliste,
-  eigene Events fuer alle vier Rollen (A16.8), und die Darstellung auf den oeffentlichen
-  Profilen und der Website (A16.7). Restaurant und Retail bekommen ihre
-  Wine-Shows-Unteransicht erst mit den Location- und Teilnehmer-Schritten —
-  deshalb hat `SHOW_ROLES` bisher nur zwei Eintraege.
+- **Wine Shows — die naechsten Durchgaenge.** Gebaut sind der erste Dashboard-Durchgang
+  und A16.7 komplett (drei Durchgaenge, siehe unten). Offen, jeder als eigener Schritt
+  und keiner vom anderen blockiert: Open Call mit Master-Data-Filtern (A16.4),
+  Location-Anfrage an Restaurant/Retail samt Bestaetigung (A16.5), Catering-Aufteilung,
+  Teilnehmer-Einladungen und Warteliste, eigene Events fuer alle vier Rollen (A16.8),
+  und der **Follow-Graph als Ankuendigungskanal** — der zweite Absatz von A16.7, als
+  einziger Teil davon noch nicht gebaut. `wineFollowGraph` liegt bereit.
+  Restaurant und Retail bekommen ihre Wine-Shows-Unteransicht erst mit den Location-
+  und Teilnehmer-Schritten — deshalb hat `SHOW_ROLES` bisher nur zwei Eintraege, und
+  deshalb bleiben ihre sieben Profilseiten beim handgeschriebenen Leerzustand.
 - **Der `Simulate Bottle Lobby release (demo)`-Knopf muss weg**, sobald es eine
   Admin-Oberflaeche gibt. Er steht nur da, weil der Prototyp kein Staff-Panel hat,
   ist als Demo beschriftet und nennt daneben den echten Weg. Im Investorengespraech

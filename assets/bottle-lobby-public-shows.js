@@ -59,22 +59,67 @@ function publicShows(all, past) {
                                  : showDateValue(a) - showDateValue(b));
 }
 
+/* ══ A SHOW ON SOMEBODY'S PROFILE (A16.7) ════════════════════════ */
+/* A16.7 puts a show on the public profile of every participant. A16.6
+   decides which of them may be named, and the two have to be read
+   together — so this returns the role a given entity may be SHOWN as,
+   or null.
+
+   The host may always be shown. A show in `planning` is publicly
+   listed under its host's name, and the host is the one announcing it;
+   nothing in A16.6 protects them.
+
+   An exhibitor may be shown only from `published`. This is stricter
+   than it first looks, and deliberately so: a confirmed producer has
+   accepted, so the "a later decline would read as a withdrawal"
+   rationale does not apply to them — but the RULE in A16.6 is flat
+   ("neither producers, nor products … are named"), and the leak is
+   real. Grande Rioja is publicly listed while anonymised; if Bodegas
+   Ruiz's profile also listed Grande Rioja, anyone reading both pages
+   would know who is exhibiting. Withholding it on the public page and
+   disclosing it on the producer's own profile would not be a weaker
+   promise, it would be a broken one. */
+function publicParticipation(show, entity) {
+  const listable = PUBLIC_UPCOMING_STAGES.indexOf(show.stage) !== -1 ||
+                   PUBLIC_PAST_STAGES.indexOf(show.stage) !== -1;
+  if (!listable) return null;
+  if (show.leadHost === entity) return 'host';
+  if (publicLevelFor(show) !== 'full') return null;
+  return confirmedExhibitors(show).some(e => e.producer === entity) ? 'exhibitor' : null;
+}
+const PARTICIPATION_LABEL = { host: 'Hosting', exhibitor: 'Exhibiting' };
+
+/* Everything a profile page needs: the shows this entity may be seen
+   at, split the way A16.7 asks for them — "upcoming and, after
+   `completed`, as history". */
+function publicShowsForEntity(all, entity) {
+  const mine = all.filter(s => publicParticipation(s, entity));
+  return {
+    upcoming: publicShows(mine, false),
+    past:     publicShows(mine, true)
+  };
+}
+
 /* ══ THE CARD (A16.7) ════════════════════════════════════════════ */
 /* Hero image, date, city, title, focus — the whole of what A16.6
    grants at the anonymised level, so one card serves both levels. The
    note is the point rather than an apology: an invited producer who has
    not yet accepted is being protected, and saying so turns a gap in the
    listing into the reason to trust it. */
-function publicShowTeaser(show, level) {
+function publicShowTeaser(show, level, role) {
   const past = PUBLIC_PAST_STAGES.indexOf(show.stage) !== -1;
   const note = level === 'anonymised'
     ? 'Exhibitors are named once they have accepted — never before.'
     : (past ? 'This show has taken place.' : 'Exhibitors, wines and venue confirmed.');
+  /* Only set on a profile, where the question is what THIS account did
+     at the show; on the Wine Shows page there is no such subject. */
+  const chip = role && PARTICIPATION_LABEL[role]
+    ? '<span class="ws-teaser-role">' + PARTICIPATION_LABEL[role] + '</span>' : '';
 
   return '<button type="button" class="ws-teaser' + (past ? ' past' : '') + '">' +
     '<img class="ws-teaser-hero" src="' + showHeroImage(show) + '" alt="' + show.title + '">' +
     '<div class="ws-teaser-body">' +
-      '<div class="ws-public-date">' + show.date + ' · ' + show.city + '</div>' +
+      '<div class="ws-public-date">' + show.date + ' · ' + show.city + chip + '</div>' +
       '<div class="ws-public-title">' + show.title + '</div>' +
       '<div class="ws-public-focus">' + show.focus + '</div>' +
       '<div class="ws-teaser-foot">' +
@@ -117,4 +162,40 @@ function publicShowCard(show, level) {
 /* The level a real visitor would get right now, from the stage alone. */
 function publicLevelFor(show) {
   return (show.stage === 'published' || show.stage === 'completed') ? 'full' : 'anonymised';
+}
+
+/* ══ MOUNTING (A16.7) ════════════════════════════════════════════ */
+/* Cards into a container, each with its full listing folded behind it,
+   and the toggle wired. Shared by the Wine Shows page and all fifteen
+   public profiles: the interaction is part of what the card IS, and
+   fifteen copies of it would drift the same way fifteen copies of the
+   renderer would.
+
+   `entity`, when given, makes the card say what that account did at
+   the show — the profile case. Returns how many were rendered. */
+function mountShowCards(host, list, entity) {
+  if (!host) return 0;
+  host.innerHTML = list.map(function (s) {
+    const level = publicLevelFor(s);
+    const id = 'ws-listing-' + s.id + (entity ? '-' + entity.replace(/\W+/g, '') : '');
+    const role = entity ? publicParticipation(s, entity) : null;
+    return '<div class="ws-cell">' +
+      publicShowTeaser(s, level, role).replace('<button type="button"',
+        '<button type="button" aria-expanded="false" aria-controls="' + id + '"') +
+      '<div class="ws-listing" id="' + id + '">' + publicShowCard(s, level) + '</div>' +
+    '</div>';
+  }).join('');
+
+  /* One handler per card rather than one on the container: the cards
+     are buttons, and a delegated listener would have to re-derive
+     which one was hit. */
+  Array.prototype.forEach.call(host.querySelectorAll('.ws-teaser'), function (btn) {
+    btn.addEventListener('click', function () {
+      const panel = btn.nextElementSibling;
+      const open = panel.classList.toggle('open');
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      btn.querySelector('.ws-teaser-more').textContent = open ? 'Close ↑' : 'Full listing →';
+    });
+  });
+  return list.length;
 }

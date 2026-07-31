@@ -80,7 +80,7 @@ console.log('\n── A16.6 on a real page');
   else ok(planning.length + ' planning show(s) in the fixtures');
 
   for (const s of planning) {
-    const cell = [...d.querySelectorAll('.ups-cell')]
+    const cell = [...d.querySelectorAll('.ws-cell')]
       .find(c => (c.querySelector('.ws-public-title') || {}).textContent === s.title);
     if (!cell) { bad(s.title + ': not on the page'); continue; }
 
@@ -110,7 +110,7 @@ console.log('\n── the full level');
   const pub = shows.filter(s => s.stage === 'published');
   if (!pub.length) bad('no published show in the fixtures — the full level is untested');
   for (const s of pub) {
-    const cell = [...d.querySelectorAll('.ups-cell')]
+    const cell = [...d.querySelectorAll('.ws-cell')]
       .find(c => (c.querySelector('.ws-public-title') || {}).textContent === s.title);
     if (!cell) { bad(s.title + ': not on the page'); continue; }
     const html = cell.innerHTML;
