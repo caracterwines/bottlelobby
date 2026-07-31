@@ -907,6 +907,18 @@ its appearances: a restaurant following a winery is notified when that
 winery exhibits somewhere or holds its own event. This makes the follow
 graph a distribution channel, not just a matchmaking signal.
 
+The feed is a **third public surface**, and the rule above applies to it
+unchanged: it announces an appearance only where the participant's own
+profile would show it. A follower of a producer confirmed at a show still
+in `planning` is told nothing — the show is anonymised, and a notification
+naming the producer would be the same leak by another route. A follower of
+the **host** is told from `planning`, because the host is public from
+`planning`.
+
+> Never derive the feed from "shows my stars take part in". That reads as
+> the obvious implementation and quietly turns the announcement channel
+> into the one place A16.6 does not hold.
+
 **On the public website.** Shows in `planning` and `published` appear on the
 Wine Shows page as cards with the hero image the distributor uploads when
 creating the show, plus date, title and city, linking to a full listing.
@@ -1026,6 +1038,12 @@ lives, and `mountShowCards()` renders the cards and wires the expanding
 listing for every surface at once — the Wine Shows page, all fifteen
 profiles and the dashboard preview.
 
+The announcement channel stays in the dashboard, since it is not a public
+page: `starsOf()`, `followedAppearances()` and `paintAppearanceWidget()`
+fill a **From Your Stars** widget on all four overviews. It asks
+`publicParticipation()` the same question the public surfaces ask, which is
+what keeps it from becoming the exception.
+
 The dashboard, the public Wine Shows page and the public profiles load
 these two files rather than carrying their own copy. A second renderer
 would be a second answer to "what may this visitor see", and the whole
@@ -1060,10 +1078,20 @@ fifteen public winery and distributor profiles, rendering from the same
 records: six list shows, nine show an empty state, and the two producers
 confirmed at an anonymised show appear on neither, per the table in A16.7.
 
-Still open: the follow graph as the announcement channel. Restaurant and
-Retail profiles stay on their present empty state until A16.5 and the
-attendee lists exist — they appear in A16.7 as venue and attendee, and
-neither relation is modelled yet.
+A fourth pass added the follow graph as the announcement channel — the
+**From Your Stars** widget on all four overviews, reading the same
+visibility function as the two public surfaces. **A16.7 is complete.**
+
+The demo graph carries a deliberate fixture for it: Weinhaus Müller
+follows Bodegas Ruiz, who is *confirmed* at the anonymised Grande Rioja.
+Their feed stays empty, which is the rule demonstrated rather than merely
+asserted. `tests/follow-feed.js` fails if that pair is ever removed,
+because without it every other assertion in the file passes vacuously.
+
+Restaurant and Retail profiles stay on their present empty state until
+A16.5 and the attendee lists exist — they appear in A16.7 as venue and
+attendee, and neither relation is modelled yet. Their dashboards do carry
+the feed, since A16.7's own example is a restaurant following a winery.
 
 Which shows a stranger may see listed is itself derived (A16.10), not a
 curated list: `planning` and `published` are upcoming, `completed` is

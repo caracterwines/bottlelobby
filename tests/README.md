@@ -39,6 +39,7 @@ treat the site as a Node project.
 | `check-static.js` | Structure rather than behaviour, and runs first: external assets present, non-empty and in the right order, JS syntax (the `node --check` step), duplicate ids, `getElementById` targets that exist, div balance and — via jsdom — that children have not escaped their container (B10), `onclick` handlers defined, CSS classes used in the markup defined, and that enum-driven class names like `ws-<stage>` cover the whole enum. Takes an optional file argument so a variant can be checked without touching the real file. |
 | `public-shows-page.js` | `bottle-lobby-wine-shows.html` — the public face of A16.7, and the first public page with any coverage at all. That the section renders matters less than that it renders **less** than the dashboard: no `draft` or `pending_approval` show is listed, and a `planning` show names none of its exhibitors, none of their wines and not the venue, while still showing date, city and focus. Also the expanding listing (closed on load, independent per card, `aria-expanded` in step) and that every hero image exists in the repo. |
 | `profile-shows.js` | The Wine Shows tab on all fifteen public winery and distributor profiles (A16.7). Every page is loaded and driven, not sampled. Checks that each account is listed at exactly the shows A16.6 permits naming it at — host from `planning`, exhibitor only from `published` — that the role chip matches, that pages with nothing show the empty state, and that no page names an exhibitor, wine or venue of a still-anonymised show. Also re-checks the structure of these pages, since they were rewritten by script: div balance, duplicate ids, and no show titles left hard-coded. |
+| `follow-feed.js` | The follow graph as an announcement channel (A16.7) — the third surface a show appears on. Checks that the **From Your Stars** widget on all four overviews announces exactly what the public profiles would show: a follower of a host hears about a `planning` show, a follower of a producer confirmed at one hears nothing. Also that releasing a show reaches its host's followers immediately, and that the demo graph still contains the followed-but-anonymised pair without which the whole file passes vacuously. |
 | `load-dashboard.js` | Not a harness — the shared loader every harness reads the page through. See the section below; it is excluded from `run-all.js` on purpose, because a module that does nothing exits 0 and would read as a passing check. |
 
 ## The pitfall: jsdom does not fetch `<script src>`
@@ -94,6 +95,14 @@ tests stayed green and only the contract failed.
 The same file also asserts that the **demo fixtures reach both sides** of the
 handshake. A contract can hold while the fixtures only ever exercise one
 side, which leaves the other untested for the wrong reason.
+
+`follow-feed.js` carries the sharpest version of that idea. Its subject is a
+leak that can only happen if some account follows a producer confirmed at a
+still-anonymised show — and when it was written, no such pair existed in the
+demo graph. Every assertion passed, and all of them passed **vacuously**. The
+pair was added to `wineFollowGraph` on purpose (Weinhaus Müller follows
+Bodegas Ruiz, confirmed at Grande Rioja), and the harness now fails if it is
+ever removed. A test whose subject cannot occur is not a passing test.
 
 ## Known and tolerated
 
@@ -155,6 +164,14 @@ The profile tab added three more, again on a copy:
 | Exhibitors made visible from `planning` | `profile-shows.js`: Bodegas Ruiz and Weingut Schmitt list *Grande Rioja* without hosting it |
 | One `data-entity` misspelt | `profile-shows.js`: *data-entity "Bodegas Ruis" but the page is about "Bodegas Ruiz"* |
 | A hand-written show left in a profile's markup | `profile-shows.js`: *show titles hard-coded — Primavera Italiana* |
+
+And three for the announcement channel:
+
+| Mutation | Caught by |
+|---|---|
+| Feed derived from raw participation instead of `publicParticipation()` | `follow-feed.js`: *feed announces Bodegas Ruiz at the anonymised "Grande Rioja"* |
+| `renderAppearanceWidgets()` dropped from `refreshShows()` | `follow-feed.js`: followers of the host are not told when a show is released |
+| The followed-but-anonymised fixture edge removed | `follow-feed.js` fails outright — see the note above |
 
 Two assertions in `profile-shows.js` were wrong before they were right, and
 both errors are worth knowing about. The first tried to validate

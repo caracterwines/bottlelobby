@@ -130,6 +130,18 @@ Kein Build-Command, Publish-Directory = Repo-Root.
   Restaurant und Retail schon hatten. A16.7 um die Rollentabelle ergaenzt.
   Neues Harness `tests/profile-shows.js` faehrt alle 15 Seiten. Gegen drei
   Mutationen verifiziert.
+- **A16.7, Durchgang 3 — Follow-Graph als Ankuendigungskanal. A16.7 ist damit
+  komplett.** Widget **From Your Stars** auf allen vier Uebersichten, auch bei
+  Restaurant und Retail: A16.7s eigenes Beispiel ist ein Restaurant, das einer
+  Winery folgt, und das ist genau die Rolle, die weder hosten noch ausstellen
+  kann. Der Feed ist die **dritte oeffentliche Flaeche** und fragt deshalb
+  dieselbe `publicParticipation()` wie Wine-Shows-Seite und Profile — wer einem
+  bei einer anonymisierten Show bestaetigten Produzenten folgt, erfaehrt nichts;
+  wer dem Host folgt, erfaehrt ab `planning` davon.
+  **Neue Demo-Kante mit Absicht:** Weinhaus Mueller folgt Bodegas Ruiz, die bei
+  Grande Rioja bestaetigt sind — der Feed bleibt leer. Ohne dieses Paar liefe
+  `tests/follow-feed.js` ins Leere, deshalb faellt es durch, wenn die Kante
+  verschwindet. A16.7 und A16.12 nachgezogen.
 - **Spec-Pflege 31.07.:** C3 unterscheidet jetzt die beiden Push-Kanaele (git aus Claude Code
   ohne Groessengrenze, MCP-Connector mit) statt pauschal "nicht pushbar"; Dateigroessen neu
   gemessen; Anhang D nach D18/D19 sortiert und um **D22** ergaenzt; der ueberholte
@@ -186,15 +198,20 @@ Kein Build-Command, Publish-Directory = Repo-Root.
   `KNOWN_UNSTYLED` — mit Pruefung in beide Richtungen, die Liste kann das Problem
   also nicht ueberleben.
 - **Wine Shows — die naechsten Durchgaenge.** Gebaut sind der erste Dashboard-Durchgang
-  und A16.7 komplett (drei Durchgaenge, siehe unten). Offen, jeder als eigener Schritt
-  und keiner vom anderen blockiert: Open Call mit Master-Data-Filtern (A16.4),
+  und **A16.7 vollstaendig** (vier Durchgaenge, siehe unten). Offen, jeder als eigener
+  Schritt und keiner vom anderen blockiert: Open Call mit Master-Data-Filtern (A16.4),
   Location-Anfrage an Restaurant/Retail samt Bestaetigung (A16.5), Catering-Aufteilung,
-  Teilnehmer-Einladungen und Warteliste, eigene Events fuer alle vier Rollen (A16.8),
-  und der **Follow-Graph als Ankuendigungskanal** — der zweite Absatz von A16.7, als
-  einziger Teil davon noch nicht gebaut. `wineFollowGraph` liegt bereit.
+  Teilnehmer-Einladungen und Warteliste, eigene Events fuer alle vier Rollen (A16.8).
   Restaurant und Retail bekommen ihre Wine-Shows-Unteransicht erst mit den Location-
   und Teilnehmer-Schritten — deshalb hat `SHOW_ROLES` bisher nur zwei Eintraege, und
   deshalb bleiben ihre sieben Profilseiten beim handgeschriebenen Leerzustand.
+  Ihre Dashboards haben den Feed aber schon.
+- **Die vierte Flaeche kommt bestimmt.** Show-Sichtbarkeit haengt jetzt an genau
+  einer Funktion, `publicParticipation()`, und drei Flaechen fragen sie: oeffentliche
+  Seite, Profile, Feed. Suche, Matchmaking-Vorschlaege oder eine E-Mail-Benachrichtigung
+  waeren die naechsten — **sie muessen dieselbe Funktion fragen.** Wer stattdessen
+  „Shows, an denen mein Stern teilnimmt" implementiert, baut den einen Ort, an dem
+  A16.6 nicht gilt. Steht so in A16.6 und A16.7.
 - **Der `Simulate Bottle Lobby release (demo)`-Knopf muss weg**, sobald es eine
   Admin-Oberflaeche gibt. Er steht nur da, weil der Prototyp kein Staff-Panel hat,
   ist als Demo beschriftet und nennt daneben den echten Weg. Im Investorengespraech
