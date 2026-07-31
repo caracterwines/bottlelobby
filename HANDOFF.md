@@ -101,6 +101,19 @@ Kein Build-Command, Publish-Directory = Repo-Root.
   `publicShowCard()` lesen, statt sie 21-fach zu kopieren.
   **Der riskante Teil war die Testinfrastruktur** — siehe unten.
   Spec A16.7 und A16.12 nachgezogen.
+- **A16.7, Durchgang 1 — die oeffentliche Wine-Shows-Seite.** Neuer Abschnitt
+  „What's Coming" **unter** der Case Study (die Seite muss das Format erklaeren,
+  bevor echte Termine etwas bedeuten), Vergangenes darunter, Detailschicht klappt
+  auf. Gerendert aus denselben Datensaetzen und demselben `publicShowCard()` wie
+  die Dashboard-Vorschau. Neu im geteilten Renderer: `publicShowTeaser()` fuer
+  die Karte mit Hero-Bild und `publicShows()` fuer die Frage, welche Shows ein
+  Fremder ueberhaupt gelistet sieht — `draft` und `pending_approval` gar nicht.
+  **Die CSS musste mitwandern** (`assets/bottle-lobby-public-shows.css`): ein
+  geteilter Renderer mit kopiertem Stylesheet haette die Drift nur von der
+  Struktur in die Optik verschoben. Die Dashboard-Vorschau zeigt jetzt Karte
+  **und** Listing, also genau das, was die oeffentliche Seite baut.
+  Neues Harness `tests/public-shows-page.js` — die erste oeffentliche Seite
+  ueberhaupt mit Pruefungen. Gegen vier Mutationen verifiziert.
 - **Spec-Pflege 31.07.:** C3 unterscheidet jetzt die beiden Push-Kanaele (git aus Claude Code
   ohne Groessengrenze, MCP-Connector mit) statt pauschal "nicht pushbar"; Dateigroessen neu
   gemessen; Anhang D nach D18/D19 sortiert und um **D22** ergaenzt; der ueberholte
@@ -111,15 +124,17 @@ Kein Build-Command, Publish-Directory = Repo-Root.
 ## Offene Punkte
 
 ### Arbeit
-- **CACHE: Netlify liefert nach einem Push weiter die alte Fassung.** Im Browsertest
-  kam auch bei frischem Aufruf noch die vorherige `bottle-lobby-dashboard.html`;
-  erst `?cb=1` holte die neue. Das war rueckblickend auch die Ursache des zunaechst
-  als Bug gemeldeten leeren "Exhibitors & Wines".
-  **Vor jedem Investorengespraech: Hard Reload (Cmd-Shift-R).**
-  Dauerhafte Loesung ist ein Cache-Header. `netlify.toml` liegt jetzt im Repo und
-  hat noch keinen `[[headers]]`-Block — dort gehoert er hin, etwa
-  `Cache-Control: public, max-age=0, must-revalidate` fuer `/*.html`. Bewusst noch
-  nicht gesetzt, weil es das Auslieferungsverhalten der ganzen Seite aendert.
+- **CACHE: praktisch erledigt, aber nicht durch eine Konfiguration.** Am 31.07.
+  live gegengeprueft: alle Dateien liefern `public, max-age=0, must-revalidate`,
+  und die neue Fassung kam **ohne** Cache-Buster durch.
+  **Wichtig fuer den naechsten, der hier sucht:** `netlify.toml` hat *keinen*
+  `[[headers]]`-Block und hatte nie einen — der Header ist Netlifys Standard
+  fuer HTML. Es wurde also nichts konfiguriert, es war von Anfang an so.
+  Damit ist auch die urspruengliche Beobachtung (nach einem Push kam die alte
+  Fassung, erst `?cb=1` half) nicht durch einen fehlenden Header erklaert,
+  sondern vermutlich durch den Browser-Cache. Ein `[[headers]]`-Block waere
+  weiterhin moeglich, aendert aber nichts am gemessenen Ergebnis — er wuerde
+  nur festschreiben, was Netlify ohnehin tut.
 - **LATENT: `exhibitorTurn()` kuerzt bei mehreren Weinen ab.** Die Funktion sagt
   "irgendein `confirmed` Wein → niemand am Zug". Liegt neben einem bestaetigten Wein
   ein weiterer Vorschlag, ist der fuer beide Seiten unsichtbar — kein Kasten, kein

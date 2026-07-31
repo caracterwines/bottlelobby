@@ -1,0 +1,52 @@
+/* ══════════════════════════════════════════════════════════════════
+   BOTTLE LOBBY — STYLES FOR THE PUBLIC VIEW OF A WINE SHOW
+   ------------------------------------------------------------------
+   The companion to bottle-lobby-public-shows.js. That file emits these
+   class names; this file is the only place they are defined.
+
+   Sharing the renderer and copying its stylesheet would have missed
+   the point — the two surfaces would still drift, just visually
+   instead of structurally. Anything the shared renderer emits belongs
+   here; page layout around it stays with the page.
+
+   Both the dashboard and bottle-lobby-wine-shows.html define the same
+   custom properties (--gold, --paper, --dim, --line), so this file
+   assumes them rather than redeclaring them.
+════════════════════════════════════════════════════════════════════ */
+
+/* ── The card (A16.7) ────────────────────────────────────────────
+   Hero image, date, title, city. Shown for `planning` and
+   `published` alike: none of it is protected by A16.6. */
+.ws-teaser { display:block; width:100%; text-align:left; background:#0e0b0b;
+  border:1px solid rgba(184,151,90,0.22); padding:0; cursor:pointer;
+  font-family:'Inter',sans-serif; transition:border-color 0.2s; }
+.ws-teaser:hover { border-color:rgba(184,151,90,0.5); }
+.ws-teaser-hero { display:block; width:100%; height:190px; object-fit:cover; }
+.ws-teaser-body { padding:1.1rem 1.2rem; }
+.ws-teaser-foot { display:flex; align-items:center; justify-content:space-between;
+  gap:1rem; margin-top:0.9rem; padding-top:0.8rem; border-top:1px solid rgba(247,243,238,0.08); }
+/* Why the exhibitors are not named yet — A16.6 read as protection,
+   which is what it is, rather than as a gap in the listing. */
+.ws-teaser-note { font-size:0.66rem; color:rgba(247,243,238,0.32); font-style:italic; line-height:1.6; }
+.ws-teaser-more { font-size:0.6rem; letter-spacing:0.14em; text-transform:uppercase;
+  color:var(--gold); white-space:nowrap; }
+.ws-teaser.past { opacity:0.55; }
+
+/* The expanding full listing. The real build gives a show its own
+   route, /wine-show/{slug} — see the deviation note in A16.7. */
+.ws-listing { display:none; margin-top:-1px; border:1px solid rgba(184,151,90,0.22);
+  border-top:none; padding:1.2rem; background:rgba(247,243,238,0.02); }
+.ws-listing.open { display:block; }
+
+/* ── The two visibility levels (A16.6) ───────────────────────────── */
+.ws-public { background:#0e0b0b; border:1px solid rgba(184,151,90,0.22); padding:1.1rem 1.2rem; }
+.ws-public-date { font-size:0.6rem; letter-spacing:0.14em; text-transform:uppercase; color:var(--gold); margin-bottom:0.45rem; }
+.ws-public-title { font-family:'Cormorant Garamond',serif; font-size:1.35rem; font-weight:300; color:var(--paper); line-height:1.15; }
+.ws-public-focus { font-size:0.76rem; color:var(--dim); margin-top:0.4rem; line-height:1.7; }
+.ws-public-hidden { margin-top:0.9rem; padding-top:0.8rem; border-top:1px dashed rgba(247,243,238,0.12);
+  font-size:0.7rem; color:rgba(247,243,238,0.32); font-style:italic; line-height:1.7; }
+.ws-public-line { font-size:0.76rem; color:var(--dim); margin-top:0.5rem; }
+.ws-public-line b { color:var(--paper); font-weight:500; }
+/* Inside the expanding listing the card is the content, not a panel
+   floating on the page — drop the frame it carries on its own. */
+.ws-listing .ws-public { border:none; padding:0; background:none; }

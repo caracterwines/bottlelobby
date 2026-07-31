@@ -978,7 +978,8 @@ row. It is what makes a disputed show reconstructable.
 | File | Holds |
 |---|---|
 | `assets/bottle-lobby-data.js` | `wineShows` — one record per show, exhibitors and products nested as relations. Also `SHOW_HERO_IMAGES` / `SHOW_HERO_FALLBACK`. Read it as the draft schema for the Supabase build. |
-| `assets/bottle-lobby-public-shows.js` | `publicShowCard(show, level)`, `publicLevelFor(show)`, `confirmedExhibitors()`, `showHeroImage()` — the two visibility levels of A16.6. |
+| `assets/bottle-lobby-public-shows.js` | `publicShowCard(show, level)` and `publicLevelFor(show)` for the two levels of A16.6, `publicShowTeaser(show, level)` for the A16.7 card, `publicShows(all, past)` + `PUBLIC_UPCOMING_STAGES` / `PUBLIC_PAST_STAGES` for which shows a stranger may see listed, plus `confirmedExhibitors()`, `showHeroImage()`, `showDateValue()`. |
+| `assets/bottle-lobby-public-shows.css` | Every class those renderers emit. Sharing the renderer and copying its stylesheet would only have moved the drift from structure to appearance. |
 
 The dashboard, the public Wine Shows page and the public profiles load
 these two files rather than carrying their own copy. A second renderer
@@ -1005,13 +1006,22 @@ anything above: open calls with master-data filters (A16.4), venue requests
 to restaurants and retailers (A16.5), the catering split, attendee
 invitations and the waitlist, and own events (A16.8).
 
-**A16.7 is being built in three passes**, the shared assets above being the
-first and now done. Still open: the Upcoming Shows section on the public
-Wine Shows page with its expanding full listing, the Wine Shows tab on the
-public winery and distributor profiles, and the follow graph as the
-announcement channel. Restaurant and Retail profiles stay on their present
-empty state until A16.5 and the attendee lists exist — they appear in A16.7
-as venue and attendee, and neither relation is modelled yet.
+**A16.7 is being built in three passes.** The shared assets above were the
+first; the public Wine Shows page is the second and is now done — an
+Upcoming Shows section placed **after** the Case Study, because the page has
+to explain the format before real dates mean anything, with the past shows
+below it and the full listing as an expanding layer. Still open: the Wine
+Shows tab on the public winery and distributor profiles, and the follow
+graph as the announcement channel. Restaurant and Retail profiles stay on
+their present empty state until A16.5 and the attendee lists exist — they
+appear in A16.7 as venue and attendee, and neither relation is modelled yet.
+
+Which shows a stranger may see listed is itself derived (A16.10), not a
+curated list: `planning` and `published` are upcoming, `completed` is
+history, and `draft`, `pending_approval` and `changes_requested` are absent
+entirely. The dashboard's "What the public sees" preview renders the card
+and the listing through the same two functions the page calls, so a host is
+shown exactly what a visitor will get.
 
 > ⚠️ The prototype carries a **`Simulate Bottle Lobby release (demo)`**
 > button on `pending_approval`, labelled as a demo shortcut and sitting next

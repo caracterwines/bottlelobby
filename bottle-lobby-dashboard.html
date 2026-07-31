@@ -909,14 +909,10 @@ body {
 .ws-vis-toggle button { flex:1; background:none; border:none; color:var(--dim); cursor:pointer;
   font-family:'Inter',sans-serif; font-size:0.6rem; letter-spacing:0.1em; text-transform:uppercase; padding:0.55rem 0.5rem; }
 .ws-vis-toggle button.active { background:rgba(184,151,90,0.12); color:var(--gold); }
-.ws-public { background:#0e0b0b; border:1px solid rgba(184,151,90,0.22); padding:1.1rem 1.2rem; }
-.ws-public-date { font-size:0.6rem; letter-spacing:0.14em; text-transform:uppercase; color:var(--gold); margin-bottom:0.45rem; }
-.ws-public-title { font-family:'Cormorant Garamond',serif; font-size:1.35rem; font-weight:300; color:var(--paper); line-height:1.15; }
-.ws-public-focus { font-size:0.76rem; color:var(--dim); margin-top:0.4rem; line-height:1.7; }
-.ws-public-hidden { margin-top:0.9rem; padding-top:0.8rem; border-top:1px dashed rgba(247,243,238,0.12);
-  font-size:0.7rem; color:rgba(247,243,238,0.32); font-style:italic; line-height:1.7; }
-.ws-public-line { font-size:0.76rem; color:var(--dim); margin-top:0.5rem; }
-.ws-public-line b { color:var(--paper); font-weight:500; }
+/* .ws-public* and .ws-teaser* moved to assets/bottle-lobby-public-shows.css,
+   linked in <head>. They are what the shared renderer emits, so they
+   are defined once — sharing the renderer and copying its stylesheet
+   would only have moved the drift from structure to appearance. */
 /* demo-only affordance — labelled so it is never mistaken for the real gate */
 .ws-demo { margin-top:0.9rem; padding:0.85rem 1rem; background:rgba(127,170,240,0.06);
   border:1px dashed rgba(127,170,240,0.3); }
@@ -1052,6 +1048,9 @@ body {
   .otbl-head { display:none; }
 }
 </style>
+<!-- The classes the shared public renderer emits. Defined once, loaded
+     by every surface that renders a show (A16.7). -->
+<link rel="stylesheet" href="assets/bottle-lobby-public-shows.css">
 </head>
 <body>
 
@@ -7991,10 +7990,16 @@ function renderShowDetail(id) {
             '<button class="' + (level === 'anonymised' ? 'active' : '') + '" onclick="toggleShowVisPreview(\'anonymised\')">Anonymised</button>' +
             '<button class="' + (level === 'full' ? 'active' : '') + '" onclick="toggleShowVisPreview(\'full\')">Full</button>' +
           '</div>' +
-          publicShowCard(s, level) +
+          /* Card first, then the listing behind it — the same two
+             pieces, in the same order, that the public Wine Shows page
+             renders. Previewing only the listing would have left the
+             host guessing at the card their hero image lands in. */
+          publicShowTeaser(s, level) +
+          '<div class="ws-listing open">' + publicShowCard(s, level) + '</div>' +
           '<div class="ws-demo-note">Right now a visitor sees the <b style="color:var(--paper)">' +
             (publicLevelFor(s) === 'full' ? 'full' : 'anonymised') + '</b> version, because this show is ' +
-            SHOW_STAGE_LABEL[s.stage].toLowerCase() + '. Both levels are rendered from the one show record.</div>' +
+            SHOW_STAGE_LABEL[s.stage].toLowerCase() + '. Both levels are rendered from the one show record, ' +
+            'by the same functions the public page uses.</div>' +
         '</div></div>' +
       '</div>' +
     '</div>';

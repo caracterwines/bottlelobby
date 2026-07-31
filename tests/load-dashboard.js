@@ -35,41 +35,60 @@ const path = require('path');
 
 const DASHBOARD = path.join(__dirname, '..', 'bottle-lobby-dashboard.html');
 
-/* Returns { html, externals } — html with every external script
-   inlined, and the list of files that were pulled in (so a caller can
-   report and check them). Throws on a missing or empty asset. */
+/* Returns { html, externals, styles } — html with every external
+   script inlined, the list of script files that were pulled in, and
+   the list of stylesheets. Throws on a missing or empty asset.
+
+   Stylesheets get the same treatment for the same reason: check-static
+   cross-checks class names against the page's CSS, and a rule that
+   moved into assets/ would otherwise look like a missing rule. */
 function loadDashboard(file) {
   const target = file ? path.resolve(file) : DASHBOARD;
   const dir = path.dirname(target);
   const raw = fs.readFileSync(target, 'utf8');
   const externals = [];
+  const styles = [];
 
-  const html = raw.replace(
+  const readAsset = (src, kind) => {
+    const abs = path.resolve(dir, src);
+    if (!fs.existsSync(abs))
+      throw new Error(kind + ' "' + src + '" does not exist at ' + abs +
+        ' — the page references an asset that is not in the repo');
+    const code = fs.readFileSync(abs, 'utf8');
+    if (!code.trim())
+      throw new Error(kind + ' "' + src + '" is empty — the page would ' +
+        'load with its ' + (kind === 'link href' ? 'rules' : 'globals') +
+        ' missing and no error anywhere');
+    return { src: src, abs: abs, code: code };
+  };
+  const isRemote = src => /^[a-z]+:\/\//i.test(src) || src.startsWith('//');
+
+  let html = raw.replace(
     /<script\s+src="([^"]+)"\s*><\/script>/g,
     (tag, src) => {
       /* Only local assets are inlined. A CDN URL would be a separate
          decision — the prototype has none, and silently swallowing one
          would hide it. */
-      if (/^[a-z]+:\/\//i.test(src) || src.startsWith('//')) return tag;
-
-      const abs = path.resolve(dir, src);
-      if (!fs.existsSync(abs))
-        throw new Error('script src="' + src + '" does not exist at ' + abs +
-          ' — the page references an asset that is not in the repo');
-
-      const code = fs.readFileSync(abs, 'utf8');
-      if (!code.trim())
-        throw new Error('script src="' + src + '" is empty — the page would ' +
-          'load with its globals missing and no error anywhere');
-
-      externals.push({ src: src, abs: abs, code: code });
+      if (isRemote(src)) return tag;
+      const asset = readAsset(src, 'script src');
+      externals.push(asset);
       /* A literal "</script>" inside the asset would close the block
          early. None today; cheap to keep honest. */
-      return '<script>\n' + code.replace(/<\/script>/g, '<\\/script>') + '\n</script>';
+      return '<script>\n' + asset.code.replace(/<\/script>/g, '<\\/script>') + '\n</script>';
     }
   );
 
-  return { html: html, externals: externals, file: target, raw: raw };
+  html = html.replace(
+    /<link\s+rel="stylesheet"\s+href="([^"]+)"\s*\/?>/g,
+    (tag, href) => {
+      if (isRemote(href)) return tag;
+      const asset = readAsset(href, 'link href');
+      styles.push(asset);
+      return '<style>\n' + asset.code + '\n</style>';
+    }
+  );
+
+  return { html: html, externals: externals, styles: styles, file: target, raw: raw };
 }
 
 module.exports = { loadDashboard: loadDashboard, DASHBOARD: DASHBOARD };

@@ -31,6 +31,60 @@ function showHeroImage(show) {
   return show.heroImage || SHOW_HERO_FALLBACK;
 }
 
+/* Which shows a visitor may see listed at all, and in what order.
+   `draft` and `pending_approval` are absent: nothing is public before
+   the show has a venue, a confirmed exhibitor and a confirmed wine
+   (A16.2), and nothing is fully public before Bottle Lobby releases it
+   (A16.1). `changes_requested` is a show being reworked and is not a
+   public state either. */
+const PUBLIC_UPCOMING_STAGES = ['planning', 'published'];
+const PUBLIC_PAST_STAGES     = ['completed'];
+
+/* The demo dates are display strings ("05 Dec 2026"), so sorting needs
+   them parsed. Returns a comparable number; unparseable dates sort
+   last rather than throwing. */
+function showDateValue(show) {
+  const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const m = /^(\d{1,2})\s+([A-Za-z]{3})\s+(\d{4})$/.exec(show.date || '');
+  if (!m) return Number.MAX_SAFE_INTEGER;
+  const mi = MONTHS.indexOf(m[2]);
+  if (mi === -1) return Number.MAX_SAFE_INTEGER;
+  return Number(m[3]) * 10000 + (mi + 1) * 100 + Number(m[1]);
+}
+/* Upcoming soonest first; past most recent first. */
+function publicShows(all, past) {
+  const stages = past ? PUBLIC_PAST_STAGES : PUBLIC_UPCOMING_STAGES;
+  return all.filter(s => stages.indexOf(s.stage) !== -1)
+            .sort((a, b) => past ? showDateValue(b) - showDateValue(a)
+                                 : showDateValue(a) - showDateValue(b));
+}
+
+/* ══ THE CARD (A16.7) ════════════════════════════════════════════ */
+/* Hero image, date, city, title, focus — the whole of what A16.6
+   grants at the anonymised level, so one card serves both levels. The
+   note is the point rather than an apology: an invited producer who has
+   not yet accepted is being protected, and saying so turns a gap in the
+   listing into the reason to trust it. */
+function publicShowTeaser(show, level) {
+  const past = PUBLIC_PAST_STAGES.indexOf(show.stage) !== -1;
+  const note = level === 'anonymised'
+    ? 'Exhibitors are named once they have accepted — never before.'
+    : (past ? 'This show has taken place.' : 'Exhibitors, wines and venue confirmed.');
+
+  return '<button type="button" class="ws-teaser' + (past ? ' past' : '') + '">' +
+    '<img class="ws-teaser-hero" src="' + showHeroImage(show) + '" alt="' + show.title + '">' +
+    '<div class="ws-teaser-body">' +
+      '<div class="ws-public-date">' + show.date + ' · ' + show.city + '</div>' +
+      '<div class="ws-public-title">' + show.title + '</div>' +
+      '<div class="ws-public-focus">' + show.focus + '</div>' +
+      '<div class="ws-teaser-foot">' +
+        '<span class="ws-teaser-note">' + note + '</span>' +
+        '<span class="ws-teaser-more">Full listing →</span>' +
+      '</div>' +
+    '</div>' +
+  '</button>';
+}
+
 /* ══ THE TWO VISIBILITY LEVELS (A16.6) ═══════════════════════════ */
 /* One function, two levels, computed from the single show record —
    never two stored versions (A16.10). */

@@ -38,12 +38,14 @@ try {
   process.exit(1);
 }
 {
-  const declared = [...fs.readFileSync(FILE, 'utf8')
-    .matchAll(/<script\s+src="([^"]+)"/g)].map(m => m[1]);
-  if (!declared.length) ok('none declared');
+  const raw = fs.readFileSync(FILE, 'utf8');
+  const declaredJs  = [...raw.matchAll(/<script\s+src="([^"]+)"/g)].map(m => m[1]);
+  const declaredCss = [...raw.matchAll(/<link\s+rel="stylesheet"\s+href="([^"]+)"/g)].map(m => m[1]);
+  if (!declaredJs.length && !declaredCss.length) ok('none declared');
   else {
-    ok(loaded.externals.length + ' of ' + declared.length + ' inlined: ' +
-       loaded.externals.map(e => e.src + ' (' + Math.round(e.code.length / 1024) + ' KB)').join(', '));
+    const show = list => list.map(e => e.src + ' (' + Math.round(e.code.length / 1024) + ' KB)').join(', ');
+    ok(loaded.externals.length + ' of ' + declaredJs.length + ' scripts inlined: ' + show(loaded.externals));
+    ok(loaded.styles.length + ' of ' + declaredCss.length + ' stylesheets inlined: ' + show(loaded.styles));
     /* Order is a contract, not a detail: the renderer reads the data. */
     const order = loaded.externals.map(e => e.src);
     const data = order.indexOf('assets/bottle-lobby-data.js');
@@ -62,7 +64,10 @@ const js = scripts.join('\n');
 /* Markup only. Nearly every false positive in earlier ad-hoc runs came
    from HTML built inside JS template strings, so strip scripts first. */
 const markup = src.replace(/<script>[\s\S]*?<\/script>/g, '');
-const style = src.split('</style>')[0];
+/* Every style block, not just the first. Rules that moved into
+   assets/*.css arrive as an extra inlined block, and a cross-check that
+   read only block one would report them as missing. */
+const style = [...src.matchAll(/<style>([\s\S]*?)<\/style>/g)].map(m => m[1]).join('\n');
 
 /* ── 1. JS syntax — the `node --check` step ──────────────────────── */
 console.log('\n── JS syntax');
@@ -237,6 +242,46 @@ console.log('\n── enum-driven class names');
   };
   report('stage pills', SHOW_STAGES, 'ws-');
   report('exhibitor/product state pills', PARTY_STATES, 'wse-');
+}
+
+/* ── 7. The shared renderer's classes are defined ────────────────── */
+/* Same blind spot as check 6, one level worse: publicShowTeaser() and
+   publicShowCard() live in assets/bottle-lobby-public-shows.js and emit
+   their class names from inside JS strings, so the markup scan in
+   check 5 cannot see them. They are also the classes two different
+   pages depend on, which is exactly where an unstyled name would show
+   up late and in front of someone. */
+console.log('\n── shared renderer classes');
+{
+  const renderer = loaded.externals.find(e => /public-shows\.js$/.test(e.src));
+  if (!renderer) {
+    ok('no shared renderer on this page');
+  } else {
+    /* Stop at a quote OR an apostrophe: the source concatenates, so
+       class="ws-teaser' + (past ? …) would otherwise capture the
+       expression along with the name. */
+    const emitted = new Set();
+    for (const m of renderer.code.matchAll(/class="([^"']*)/g))
+      m[1].split(/\s+/).filter(c => c.startsWith('ws-')).forEach(c => emitted.add(c));
+
+    /* Modifiers are appended conditionally and never appear next to
+       their base class in the source, so they are named here. Both are
+       only ever used in combination, hence the compound selector. */
+    const MODIFIERS = ['ws-teaser.past', 'ws-listing.open'];
+
+    const has = cls => new RegExp('\\.' + cls.replace(/\./g, '\\.') + '[\\s,{:.]').test(style);
+    const missing = [...emitted, ...MODIFIERS].filter(c => !has(c));
+    if (missing.length) bad('emitted by the shared renderer, no CSS rule: ' + missing.map(c => '.' + c).join(', '));
+    else ok(emitted.size + ' emitted classes + ' + MODIFIERS.length + ' modifiers, all styled');
+
+    /* And the reverse, so the stylesheet cannot quietly outlive its
+       renderer: every card rule should still correspond to something
+       the renderer emits. */
+    const declared = [...style.matchAll(/^\.(ws-teaser[\w-]*)/gm)].map(m => m[1]);
+    const orphans = [...new Set(declared)].filter(c => !emitted.has(c));
+    if (orphans.length) bad('styled but no longer emitted: ' + orphans.map(c => '.' + c).join(', '));
+    else ok('no orphaned card rules');
+  }
 }
 
 console.log(fail ? `\n✗ ${fail} failure(s)` : '\n✓ all checks passed');

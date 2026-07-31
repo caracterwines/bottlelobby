@@ -12,6 +12,18 @@
   --smoke: #1a1212; --dim: rgba(247,243,238,0.45); --line: rgba(247,243,238,0.07);
 }
 html { scroll-behavior: smooth; }
+
+/* Layout around the shared cards (A16.7). The cards themselves are
+   styled by assets/bottle-lobby-public-shows.css, linked below — this
+   page owns only the grid they sit in. */
+.ups-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.6rem; align-items: start; }
+.ups-cell { display: block; }
+.ups-past-head { font-size: 0.62rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(--dim);
+  margin: 3.5rem 0 1.6rem; display: flex; align-items: center; gap: 1rem; }
+.ups-past-head::after { content: ''; flex: 1; height: 1px; background: var(--line); }
+.ups-empty { font-size: 0.82rem; color: var(--dim); }
+.ups-empty a { color: var(--gold); text-decoration: none; border-bottom: 1px solid rgba(184,151,90,0.3); }
+@media (max-width: 800px) { .ups-grid { grid-template-columns: 1fr; } }
 body { font-family: 'Inter', sans-serif; background: var(--ink); color: var(--paper); font-size: 14px; line-height: 1.6; overflow-x: hidden; }
 
 nav {
@@ -250,6 +262,9 @@ h2 em { font-style: italic; color: var(--gold); }
     .floating-cta .btn { padding: 0.5rem 1rem; font-size: 0.65rem; }
   }
 </style>
+<!-- The classes the shared public renderer emits. Same file the
+     dashboard links, so both surfaces cannot drift (A16.7). -->
+<link rel="stylesheet" href="assets/bottle-lobby-public-shows.css">
 </head>
 <body>
 
@@ -427,6 +442,28 @@ h2 em { font-style: italic; color: var(--gold); }
     </div>
 
     <p class="recap-links">Full event recaps: <a href="https://www.weinstore24.de/de/content/114-flair-of-lebanon-hamburg" target="_blank" rel="noopener">Flair of Lebanon — Hamburg</a> · <a href="https://www.weinstore24.de/de/content/113-flair-of-lebanon-duesseldorf" target="_blank" rel="noopener">Flair of Lebanon — Düsseldorf</a></p>
+  </div>
+</section>
+
+<!-- ══ UPCOMING SHOWS (A16.7) ══════════════════════════════════════
+     Placed after the Case Study on purpose: the page has to explain
+     the format before real dates mean anything. Rendered from the
+     shared records in assets/bottle-lobby-data.js by the shared
+     renderer — the same publicShowCard() the dashboard previews with,
+     so what a host sees promised is what a visitor gets. -->
+<section class="section" id="upcoming">
+  <div class="container">
+    <p class="eyebrow">What's Coming</p>
+    <h2>The next rooms<br><em>we are filling.</em></h2>
+    <p class="lead">Every show below is live on the platform right now. Shows appear here as soon as they have a venue, a confirmed exhibitor and a confirmed wine — but a producer is never named in public before they have accepted, so early listings show the date, the city and the theme and nothing more. That restraint is deliberate: it lets a show build interest without committing anyone who has not yet said yes.</p>
+
+    <div class="ups-grid" id="ups-upcoming"></div>
+    <p class="ups-empty" id="ups-empty" style="display:none">No shows are currently open for listing. <a href="bottle-lobby-contact.html">Talk to us</a> about hosting one.</p>
+
+    <div id="ups-past-wrap" style="display:none">
+      <div class="ups-past-head">Previously</div>
+      <div class="ups-grid" id="ups-past"></div>
+    </div>
   </div>
 </section>
 
@@ -660,6 +697,58 @@ h2 em { font-style: italic; color: var(--gold); }
   <a href="bottle-lobby-dashboard.html" class="btn btn-outline">Member Login</a>
   <a href="bottle-lobby-contact.html" class="btn btn-gold">Join Now</a>
 </div>
+
+<!-- ══ SHARED ASSETS (A16.7) ══════════════════════════════════════
+     The same two files the dashboard loads, in the same order: a show
+     exists exactly once, and one renderer decides what a visitor may
+     see. Classic scripts, not modules — this page is opened over
+     file:// as well as over http. -->
+<script src="assets/bottle-lobby-data.js"></script>
+<script src="assets/bottle-lobby-public-shows.js"></script>
+<script>
+/* Renders the Upcoming Shows section. This file decides WHICH shows to
+   list and where to put them; it never decides what may be shown about
+   one — that is publicLevelFor() + publicShowCard(), shared with the
+   dashboard, and duplicating either here would put the A16.6 promise in
+   two places at once.
+
+   The expanding listing stands in for the real build's own route,
+   /wine-show/{slug}. See the deviation note in A16.7. */
+(function () {
+  function paint(containerId, past) {
+    const host = document.getElementById(containerId);
+    const list = publicShows(wineShows, past);
+    host.innerHTML = list.map(function (s, i) {
+      const level = publicLevelFor(s);
+      const id = 'ws-listing-' + s.id;
+      return '<div class="ups-cell">' +
+        publicShowTeaser(s, level).replace('<button type="button"',
+          '<button type="button" aria-expanded="false" aria-controls="' + id + '"') +
+        '<div class="ws-listing" id="' + id + '">' + publicShowCard(s, level) + '</div>' +
+      '</div>';
+    }).join('');
+
+    /* One handler per card rather than one on the section: the cards
+       are buttons, and a delegated listener would have to re-derive
+       which one was hit. */
+    [...host.querySelectorAll('.ws-teaser')].forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        const panel = btn.nextElementSibling;
+        const open = panel.classList.toggle('open');
+        btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+        btn.querySelector('.ws-teaser-more').textContent =
+          open ? 'Close ↑' : 'Full listing →';
+      });
+    });
+    return list.length;
+  }
+
+  const upcoming = paint('ups-upcoming', false);
+  const pastCount = paint('ups-past', true);
+  document.getElementById('ups-empty').style.display = upcoming ? 'none' : '';
+  document.getElementById('ups-past-wrap').style.display = pastCount ? '' : 'none';
+})();
+</script>
 
 </body>
 </html>

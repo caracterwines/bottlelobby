@@ -37,6 +37,7 @@ treat the site as a Node project.
 | `wine-handshake.js` | The two-sided wine confirmation (A16.4, D23). Both sides of every path, including the full round trip `host declines → producer proposes again → host confirms → planning`. Contains the regression test for the dead end where a producer could confirm without naming a wine, leaving the show stuck in `draft`. |
 | `invite-render.js` | That `saveInvite()` actually renders. Three entry paths down to the DOM, after a reported case where "Exhibitors & Wines" looked empty. |
 | `check-static.js` | Structure rather than behaviour, and runs first: external assets present, non-empty and in the right order, JS syntax (the `node --check` step), duplicate ids, `getElementById` targets that exist, div balance and — via jsdom — that children have not escaped their container (B10), `onclick` handlers defined, CSS classes used in the markup defined, and that enum-driven class names like `ws-<stage>` cover the whole enum. Takes an optional file argument so a variant can be checked without touching the real file. |
+| `public-shows-page.js` | `bottle-lobby-wine-shows.html` — the public face of A16.7, and the first public page with any coverage at all. That the section renders matters less than that it renders **less** than the dashboard: no `draft` or `pending_approval` show is listed, and a `planning` show names none of its exhibitors, none of their wines and not the venue, while still showing date, city and focus. Also the expanding listing (closed on load, independent per card, `aria-expanded` in step) and that every hero image exists in the repo. |
 | `load-dashboard.js` | Not a harness — the shared loader every harness reads the page through. See the section below; it is excluded from `run-all.js` on purpose, because a module that does nothing exits 0 and would read as a passing check. |
 
 ## The pitfall: jsdom does not fetch `<script src>`
@@ -130,6 +131,21 @@ The asset checks were verified the same way, against three mutations:
 
 That third row is the division of labour working: a static check should not
 claim to know what a file does when it runs.
+
+The A16.7 checks were verified against four more, run against a **copy of the
+repo** rather than the working tree — `rsync` excluding `tests/node_modules`
+and `.git`, with `node_modules` symlinked back in:
+
+| Mutation | Caught by |
+|---|---|
+| `publicLevelFor()` always returns `'full'` | `public-shows-page.js` names the leaked exhibitors, wines and venue; `wine-shows.js` catches it too |
+| `'draft'` added to `PUBLIC_UPCOMING_STAGES` | `public-shows-page.js`: *non-public stages listed: Sicilia Prima (draft)* |
+| Shared stylesheet emptied | `check-static.js`, by filename |
+| One rule deleted from the shared stylesheet | `check-static.js`: *emitted by the shared renderer, no CSS rule: `.ws-teaser-hero`* |
+
+Mutating a copy is the better habit: the mutation cannot survive a crashed
+run or a forgotten restore, and the working tree is never in a state where an
+interrupted session would leave something broken behind.
 
 **One repair fell out of this.** `invite-render.js` never called
 `process.exit(fail ? 1 : 0)`, so it exited 0 whatever it found. Every assertion
