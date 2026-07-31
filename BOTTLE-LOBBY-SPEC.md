@@ -857,26 +857,50 @@ programme are public.
 > announced as a venue while nothing is settled. Anonymised early listing
 > still lets the show build interest without committing anyone.
 
+**Anonymisation holds across every surface at once.** It is a property of
+the show, not of the page a visitor happens to be on: the Wine Shows page,
+the participants' public profiles, search, and anything added later all
+answer the question the same way, from the same function.
+
+> **Why this is a second, independent reason — and the stronger one:** the
+> first reason above is about an *unanswered* invitation, so it stops
+> applying the moment a producer confirms. That is the trap. An anonymised
+> show is still **publicly listed under its title**. If a confirmed
+> producer's own profile then showed *"Exhibiting at Wine Show Rioja"*, a
+> reader who has seen both pages knows exactly who is exhibiting — and the
+> anonymisation on the first page bought nothing. A promise kept on one
+> surface and broken on another is not a weaker promise; it is no promise.
+>
+> So the rule is not "hide producers who have not answered yet". It is
+> "before `published`, no surface associates a producer with this show" —
+> which is why an exhibitor appears on their own profile only from
+> `published`, while the host, who is the one announcing the show, appears
+> from `planning`. See the table in A16.7.
+>
+> Do not "simplify" this by letting confirmed exhibitors through early. It
+> looks like an inconsistency and is the whole mechanism.
+
 ### A16.7 Where shows and events appear
 
 **On the public profile (A11) of every participant** — host, exhibitor,
 venue and attendee alike — as upcoming and, after `completed`, as history.
 A winery's profile showing three fairs it presented at is a credential.
 
-Read this together with A16.6, because the two constrain each other:
+**An exhibitor appears on their own profile only from `published`. The host
+appears from `planning`.** A16.6 is what makes those two different: the
+host is the one announcing the show, and anonymisation protects producers,
+products and the venue, not the announcer.
 
 | Role | Appears on their profile from |
 |---|---|
-| Host | `planning` — the host is the one announcing the show, and A16.6 protects producers, products and the venue, not the announcer |
+| Host | `planning` |
 | Exhibitor | `published` — **not** `planning`, even once they have confirmed |
 
 The exhibitor rule is stricter than the "a later decline would read as a
-withdrawal" reasoning alone requires, and deliberately so. An anonymised
-show is *publicly listed* under its title. If a confirmed producer's own
-profile also listed that title, reading the two pages together would give
-away who is exhibiting — so withholding the name on the Wine Shows page
-while disclosing it on the producer's profile would not be a weaker
-promise, it would be a broken one.
+withdrawal" reasoning alone requires, and that is the point: anonymisation
+holds across surfaces, or it holds nowhere. The full argument is in A16.6,
+under *Anonymisation holds across every surface at once* — read it before
+changing this table.
 
 **Through the follow graph (A7).** Following an account subscribes you to
 its appearances: a restaurant following a winery is notified when that

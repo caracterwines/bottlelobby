@@ -69,16 +69,15 @@ function publicShows(all, past) {
    listed under its host's name, and the host is the one announcing it;
    nothing in A16.6 protects them.
 
-   An exhibitor may be shown only from `published`. This is stricter
-   than it first looks, and deliberately so: a confirmed producer has
-   accepted, so the "a later decline would read as a withdrawal"
-   rationale does not apply to them — but the RULE in A16.6 is flat
-   ("neither producers, nor products … are named"), and the leak is
-   real. Grande Rioja is publicly listed while anonymised; if Bodegas
-   Ruiz's profile also listed Grande Rioja, anyone reading both pages
-   would know who is exhibiting. Withholding it on the public page and
-   disclosing it on the producer's own profile would not be a weaker
-   promise, it would be a broken one. */
+   An exhibitor may be shown only from `published` — even once they
+   have confirmed. That looks like an inconsistency and is the whole
+   mechanism: an anonymised show is publicly listed under its title, so
+   a profile saying "Exhibiting at Grande Rioja" would give away what
+   the Wine Shows page withholds. Anonymisation holds across surfaces
+   or it holds nowhere.
+
+   Spec: A16.6, "Anonymisation holds across every surface at once", and
+   the role table in A16.7. Read those before loosening this. */
 function publicParticipation(show, entity) {
   const listable = PUBLIC_UPCOMING_STAGES.indexOf(show.stage) !== -1 ||
                    PUBLIC_PAST_STAGES.indexOf(show.stage) !== -1;
