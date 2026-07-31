@@ -71,6 +71,8 @@ This applies to **everything**:
 
 **Reference pattern to follow:** Wine Shows already model this correctly — an event is created once by its host; other stakeholders get a participation/attendee relation to that same single event record. Orders follow the identical shape: one record, two parties, two perspectives. Use this as the template for how Wines, Awards, Press and Reviews relations are built.
 
+**A16 works this pattern out in full** — hosts, exhibitors, venue, attendees and products all hang off one `wine_shows` record, and every product on a show is a foreign key into the producer's own `products` table, never a copy. Read it as the worked example of this rule.
+
 ---
 
 ## A2. Ownership Map — who owns what
@@ -688,6 +690,231 @@ the business decides otherwise.
 
 > **Open business decision, not a technical one:** whether and when to widen beyond wine is
 > Serge and Kelly's call. This section only guarantees that the answer stays cheap either way.
+
+---
+
+## A16. Wine Shows & Events
+
+> A1 names Wine Shows as the reference pattern for every relation in this
+> model: one record, created once by its host, everyone else attached to it.
+> This section works that pattern out in full. It is also the feature that
+> ties the others together — partnerships (A6), the follow graph (A7),
+> matchmaking (A8), public profiles (A11) and producer types (A15) all meet
+> here.
+
+**Two different things, never merged:**
+
+| | Wine Show | Event |
+|---|---|---|
+| Owner | Distributor(s) only | Any of the four roles |
+| Purpose | Trade fair — producers present to buyers | The owner's own occasion |
+| Approval | **Bottle Lobby staff must release it** | None — freely managed |
+| Examples | "Grande Rioja", Düsseldorf, 5 Dec | In-store tasting, winemaker dinner, winery anniversary |
+
+The nav items stay separate in every dashboard: **Wine Shows** for fairs,
+**Client Events** / **My Events** for a role's own occasions (B8).
+
+### A16.1 Why Wine Shows carry an approval gate
+
+A Wine Show is a **Bottle Lobby product**. The platform vouches for it, so
+staff confirm every show manually in the internal admin panel once date,
+venue, exhibitors and products are settled. Same control point as
+partnership activation (A6), same reason: what carries the platform's name
+is checked by the platform.
+
+Own events carry no such promise and need no release.
+
+### A16.2 Lifecycle
+
+```
+draft ──► planning ──► pending_approval ──► published ──► completed
+                              │
+                              └──► changes_requested ──┐
+                                    (staff note)       │
+                                    ◄──────────────────┘
+
+published ──► cancelled      all parties notified
+published ──► rescheduled    new date, every confirmation must be renewed
+```
+
+| Stage | Trigger | Meaning |
+|---|---|---|
+| `draft` | Distributor creates the show | Visible to the host only |
+| `planning` | **Venue + at least one exhibitor + at least one product confirmed** | Publicly listed, but anonymised — see A16.6 |
+| `pending_approval` | Distributor submits | Bottle Lobby staff review |
+| `changes_requested` | Staff decline **with a written reason** | Back to the distributor, who amends and resubmits. Not terminal |
+| `published` | Staff release | Full details public, invitations can go out |
+| `completed` | After the event date | Moves to history on every participant's profile |
+| `cancelled` | Host | All confirmed parties notified |
+| `rescheduled` | Host sets a new date | **All exhibitor, venue and attendee confirmations reset to pending** |
+
+> `rescheduled` deliberately invalidates every confirmation. A producer who
+> agreed to 5 December did not agree to 12 February, and a venue may not be
+> free. Silently carrying confirmations over would fake consent.
+
+### A16.3 Hosts
+
+A show belongs to **one or more distributors**. Co-hosting requires an
+active Distributor↔Distributor partnership (A6, A8) — the same gate as any
+other joint commercial act. One host is the **lead** and submits for
+approval; all hosts appear as organisers.
+
+### A16.4 Exhibitors
+
+Exhibitors are **producers** (A15). A distributor gets them two ways:
+
+**Direct invitation** to a specific producer, optionally naming a wanted
+product. The producer confirms, declines, or **confirms with a different
+product** — the selection is a proposal, not an instruction.
+
+**Open call** to a filtered set of the distributor's partnered producers.
+Filters, all drawn from existing master data (A4, A15):
+
+| Filter | Source |
+|---|---|
+| Producer type | `producer_types` — winery, distillery, brewery … |
+| Country | master data, top of the cascade |
+| Region | depends on Country |
+| Appellation | depends on Region |
+| Component | producers holding a given grape variety, grain, botanical … |
+
+Matching producers see the call under **Wine Shows** in their dashboard,
+with full event and venue detail, and can apply. A producer can also
+approach a distributor unprompted and ask to exhibit, or propose holding a
+show together.
+
+A show may mix producer types and categories freely — three wineries with
+two wines each, plus a brandy and a whisky, is one show.
+
+### A16.5 Venue, attendees and cost
+
+**Venue** is either the distributor's own premises or a **partnered**
+restaurant or retailer, by request. Hosting requires an active partnership;
+attending does not.
+
+The venue host sets a **catering contribution** (food and drink), settled
+one of three ways:
+
+| Mode | Effect |
+|---|---|
+| `split_by_products` | Divided across exhibitors **by number of products presented** — an exhibitor showing two wines carries twice the share of one showing a single wine |
+| `host_covers` | The distributor pays it |
+| `free` | The venue waives it, treating the show as its own marketing |
+
+**Attendees** are restaurants and retailers. They are invited by the host,
+or they find shows in their region and **request to attend without any
+existing partnership** — a Wine Show is an entry point into the network,
+not only an instrument between existing partners.
+
+The host sets a **capacity**. Requests beyond it join a **waitlist** and
+move up automatically when someone withdraws. Turning applicants away
+outright would discard exactly the interest the show exists to create.
+
+Once published, a venue restaurant may upload the **menu**.
+
+### A16.6 Two levels of visibility
+
+This is the rule that protects everyone involved.
+
+**From `planning` — anonymised.** Title, date, city and thematic focus only:
+*"Wine Show Rioja · 5 Dec 2026 · Düsseldorf · premium reds."* Neither
+producers, nor products, nor the exact venue are named.
+
+**From `published` — full.** Exhibitors, their products, the venue and the
+programme are public.
+
+> **Why:** an invited producer must not appear publicly before accepting —
+> a later decline would read as a withdrawal. A restaurant must not be
+> announced as a venue while nothing is settled. Anonymised early listing
+> still lets the show build interest without committing anyone.
+
+### A16.7 Where shows and events appear
+
+**On the public profile (A11) of every participant** — host, exhibitor,
+venue and attendee alike — as upcoming and, after `completed`, as history.
+A winery's profile showing three fairs it presented at is a credential.
+
+**Through the follow graph (A7).** Following an account subscribes you to
+its appearances: a restaurant following a winery is notified when that
+winery exhibits somewhere or holds its own event. This makes the follow
+graph a distribution channel, not just a matchmaking signal.
+
+**On the public website.** Shows in `planning` and `published` appear on the
+Wine Shows page as cards with the hero image the distributor uploads when
+creating the show, plus date, title and city, linking to a full listing.
+
+### A16.8 Own events
+
+Any of the four roles creates and manages these freely — no approval.
+Invitations go to partnered stakeholders; the follow graph carries the
+announcement further.
+
+An event owner may additionally ask a producer or distributor to **sponsor**
+the event or **join as an exhibitor**, which the invitee confirms or
+declines. A retailer's vintage presentation with the winemaker present, or a
+restaurant's winemaker dinner, are the typical shapes.
+
+### A16.9 Tables
+
+```sql
+wine_shows (
+  id, title, hero_image_url, focus_text, event_date, city,
+  stage        enum('draft','planning','pending_approval','changes_requested',
+                    'published','completed','cancelled','rescheduled'),
+  lead_host_id FK → distributors,
+  venue_type   enum('host_premises','partner_venue'),
+  venue_id     FK → stakeholders (nullable),
+  catering_mode enum('split_by_products','host_covers','free'),
+  catering_total, capacity, menu_url,
+  staff_note                       -- reason on changes_requested
+)
+
+wine_show_hosts      ( show_id FK, distributor_id FK )
+wine_show_exhibitors ( show_id FK, producer_id FK,
+                       status enum('invited','applied','confirmed','declined'),
+                       source enum('invitation','open_call','producer_request') )
+wine_show_products   ( show_id FK, producer_id FK, product_id FK → products,
+                       proposed_by enum('host','producer'),
+                       status enum('proposed','confirmed','declined') )
+wine_show_open_calls ( show_id FK, producer_type_id, country_id, region_id,
+                       appellation_id, component_id )   -- all nullable
+wine_show_attendees  ( show_id FK, stakeholder_id FK,
+                       status enum('invited','requested','confirmed',
+                                   'declined','waitlisted') )
+wine_show_events     ( show_id FK, at, actor, text )    -- append-only trail
+
+events            ( id, owner_id, owner_type, title, description,
+                    event_date, location, hero_image_url, status )
+event_invitations ( event_id FK, stakeholder_id FK,
+                    role enum('guest','sponsor','exhibitor'),
+                    status enum('invited','confirmed','declined') )
+```
+
+**Products are referenced, never copied** — `wine_show_products.product_id`
+is a foreign key into `products`, owned by the producer (A1, A2). A show
+lists which products are presented; it never holds product content.
+
+`wine_show_events` is append-only, like `order_events` (A14.3): every
+invitation, confirmation, decline, staff decision and reschedule writes one
+row. It is what makes a disputed show reconstructable.
+
+### A16.10 Computed, never stored
+
+- **Whether a show may enter `planning`** — derived live from venue,
+  exhibitor and product confirmations, not a flag someone sets.
+- **A producer's catering share** — `catering_total × (own products ÷ all
+  products)`, recomputed whenever the line-up changes.
+- **Waitlist position** — derived from request order and current capacity.
+- **What a given viewer sees** — computed from `stage` and the viewer's role,
+  per A16.6. Never two stored versions of the same show.
+
+### A16.11 Still open
+
+- **Payment flow for the catering contribution.** The split is defined; how
+  it is invoiced is not. Likely an order document (A14.5) between venue and
+  exhibitors, but that needs deciding.
+- **Ticketing or attendance fees** — not modelled. Shows are currently free
+  to attend.
 
 ---
 

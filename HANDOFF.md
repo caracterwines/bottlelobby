@@ -57,6 +57,12 @@ Kein Build-Command, Publish-Directory = Repo-Root.
   Die beiden Anfrage-Richtungen liegen pro Rolle in einer gemeinsamen **My Requests**-Sektion
   (eingehend oben), wie beim Distributor. Spec B8 deckt jetzt alle vier Rollen ab,
   A6 nachgezogen, Anhang D um **D21** ergaenzt.
+- **Spec-Abschnitt A16 "Wine Shows & Events"** angelegt (nach A15, vor Teil B). Trennt Messen
+  mit Staff-Freigabe von eigenen Veranstaltungen ohne Freigabe, definiert Lifecycle,
+  Aussteller-Einladung und Open Call, Location/Catering-Aufteilung, Warteliste, die zwei
+  Sichtbarkeitsstufen (ab `planning` anonymisiert, ab `published` vollstaendig) und die
+  Tabellen. Anhang D bleibt unberuehrt — es wird nichts abgeloest. A1 verweist jetzt auf A16
+  als ausgearbeitetes Beispiel des Single-Source-of-Truth-Musters.
 - **"My Stars" / "My Fans" gelten jetzt in allen vier Rollen** — "Wine Stars" und "Wine Fans"
   sind weg, und die "My ___"-Konvention ist nicht mehr distributor-only. Neu angelegt:
   My Stars bei der Winery, My Fans bei Restaurant und Retail; alle vier Rollen rufen jetzt
@@ -68,11 +74,13 @@ Kein Build-Command, Publish-Directory = Repo-Root.
 ## Offene Punkte
 
 ### Arbeit
-- **Wine Shows als eigener Spec-Abschnitt** — naechstes grosses Thema. Der Distributor legt
-  eine Messe an, Hersteller treten als Aussteller bei, Restaurant und Retail als Location
-  oder Teilnehmer, Freigabe durch Bottle-Lobby-Staff. Die Nav-Punkte sind dafuer schon sauber
-  getrennt: **Wine Shows** = Messen (Winery, Distributor), **Client Events** / **My Events**
-  = eigene Veranstaltungen (Distributor, Retail). Diese Trennung nicht wieder einebnen.
+- **Wine Shows & Events im Prototyp bauen** — die Spec dafuer steht jetzt (A16), der Code
+  noch nicht. Bisher sind es reine Demo-Nav-Punkte ohne Unterseite. Die Trennung
+  **Wine Shows** = Messen mit Staff-Freigabe (Winery, Distributor) gegen
+  **Client Events** / **My Events** = eigene Veranstaltungen ohne Freigabe
+  (Distributor, Retail) nicht wieder einebnen — A16 haengt daran.
+  Zwei Punkte sind in A16.11 bewusst offen: die Abrechnung des Catering-Beitrags
+  und ob es Tickets/Eintritt gibt.
 - **Marge-Block fuer die Winery** bleibt bewusst aus (`ORDER_ROLES.winery.margin = false`):
   es gibt kein Feld fuer Produktionskosten, eine geschaetzte Zahl waere ein A1-Verstoss.
   Anschalten, sobald echte Kostendaten existieren.
