@@ -1205,7 +1205,7 @@ Since the sidebar rebuild, every profile nav item opens its **own discrete sub-p
 
 Identical to Restaurant, with three differences: **My Wine Selection** instead of My Wine List; **no Tools section**; and an own **Events** section holding **My Events** in position 7, ahead of Account.
 
-> **"My Events" and "Wine Shows" are different things and must stay separate nav items.** Wine Shows are trade fairs; My Events are the retailer's own in-store occasions (an in-store tasting, a wine dinner with a restaurant, an oenologist evening). The distributor already draws this line with *Wine Shows* vs *Client Events*. A future spec section will make Wine Shows a first-class feature — created by a distributor, producers joining as exhibitors, restaurants and retailers as venue or attendee, released by Bottle Lobby staff. Keep the two nav items apart so that section has a clean place to dock.
+> **"My Events" and "Wine Shows" are different things and must stay separate nav items.** Wine Shows are trade fairs; My Events are the retailer's own in-store occasions (an in-store tasting, a wine dinner with a restaurant, an oenologist evening). The distributor already draws this line with *Wine Shows* vs *Client Events*. **A16 is the section this docks into** — it specifies both and keeps them apart for the same reason: a Wine Show is released by Bottle Lobby staff, an own event never is.
 
 ---
 
@@ -1309,26 +1309,28 @@ Serge no longer uploads anything at the start of a new chat. Claude reads the re
 - Run the CSS class cross-check before pushing.
 - Commit messages: short, in English, conventional-commit style (`fix:`, `feat:`, `chore:`).
 
-### ⚠️ The one real constraint — and when to fall back to manual upload
+### ⚠️ Two push channels — and which constraint applies to which
 
-The GitHub connector has **no patch or diff operation**. `create_or_update_file` and `push_files` always replace the **entire file**, and that content must pass through Claude's output. Cost therefore scales with file size, not with the size of the change.
+**From Claude Code: `git push`. No size limit, no special handling.** A local clone exists, `gh auth login` is set up, and a commit carries only the diff. `bottle-lobby-dashboard.html` is pushed this way like any other file. This is the default route for all substantial work.
 
-| File | Size | Verdict |
+**From Claude in chat: the GitHub MCP connector — and it has no patch or diff operation.** `create_or_update_file` and `push_files` always replace the **entire file**, and that content must pass through Claude's output. Cost therefore scales with file size, not with the size of the change. Measured 31 July 2026:
+
+| File | Size | Via the connector |
 |---|---|---|
-| Variety pages, wine article pages | ~10–27 KB | Unproblematic |
-| Winery / distributor public profiles | ~40–68 KB | Fine |
-| `restaurant-profile.html`, `retail-profile.html` | ~99–101 KB | Expensive |
-| `why-join.html`, `distributor-profile.html` | ~110 KB | Expensive |
-| `winery-profile.html`, `profile-demo.html` | ~144–148 KB | Expensive — one per session at most |
-| **`bottle-lobby-dashboard.html`** | **~415 KB** | **Cannot be pushed at all** |
+| Variety pages | ~14–19 KB | Unproblematic |
+| Wine article pages | ~29–31 KB | Unproblematic |
+| Public profile pages, all 4 roles | ~48–68 KB | Fine |
+| `BOTTLE-LOBBY-SPEC.md` | ~88 KB | Fine |
+| `restaurant-profile.html`, `retail-profile.html` | ~100–101 KB | Expensive |
+| `why-join.html`, `distributor-profile.html` | ~111 KB | Expensive |
+| `winery-profile.html`, `profile-demo.html` | ~144–149 KB | Expensive — one per session at most |
+| **`bottle-lobby-dashboard.html`** | **~473 KB** | **Not possible — exceeds a single response** |
 
-> The dashboard exceeds what fits in a single response. Any change to it is built locally and handed over as **that one file**, which Serge uploads via GitHub's *Add file → Upload files*.
->
-> **Measured composition:** ~170 KB markup, ~120 KB JavaScript, ~43 KB CSS. Extracting CSS and JS into separate files would leave the HTML at ~170 KB and therefore **still unpushable** — which is why that refactor was assessed and rejected rather than assumed to help. Measure before recommending a refactor.
+**Fallback rule, chat sessions only:** when a chat session will make many changes to the large files above, work locally in the container and hand over the finished result — a single file, or a ZIP for multi-file work (max. 100 files per commit), which Serge uploads via GitHub's *Add file → Upload files*. This is an explicit, sanctioned exception, not a failure.
 
-**Fallback rule:** when a session will make many changes to the large files above, work locally in the container and hand over the finished result — a single file, or a ZIP for multi-file work (max. 100 files per commit). This is an explicit, sanctioned exception, not a failure.
+**Claude flags this proactively at the start of such a session** rather than discovering it halfway through — and states which channel it is on, since the answer differs entirely between Claude Code and chat.
 
-**Claude flags this proactively at the start of such a session** rather than discovering it halfway through.
+> **Measured composition of the dashboard** (31 July 2026): ~186 KB markup, ~228 KB JavaScript, ~59 KB CSS. An earlier figure of ~170 / ~120 / ~43 KB was simply wrong — it did not even sum to the file size it claimed to describe. Extracting CSS and JS would leave the HTML at ~186 KB, still above what the connector handles comfortably; and with `git push` available the refactor has no motivation left at all (D15, D22). Measure before recommending a refactor.
 
 ## C4. Claude's active reminder duties
 
@@ -1399,13 +1401,14 @@ Diagnosed 30 July 2026 after repeated `403 Resource not accessible by integratio
 | D12 | Orders were three scroll-target sections inside the distributor's profile page | **A14.8** — Orders is its own sub-view with a list and a detail level | Order management is the commercial core and needs a working surface, not a section of a long page. |
 | D13 | Handover was a full ZIP of every file after each change, uploaded manually to Netlify | **Part C** — GitHub → Netlify pipeline, Claude pushes directly | Two manual steps became none for most files. The ZIP survives only as an explicit fallback for the oversized files (C3). |
 | D14 | `HANDOFF.md` carried file lists, file counts and change history | **C2** — only open items, next steps and reasoning | Git already knows the rest, and duplicated inventories go stale silently. |
-| D15 | Proposal to split `bottle-lobby-dashboard.html` into separate CSS and JS files so Claude could push it directly | **C3** — rejected after measuring | The file is ~170 KB markup, ~120 KB JS, ~43 KB CSS. Extracting CSS and JS leaves the HTML at ~170 KB — still unpushable. The refactor would have carried real risk for no gain. **Do not re-propose without measuring again.** |
+| D15 | Proposal to split `bottle-lobby-dashboard.html` into separate CSS and JS files so Claude could push it directly | **C3** — rejected after measuring | The file is ~170 KB markup, ~120 KB JS, ~43 KB CSS. Extracting CSS and JS leaves the HTML at ~170 KB — still unpushable. The refactor would have carried real risk for no gain. **Do not re-propose without measuring again.** *(Re-measured 31 July 2026: the composition stated here was wrong — actually ~186 KB markup, ~228 KB JS, ~59 KB CSS. The conclusion stands and is now stronger, since `git push` from Claude Code removes the motivation entirely — C3, D22.)* |
 | D16 | Distributor sidebar had a fourth-position **"Orders"** section with items "Incoming Orders / My Orders / Order History" | **B8** — renamed **"Commerce"** and promoted to second position, directly under Overview; items renamed **My Sales / My Purchases / Order History** | "Orders" undersold the commercial core and sat too low in the sidebar. "Commerce" reads as the primary workspace, and the buyer/seller-neutral "My Sales / My Purchases" pair names each direction plainly. Routing into the Orders sub-view (A14.8) is unchanged. |
 | D17 | Distributor Promo Materials, Offers and Deals sat in their own **"Promotion"** nav section (the move recorded in D11) | **B8** — consolidated under the **"My Portfolio"** section, alongside My Wine Portfolio and My Labels | With Commerce promoted to the top, the remaining seller-owned instruments read more coherently as one "what I carry and how I promote it" group than as a thin standalone section. Supersedes the "Promotion" section named as the answer in D11; D11 remains valid history of the earlier My Profile → Promotion move. |
-| D19 | Winery, Restaurant and Retail read their orders in card-list sections inside the profile page (`wsection-orders-in`, `rsection-orders`, `tsection-orders` …); Restaurant and Retail called their nav item **"My Orders"** | **A14.8** — all four roles use the same two-level Orders sub-view, driven by the `ORDER_ROLES` registry; the buying roles' nav item is now **"My Purchases"** | The card list could show an order but not work one: no payment, documents, shipping or line editing. Parameterising the existing sub-view rather than copying it keeps one implementation for a model that is one record seen from two sides (invariant 8). "My Purchases" makes the same act carry the same name in every role — the distributor already used it for buying, and "My Orders" no longer denotes anything specific there (D16). |
 | D18 | Distributor dashboard profile was one long scrolling page; nav items were scroll targets to sections within it (the general case of D12, which covered Orders) | **B8** — every nav item opens its own discrete sub-page via `showDistributorView()`, showing exactly one section and hiding the rest; grouped views add an `.ord-tab` tab bar | A single scroll page made deep sections hard to reach and mixed unrelated content on screen at once. Discrete sub-pages give each area a clean working surface, consistent with the Orders sub-view (A14.8, D12). |
+| D19 | Winery, Restaurant and Retail read their orders in card-list sections inside the profile page (`wsection-orders-in`, `rsection-orders`, `tsection-orders` …); Restaurant and Retail called their nav item **"My Orders"** | **A14.8** — all four roles use the same two-level Orders sub-view, driven by the `ORDER_ROLES` registry; the buying roles' nav item is now **"My Purchases"** | The card list could show an order but not work one: no payment, documents, shipping or line editing. Parameterising the existing sub-view rather than copying it keeps one implementation for a model that is one record seen from two sides (invariant 8). "My Purchases" makes the same act carry the same name in every role — the distributor already used it for buying, and "My Orders" no longer denotes anything specific there (D16). |
 | D20 | The follow feature carried a different label per role: the winery showed **"Wine Fans"** and no follow list at all, Restaurant and Retail showed **"Wine Stars"** and no fan list, and only the distributor used **My Stars / My Fans**. The "My ___" convention was declared **Distributor-only** | **A7** — one uniform pair, **My Stars / My Fans**, in all four roles, both directions always shown; the "My ___" convention now applies everywhere (B8) | The follow graph is a single symmetric relation between any two stakeholder types (A7). Three names for two directions made it read as three separate features, and hiding one direction per role hid data that already existed — a winery follows accounts, a restaurant has followers. Wine-themed labels also tied a category-neutral relation to wine, against invariant 5. Note the direction of travel: the *convention* generalised, the *exception* did not survive. |
 | D21 | Winery, Restaurant and Retail sidebars had one combined **"Network"** section, unprefixed labels (Basic Information, Wine Portfolio, Active Distributors, Distributor Requests …), an Orders section low in the list, and profile nav items that were scroll targets rather than sub-pages | **B8** — the same eight-section structure, the same "My ___" convention and the same sub-page mechanics as the distributor, minus whatever a role has nothing for | Four dashboards that behaved differently taught the user four navigations for one product, and the divergence was accidental — the distributor was simply rebuilt first (D16, D17, D18). Merging the two request directions into one **My Requests** section per role also removed a real inconsistency: the same partnership record was reachable under two different section names depending on who sent it. |
+| D22 | C3 stated flatly that `bottle-lobby-dashboard.html` **"cannot be pushed at all"**, with a file-size table measured before the Wine Shows pass | **C3** — the limit belongs to the MCP connector, not to the repo. From Claude Code `git push` handles the file like any other; the whole-file constraint and the size table apply to **chat sessions only** | The unqualified wording pushed work onto the manual-upload route even where a local clone was available — slower, and it needs a step from Serge for no reason. The sizes were stale too: the dashboard had grown from ~415 KB to ~473 KB, and the recorded composition was wrong (D15). |
 
 ---
 
