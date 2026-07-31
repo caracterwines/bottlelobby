@@ -57,6 +57,16 @@ Kein Build-Command, Publish-Directory = Repo-Root.
   Die beiden Anfrage-Richtungen liegen pro Rolle in einer gemeinsamen **My Requests**-Sektion
   (eingehend oben), wie beim Distributor. Spec B8 deckt jetzt alle vier Rollen ab,
   A6 nachgezogen, Anhang D um **D21** ergaenzt.
+- **Wine Shows im Prototyp, erster Durchgang** — bewusst schmal, aber durchgaengig:
+  Distributor legt eine Show an (Modal mit Location-Wahl und Kapazitaet), laedt einen
+  Aussteller gezielt ein (optional mit Wunschwein aus dessen eigenem Sortiment), die
+  Winery bestaetigt, lehnt ab oder bestaetigt mit einem anderen Wein. Liste und Detail
+  nach dem Muster der Orders-Ansicht, getrieben von `SHOW_ROLES` — gleiche Form wie
+  `ORDER_ROLES`, vorerst nur zwei Rollen. Der Uebergang `draft → planning` wird aus dem
+  Datensatz berechnet (Location + bestaetigter Aussteller + bestaetigter Wein) und als
+  Checkliste angezeigt, nicht per Hand geschaltet. Beide Sichtbarkeitsstufen aus A16.6
+  stehen im Detail nebeneinander, aus einem Datensatz gerendert. Weine sind
+  Referenzen in `partnerWinesPool`, nie Kopien. Spec um A16.12 (Prototyp-Stand) ergaenzt.
 - **Spec-Abschnitt A16 "Wine Shows & Events"** angelegt (nach A15, vor Teil B). Trennt Messen
   mit Staff-Freigabe von eigenen Veranstaltungen ohne Freigabe, definiert Lifecycle,
   Aussteller-Einladung und Open Call, Location/Catering-Aufteilung, Warteliste, die zwei
@@ -74,13 +84,20 @@ Kein Build-Command, Publish-Directory = Repo-Root.
 ## Offene Punkte
 
 ### Arbeit
-- **Wine Shows & Events im Prototyp bauen** — die Spec dafuer steht jetzt (A16), der Code
-  noch nicht. Bisher sind es reine Demo-Nav-Punkte ohne Unterseite. Die Trennung
-  **Wine Shows** = Messen mit Staff-Freigabe (Winery, Distributor) gegen
-  **Client Events** / **My Events** = eigene Veranstaltungen ohne Freigabe
-  (Distributor, Retail) nicht wieder einebnen — A16 haengt daran.
-  Zwei Punkte sind in A16.11 bewusst offen: die Abrechnung des Catering-Beitrags
-  und ob es Tickets/Eintritt gibt.
+- **Wine Shows — die naechsten Durchgaenge.** Der erste ist gebaut (siehe unten),
+  der Rest steht noch aus, jeder als eigener Schritt und keiner vom anderen blockiert:
+  Open Call mit Master-Data-Filtern (A16.4), Location-Anfrage an Restaurant/Retail
+  samt Bestaetigung (A16.5), Catering-Aufteilung, Teilnehmer-Einladungen und Warteliste,
+  eigene Events fuer alle vier Rollen (A16.8), und die Darstellung auf den oeffentlichen
+  Profilen und der Website (A16.7). Restaurant und Retail bekommen ihre
+  Wine-Shows-Unteransicht erst mit den Location- und Teilnehmer-Schritten —
+  deshalb hat `SHOW_ROLES` bisher nur zwei Eintraege.
+- **Der `Simulate Bottle Lobby release (demo)`-Knopf muss weg**, sobald es eine
+  Admin-Oberflaeche gibt. Er steht nur da, weil der Prototyp kein Staff-Panel hat,
+  ist als Demo beschriftet und nennt daneben den echten Weg. Im Investorengespraech
+  ist die Freigabe das Verkaufsargument (A16.1) — nicht als Provisorium praesentieren.
+- **Catering-Abrechnung und Tickets** sind in A16.11 bewusst offen gelassen und
+  brauchen eine Entscheidung, bevor der Catering-Schritt gebaut wird.
 - **Marge-Block fuer die Winery** bleibt bewusst aus (`ORDER_ROLES.winery.margin = false`):
   es gibt kein Feld fuer Produktionskosten, eine geschaetzte Zahl waere ein A1-Verstoss.
   Anschalten, sobald echte Kostendaten existieren.

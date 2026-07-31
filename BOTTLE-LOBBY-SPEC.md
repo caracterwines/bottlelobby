@@ -916,6 +916,35 @@ row. It is what makes a disputed show reconstructable.
 - **Ticketing or attendance fees** — not modelled. Shows are currently free
   to attend.
 
+### A16.12 Prototype state
+
+**Prototype blueprint:** `wineShows` (one record per show, exhibitors and
+products nested as relations), the `SHOW_ROLES` registry — same shape as
+`ORDER_ROLES` (A14.8) — `showWineShows()` / `renderWineShows()` /
+`renderShowDetail()` for the two-level list-and-detail sub-view,
+`showReadiness()` + `promoteIfReady()` for A16.10, `publicShowCard(show,
+level)` + `publicLevelFor(show)` for the two visibility levels of A16.6,
+and the `wine-show-modal` / `show-invite-modal` / `show-product-modal`
+trio. All in `bottle-lobby-dashboard.html`.
+
+**Built in the first pass:** hosting a show, inviting an exhibitor with an
+optional wanted wine, the producer's confirm / decline / counter-propose,
+the lifecycle stages, the computed readiness checklist, and both visibility
+levels side by side.
+
+**Not built yet** — each its own later pass, none of them blocked by
+anything above: open calls with master-data filters (A16.4), venue requests
+to restaurants and retailers (A16.5), the catering split, attendee
+invitations and the waitlist, own events (A16.8), and how shows surface on
+public profiles and the website (A16.7).
+
+> ⚠️ The prototype carries a **`Simulate Bottle Lobby release (demo)`**
+> button on `pending_approval`, labelled as a demo shortcut and sitting next
+> to a note naming the real mechanism. There is no admin panel in the
+> mockup. Do not let that button imply the gate is optional — A16.1 is the
+> control point, and in the real build the host can never release their own
+> show. Delete the button the moment an admin surface exists.
+
 ---
 
 # PART B — PROTOTYPE CONVENTIONS
