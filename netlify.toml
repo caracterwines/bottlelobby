@@ -1,0 +1,15 @@
+# Netlify configuration.
+#
+# There is deliberately NO [build] section. The site has no build step and
+# its publish directory (the repo root) is set in the Netlify UI. Declaring
+# a [build] block here would silently override those settings.
+
+# The publish directory is the repo root, so everything committed is served
+# by default — including tests/. Block it: the harnesses are development
+# tooling and have no business being reachable at bottlelobby.netlify.app.
+# Nothing links to them, but "unlinked" is not "not public".
+[[redirects]]
+  from = "/tests/*"
+  to = "/404.html"
+  status = 404
+  force = true

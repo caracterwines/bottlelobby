@@ -1,0 +1,11 @@
+{
+  "name": "bottle-lobby-tests",
+  "private": true,
+  "description": "jsdom harnesses for bottle-lobby-dashboard.html. Deliberately not in the repo root — Netlify treats the root as the publish directory and would try to interpret a package.json there.",
+  "scripts": {
+    "test": "node run-all.js"
+  },
+  "devDependencies": {
+    "jsdom": "^24.0.0"
+  }
+}

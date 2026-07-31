@@ -1,0 +1,7 @@
+# Test dependencies. `npm install` in tests/ pulls jsdom and its tree;
+# none of it belongs in the repo, and the repo root is Netlify's publish
+# directory, so anything committed here would also be served.
+tests/node_modules/
+tests/package-lock.json
+
+.DS_Store

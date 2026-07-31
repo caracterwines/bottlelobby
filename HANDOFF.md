@@ -139,6 +139,14 @@ Kein Build-Command, Publish-Directory = Repo-Root.
 
 ## Hinweise fuer Claude
 
+- **Die jsdom-Harnesses liegen in `tests/`** und brauchen einmalig
+  `cd tests && npm install` (nur jsdom). Danach `npm test` — ein Lauf ueber alle
+  vier, eine Zeile pro Datei. `tests/node_modules/` ist git-ignoriert, und
+  `netlify.toml` sperrt `/tests/*` auf der Live-Seite, weil das Publish-Directory
+  das Repo-Root ist. Neue Zusicherungen gehoeren dorthin, nicht in den Scratchpad
+  (Spec C7). Die Struktur-Pruefungen (doppelte IDs, div-Balance, onclick,
+  CSS-Cross-Check, `node --check`) sind noch NICHT dort und laufen weiter von Hand.
+
 - `bottle-lobby-dashboard.html` ist ~473 KB (31.07. nachgemessen). Ueber **git push**
   ist das kein Problem — die Groessengrenze gilt allein dem MCP-Connector, der immer
   die ganze Datei ersetzt. Spec C3 unterscheidet die beiden Kanaele jetzt sauber.

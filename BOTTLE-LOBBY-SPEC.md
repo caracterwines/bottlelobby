@@ -1403,7 +1403,31 @@ Diagnosed 30 July 2026 after repeated `403 Resource not accessible by integratio
 | Version control + deploy | GitHub MCP connector → Netlify auto-deploy |
 | Image generation | OpenArt (`gpt-image-2`, poll with `openart_creation_get` + `historyId`) |
 | Multi-file changes | Python scripting in the container, then push |
-| JS verification | `node --check` on the extracted script block, plus a DOM-stub harness for logic tests |
+| JS verification | `node --check` on the extracted script block, plus a DOM harness for logic tests |
+| Test harnesses | `tests/` in the repo root — `cd tests && npm install && npm test` (jsdom) |
+
+**Harnesses live in `tests/`, never in a scratchpad.** They load the real
+`bottle-lobby-dashboard.html`, run its scripts and drive the actual functions.
+**A new assurance goes into that directory as part of the same change that
+motivated it** — when a bug is found and fixed, the assertion that would have
+caught it is committed alongside the fix. A harness written in a scratchpad is
+thrown away, which is why the same checks were re-derived every session and
+regressions were caught only by whoever remembered them.
+
+Two kinds of assertion have already earned their place there and are worth
+copying when a similar situation arises:
+
+- **Contract tests over vocabulary.** When two pieces of code compare values
+  from what should be one set of names, assert that the sets match — parse the
+  producing function, collect what it can return, check the consumers against
+  it. A mismatch of this kind is invisible to behavioural tests: both sides
+  look reasonable, the comparison is simply always false.
+- **Fixture-reachability tests.** Assert that the demo data actually exercises
+  each branch a contract covers. A contract can hold while the fixtures only
+  ever reach one side of it.
+
+`tests/` is excluded from the deployed site in `netlify.toml` — the publish
+directory is the repo root, so everything committed is served unless blocked.
 
 **OpenArt limitation:** No true alpha-channel transparency — "transparent background" renders a visible checkerboard as image content. Workaround: match the exact background hex in the prompt, or use chroma-key green (`#00FF00`) for external removal.
 
