@@ -937,6 +937,34 @@ The host sets a **capacity**. Requests beyond it join a **waitlist** and
 move up automatically when someone withdraws. Turning applicants away
 outright would discard exactly the interest the show exists to create.
 
+**Four rules make that work:**
+
+**1. A seat is computed, never stored.** The stored fact is that both sides
+said yes; who currently holds one of the `capacity` seats and who is on the
+waitlist follows from **request order** against the capacity (A16.10). This
+is what makes "move up automatically" true rather than a job somebody has to
+run: a withdrawal removes a row, and the next person is seated by the same
+arithmetic that seated the first. A stored `waitlisted` status would need a
+cascade to maintain and would be wrong the moment anyone left.
+
+**2. Only confirmed attendees consume capacity.** An unanswered invitation
+holds nothing. Otherwise a host could fill their own room by inviting
+sixty people who never replied, and the waitlist would form behind an
+empty hall.
+
+**3. Invitations go to partners; requests are the route for everyone else.**
+The host invites from the accounts they already work with, and anyone else
+finds the show and asks — which is A16.5's own point about a Wine Show being
+an entry into the network, and A16.0's about reaching the demand side. No
+partnership is required to attend, and none is created by attending.
+
+**4. The attendee list is the host's book.** It is not public, and one
+attendee never sees another. The distributor's customer list is the thing
+they are least willing to hand over, and a show they organise must not
+publish it as a side effect. The **venue** is told how many are coming and
+not who — the same rule that governs the line-up (A16.6), for the same
+reason: what catering needs is a head count.
+
 Once published, a venue restaurant may upload the **menu**.
 
 ### A16.6 Two levels of visibility
@@ -1091,8 +1119,10 @@ wine_show_products   ( show_id FK, producer_id FK, product_id FK → products,
 wine_show_open_calls ( show_id FK, producer_type_id, country_id, region_id,
                        appellation_id, component_id )   -- all nullable
 wine_show_attendees  ( show_id FK, stakeholder_id FK,
+                       source enum('invitation','request'),
                        status enum('invited','requested','confirmed',
-                                   'declined','waitlisted') )
+                                   'declined','withdrawn'),
+                       requested_at )    -- the order seats are handed out in
 wine_show_events     ( show_id FK, at, actor, text )    -- append-only trail
 
 events            ( id, owner_id, owner_type, title, description,
@@ -1160,7 +1190,10 @@ answered.
 - **Whether a show may be submitted for approval** — every contribution
   settled (A16.11), on top of the existing readiness checks. Never a flag:
   it is the sum over the exhibitor rows.
-- **Waitlist position** — derived from request order and current capacity.
+- **A seat, and the waitlist position** — the confirmed attendees in request
+  order; the first `capacity` of them hold seats, the rest are the waitlist,
+  in that order. Neither is stored, which is precisely why a withdrawal
+  promotes the next person without anything running (A16.5).
 - **What a given viewer sees** — computed from `stage` and the viewer's role,
   per A16.6. Never two stored versions of the same show.
 
@@ -1417,9 +1450,13 @@ producer, not to the host.
 #### One act, two directions
 
 ```
-interests ──► CLOSING ──┬──► 1 order   Distributor → Producer    (purchase)
-                        └──► N orders  Distributor → Attendees   (sales)
+interests ──► CLOSING ──┬──► one order per PRODUCER    (purchase)
+                        └──► one order per ATTENDEE    (sales)
 ```
+
+One order per producer, not one per show: each producer is a separate
+supplier with a separate invoice. "One targeted order" means one instead of
+the seven separate ones the seven attendees would otherwise have caused.
 
 **Upstream** is an ordinary A14 order — `source: 'wine_show_order'`,
 `wine_show_id` set, lines with real `product_id`s. It is also the act that
@@ -1435,36 +1472,42 @@ two are not merged. For an attendee with no active partnership the prepared
 order simply waits — the partnership request comes first (A6), which is
 precisely the pipeline A16.5 means by "entry point into the network".
 
-#### When the producer under-supplies
+#### What the attendee actually has to be told: how long it takes
 
-This will happen, so it is specified rather than left open.
+The normal case is not scarcity. It is **lead time**. The wine exists; the
+distributor simply does not have it yet, because the whole model is to order
+it after the show. Somebody who tasted a wine on Thursday and wants it on
+their list needs to know whether that means next week or next month.
 
-**Who decides the allocation: the host.** It is their commercial
-relationship on both sides, and A14.2 puts every seller-side transition
-with the seller. But never silently, and never by arithmetic alone:
-
-- **The default is computed and proposed** — pro rata by requested
-  quantity. It is a proposal, not a rule: a customer who takes a pallet a
-  year may be protected ahead of one who took two bottles, and that
-  judgement is the host's to make.
-- **An override is explicit and logged.** It writes an `order_events` row on
-  each affected order (A14.3), so the decision is reconstructable.
-
-**What the attendee sees:**
+So the host names a **lead time** at closing — *"about 14 days after the
+show"* — and the attendee sees it **before placing** their order. That is a
+figure on the show, not a mechanism:
 
 | | |
 |---|---|
-| Before placing | The final quantity and price. Nothing is committed on their side before this |
-| If cut after placing | The reduced quantity **with its reason** — *"short supply from the producer: 138 requested, 96 delivered"* — and the choice to accept it or cancel, while the line is still editable (A14.8) |
-| If the wine falls away entirely | Told plainly. A prepared order is voided; a placed one is `declined` by the seller (A14.2) with the reason attached |
-| **Never** | Another attendee's quantity, or the allocation across customers. That is the distributor's book, not a shared document |
+| `wine_shows.delivery_lead` | The host's expectation, named once at closing and shown on every prepared order from that show |
+| `orders.eta` (A14.3) | The real date, once the goods are actually moving |
 
-> **Why the buyer gets a choice rather than a smaller delivery:** a
-> restaurant that ordered 24 bottles may have built a list around them, and
-> 9 is a different proposition, not a smaller version of the same one.
-> Reducing without asking is the same defect A16.11 names for the catering
-> contribution — changing a number somebody has already acted on — with the
-> direction reversed. The cost of asking is one notification.
+The two are deliberately different fields. An expectation given before
+anybody ordered is not a delivery date, and writing it into `eta` would turn
+a sentence into a promise the shipping block then reports on.
+
+#### When the producer cannot supply — the exception
+
+It happens: a vintage sells out, or the producer turns the consolidated
+order down. **This needs no machinery of its own.** The purchase order is an
+ordinary A14 order and A14.2 already has `declined` for exactly this; what
+follows is the ordinary order flow — the affected sales orders are edited
+while their lines are still editable, or corrected by credit note once they
+are not (A14.8).
+
+Two things hold, and both are already rules elsewhere:
+
+- **The attendee is told, with the reason.** A change to a number somebody
+  has acted on is never silent — the same principle A16.11 states for the
+  catering contribution.
+- **One attendee never learns another's quantity.** The distributor's book
+  stays the distributor's (A16.5, rule 4).
 
 #### Two `source` values, not one
 
@@ -1495,9 +1538,12 @@ wine_show_interests (
 )
 ```
 
-`wine_show_products` gains `indicative_price` (host-owned, non-binding).
-`orders` already carries `wine_show_id` from A16.11; both show sources use
-it.
+`wine_show_products` gains `indicative_price` (host-owned, non-binding);
+`wine_shows` gains `delivery_lead`, named at closing. `orders` already
+carries `wine_show_id` from A16.11; both show sources use it.
+
+An interest is only ever written while the show is `published` or
+`completed` — never from the public listing, for the reason below.
 
 #### Computed, never stored
 
@@ -1507,6 +1553,8 @@ it.
   stored, as order lines; the proposal never is.
 - **Whether an attendee may place their prepared order** — from the
   partnership being active (A6), not from a flag on the interest.
+- **What is still outstanding against a purchase order** — from the order's
+  own lines and ship status (A14), not from anything held on the show.
 
 #### Where this section lives, and why
 
@@ -1519,14 +1567,23 @@ creation path and a special case, for a mechanism that belongs to the show.
 A14 gains only the mechanical parts: the two `source` values and the
 `wine_show_id` column.
 
-#### Still open
+#### Two rules about when an interest exists, and how long
 
-- **Whether interests may be entered before the show**, from the public
-  listing. Tempting, and it would make the tally readable earlier — but it
-  turns a fair into a pre-order page and needs deciding on its own.
-- **What happens to a lapsed interest as a signal.** A wine dropped for
-  want of demand is exactly the market intelligence A8 trades in, and
-  throwing it away would waste it. Not modelled.
+**Only during or after the show — never from the public listing.** The
+tempting version lets a visitor mark a wine from the Wine Shows page and
+makes the tally readable earlier. It is the wrong feature: **the value of
+the signal is that somebody tasted the wine.** A note made from a web page
+is a different thing wearing the same name, and allowing both would mix them
+in one column with no way to tell them apart afterwards. A pre-order page is
+a decision of its own, not a side effect of this one.
+
+**A lapsed interest is kept, never deleted.** *"Three restaurants wanted
+this wine and it came to nothing"* is precisely the market intelligence A8
+trades in — arguably worth more than a fulfilled one, because it names
+demand nobody is currently serving. `status = 'lapsed'` is therefore a
+resting state, not a tombstone, and the rows stay put like every other
+history in this model (A16.4's declined products, `order_events`,
+`wine_show_events`).
 
 ### A16.13 Prototype state
 
@@ -2168,6 +2225,7 @@ directory is the repo root, so everything committed is served unless blocked.
 | D24 | The catering contribution had three modes, of which `split_by_products` was the only one that charged exhibitors, and a producer's share was **live-computed throughout** — `catering_total × (own ÷ all products)`, "recomputed whenever the line-up changes" (A16.10) | **A16.5 / A16.10 / A16.11** — four modes with `fixed_per_product` as the default, and the amount computed only **until the producer consents to it**, then held as a ceiling that may fall but never rise | Live computation and consent cannot coexist once money is involved: a producer who agreed to €400 owed €500 the moment a third party dropped out, without ever seeing the increase. Recalculating and re-collecting consent instead had no natural end — a second dropout restarts the round for everyone, days before the fair. `fixed_per_product` removes the cascade by construction rather than managing it, and matches how a stand is really booked: at a price, not as a share of the organiser's invoice. `split_by_products` survives for hosts who pass the venue's bill through one-to-one. |
 | D25 | `cancelled` and `rescheduled` were available to the host at any time, with `rescheduled` resetting every confirmation | **A16.2** — both barred from the commitment point (A16.11); unwinding a committed show is a credit note handled by staff, not a lifecycle transition | Resetting confirmations was right while a confirmation only meant "I will come". Once it is a payment obligation, the reset revokes something a third party has already acted on — the venue has booked staff, the host has invoiced. The mechanism did not become wrong, its reach did. |
 | D26 | A16.5 called the restaurant or retailer providing the room the **"venue host"**, while A16.3 calls the organising distributor the **host** | **A16.5 / A16.11** — **host** is the distributor, **venue** is the restaurant or retailer; "venue host" is not used | Harmless while only one of them acted. The settlement flow (A16.11) has both parties acting in the same nine steps, quoting to and confirming with each other, and one word for two roles in one flow is a defect waiting to be read the wrong way. The prototype's field names (`venueType`, `venueName`) were already on the right side of this. |
+| D28 | `wine_show_attendees.status` carried **`waitlisted`** as a stored value, alongside a rule that the waitlist "moves up automatically" | **A16.5 / A16.9 / A16.10** — the status records only the decision (`invited` · `requested` · `confirmed` · `declined` · `withdrawn`); holding a seat or a waitlist place is computed from request order against capacity | The two could not both be true. A stored `waitlisted` has to be rewritten for everyone behind a departing attendee, which is a cascade, not an automatic move-up — and it is stale between the withdrawal and the rewrite. Computing it makes the promise in A16.5 literally true. `withdrawn` was added in the same breath: leaving of your own accord and being turned down are different facts, and only one of them may be re-invited without ceremony (the same distinction `lapsed` draws in A16.11). **Superseded before it was ever built.** |
 | D27 | `orders.source` was to gain a single **`wine_show`** value, guarded by "a `wine_show` order can never carry product lines" (A16.11) | **A16.12 / A14.3** — two opposite values, `wine_show_order` (goods, down the chain, always product lines) and `wine_show_catering` (service, against the chain, never product lines), each with its own guard | The single value was drafted while the catering settlement was the only money a show produced, and it was already wrong: the show's *purpose* is the consolidated purchase (A16.0), which is a product order sourced from a show. One value would have forced the guard to be either useless or false. **Superseded before it was ever built** — noted here because the decision was taken, not because code changed. |
 
 ---
