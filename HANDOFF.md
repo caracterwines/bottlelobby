@@ -200,9 +200,17 @@ Kein Build-Command, Publish-Directory = Repo-Root.
 ## Offene Punkte
 
 ### Arbeit
-- **CACHE: praktisch erledigt, aber nicht durch eine Konfiguration.** Am 31.07.
-  live gegengeprueft: alle Dateien liefern `public, max-age=0, must-revalidate`,
-  und die neue Fassung kam **ohne** Cache-Buster durch.
+- **CACHE: NICHT erledigt — am 01.08. erneut aufgetreten.** Nach dem Push kam wieder
+  die alte Fassung, erst `?v=cab9b93` holte die neue. Die Formulierung „praktisch
+  erledigt" stand hier seit dem 31.07. und war zu optimistisch: gemessen war damals
+  nur, dass **Netlify** korrekt ausliefert, nicht dass der **Browser** die neue
+  Fassung nimmt. Beides bleibt wahr — der Server ist in Ordnung, der Browser-Cache
+  ist es nicht.
+  **Praktische Regel bis auf Weiteres: beim Gegenpruefen `?v=<commit>` anhaengen.**
+  Ein `[[headers]]`-Block wuerde daran nichts aendern, er schriebe nur fest, was
+  Netlify ohnehin sendet. Wenn es stoeren soll, waere der echte Hebel ein
+  Cache-Buster im Dateinamen der Assets — eigener Punkt, nicht nebenbei.
+  Der urspruengliche Befund vom 31.07. im Wortlaut, weil er weiter gilt:
   **Wichtig fuer den naechsten, der hier sucht:** `netlify.toml` hat *keinen*
   `[[headers]]`-Block und hatte nie einen — der Header ist Netlifys Standard
   fuer HTML. Es wurde also nichts konfiguriert, es war von Anfang an so.

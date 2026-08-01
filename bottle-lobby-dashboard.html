@@ -7852,6 +7852,19 @@ function promoteIfReady(show) {
   }
   return false;
 }
+/* B12 — AN ACTION NEVER FAILS SILENTLY.
+   Every guard below is unreachable through today's UI, which is the
+   reason it has to speak rather than the reason it need not: the
+   console reaches it, a harness reaches it, and the next pass that
+   adds a second entry point reaches it. A silent return makes a click
+   look like it worked. */
+function actionShow(id) {
+  const s = wineShows.find(x => x.id === id);
+  if (!s) showToast('✗ That show could not be found');
+  return s;
+}
+function actionSay(msg) { showToast('✗ ' + msg); }
+
 const SHOW_TODAY = '31 Jul 2026';
 function logShow(show, actor, text) {
   show.events.push({ at: SHOW_TODAY, actor: actor, text: text });
@@ -8651,7 +8664,7 @@ function refreshShows() {
 }
 
 function submitShowForRelease(id) {
-  const s = wineShows.find(x => x.id === id); if (!s) return;
+  const s = actionShow(id); if (!s) return;
   if (!showReadiness(s).ready) { showToast('✗ A show needs a venue, a confirmed exhibitor and a confirmed wine first.'); return; }
   s.stage = 'pending_approval';
   logShow(s, s.leadHost, 'Submitted to Bottle Lobby for release');
@@ -8662,7 +8675,7 @@ function submitShowForRelease(id) {
 /* Demo shortcut only. The real gate lives in the internal admin panel
    (A16.1) and is never operable by the host. */
 function simulateStaffRelease(id) {
-  const s = wineShows.find(x => x.id === id); if (!s) return;
+  const s = actionShow(id); if (!s) return;
   s.stage = 'published';
   logShow(s, 'Bottle Lobby', 'Released — full details are now public');
   refreshShows();
@@ -8676,8 +8689,9 @@ function simulateStaffRelease(id) {
    named wine, which is what used to leave `products` empty and pin the
    show in `draft` for good (D23). */
 function respondToInvite(id, action) {
-  const role = activeShowRole, s = wineShows.find(x => x.id === id); if (!s) return;
-  const me = myExhibitor(role, s); if (!me) return;
+  const role = activeShowRole, s = actionShow(id); if (!s) return;
+  const me = myExhibitor(role, s);
+  if (!me) { actionSay('You are not an exhibitor at this show'); return; }
 
   if (action === 'decline') {
     if (!confirm('Decline this invitation to exhibit at ' + s.title + '?')) return;
@@ -8704,10 +8718,11 @@ function respondToInvite(id, action) {
    Declining a wine never ends the participation — the producer stays
    confirmed and is asked for another. */
 function hostRespondToProduct(showId, producer, action) {
-  const s = wineShows.find(x => x.id === showId); if (!s) return;
-  const e = s.exhibitors.find(x => x.producer === producer); if (!e) return;
+  const s = actionShow(showId); if (!s) return;
+  const e = s.exhibitors.find(x => x.producer === producer);
+  if (!e) { actionSay(producer + ' is not an exhibitor at this show'); return; }
   const proposal = e.products.find(p => p.status === 'proposed' && p.proposedBy === 'producer');
-  if (!proposal) return;
+  if (!proposal) { actionSay('There is no wine from ' + producer + ' waiting for your answer'); return; }
 
   if (action === 'decline') {
     if (!confirm('Decline ' + proposal.name + ' for ' + producer + '? They stay on the show and can propose another wine.')) return;
@@ -8734,7 +8749,7 @@ let attendeeShowId = null;
 
 function openAttendeeModal(id) {
   attendeeShowId = id;
-  const s = wineShows.find(x => x.id === id); if (!s) return;
+  const s = actionShow(id); if (!s) return;
   const already = attendeesOf(s).map(a => a.stakeholder);
   const candidates = activePartners.filter(p =>
     (p.type === 'restaurant' || p.type === 'retail') && already.indexOf(p.winery) === -1);
@@ -8751,7 +8766,7 @@ function openAttendeeModal(id) {
 function closeAttendeeModal() { document.getElementById('wine-show-attendee-modal').classList.remove('active'); }
 
 function saveAttendeeInvite() {
-  const s = wineShows.find(x => x.id === attendeeShowId); if (!s) return;
+  const s = actionShow(attendeeShowId); if (!s) return;
   const who = document.getElementById('af-guest').value;
   if (!who) { showToast('✗ Pick a guest first'); return; }
   s.attendees = attendeesOf(s);
@@ -8766,8 +8781,9 @@ function saveAttendeeInvite() {
    computed from request order against capacity, so somebody accepted
    into a full room simply lands on the waitlist (A16.10, D28). */
 function hostRespondToAttendee(showId, who, action) {
-  const s = wineShows.find(x => x.id === showId); if (!s) return;
-  const a = attendeesOf(s).find(x => x.stakeholder === who); if (!a) return;
+  const s = actionShow(showId); if (!s) return;
+  const a = attendeesOf(s).find(x => x.stakeholder === who);
+  if (!a) { actionSay(who + ' is not on the guest list'); return; }
   if (action === 'decline') {
     if (!confirm('Turn down ' + who + '\u2019s request for a place?')) return;
     a.status = 'declined';
@@ -8789,7 +8805,7 @@ function hostRespondToAttendee(showId, who, action) {
 /* Attendee side. A request needs no partnership (A16.5). */
 function requestPlace(id) {
   const role = activeShowRole, cfg = SHOW_ROLES[role];
-  const s = wineShows.find(x => x.id === id); if (!s) return;
+  const s = actionShow(id); if (!s) return;
   s.attendees = attendeesOf(s);
   const mine = s.attendees.find(a => a.stakeholder === cfg.entity);
   if (mine) { mine.status = 'requested'; mine.at = SHOW_TODAY; }
@@ -8800,8 +8816,9 @@ function requestPlace(id) {
 }
 
 function respondToAttendeeInvite(id, action) {
-  const role = activeShowRole, s = wineShows.find(x => x.id === id); if (!s) return;
-  const me = myAttendance(role, s); if (!me) return;
+  const role = activeShowRole, s = actionShow(id); if (!s) return;
+  const me = myAttendance(role, s);
+  if (!me) { actionSay('You are not on this show\u2019s guest list'); return; }
   if (action === 'decline') {
     if (!confirm('Decline the invitation to attend ' + s.title + '?')) return;
     me.status = 'declined';
@@ -8824,8 +8841,9 @@ function respondToAttendeeInvite(id, action) {
    promotes anybody. The next person is seated because the seat
    arithmetic is asked again on the next render. */
 function withdrawPlace(id) {
-  const role = activeShowRole, s = wineShows.find(x => x.id === id); if (!s) return;
-  const me = myAttendance(role, s); if (!me) return;
+  const role = activeShowRole, s = actionShow(id); if (!s) return;
+  const me = myAttendance(role, s);
+  if (!me) { actionSay('You are not on this show\u2019s guest list'); return; }
   if (!confirm('Give up your place at ' + s.title + '?')) return;
   const before = attendeeQueue(s).waiting[0];
   me.status = 'withdrawn';
@@ -8845,7 +8863,7 @@ let venueShowId = null;
 
 function openVenueModal(id) {
   venueShowId = id;
-  const s = wineShows.find(x => x.id === id); if (!s) return;
+  const s = actionShow(id); if (!s) return;
   document.getElementById('vf-show').textContent = s.title + ' · ' + s.date + ' · ' + s.city;
   /* Hosting requires an ACTIVE partnership; attending does not (A16.5).
      Partnered restaurants and retailers only — the same list the
@@ -8860,7 +8878,7 @@ function openVenueModal(id) {
 function closeVenueModal() { document.getElementById('wine-show-venue-modal').classList.remove('active'); }
 
 function sendVenueRequest() {
-  const s = wineShows.find(x => x.id === venueShowId); if (!s) return;
+  const s = actionShow(venueShowId); if (!s) return;
   const who = document.getElementById('vf-partner').value;
   if (!who) { showToast('✗ Pick a partner venue first'); return; }
   const partner = activePartners.find(p => p.winery === who);
@@ -8879,7 +8897,7 @@ function sendVenueRequest() {
 
 function openVenueQuoteModal(id) {
   venueShowId = id;
-  const s = wineShows.find(x => x.id === id); if (!s) return;
+  const s = actionShow(id); if (!s) return;
   document.getElementById('vq-show').textContent = s.title + ' · ' + s.date + ' · ' + s.city;
   document.getElementById('vq-intro').innerHTML = 'One price for the room and the catering together, for ' +
     'the whole show. ' + s.leadHost + ' decides separately how that cost reaches the exhibitors — that ' +
@@ -8890,7 +8908,7 @@ function openVenueQuoteModal(id) {
 function closeVenueQuoteModal() { document.getElementById('wine-show-quote-modal').classList.remove('active'); }
 
 function saveVenueQuote() {
-  const s = wineShows.find(x => x.id === venueShowId); if (!s) return;
+  const s = actionShow(venueShowId); if (!s) return;
   const amount = parseFloat(document.getElementById('vq-amount').value);
   if (!(amount >= 0)) { showToast('✗ Name an amount first'); return; }
   const changed = s.venueStatus === 'quoted';
@@ -8906,7 +8924,7 @@ function saveVenueQuote() {
 }
 
 function declineVenueRequest(id) {
-  const s = wineShows.find(x => x.id === id); if (!s) return;
+  const s = actionShow(id); if (!s) return;
   if (!confirm('Decline hosting ' + s.title + ' at your place?')) return;
   s.venueStatus = 'declined';
   logShow(s, s.venueEntity, 'Declined the venue request');
@@ -8993,7 +9011,7 @@ function showFormatDate(v) {
 let inviteShowId = null;
 function openInviteModal(id) {
   inviteShowId = id;
-  const s = wineShows.find(x => x.id === id); if (!s) return;
+  const s = actionShow(id); if (!s) return;
   const already = s.exhibitors.map(e => e.producer);
   const candidates = activePartners.filter(p => p.type === 'winery' && already.indexOf(p.winery) === -1);
   const sel = document.getElementById('if-producer');
@@ -9015,7 +9033,7 @@ function onInviteProducerChange() {
     wines.map(w => '<option value="' + w.name + ' ' + w.vintage + '">' + w.name + ' ' + w.vintage + '</option>').join('');
 }
 function saveInvite() {
-  const s = wineShows.find(x => x.id === inviteShowId); if (!s) return;
+  const s = actionShow(inviteShowId); if (!s) return;
   const producer = document.getElementById('if-producer').value;
   if (!producer) { showToast('✗ Pick a producer first'); return; }
   const product = document.getElementById('if-product').value;
@@ -9031,8 +9049,9 @@ function saveInvite() {
 let counterShowId = null;
 function openCounterModal(id) {
   counterShowId = id;
-  const role = activeShowRole, s = wineShows.find(x => x.id === id); if (!s) return;
-  const me = myExhibitor(role, s); if (!me) return;
+  const role = activeShowRole, s = actionShow(id); if (!s) return;
+  const me = myExhibitor(role, s);
+  if (!me) { actionSay('You are not an exhibitor at this show'); return; }
   /* What is no longer offerable, derived rather than stored:
      - anything still on the table (proposed or confirmed)
      - a wine the HOST turned down — that proposal is used up
@@ -9071,8 +9090,9 @@ function closeCounterModal() { document.getElementById('show-product-modal').cla
 /* A wine the producer puts forward is a proposal like any other — the
    host has to say yes to it. It is NOT confirmed here (D23). */
 function saveCounter() {
-  const role = activeShowRole, s = wineShows.find(x => x.id === counterShowId); if (!s) return;
-  const me = myExhibitor(role, s); if (!me) return;
+  const role = activeShowRole, s = actionShow(counterShowId); if (!s) return;
+  const me = myExhibitor(role, s);
+  if (!me) { actionSay('You are not an exhibitor at this show'); return; }
   const product = document.getElementById('cf-product').value;
   if (!product) { showToast('✗ Pick a wine first'); return; }
   const hadProposal = me.products.some(p => p.status === 'proposed' && p.proposedBy === 'host');

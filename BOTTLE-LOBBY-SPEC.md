@@ -2038,6 +2038,31 @@ The closing pair closed **both** the wine-card AND the wines-grid after only the
 
 ---
 
+## B12. An action never fails silently
+
+Every function reachable from a button ends in one of two ways: it does
+something and says so with a `showToast()`, or it does nothing and says
+**why**. A bare `return` in an action path is forbidden.
+
+```js
+if (!me) return;                                   // ❌
+if (!me) { showToast('✗ …'); return; }             // ✅
+```
+
+> **Why:** a guard that is unreachable through the UI today is reachable
+> from the console, from a test harness, and from the next pass that adds a
+> second entry point. When it fires silently the click looks like it worked,
+> and the time goes into looking for a rendering bug that is not there —
+> which is exactly how two sessions were spent before this rule existed.
+> The cost of the alternative is one line.
+
+**Applies to actions, not to renderers.** A render function that returns
+early because its container is not on screen is correct and silent by
+design (`paintAppearanceWidget`, `hideShowsView`). The distinction is
+whether a person just clicked something.
+
+---
+
 # PART C — WORKING METHOD
 
 > **Changed 30 July 2026:** the ZIP-based handoff was replaced by a live GitHub → Netlify pipeline. The rules below supersede the previous "full ZIP after every session" method.

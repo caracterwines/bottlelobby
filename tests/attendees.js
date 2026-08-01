@@ -208,5 +208,29 @@ console.log('\n── requests and invitations are turns like any other');
   else ok('and stops counting the moment it is gone — computed, not flagged');
 }
 
+/* ── 6. B12: a guard that cannot proceed says so ───────────────── */
+console.log('\n── an action that does nothing says why (B12)');
+{
+  const said = [];
+  const realToast = w.showToast;
+  w.showToast = m => { said.push(m); };
+  /* withdrawPlace acts on the ACTIVE role. Called while the distributor
+     is active there is no attendance to withdraw — unreachable from the
+     UI, reachable from here, and it must not look like it worked. */
+  w.showWineShows('distributor','current');
+  w.withdrawPlace('WS-2603');
+  if (!said.length) bad('withdrawPlace returned silently for a role with no attendance');
+  else ok('withdrawPlace with no attendance says so: "' + said[0] + '"');
+  said.length = 0;
+  w.hostRespondToAttendee('WS-2603','Nobody At All','accept');
+  if (!said.length) bad('answering a guest who is not on the list returned silently');
+  else ok('an unknown guest is reported, not ignored');
+  said.length = 0;
+  w.withdrawPlace('WS-9999');
+  if (!said.length) bad('an unknown show id returned silently');
+  else ok('an unknown show is reported');
+  w.showToast = realToast;
+}
+
 console.log(fail ? `\n✗ ${fail} failure(s)` : '\n✓ all checks passed');
 process.exit(fail ? 1 : 0);
