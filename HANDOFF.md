@@ -23,6 +23,22 @@ Kein Build-Command, Publish-Directory = Repo-Root.
 
 ## Zuletzt abgeschlossen
 
+- **A16.12-Kette, Durchgang 1 — Teilnehmer und Warteliste (A16.5).** Host laedt ein
+  oder beantwortet Anfragen, Restaurant/Retail fragen von der Besucheransicht aus
+  einen Platz an, nehmen Einladungen an, springen wieder ab.
+  **Der Kern ist, dass nichts gespeichert wird:** `attendeeQueue()` schneidet die
+  bestaetigten Teilnehmer in Anfragereihenfolge bei `capacity` — die ersten sitzen,
+  der Rest wartet. Ein Rueckzug befoerdert dadurch den Naechsten, ohne dass irgendwo
+  etwas laeuft; das Harness prueft das haerter als noetig, indem es die Zeile des
+  Beguenstigten **byteweise vergleicht**. `waitlisted` ist aus dem Enum raus
+  (Anhang D **D28**), `withdrawn` neu — Abspringen und Abgelehntwerden sind
+  verschiedene Tatsachen.
+  Dazu die vierte A16.5-Regel: die Teilnehmerliste ist das Buch des Hosts. Kein
+  Teilnehmer sieht einen anderen, die Location bekommt eine Kopfzahl, die
+  oeffentliche Karte nennt niemanden. Neues Harness `tests/attendees.js`, gegen
+  sieben Mutationen verifiziert.
+  Demo-Fixture mit Absicht: WS-2603 hat `capacity: 3` — eine Show, deren Raum nie
+  voll wird, kann das einzige Verhalten nicht zeigen, das A16.5 verspricht.
 - **A16.11, Durchgang 1 — Location-Anfrage und Bepreisung** (A16.11 Schritte 1–2).
   Restaurant und Retail haben jetzt eine eigene Wine-Shows-Unteransicht; `SHOW_ROLES`
   hat vier Eintraege und drei `side`-Werte (host · producer · venue). Der Distributor

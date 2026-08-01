@@ -1662,13 +1662,22 @@ sees head counts rather than names until the show is released, and the
 search box matches producer names only where the viewer may already read
 them.
 
+**Built for attendees (A16.5):** invitations from the host, requests from
+anyone at all — attending needs no partnership — accept, decline, withdraw,
+and the waitlist. `attendeeQueue()` cuts the confirmed attendees in request
+order at `capacity`; a withdrawal promotes the next person because the same
+arithmetic is asked again, with nothing to run and nothing to keep in step
+(D28). The attendee list renders for the host alone: an attendee sees only
+their own standing, the venue a head count, the public card nobody at all.
+`tests/attendees.js` compares the promoted attendee's record byte for byte
+before and after, which is the check that fails if anybody ever stores the
+standing.
+
 **Not built yet.** Two chains and two loose ends:
 
 **The order list (A16.12)** — the instrument, and the agreed next chain.
-It stands on the **attendee list (A16.5)**, which is therefore its first
-pass rather than an independent one: an interest is written by somebody who
-was at the show, so `wine_show_attendees` has to exist before anything can
-point at it.
+Its first pass is built: `wine_show_attendees` now exists, which is what an
+interest points at.
 
 **The rest of the catering settlement (A16.11 steps 3–9)** — steps 1–2 are
 built. Steps 3–8 touch nothing the order list touches; **step 9, the

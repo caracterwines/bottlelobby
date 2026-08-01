@@ -40,9 +40,15 @@ w.showWineShows('distributor','current');
   else ok('show awaiting the host sorts to the top');
   if (!rows[0].textContent.includes('Awaiting you')) bad('top row not chipped');
   else ok('"Awaiting you" chip on the host list');
-  const others = rows.slice(1).filter(r => r.textContent.includes('Awaiting you'));
-  if (others.length) bad('rows not awaiting the host are chipped too');
-  else ok('no false chips on the other rows');
+  /* Every chip must correspond to a real turn and every turn to a chip —
+     the list and showAwaits() cannot be allowed to drift apart. */
+  const S2 = t => w.eval('wineShows').find(x => t.includes(x.title));
+  const wrong = rows.filter(r => {
+    const sh = S2(r.textContent);
+    return sh && r.textContent.includes('Awaiting you') !== w.eval('showAwaits')('distributor', sh);
+  });
+  if (wrong.length) bad(wrong.length + ' row(s) chipped against what showAwaits() says');
+  else ok('every chip matches showAwaits(), in both directions');
 }
 
 /* WS-2604 is the draft this file drives to `planning`, and its venue is
@@ -159,15 +165,18 @@ else ok('producer accepting the host wine settles it in one step');
 console.log('\n── badges track the turn, both directions');
 w.showWineShows('distributor','current');
 // everything the host owed is answered; only WS-2602 (pending_approval) is left
-const hostWaiting = w.eval('showsAwaiting')('distributor','host').length;
-if (hostWaiting !== 0) bad('host should owe nothing now, owes ' + hostWaiting);
-else ok('host owes nothing after answering');
-if (d.getElementById('dshow-badge').textContent !== '1')
-  bad('host badge should be 1 (the pending_approval show), got ' + d.getElementById('dshow-badge').textContent);
-else ok('host badge = 1, the show awaiting Bottle Lobby');
-if ([...d.querySelectorAll('#dshow-table .otbl-row')].some(r => r.textContent.includes('Awaiting you')))
-  bad('no row should be chipped when the host owes nothing');
-else ok('no "Awaiting you" chips left on the host list');
+/* Every WINE is answered. What is left is the attendee request on
+   WS-2603 — a different relation, and it must still be counted. */
+const stillOwed = w.eval('showsAwaiting')('distributor');
+const owedWine = stillOwed.filter(sh => sh.exhibitors.some(e => w.eval('exhibitorTurn')(sh, e) === 'host'));
+if (owedWine.length !== 0) bad('host should owe no WINE now, owes ' + owedWine.length);
+else ok('host owes no wine after answering');
+if (stillOwed.length !== 1 || stillOwed[0].id !== 'WS-2603')
+  bad('what remains should be exactly the attendee request on WS-2603, got ' + stillOwed.map(x => x.id));
+else ok('what remains is the request for a place — the other relation, still counted');
+if (d.getElementById('dshow-badge').textContent !== '2')
+  bad('host badge should be 2 (the request + the pending_approval show), got ' + d.getElementById('dshow-badge').textContent);
+else ok('host badge = 2, the request for a place and the show awaiting Bottle Lobby');
 // the winery's own turn is what its badge shows
 w.showWineShows('winery','current');
 const wWaiting = w.eval('showsAwaiting')('winery','producer').length;

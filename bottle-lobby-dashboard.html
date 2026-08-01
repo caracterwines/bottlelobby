@@ -896,7 +896,13 @@ body {
 .wse-applied   { background:rgba(184,151,90,0.14); color:var(--gold); }
 .wse-confirmed { background:rgba(76,175,125,0.15); color:#4caf7d; }
 .wse-declined  { background:rgba(107,26,26,0.3); color:#d88; }
-.wse-proposed  { background:rgba(127,170,240,0.15); color:#7faaf0; }
+.wse-proposed,
+.wse-requested { background:rgba(127,170,240,0.15); color:#7faaf0; }
+.wse-withdrawn { background:rgba(247,243,238,0.08); color:var(--dim); }
+/* A seat and a waitlist place are COMPUTED (A16.5, A16.10), so they are
+   not status classes — they render as their own pair. */
+.ws-seat     { background:rgba(76,175,125,0.15); color:#4caf7d; }
+.ws-waitlist { background:rgba(184,151,90,0.14); color:var(--gold); }
 /* readiness checklist — A16.10, computed live, never a stored flag */
 .ws-check { display:flex; flex-direction:column; gap:0.5rem; }
 .ws-check-row { display:flex; align-items:baseline; gap:0.6rem; font-size:0.76rem; color:var(--dim); }
@@ -7766,7 +7772,13 @@ function venueTurn(show) {
 function showAwaits(role, show) {
   const cfg = SHOW_ROLES[role];
   if (SHOW_PAST_STAGES.indexOf(show.stage) !== -1) return false;
-  if (cfg.side === 'venue') return venueTurn(show) === 'venue';
+  if (cfg.side === 'venue') {
+    const me = myAttendance(role, show);
+    return venueTurn(show) === 'venue' || (!!me && me.status === 'invited');
+  }
+  /* An attendee request waits on the host exactly as a proposed wine
+     does — same shape, same single answer (A16.5). */
+  if (cfg.side === 'host' && attendeesOf(show).some(a => a.status === 'requested')) return true;
   /* A quote genuinely waits on the host — venueTurn() says so — but
      accepting it is A16.11 step 6 and does not exist yet. Counting it
      here would badge a show the host cannot move, so the quote is
@@ -7778,6 +7790,41 @@ function showAwaits(role, show) {
 }
 function showsAwaiting(role) {
   return showsForRole(role).filter(s => showAwaits(role, s));
+}
+
+/* ══ ATTENDEES — A SEAT IS COMPUTED (A16.5, A16.10, D28) ═════════ */
+/* There is no stored `waitlisted`. The confirmed attendees in request
+   order are the queue; the first `capacity` of them hold seats and the
+   rest are waiting. That is what makes "the waitlist moves up
+   automatically" literally true — a withdrawal removes a row and the
+   next person is seated by the same arithmetic, with nothing to run
+   and nothing to keep in step.
+
+   Only CONFIRMED attendees consume capacity: an unanswered invitation
+   holds nothing, or a host could fill their own room by inviting sixty
+   people who never replied. */
+function attendeesOf(show) { return show.attendees || []; }
+function attendeeQueue(show) {
+  const confirmed = attendeesOf(show).filter(a => a.status === 'confirmed');
+  return { seated: confirmed.slice(0, show.capacity),
+           waiting: confirmed.slice(show.capacity) };
+}
+/* 'seat' | 'waitlist' | null — null while nobody has said yes yet. */
+function attendeeStanding(show, a) {
+  if (!a || a.status !== 'confirmed') return null;
+  return attendeeQueue(show).seated.indexOf(a) !== -1 ? 'seat' : 'waitlist';
+}
+function waitlistPosition(show, a) {
+  const i = attendeeQueue(show).waiting.indexOf(a);
+  return i === -1 ? null : i + 1;
+}
+function myAttendance(role, show) {
+  const cfg = SHOW_ROLES[role];
+  return attendeesOf(show).find(a => a.stakeholder === cfg.entity) || null;
+}
+/* A show still open to attend: listed publicly and not yet history. */
+function attendable(show) {
+  return PUBLIC_UPCOMING_STAGES.indexOf(show.stage) !== -1;
 }
 
 /* Whether a draft may move to `planning` is derived from the show's
@@ -7962,12 +8009,12 @@ function showKpis(role) {
   /* Discovery first, the venue relation second — that is the order of
      importance for a restaurant or retailer (A16.0). */
   if (cfg.side === 'venue') {
-    const asVenue = live.filter(s => isMyVenue(role, s) &&
-      (s.venueStatus === 'quoted' || s.venueStatus === 'accepted'));
+    const seats = live.filter(s => attendeeStanding(s, myAttendance(role, s)) === 'seat');
+    const queue = live.filter(s => attendeeStanding(s, myAttendance(role, s)) === 'waitlist');
     return [
-      { label:'Upcoming Shows', value:live.length,                sub:'you can attend or exhibit at' },
-      { label:'Awaiting You',   value:showsAwaiting(role).length, sub:'venue request to price' },
-      { label:'You Host',       value:asVenue.length,             sub:'as the venue' },
+      { label:'Upcoming Shows', value:live.length,                sub:'open to you' },
+      { label:'Awaiting You',   value:showsAwaiting(role).length, sub:'an invitation or a venue request' },
+      { label:'Your Places',    value:seats.length,               sub:queue.length ? queue.length + ' more on a waitlist' : 'confirmed seats' },
       { label:'Past Shows',     value:mine.length - live.length,  sub:'in your history' }
     ];
   }
@@ -8032,13 +8079,23 @@ function renderWineShows(role) {
     const roleChip  = isMyVenue(role, s)
       ? '<span class="ord-chip chip-promo">' +
         (s.venueStatus === 'requested' ? 'Venue request' : 'You are the venue') + '</span>' : '';
+    const me        = cfg.side === 'venue' ? myAttendance(role, s) : null;
+    const standing  = me ? attendeeStanding(s, me) : null;
+    const attendChip = !me ? ''
+      : '<span class="ord-chip chip-manual">' + (
+          me.status === 'invited'   ? 'Invited to attend' :
+          me.status === 'requested' ? 'Place requested'   :
+          me.status === 'withdrawn' ? 'Withdrawn'         :
+          me.status === 'declined'  ? 'No place'          :
+          standing === 'seat'       ? 'You have a place'  :
+                                      'Waitlist #' + waitlistPosition(s, me)) + '</span>';
     return '<div class="otbl-row" style="grid-template-columns:104px 104px 1.5fr 1.1fr 74px 136px 26px" ' +
       'onclick="openShowDetail(\'' + s.id + '\')">' +
       '<span class="otbl-id">' + s.id + '</span>' +
       '<span class="otbl-dim">' + s.date + '</span>' +
       '<span class="otbl-cust">' + s.title +
         '<em>' + (showAwaits(role, s) ? '<span class="ord-chip chip-offer">Awaiting you</span>' : '') +
-        quoteChip + roleChip + s.focus + '</em></span>' +
+        quoteChip + roleChip + attendChip + s.focus + '</em></span>' +
       '<span class="otbl-cust">' + s.city + '<em>' + venueCell + '</em></span>' +
       '<span class="otbl-dim">' + wineCell + '</span>' +
       '<span><span class="ord-stage ws-' + s.stage + '">' + SHOW_STAGE_LABEL[s.stage] + '</span></span>' +
@@ -8159,6 +8216,103 @@ function venueRequestBox(s) {
     : '';
 }
 
+/* THE HOST'S BOOK (A16.5, rule 4). The attendee list is not public and
+   one attendee never sees another — a distributor's customer list is
+   the thing they are least willing to hand over, and a show they
+   organise must not publish it as a side effect. So this box renders
+   for the host alone; the venue gets a head count (see the detail
+   pane) and an attendee gets their own standing, nothing more. */
+function attendeeBook(s) {
+  const q = attendeeQueue(s), list = attendeesOf(s);
+  const rows = list.length ? list.map(a => {
+    const stand = attendeeStanding(s, a);
+    const pos   = stand === 'waitlist' ? waitlistPosition(s, a) : null;
+    const chip  = stand === 'seat'
+      ? '<span class="ord-stage ws-seat">seated</span>'
+      : (stand === 'waitlist' ? '<span class="ord-stage ws-waitlist">waitlist #' + pos + '</span>' : '');
+    const acts = a.status === 'requested'
+      ? '<div class="ord-actions" style="margin-top:0.5rem">' +
+          '<button class="btn-sm btn-gold" onclick="hostRespondToAttendee(\'' + s.id + '\',\'' +
+            a.stakeholder.replace(/'/g, "\\'") + '\',\'accept\')">Accept</button>' +
+          '<button class="btn-sm btn-outline" onclick="hostRespondToAttendee(\'' + s.id + '\',\'' +
+            a.stakeholder.replace(/'/g, "\\'") + '\',\'decline\')">Decline</button>' +
+        '</div>'
+      : '';
+    return '<div style="padding:0.7rem 0;border-bottom:1px solid rgba(247,243,238,0.05)">' +
+      '<div style="display:flex;align-items:center;gap:0.7rem">' +
+        '<span style="font-size:0.84rem;color:var(--paper);flex:1">' + a.stakeholder +
+          '<em class="otbl-dim" style="display:block;font-size:0.68rem;font-style:normal">' +
+          (a.source === 'request' ? 'asked to attend' : 'invited') + ' · ' + a.at + '</em></span>' +
+        chip +
+        '<span class="ord-stage wse-' + a.status + '">' + a.status + '</span>' +
+      '</div>' + acts +
+    '</div>';
+  }).join('') : '<div class="otbl-dim" style="padding:0.6rem 0">Nobody on the list yet.</div>';
+
+  const canInvite = attendable(s);
+  return '<div class="odt-box"><div class="odt-box-head">Attendees' +
+      '<span class="right">' + q.seated.length + ' / ' + s.capacity + ' seats' +
+      (q.waiting.length ? ' · ' + q.waiting.length + ' waiting' : '') +
+      (canInvite ? ' <button class="btn-sm btn-outline" onclick="openAttendeeModal(\'' + s.id + '\')">+ Invite</button>' : '') +
+      '</span></div><div class="odt-box-body">' +
+    '<div class="edit-section-sub" style="margin:0 0 0.9rem">Restaurants and retailers. A place needs no ' +
+    'partnership — that is what makes a show an entry point into your network (A16.5). Seats are counted from ' +
+    'confirmed attendees only, in the order they asked; an unanswered invitation holds nothing.</div>' +
+    rows +
+  '</div></div>';
+}
+
+/* An attendee's OWN standing. Rendered on the visitor pane and on the
+   venue's participant pane alike, because attending and providing the
+   room are two different relations and either may exist without the
+   other. */
+function myAttendanceBox(role, s) {
+  if (SHOW_ROLES[role].side !== 'venue') return '';
+  const me = myAttendance(role, s);
+  const past = SHOW_PAST_STAGES.indexOf(s.stage) !== -1;
+  let head = 'Attending', body = '', acts = '';
+
+  if (!me && past) return '';
+  if (!me) {
+    if (!attendable(s)) return '';
+    body = 'A Wine Show is where a distributor presents wines they do not yet list and takes orders on the ' +
+           'spot — you are who it is put on for. Asking for a place needs no partnership with ' + s.leadHost + '.';
+    acts = '<button class="btn-sm btn-gold" onclick="requestPlace(\'' + s.id + '\')">Request a place</button>';
+  } else if (me.status === 'invited') {
+    head = 'Your Invitation';
+    body = s.leadHost + ' has invited you to attend on ' + s.date + '.';
+    acts = '<button class="btn-sm btn-gold" onclick="respondToAttendeeInvite(\'' + s.id + '\',\'accept\')">Accept</button>' +
+           '<button class="btn-sm btn-outline" onclick="respondToAttendeeInvite(\'' + s.id + '\',\'decline\')">Decline</button>';
+  } else if (me.status === 'requested') {
+    head = 'Place Requested';
+    body = 'You asked ' + s.leadHost + ' for a place on ' + me.at + '. They still have to confirm it.';
+  } else if (me.status === 'confirmed') {
+    const stand = attendeeStanding(s, me);
+    if (stand === 'seat') {
+      head = past ? 'You Attended' : 'You Have a Place';
+      body = past ? 'You were at this show.' : 'Confirmed for ' + s.date + ' in ' + s.city + '.';
+      if (!past) acts = '<button class="btn-sm btn-outline" onclick="withdrawPlace(\'' + s.id + '\')">Withdraw</button>';
+    } else {
+      head = 'On the Waitlist';
+      body = 'The room is full, so you are <strong style="color:var(--paper)">number ' + waitlistPosition(s, me) +
+             '</strong> on the waitlist. You move up automatically the moment somebody withdraws — nobody has to ' +
+             'do anything, and there is no queue to be forgotten in.';
+      acts = '<button class="btn-sm btn-outline" onclick="withdrawPlace(\'' + s.id + '\')">Withdraw</button>';
+    }
+  } else if (me.status === 'declined') {
+    head = 'No Place';
+    body = s.leadHost + ' could not offer you a place at this show.';
+  } else if (me.status === 'withdrawn') {
+    head = 'You Withdrew';
+    body = 'You gave up your place. You can ask again while the show is still open.';
+    if (attendable(s)) acts = '<button class="btn-sm btn-outline" onclick="requestPlace(\'' + s.id + '\')">Ask again</button>';
+  }
+  return '<div class="odt-box"><div class="odt-box-head">' + head + '</div><div class="odt-box-body">' +
+    '<div class="edit-section-sub" style="margin:0' + (acts ? ' 0 0.9rem' : '') + '">' + body + '</div>' +
+    (acts ? '<div class="ord-actions">' + acts + '</div>' : '') +
+  '</div></div>';
+}
+
 /* WHO MAY READ WHICH ROW OF THE TRAIL.
    `wine_show_events` is one append-only record (A16.9) — but who may
    READ a row is a visibility question like any other, and therefore
@@ -8239,15 +8393,14 @@ function renderShowVisitorDetail(s, cfg) {
         '</div></div>' +
       '</div>' +
       '<div>' +
-        '<div class="odt-box"><div class="odt-box-head">Attending</div><div class="odt-box-body">' +
-          '<div class="edit-section-sub" style="margin:0">A Wine Show is where a distributor presents wines they do ' +
-          'not yet list and takes orders on the spot — you are who it is put on for (A16.0). ' +
+        myAttendanceBox(activeShowRole, s) +
+        '<div class="odt-box"><div class="odt-box-head">What is public</div><div class="odt-box-body">' +
+          '<div class="edit-section-sub" style="margin:0">' +
           (level === 'anonymised'
             ? 'Exhibitors, their wines and the venue are named once Bottle&nbsp;Lobby releases the show.'
             : 'Exhibitors, their wines and the venue are public.') + '</div>' +
-          '<div class="ws-demo-note" style="margin-top:0.8rem">Requesting a place, the capacity and the waitlist ' +
-          'are A16.5 and are built in a later pass. Nothing here is a second, more generous view of the show: ' +
-          'this is rendered by the same functions the public Wine Shows page uses.</div>' +
+          '<div class="ws-demo-note" style="margin-top:0.8rem">Nothing here is a second, more generous view of ' +
+          'the show: the listing is rendered by the same functions the public Wine Shows page uses.</div>' +
         '</div></div>' +
       '</div>' +
     '</div>';
@@ -8275,8 +8428,9 @@ function renderShowDetail(id) {
   const lineUpPublic = s.stage === 'published' || SHOW_PAST_STAGES.indexOf(s.stage) !== -1;
   const exhRows = (isVenue && !lineUpPublic)
     ? '<div class="otbl-dim" style="padding:0.6rem 0">' + confirmedExhibitors(s).length +
-      ' confirmed exhibitor(s), ' + showProductCount(s) + ' wine(s) — enough to plan the catering. ' +
-      'Who they are becomes visible when Bottle Lobby releases the show.</div>'
+      ' confirmed exhibitor(s), ' + showProductCount(s) + ' wine(s), ' +
+      attendeeQueue(s).seated.length + ' guest(s) expected — enough to plan the catering. ' +
+      'Who they are is the host\'s book, not yours (A16.5).</div>'
     : s.exhibitors.length ? s.exhibitors.map(e => {
     const prods = e.products.map(p =>
       '<div class="ord-item">' +
@@ -8431,6 +8585,7 @@ function renderShowDetail(id) {
     '<div class="odt-grid">' +
       '<div>' +
         (isVenue && isMyVenue(role, s) ? venueRequestBox(s) : '') +
+        (isVenue ? myAttendanceBox(role, s) : '') +
         (isHost  ? hostVenueBox(s)    : '') +
         exhActions + hostProposalBox + readinessBox + gateBox +
         '<div class="odt-box"><div class="odt-box-head">Exhibitors &amp; Wines' +
@@ -8439,6 +8594,7 @@ function renderShowDetail(id) {
           '<div class="edit-section-sub" style="margin:1rem 0 0">Every wine here is a reference to the producer\'s own ' +
           'record — the show never holds a copy.</div>' +
         '</div></div>' +
+        (isHost ? attendeeBook(s) : '') +
         '<div class="odt-box"><div class="odt-box-head">History</div><div class="odt-box-body">' + trail + '</div></div>' +
       '</div>' +
       '<div>' +
@@ -8566,6 +8722,119 @@ function hostRespondToProduct(showId, producer, action) {
   promoteIfReady(s);
   refreshShows();
   showToast('✓ ' + proposal.name + ' confirmed for ' + producer);
+}
+
+/* ── ATTENDEES (A16.5) ────────────────────────────────────────
+   Two routes in, one row. Invitations go to accounts the host already
+   works with; anyone else finds the show and asks — which is what
+   makes a show an entry point into the network rather than an
+   instrument between existing partners. No partnership is required to
+   attend, and none is created by attending. */
+let attendeeShowId = null;
+
+function openAttendeeModal(id) {
+  attendeeShowId = id;
+  const s = wineShows.find(x => x.id === id); if (!s) return;
+  const already = attendeesOf(s).map(a => a.stakeholder);
+  const candidates = activePartners.filter(p =>
+    (p.type === 'restaurant' || p.type === 'retail') && already.indexOf(p.winery) === -1);
+  const q = attendeeQueue(s);
+  document.getElementById('af-show').textContent = s.title + ' · ' + s.date + ' · ' + s.city;
+  document.getElementById('af-seats').textContent = q.seated.length + ' of ' + s.capacity +
+    ' seats taken' + (q.waiting.length ? ', ' + q.waiting.length + ' on the waitlist' : '') + '.' +
+    (q.seated.length >= s.capacity ? ' A new acceptance joins the waitlist.' : '');
+  document.getElementById('af-guest').innerHTML = candidates.length
+    ? candidates.map(p => '<option value="' + p.winery + '">' + p.winery + ' · ' + p.region + '</option>').join('')
+    : '<option value="">Everyone you partner with is already on the list</option>';
+  document.getElementById('wine-show-attendee-modal').classList.add('active');
+}
+function closeAttendeeModal() { document.getElementById('wine-show-attendee-modal').classList.remove('active'); }
+
+function saveAttendeeInvite() {
+  const s = wineShows.find(x => x.id === attendeeShowId); if (!s) return;
+  const who = document.getElementById('af-guest').value;
+  if (!who) { showToast('✗ Pick a guest first'); return; }
+  s.attendees = attendeesOf(s);
+  s.attendees.push({ stakeholder: who, source:'invitation', status:'invited', at: SHOW_TODAY });
+  logShow(s, s.leadHost, who + ' invited to attend');
+  closeAttendeeModal();
+  refreshShows();
+  showToast('✓ ' + who + ' invited to ' + s.title);
+}
+
+/* Host answers a request. Accepting does NOT decide a seat — that is
+   computed from request order against capacity, so somebody accepted
+   into a full room simply lands on the waitlist (A16.10, D28). */
+function hostRespondToAttendee(showId, who, action) {
+  const s = wineShows.find(x => x.id === showId); if (!s) return;
+  const a = attendeesOf(s).find(x => x.stakeholder === who); if (!a) return;
+  if (action === 'decline') {
+    if (!confirm('Turn down ' + who + '\u2019s request for a place?')) return;
+    a.status = 'declined';
+    logShow(s, s.leadHost, 'Declined ' + who + '\u2019s request for a place');
+    refreshShows();
+    showToast(who + ' turned down');
+    return;
+  }
+  a.status = 'confirmed';
+  const stand = attendeeStanding(s, a);
+  logShow(s, s.leadHost, 'Confirmed ' + who + ' as a guest' +
+    (stand === 'waitlist' ? ' — the room is full, so they are on the waitlist' : ''));
+  refreshShows();
+  showToast(stand === 'waitlist'
+    ? '✓ ' + who + ' confirmed — waitlist #' + waitlistPosition(s, a)
+    : '✓ ' + who + ' has a place');
+}
+
+/* Attendee side. A request needs no partnership (A16.5). */
+function requestPlace(id) {
+  const role = activeShowRole, cfg = SHOW_ROLES[role];
+  const s = wineShows.find(x => x.id === id); if (!s) return;
+  s.attendees = attendeesOf(s);
+  const mine = s.attendees.find(a => a.stakeholder === cfg.entity);
+  if (mine) { mine.status = 'requested'; mine.at = SHOW_TODAY; }
+  else s.attendees.push({ stakeholder: cfg.entity, source:'request', status:'requested', at: SHOW_TODAY });
+  logShow(s, cfg.entity, 'Requested a place at the show');
+  refreshShows();
+  showToast('✓ Place requested — ' + s.leadHost + ' has to confirm it');
+}
+
+function respondToAttendeeInvite(id, action) {
+  const role = activeShowRole, s = wineShows.find(x => x.id === id); if (!s) return;
+  const me = myAttendance(role, s); if (!me) return;
+  if (action === 'decline') {
+    if (!confirm('Decline the invitation to attend ' + s.title + '?')) return;
+    me.status = 'declined';
+    logShow(s, me.stakeholder, 'Declined the invitation to attend');
+    refreshShows();
+    showToast('Invitation declined');
+    return;
+  }
+  me.status = 'confirmed';
+  const stand = attendeeStanding(s, me);
+  logShow(s, me.stakeholder, 'Accepted the invitation to attend' +
+    (stand === 'waitlist' ? ' — the room is full, so they are on the waitlist' : ''));
+  refreshShows();
+  showToast(stand === 'waitlist'
+    ? '✓ Accepted — the room is full, you are waitlist #' + waitlistPosition(s, me)
+    : '✓ You have a place at ' + s.title);
+}
+
+/* The one action that demonstrates the whole design: nothing here
+   promotes anybody. The next person is seated because the seat
+   arithmetic is asked again on the next render. */
+function withdrawPlace(id) {
+  const role = activeShowRole, s = wineShows.find(x => x.id === id); if (!s) return;
+  const me = myAttendance(role, s); if (!me) return;
+  if (!confirm('Give up your place at ' + s.title + '?')) return;
+  const before = attendeeQueue(s).waiting[0];
+  me.status = 'withdrawn';
+  logShow(s, me.stakeholder, 'Withdrew from the show');
+  const promoted = before && attendeeStanding(s, before) === 'seat' ? before.stakeholder : null;
+  if (promoted) logShow(s, 'Bottle Lobby', promoted + ' moved up from the waitlist');
+  refreshShows();
+  showToast(promoted ? 'Place given up — ' + promoted + ' moved up from the waitlist'
+                     : 'Place given up');
 }
 
 /* ── THE VENUE RELATION (A16.11 steps 1–2) ─────────────────────
@@ -9036,6 +9305,31 @@ renderAppearanceWidgets();
     <div class="modal-footer">
       <button class="btn-sm btn-outline" onclick="closeVenueModal()">Cancel</button>
       <button class="btn-sm btn-gold" onclick="sendVenueRequest()">Send Request →</button>
+    </div>
+  </div>
+</div>
+
+<!-- Host invites a guest to attend (A16.5) -->
+<div class="modal-overlay" id="wine-show-attendee-modal">
+  <div class="modal-panel" style="max-width:620px">
+    <div class="modal-header">
+      <div class="modal-title">Invite a <span>Guest</span></div>
+      <button class="modal-close" onclick="closeAttendeeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="ord-track" style="margin-top:0"><b id="af-show"></b></div>
+      <div class="edit-section-sub">Restaurants and retailers you partner with. Anyone else can find the show and ask for a place themselves — attending needs no partnership, which is what makes a show an entry point into your network.</div>
+      <div class="edit-section-sub" id="af-seats" style="margin-top:-0.4rem"></div>
+
+      <div class="form-row full">
+        <div class="form-field"><div class="field-label">Guest</div>
+          <select class="field-input" id="af-guest"></select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-sm btn-outline" onclick="closeAttendeeModal()">Cancel</button>
+      <button class="btn-sm btn-gold" onclick="saveAttendeeInvite()">Send Invitation →</button>
     </div>
   </div>
 </div>

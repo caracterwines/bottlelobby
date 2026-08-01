@@ -50,7 +50,16 @@ const SHOW_HERO_FALLBACK = 'images/duesseldorf-tasting-wide.jpg';
    flow has something to show without clicking first:
      WS-2604  requested  → Bistro Laurent has a request to answer
      WS-2602  quoted     → the host has a price to look at
-     WS-2599  accepted   → Weinhaus Müller has hosted one, in history */
+     WS-2599  accepted   → Weinhaus Müller has hosted one, in history
+
+   ATTENDEES (A16.5, A16.9). `stakeholder` is the join key standing in
+   for `stakeholder_id`. `status` holds only the DECISION — there is no
+   `waitlisted` value, because holding a seat is computed from request
+   order against `capacity` (A16.10, D28). Array order IS request
+   order; nothing else records it.
+
+   Attending needs no partnership, and the fixtures say so: Restaurant
+   Hafenkante and Vinoteca Alster appear nowhere in `activePartners`. */
 let wineShows = [
   { id:'WS-2604', title:'Sicilia Prima', date:'14 Mar 2027', city:'Frankfurt',
     focus:'Sicilian indigenous varieties for the on-trade',
@@ -58,7 +67,7 @@ let wineShows = [
     stage:'draft', leadHost:'Hawesko GmbH',
     venueType:'partner_venue', venueEntity:'Bistro Laurent',
     venueName:'Bistro Laurent, Frankfurt', venueStatus:'requested',
-    capacity:60, exhibitors:[],
+    capacity:60, exhibitors:[], attendees:[],
     events:[
       { at:'30 Jul 2026', actor:'Hawesko GmbH', text:'Show created as a draft' },
       { at:'30 Jul 2026', actor:'Hawesko GmbH', text:'Venue request sent to Bistro Laurent' } ] },
@@ -70,6 +79,10 @@ let wineShows = [
     venueType:'host_premises', venueEntity:null,
     venueName:'Hawesko Tasting Loft, Hamburg', venueStatus:'not_required',
     capacity:80,
+    attendees:[
+      { stakeholder:'Vinstuen København', source:'invitation', status:'confirmed', at:'20 Jul 2026' },
+      { stakeholder:'Bistro Laurent',     source:'invitation', status:'invited',   at:'29 Jul 2026' }
+    ],
     exhibitors:[
       { producer:'Bodegas Ruiz', status:'confirmed', source:'invitation',
         products:[ { name:'Rioja Reserva 2019', proposedBy:'host', status:'confirmed' } ] },
@@ -87,7 +100,8 @@ let wineShows = [
       { at:'17 Jul 2026', actor:'Bottle Lobby', text:'Venue, exhibitor and product confirmed — show moved to Planning' },
       { at:'24 Jul 2026', actor:'Hawesko GmbH', text:'Weingut Schmitt invited — no wine proposed' },
       { at:'26 Jul 2026', actor:'Weingut Schmitt', text:'Proposed Spätburgunder — Mosel 2022' },
-      { at:'28 Jul 2026', actor:'Hawesko GmbH', text:'Cantina Rossi invited with Primitivo Riserva 2020' } ] },
+      { at:'28 Jul 2026', actor:'Hawesko GmbH', text:'Cantina Rossi invited with Primitivo Riserva 2020' },
+      { at:'29 Jul 2026', actor:'Hawesko GmbH', text:'Bistro Laurent invited to attend' } ] },
 
   { id:'WS-2602', title:'Nordic Selection', date:'22 Jan 2027', city:'Copenhagen',
     focus:'Mediterranean whites for Scandinavian kitchens',
@@ -96,7 +110,7 @@ let wineShows = [
     venueType:'partner_venue', venueEntity:'Vinstuen København',
     venueName:'Vinstuen København, Copenhagen', venueStatus:'quoted',
     cateringTotal:1250, venueQuotedAt:'27 Jul 2026',
-    capacity:50,
+    capacity:50, attendees:[],
     exhibitors:[
       { producer:'Cantina Rossi', status:'confirmed', source:'invitation',
         products:[ { name:'Grillo Sicilia DOC 2023', proposedBy:'producer', status:'confirmed' } ] },
@@ -117,7 +131,18 @@ let wineShows = [
     stage:'published', leadHost:'Hawesko GmbH',
     venueType:'host_premises', venueEntity:null,
     venueName:'Hawesko Tasting Loft, Hamburg', venueStatus:'not_required',
-    capacity:70,
+    /* Deliberately small so the waitlist is reachable in the demo: three
+       seats, three confirmed, one more asking. A real tasting seats more;
+       a fixture that never fills its room cannot show the one behaviour
+       A16.5 promises — that a withdrawal promotes the next person with
+       nobody doing anything. */
+    capacity:3,
+    attendees:[
+      { stakeholder:'Bistro Laurent',        source:'invitation', status:'confirmed', at:'02 Jun 2026' },
+      { stakeholder:'Restaurant Hafenkante', source:'request',    status:'confirmed', at:'09 Jun 2026' },
+      { stakeholder:'Vinoteca Alster',       source:'request',    status:'confirmed', at:'14 Jun 2026' },
+      { stakeholder:'Weinhaus Müller',       source:'request',    status:'requested', at:'28 Jul 2026' }
+    ],
     exhibitors:[
       { producer:'Henri Dubois Domaine', status:'confirmed', source:'invitation',
         products:[ { name:'Sancerre Rouge 2022', proposedBy:'host', status:'confirmed' } ] },
@@ -129,7 +154,8 @@ let wineShows = [
       { at:'02 Jun 2026', actor:'Weingut Schmitt', text:'Confirmed with Müller-Thurgau — Mosel 2023' },
       { at:'04 Jun 2026', actor:'Henri Dubois Domaine', text:'Confirmed with Sancerre Rouge 2022' },
       { at:'11 Jun 2026', actor:'Hawesko GmbH', text:'Submitted to Bottle Lobby for release' },
-      { at:'15 Jun 2026', actor:'Bottle Lobby', text:'Released — full details are now public' } ] },
+      { at:'15 Jun 2026', actor:'Bottle Lobby', text:'Released — full details are now public' },
+      { at:'28 Jul 2026', actor:'Weinhaus Müller', text:'Requested a place at the show' } ] },
 
   { id:'WS-2599', title:'Primavera Italiana', date:'12 Apr 2026', city:'Munich',
     focus:'Italian spring releases',
@@ -139,6 +165,10 @@ let wineShows = [
     venueName:'Weinhaus Müller, Munich', venueStatus:'accepted',
     cateringTotal:780, venueQuotedAt:'09 Feb 2026', venueAcceptedAt:'11 Feb 2026',
     capacity:65,
+    attendees:[
+      { stakeholder:'Bistro Laurent',  source:'invitation', status:'confirmed', at:'20 Feb 2026' },
+      { stakeholder:'Vinoteca Alster', source:'request',    status:'confirmed', at:'01 Mar 2026' }
+    ],
     exhibitors:[
       { producer:'Cantina Rossi', status:'confirmed', source:'invitation',
         products:[ { name:"Nero d'Avola Sicilia DOC 2022", proposedBy:'host', status:'confirmed' } ] }

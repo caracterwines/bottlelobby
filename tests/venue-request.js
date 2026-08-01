@@ -101,8 +101,10 @@ w.showWineShows('restaurant','current');
   if (!rows[0].textContent.includes('Awaiting you')) bad('an unanswered request should be chipped');
   else if (!rows[0].textContent.includes('Venue request')) bad('the row does not say WHY it awaits them');
   else ok('request row chipped "Awaiting you" + "Venue request"');
-  if (d.getElementById('rshow-badge').textContent !== '1') bad('restaurant badge should be 1, got "' + d.getElementById('rshow-badge').textContent + '"');
-  else ok('badge counts the request only — browsing is not a task');
+  /* Two turns: the venue request on WS-2604 and the invitation to attend
+     WS-2601. Browsing the other show is not a task and must not count. */
+  if (d.getElementById('rshow-badge').textContent !== '2') bad('restaurant badge should be 2, got "' + d.getElementById('rshow-badge').textContent + '"');
+  else ok('badge counts the venue request and the attendance invitation — browsing is not a task');
 
   /* a browsed anonymised show gives nothing away in the row itself */
   const rioja = rows.find(r => r.textContent.includes('Grande Rioja'));

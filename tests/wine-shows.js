@@ -23,8 +23,8 @@ const byId  = id => shows().find(s => s.id === id);
 console.log('── initial badges');
 if (d.getElementById('wshow-badge').textContent !== '1') bad('winery badge should be 1 pending invitation');
 else ok('winery badge = 1 open invitation');
-if (d.getElementById('dshow-badge').textContent !== '2') bad('distributor badge should be 2 (1 wine to answer + 1 awaiting release), got ' + d.getElementById('dshow-badge').textContent);
-else ok('distributor badge = 2 (a wine to answer + a show awaiting release)');
+if (d.getElementById('dshow-badge').textContent !== '3') bad('distributor badge should be 3 (1 wine + 1 attendee request + 1 awaiting release), got ' + d.getElementById('dshow-badge').textContent);
+else ok('distributor badge = 3 (a wine, a request for a place, a show awaiting release)');
 
 // ── 2. view isolation: opening shows hides dashboard/profile/orders
 console.log('\n── view switching');
