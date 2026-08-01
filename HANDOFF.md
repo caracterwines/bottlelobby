@@ -23,6 +23,25 @@ Kein Build-Command, Publish-Directory = Repo-Root.
 
 ## Zuletzt abgeschlossen
 
+- **A16.12-Kette, Durchgang 3a — die zwei Spalten sichtbar.** `lineKind()` liest das
+  Portfolio des Hosts und antwortet je Zeile „stock" oder „preorder"; nichts davon
+  wird gespeichert, also wechselt ein aufgenommener Wein die Spalte von selbst.
+  Gast sieht es in Klartext je Zeile, samt Lieferzeit **nur** an Vorbestell-Zeilen —
+  „14 Tage" ueber einen Lagerwein waere derselbe Fehler in die andere Richtung.
+  Beim Host steht `preorderTally()` getrennt: die Zahl, auf der die Erstbestellung
+  beim noch nicht gelisteten Winzer ruht.
+  **Fixture nach Vorgabe:** Mueller-Thurgau ins Portfolio, damit *Loire & Mosel*
+  beide Spalten **nebeneinander** zeigt — auf zwei Shows verteilt waere die
+  Unterscheidung da, aber nicht vorgefuehrt.
+  `tests/order-list.js` um fuenf Abschnitte erweitert, gegen fuenf Mutationen
+  verifiziert.
+  **Zwei Eigenfehler unterwegs, beide gefunden:** ein fehlendes Anfuehrungszeichen
+  (Syntaxfehler, sofort von `node --check` gefangen) und eine zu grob gefasste
+  Zusicherung — `querySelectorAll('div')` traf verschachtelte Eltern, sodass die
+  Pruefung „keine Lieferzeit an der Lagerzeile" aus dem falschen Grund haette
+  bestehen koennen. Jetzt je Zeile ueber das eine Mengenfeld isoliert.
+  `check-static` kennt jetzt auch IDs, die Skripte als Literal ins Markup schreiben
+  (`ol-lead` war sonst faelschlich „fehlend").
 - **A16.12-Kette, Durchgang 2 — die Bestellliste auf der Show.** Gast mit Platz
   traegt seine Mengen selbst ein, der Host am Stand fuer ihn (`enteredBy`), beide
   ueber dieselbe Funktion `writeInterest()`. Auszaehlung live: Haeuser **und**
