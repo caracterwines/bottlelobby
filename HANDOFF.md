@@ -23,6 +23,21 @@ Kein Build-Command, Publish-Directory = Repo-Root.
 
 ## Zuletzt abgeschlossen
 
+- **Entschieden 01.08.: Teilnehmer erscheinen ab `completed` auf dem eigenen Profil**
+  (Anhang D **D30**). A16.7 sagte „Host, Aussteller, Location und Teilnehmer
+  **gleichermassen**" — das war vor der Teilnehmerliste geschrieben und zu weit
+  gefasst, denn A16.5 Regel 4 haelt die Gaesteliste beim Host, und fuenfzehn Profile
+  mit „ich bin dort" ergeben genau diese Liste. **Serges Begruendung, jetzt in der
+  Spec:** die Anwesenheit ist eine eigene Tatsache des Teilnehmers, die er zeigen
+  darf — aber erst, wenn sie keine Auskunft ueber die Gegenwart mehr gibt. Vorher ist
+  „ich bin dort" eine Aussage ueber die Gaesteliste, danach eine ueber die eigene
+  Vergangenheit. Damit bleibt der Credential-Gedanke von A16.7 erhalten und Regel 4
+  gilt genau so lange, wie sie etwas schuetzt.
+  A16.7 hat statt „gleichermassen" jetzt **eine Zeile je Rolle mit eigenem Zeitpunkt**
+  (Host `planning`, Aussteller und Location `published`, Teilnehmer `completed`),
+  A16.5 Regel 4 die zeitliche Grenze. Derselbe Mechanismus wie A16.6 — eine Regel,
+  die auf einer Flaeche gilt und auf der anderen nicht, gilt gar nicht — nur ist die
+  Grenze hier zeitlich statt raeumlich.
 - **A16.12-Kette, Durchgang 3c — Zuruecklegen. Die Kette ist damit komplett.**
   Entscheidung je vorbestelltem Wein beim Abschluss: bestellen oder mit Begruendung
   zuruecklegen. Ohne Begruendung wird abgelehnt — eine Begruendung, die niemand
@@ -294,19 +309,19 @@ Abschluss mit beiden Order-Richtungen → Zuruecklegen). Die Kette traegt end-to
    `wine_show_catering` fehlt. Laesst sich mit 1 zusammenlegen, wenn dir groessere
    Pruefungen im Browser lieber sind.
 3. **Oeffentliche Profile von Restaurant und Retail (A16.7 abschliessen)** — klein
-   und **genau jetzt entsperrt**: A16.13 haelt fest, dass sie auf dem handgeschriebenen
+   und **genau jetzt entsperrt**: A16.13 hielt fest, dass sie auf dem handgeschriebenen
    Leerzustand bleiben, „bis A16.5 und die Teilnehmerlisten existieren". Beides
-   existiert seit heute. **ABER: erst entscheiden, siehe unten.**
+   existiert seit heute, und die noetige Entscheidung ist gefallen (siehe unten):
+   Location ab `published`, Teilnehmer ab `completed`. Beide Zeilen gehoeren in
+   `publicParticipation()` — dieselbe Funktion, die schon Host und Aussteller
+   beantwortet. **Nichts sonst darf lernen, die Frage getrennt zu beantworten**,
+   sonst ist es die vierte Flaeche, vor der A16.6 warnt.
 4. **Open Call mit Master-Data-Filtern (A16.4)** — unabhaengig, mittelgross; braucht
    Filter ueber Master-Daten, die es als echte Tabellen im Prototyp nicht gibt.
    Vorher klaeren, wie tief das nachgebaut wird.
 5. **Eigene Events (A16.8)** — unabhaengig, groesste Flaeche fuer das wenigste neue
    Modell (vier Rollen, kein Freigabe-Gate). Gut, wenn ein breiter, risikoarmer
    Durchgang ansteht.
-
-### ⚠ ZUERST ZU ENTSCHEIDEN: A16.7 widerspricht A16.5 Regel 4
-
-Beim Bau der Teilnehmerliste heute entstanden, beide Saetze stehen so in der Spec:
 
 - **CACHE: NICHT erledigt — am 01.08. erneut aufgetreten.** Nach dem Push kam wieder
   die alte Fassung, erst `?v=cab9b93` holte die neue. Die Formulierung „praktisch

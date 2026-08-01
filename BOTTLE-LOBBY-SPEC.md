@@ -995,12 +995,19 @@ finds the show and asks — which is A16.5's own point about a Wine Show being
 an entry into the network, and A16.0's about reaching the demand side. No
 partnership is required to attend, and none is created by attending.
 
-**4. The attendee list is the host's book.** It is not public, and one
-attendee never sees another. The distributor's customer list is the thing
-they are least willing to hand over, and a show they organise must not
-publish it as a side effect. The **venue** is told how many are coming and
-not who — the same rule that governs the line-up (A16.6), for the same
-reason: what catering needs is a head count.
+**4. The attendee list is the host's book, until the show is over.** It is
+not public, and one attendee never sees another. The distributor's customer
+list is the thing they are least willing to hand over, and a show they
+organise must not publish it as a side effect. The **venue** is told how
+many are coming and not who — the same rule that governs the line-up
+(A16.6), for the same reason: what catering needs is a head count.
+
+**The bound is `completed`, not for ever.** From then an attendee may show
+their own attendance on their own profile (A16.7), because at that point
+the sentence reports on their past rather than on who is in the room. The
+host's list as a *list* is never published — what changes is that each
+attendee's own fact stops giving it away. A rule kept past the point where
+it protects anything stops being a protection and becomes a habit.
 
 Once published, a venue restaurant may upload the **menu**.
 
@@ -1046,24 +1053,39 @@ answer the question the same way, from the same function.
 ### A16.7 Where shows and events appear
 
 **On the public profile (A11) of every participant** — host, exhibitor,
-venue and attendee alike — as upcoming and, after `completed`, as history.
-A winery's profile showing three fairs it presented at is a credential.
+venue and attendee — as upcoming and, after `completed`, as history. A
+winery's profile showing three fairs it presented at is a credential.
 
-**An exhibitor appears on their own profile only from `published`. The host
-appears from `planning`.** A16.6 is what makes those two different: the
-host is the one announcing the show, and anonymisation protects producers,
-products and the venue, not the announcer.
+**But not all of them from the same moment.** Each role appears as soon as
+its appearing gives nothing away that another rule is holding back:
 
-| Role | Appears on their profile from |
-|---|---|
-| Host | `planning` |
-| Exhibitor | `published` — **not** `planning`, even once they have confirmed |
+| Role | Appears on their profile from | Because |
+|---|---|---|
+| Host | `planning` | They are the one announcing the show. A16.6 protects producers, products and the venue — not the announcer |
+| Exhibitor | `published` — **not** `planning`, even once they have confirmed | An anonymised show is publicly listed under its title, so a profile saying "exhibiting at Grande Rioja" gives away exactly what the listing withholds |
+| Venue | `published` | The exact venue is part of what A16.6 protects, for the same reason and until the same moment |
+| Attendee | **`completed`** | Their attendance is their own fact to show — but only once it no longer reports on the present. See below |
 
 The exhibitor rule is stricter than the "a later decline would read as a
 withdrawal" reasoning alone requires, and that is the point: anonymisation
 holds across surfaces, or it holds nowhere. The full argument is in A16.6,
 under *Anonymisation holds across every surface at once* — read it before
 changing this table.
+
+> **Why an attendee waits for `completed`.** Being at a show is a fact
+> about the attendee, and they may show it. Before and during the show,
+> however, *"I am going to Grande Rioja"* is not a statement about
+> themselves — it is a statement about the **guest list**, which A16.5 rule
+> 4 keeps as the host's book. Fifteen profiles each saying "I will be
+> there" reconstruct exactly the list that rule withholds. Afterwards the
+> same sentence is a statement about their own past, and the list it once
+> belonged to has nothing left to protect.
+>
+> This is A16.6's mechanism again: **a rule that holds on one surface and
+> not on another holds nowhere** — only here the boundary is in time rather
+> than across surfaces. And it keeps both halves intact: A16.7's credential
+> survives, and A16.5 rule 4 applies for exactly as long as it protects
+> something. See Appendix D (D30).
 
 **Through the follow graph (A7).** Following an account subscribes you to
 its appearances: a restaurant following a winery is notified when that
@@ -1983,10 +2005,14 @@ Their feed stays empty, which is the rule demonstrated rather than merely
 asserted. `tests/follow-feed.js` fails if that pair is ever removed,
 because without it every other assertion in the file passes vacuously.
 
-Restaurant and Retail profiles stay on their present empty state until
-A16.5 and the attendee lists exist — they appear in A16.7 as venue and
-attendee, and neither relation is modelled yet. Their dashboards do carry
-the feed, since A16.7's own example is a restaurant following a winery.
+Restaurant and Retail profiles still carry their hand-written empty state.
+**Both relations they need now exist** — venue (A16.11 steps 1–2) and
+attendee (A16.5) — so the pass is unblocked, and the rule it must implement
+is the role table in A16.7: venue from `published`, attendee from
+`completed`. `publicParticipation()` answers only `host` and `exhibitor`
+today and is where those two rows belong; nothing else should learn to
+answer the question separately. Their dashboards already carry the feed,
+since A16.7's own example is a restaurant following a winery.
 
 Which shows a stranger may see listed is itself derived (A16.10), not a
 curated list: `planning` and `published` are upcoming, `completed` is
@@ -2536,6 +2562,7 @@ directory is the repo root, so everything committed is served unless blocked.
 | D24 | The catering contribution had three modes, of which `split_by_products` was the only one that charged exhibitors, and a producer's share was **live-computed throughout** — `catering_total × (own ÷ all products)`, "recomputed whenever the line-up changes" (A16.10) | **A16.5 / A16.10 / A16.11** — four modes with `fixed_per_product` as the default, and the amount computed only **until the producer consents to it**, then held as a ceiling that may fall but never rise | Live computation and consent cannot coexist once money is involved: a producer who agreed to €400 owed €500 the moment a third party dropped out, without ever seeing the increase. Recalculating and re-collecting consent instead had no natural end — a second dropout restarts the round for everyone, days before the fair. `fixed_per_product` removes the cascade by construction rather than managing it, and matches how a stand is really booked: at a price, not as a share of the organiser's invoice. `split_by_products` survives for hosts who pass the venue's bill through one-to-one. |
 | D25 | `cancelled` and `rescheduled` were available to the host at any time, with `rescheduled` resetting every confirmation | **A16.2** — both barred from the commitment point (A16.11); unwinding a committed show is a credit note handled by staff, not a lifecycle transition | Resetting confirmations was right while a confirmation only meant "I will come". Once it is a payment obligation, the reset revokes something a third party has already acted on — the venue has booked staff, the host has invoiced. The mechanism did not become wrong, its reach did. |
 | D26 | A16.5 called the restaurant or retailer providing the room the **"venue host"**, while A16.3 calls the organising distributor the **host** | **A16.5 / A16.11** — **host** is the distributor, **venue** is the restaurant or retailer; "venue host" is not used | Harmless while only one of them acted. The settlement flow (A16.11) has both parties acting in the same nine steps, quoting to and confirming with each other, and one word for two roles in one flow is a defect waiting to be read the wrong way. The prototype's field names (`venueType`, `venueName`) were already on the right side of this. |
+| D30 | A16.7 put every participant on their public profile **"host, exhibitor, venue and attendee alike"**, from the same moment | **A16.7 / A16.5** — a row per role with its own moment: host from `planning`, exhibitor and venue from `published`, **attendee from `completed`**; A16.5 rule 4 gains the matching bound | "Alike" was written before attendees were modelled and turned out to be too broad: A16.5 rule 4 keeps the guest list as the host's book, and fifteen profiles each saying "I will be there" reconstruct precisely that list. Deferring the attendee to `completed` keeps both halves whole — the credential A16.7 is after, and the protection rule 4 is after — because the same sentence reports on the guest list before the show and on the attendee's own past afterwards. The boundary is temporal where A16.6's is spatial; the mechanism ("a rule that holds on one surface and not another holds nowhere") is the same one. |
 | D29 | A16.12 closed a wine the tally did not carry by letting the interests **`lapse`**, with the attendees "told plainly that the wine will not be listed" | **A16.12** — the host **holds it back with a reason**, the reason goes to the **producer** as a message they can answer, the interests are kept as `held_back`, and the pre-orderer is told *"not ordered this time, your note is kept"* rather than refused | "Lapsed" described an expiry, and the flat refusal ended a conversation that in this trade has barely started: a producer can carry the freight or improve the terms, and some wines need two or three shows before they carry themselves. Both of the old behaviours also destroyed the signal — a guest told "no" stops asking, and A8 loses exactly the demand nobody is serving yet. Only the wording of the guest's message was ever in doubt; the reason reaching the producer was the substantive change. |
 | D28 | `wine_show_attendees.status` carried **`waitlisted`** as a stored value, alongside a rule that the waitlist "moves up automatically" | **A16.5 / A16.9 / A16.10** — the status records only the decision (`invited` · `requested` · `confirmed` · `declined` · `withdrawn`); holding a seat or a waitlist place is computed from request order against capacity | The two could not both be true. A stored `waitlisted` has to be rewritten for everyone behind a departing attendee, which is a cascade, not an automatic move-up — and it is stale between the withdrawal and the rewrite. Computing it makes the promise in A16.5 literally true. `withdrawn` was added in the same breath: leaving of your own accord and being turned down are different facts, and only one of them may be re-invited without ceremony (the same distinction `lapsed` draws in A16.11). **Superseded before it was ever built.** |
 | D27 | `orders.source` was to gain a single **`wine_show`** value, guarded by "a `wine_show` order can never carry product lines" (A16.11) | **A16.12 / A14.3** — two opposite values, `wine_show_order` (goods, down the chain, always product lines) and `wine_show_catering` (service, against the chain, never product lines), each with its own guard | The single value was drafted while the catering settlement was the only money a show produced, and it was already wrong: the show's *purpose* is the consolidated purchase (A16.0), which is a product order sourced from a show. One value would have forced the guard to be either useless or false. **Superseded before it was ever built** — noted here because the decision was taken, not because code changed. |
