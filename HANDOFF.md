@@ -235,19 +235,24 @@ Kein Build-Command, Publish-Directory = Repo-Root.
   Solange nichts entschieden ist, verwaltet `check-static.js` sie in
   `KNOWN_UNSTYLED` — mit Pruefung in beide Richtungen, die Liste kann das Problem
   also nicht ueberleben.
-- **DIE GROESSTE OFFENE LUECKE: die Bestellliste aus A16.0.** Waehrend der Show
-  Bestellungen von Restaurants und Retailern einsammeln und daraus EINE
-  Sammelbestellung beim Winzer machen — das ist der Zweck der Wine Show, und A14
-  kennt davon nichts: kein show-basierter Auftrag, kein Konsolidierungsschritt, keine
-  Verbindung von `wine_shows` zur entstehenden `orders`-Zeile. Braucht eine eigene
-  Entscheidung vor dem Bau. Bis dahin traegt die Plattform den *Anlass*, aber nicht
-  das *Instrument*.
+- **NAECHSTE KETTE: die Bestellliste (A16.12), spezifiziert, nicht gebaut.**
+  Entschieden am 1.8.: das Instrument kommt vor der Nebenrechnung, Catering wird
+  dafuer unterbrochen. Der Entwurf beantwortet die vier offenen Punkte:
+  Richtpreis auf der Bedarfsmeldung (sichtbar, ausdruecklich unverbindlich; verbindlich
+  erst in der Verkaufs-Order), Unterdeckung (Verteilung entscheidet der Distributor,
+  Vorschlag pro rata berechnet, Uebersteuerung landet in `order_events`; der Kunde
+  erfaehrt Kuerzung **samt Grund** und darf abspringen, sieht aber nie fremde Mengen),
+  zwei `source`-Werte statt einem, und A16 statt A14 als Ort.
+  **Reihenfolge-Zwang daraus:** Catering-Durchgang 4 (Rechnung) muss NACH A16.12
+  kommen — beide haengen an `orders.source` und der Wache daran (Anhang D **D27**).
 - **Wine Shows — die naechsten Durchgaenge.** Gebaut sind der erste Dashboard-Durchgang,
   **A16.7 vollstaendig** und **A16.11 Schritte 1–2** (Location-Anfrage + Bepreisung).
-  Offen: Open Call mit Master-Data-Filtern (A16.4), Teilnehmer-Einladungen und
-  Warteliste (A16.5), eigene Events (A16.8), die Bestellliste oben — und die
-  **Catering-Abrechnung ab Schritt 3**: Modus + Satz, Versand der Beitraege, die
-  verbindlichen Bestaetigungen mit A6-Mechanik, Rechnung und Zahlung.
+  Als Naechstes die Bestellliste-Kette (oben), deren erster Durchgang die
+  **Teilnehmerliste (A16.5)** ist — sie ist Voraussetzung, keine unabhaengige Aufgabe:
+  eine Bedarfsmeldung kommt von jemandem, der auf der Show war.
+  Danach frei: **Catering ab Schritt 3** (Modus + Satz, Versand der Beitraege, die
+  verbindlichen Bestaetigungen mit A6-Mechanik — Schritt 9 Rechnung erst nach A16.12),
+  Open Call mit Master-Data-Filtern (A16.4), eigene Events (A16.8).
   **Beim naechsten Durchgang nicht vergessen:** `showAwaits()` zaehlt ein
   vorliegendes Location-Angebot bewusst NICHT als Aufgabe des Hosts, weil er es noch
   nicht annehmen kann. Sobald die verbindliche Annahme existiert, gehoert
