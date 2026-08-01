@@ -4,7 +4,7 @@
 > Dateiliste, Dateianzahl und Aenderungshistorie stehen in der Git-Historie — nicht hier.
 > Dauerhafte Regeln stehen in `BOTTLE-LOBBY-SPEC.md`, kurze Invarianten in `CLAUDE.md` — nicht hier.
 
-**Letzte Aktualisierung:** 31. Juli 2026
+**Letzte Aktualisierung:** 1. August 2026
 
 ---
 
@@ -23,6 +23,17 @@ Kein Build-Command, Publish-Directory = Repo-Root.
 
 ## Zuletzt abgeschlossen
 
+- **A16.11 „Catering settlement" — Spec zuerst, Bau folgt.** Neun Schritte von der
+  Location-Anfrage bis zur Staff-Freigabe, der **verbindliche Punkt** (erste Zusage
+  oder Angebotsannahme, abgeleitet — kein Flag) und was er sperrt, vier Regeln gegen
+  die Neuberechnungs-Schleife bei Winzer-Ausfall, und die Empfehlung, den Beitrag als
+  `orders`-Datensatz zu fuehren. Mitgezogen: **A16.5** (Vokabular host/venue, vierter
+  Modus `fixed_per_product` als Standard), **A16.2** (`cancelled`/`rescheduled` ab dem
+  verbindlichen Punkt gesperrt), **A16.9** (Beitragsfelder auf der Aussteller-Zeile,
+  Status `lapsed`), **A16.10** (berechnet bis zur Zusage, danach Obergrenze),
+  **A3** (Warenfluss ≠ Geldfluss), **A14.3/.5/.7/.8** (Service-Auftrag,
+  `settled_otherwise`, keine Versand-KPIs), **CLAUDE.md** Invariante 7 (zweite
+  Ausnahme). Anhang D um **D24–D26** ergaenzt.
 - Migration von ZIP-Workflow auf GitHub + Netlify; Schreibzugriff des Connectors eingerichtet
 - Bestellsystem gebaut: gemeinsames `orders`-Modell ueber beide Haelften der Lieferkette
 - Auftragsverwaltung als eigene Unteransicht im Distributor-Dashboard (Liste + Detail,
@@ -179,6 +190,12 @@ Kein Build-Command, Publish-Directory = Repo-Root.
   gewinnt also wenig — trotzdem eine bewusste Entscheidung wert, weil dort das
   vollstaendige Geschaeftsmodell steht. `netlify.toml` koennte sie mit derselben
   Redirect-Regel wie `/tests/*` ausschliessen.
+- **A14.7 hatte keine „abweichend vereinbart"-Stufe** — entgegen der Annahme bei der
+  A16.11-Entscheidung. Die Kette war `not_invoiced → invoiced → partial → paid` plus
+  abgeleitetes `overdue`, mehr nicht. `settled_otherwise` ist mit A16.11 **neu
+  angelegt** worden, nicht bloss weiterverwendet: ohne sie blockiert eine
+  ausserhalb der Plattform beglichene Rechnung die Show-Freigabe dauerhaft.
+  Im Prototyp fehlt sie noch — `PAY_LABEL` kennt sie nicht.
 - **Kein Rueckweg aus `planning`.** Wird ein bereits beidseitig bestaetigter Wein
   spaeter abgelehnt, faellt `showReadiness` auf `false`, die Show bleibt aber in
   `planning` und rutscht nicht nach `draft` zurueck. A16.2 kennt keinen Rueckweg,
@@ -198,10 +215,11 @@ Kein Build-Command, Publish-Directory = Repo-Root.
   `KNOWN_UNSTYLED` — mit Pruefung in beide Richtungen, die Liste kann das Problem
   also nicht ueberleben.
 - **Wine Shows — die naechsten Durchgaenge.** Gebaut sind der erste Dashboard-Durchgang
-  und **A16.7 vollstaendig** (vier Durchgaenge, siehe unten). Offen, jeder als eigener
-  Schritt und keiner vom anderen blockiert: Open Call mit Master-Data-Filtern (A16.4),
-  Location-Anfrage an Restaurant/Retail samt Bestaetigung (A16.5), Catering-Aufteilung,
-  Teilnehmer-Einladungen und Warteliste, eigene Events fuer alle vier Rollen (A16.8).
+  und **A16.7 vollstaendig** (vier Durchgaenge, siehe unten). Offen: Open Call mit
+  Master-Data-Filtern (A16.4), Teilnehmer-Einladungen und Warteliste (A16.5), eigene
+  Events fuer alle vier Rollen (A16.8) — die drei unabhaengig voneinander — und die
+  **Catering-Abrechnung (A16.11)**, die als Einzige eine Kette ist: Location-Anfrage
+  und Bepreisung (A16.5 Schritte 1–2) tragen alles Weitere.
   Restaurant und Retail bekommen ihre Wine-Shows-Unteransicht erst mit den Location-
   und Teilnehmer-Schritten — deshalb hat `SHOW_ROLES` bisher nur zwei Eintraege, und
   deshalb bleiben ihre sieben Profilseiten beim handgeschriebenen Leerzustand.
@@ -216,8 +234,16 @@ Kein Build-Command, Publish-Directory = Repo-Root.
   Admin-Oberflaeche gibt. Er steht nur da, weil der Prototyp kein Staff-Panel hat,
   ist als Demo beschriftet und nennt daneben den echten Weg. Im Investorengespraech
   ist die Freigabe das Verkaufsargument (A16.1) — nicht als Provisorium praesentieren.
-- **Catering-Abrechnung und Tickets** sind in A16.11 bewusst offen gelassen und
-  brauchen eine Entscheidung, bevor der Catering-Schritt gebaut wird.
+- **Catering-Abrechnung: entschieden und spezifiziert (A16.11), noch nicht gebaut.**
+  Offen sind dort nur noch drei Punkte, zwei davon nicht von uns entscheidbar:
+  die **Rechtswirkung der Klick-Bestaetigung** (Jurist, plus die Frage, ob der
+  Distributor eine unterschriebene Angebotsannahme braucht), **grenzueberschreitende
+  Umsatzsteuer** auf den Beitrag, und die **`orders`-Empfehlung** aus A16.11 —
+  Catering-Beitrag als `orders`-Datensatz mit `source: 'wine_show'` statt eigener
+  Tabelle. Die ersten beiden Bau-Durchgaenge (Location-Anfrage, Bepreisung) haengen
+  nicht daran; der Rechnungs-Durchgang schon.
+  **Tickets bleiben draussen** — bezahlter Eintritt gehoert zu eigenen Events (A16.8),
+  steht jetzt ausdruecklich so in A16.11.
 - **Marge-Block fuer die Winery** bleibt bewusst aus (`ORDER_ROLES.winery.margin = false`):
   es gibt kein Feld fuer Produktionskosten, eine geschaetzte Zahl waere ein A1-Verstoss.
   Anschalten, sobald echte Kostendaten existieren.

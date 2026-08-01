@@ -110,6 +110,8 @@ Consequences for the build:
 
 **Own-Label:** A separate flag/relation layered on top of the winery→distributor wine link (which distributor exclusively licensed which wine). Never a separate copy of the wine.
 
+**This rule governs the flow of goods, not the flow of money.** A distributor invoicing a producer for a service — a Wine Show catering contribution, A16.11 — runs against the arrows above and is not a breach of them: no product changes hands, and such an order may not carry product lines at all. Only a route by which wine reaches a buyer is a supply chain shortcut.
+
 ---
 
 ## A4. Master Data (admin-maintained, never free text)
@@ -440,7 +442,8 @@ A separate `ship_status` runs alongside the stage for warehouse reality:
 orders (
   id, buyer_id, buyer_type, seller_id, seller_type,
   stage        enum('pending','accepted','shipped','delivered','declined','cancelled'),
-  source       enum('manual','reorder','deal','offer','promo'),
+  source       enum('manual','reorder','deal','offer','promo','wine_show'),
+  wine_show_id FK → wine_shows (nullable),   -- source = 'wine_show' only (A16.11)
   placed_at,
   tax_mode     enum('net','vat'),          -- per order, see A14.6
   vat_rate, discount_pct, shipping_cost,
@@ -450,7 +453,10 @@ orders (
 )
 
 order_items (
-  order_id FK, wine_id FK→wines,           -- reference, never a copy
+  order_id FK, wine_id FK→wines,           -- reference, never a copy.
+                                           -- Nullable ONLY on a service order
+                                           -- (source = 'wine_show', A16.11)
+  description,                             -- service lines only, where wine_id is null
   qty, unit_price, cost_price,             -- cost_price drives the margin block
   discount_pct, is_free                    -- is_free = deal free goods, priced at 0
 )
@@ -500,6 +506,8 @@ Six types, each with its own number sequence and issue date:
 
 Documents render from the live order. **In the real build the generated PDF must be frozen and archived at issue time** (`pdf_url`), because an invoice is a legal record and must not change when the order is later edited. This is the one place where a snapshot is correct and the single-source-of-truth rule yields to accounting law.
 
+`PP` carries a second job: it is the instrument for a Wine Show catering contribution, host to producer (A16.11). Nothing about the document changes — only what the order underneath it is for.
+
 ### A14.6 Tax
 
 `tax_mode` is set **per order**, not per account, because the same distributor sells domestically and across borders:
@@ -512,6 +520,8 @@ Wine-specific extras for the real build: excise duty number on documents, deposi
 ### A14.7 Payment
 
 `not_invoiced` → `invoiced` → `partial` → `paid`, with `overdue` **derived from the due date**, not stored as a stage. Payments are rows in `order_payments`, so partial payments accumulate naturally and the outstanding amount is always `total − sum(payments)`. A prepayment flag on the order blocks dispatch until paid in full.
+
+`settled_otherwise` is a fifth terminal status alongside `paid`: the seller records that the balance was cleared outside the platform — offset, cash, an arrangement between two people who know each other. It closes the order without inventing a payment row, and it is what stops an unpayable invoice blocking a Wine Show release (A16.11, step 8). It never means "waived silently": the seller has to set it, and it lands in `order_events` like everything else.
 
 ### A14.8 UI structure — non-negotiable
 
@@ -528,6 +538,8 @@ The KPI set follows the same split and is computed live (invariant 7), never sto
 |---|---|
 | Selling | Open Orders · Awaiting Payment (with outstanding amount) · Ready to Ship (with bottle count) · Revenue |
 | Buying | Open Orders · In Transit (with bottle count) · To Pay (with outstanding amount) · Spend |
+
+**Service orders are listed but not shipped.** A `source: 'wine_show'` order (A16.11) has no lines with a product on them, so every bottle count and both shipping KPIs — Ready to Ship, In Transit — must skip it, and the shipping block and delivery note do not apply. It still appears in the list with its own source chip and still counts towards Revenue, Spend and the payment KPIs, because the money is real and the producer has to find the invoice to pay it.
 
 **Level 2 — order detail.** The working surface:
 
@@ -752,6 +764,24 @@ published ──► rescheduled    new date, every confirmation must be renewed
 > agreed to 5 December did not agree to 12 February, and a venue may not be
 > free. Silently carrying confirmations over would fake consent.
 
+**Both terminal moves are barred once money is committed.** From the
+commitment point defined in A16.11 — the first binding contribution
+confirmation, or the host's acceptance of the venue's offer, whichever comes
+first — `cancelled` and `rescheduled` are unreachable, and the buttons are
+gone rather than disabled.
+
+> **Why:** `rescheduled` resets every confirmation, and a confirmation is now
+> a payment obligation. Resetting one would revoke a commitment somebody else
+> has already acted on — the venue has booked staff, the host has invoiced.
+> `cancelled` is the same problem without the new date.
+>
+> This does not mean a committed show can never fall through. It means
+> unwinding it is **not a lifecycle transition**: it is a commercial reversal
+> — credit notes against the issued prepayment invoices (A14.5 `CN`),
+> handled by Bottle Lobby staff, who are already the release gate (A16.1).
+> The host does not get a button that quietly leaves other people out of
+> pocket.
+
 ### A16.3 Hosts
 
 A show belongs to **one or more distributors**. Co-hosting requires an
@@ -817,18 +847,35 @@ two wines each, plus a brandy and a whisky, is one show.
 
 ### A16.5 Venue, attendees and cost
 
+> **Two words, two parties — keep them apart.** The **host** is the
+> organising distributor (A16.3). The **venue** is the restaurant or
+> retailer providing the room, naming the price and organising the
+> catering. Both act in the settlement flow, so "venue host" is never
+> used: the venue is not a host, and the host is not the venue. Where
+> the host uses their own premises, the two coincide in one account and
+> no venue request exists.
+
 **Venue** is either the distributor's own premises or a **partnered**
 restaurant or retailer, by request. Hosting requires an active partnership;
 attending does not.
 
-The venue host sets a **catering contribution** (food and drink), settled
-one of three ways:
+**The venue names the price** for room and catering together, in its own
+dashboard, and organises the catering. That figure enters the show record
+directly — the host never retypes it (A1) — and the host is notified. The
+notification is a step of its own, not a silent update: the host has to
+learn what the show will cost before deciding how to pass it on.
+
+The host then chooses how the cost reaches the exhibitors, one of four ways:
 
 | Mode | Effect |
 |---|---|
-| `split_by_products` | Divided across exhibitors **by number of products presented** — an exhibitor showing two wines carries twice the share of one showing a single wine |
+| `fixed_per_product` | **Default.** A fixed amount per presented product, set by the host. An exhibitor showing two wines pays twice a single-wine exhibitor, but nobody's amount depends on anybody else's presence |
+| `split_by_products` | The venue's total divided across exhibitors **by number of products presented** — the same ratio, but every amount moves when the line-up moves |
 | `host_covers` | The distributor pays it |
 | `free` | The venue waives it, treating the show as its own marketing |
+
+The full settlement — who confirms what, when the amounts stop moving, and
+how they are invoiced — is **A16.11**.
 
 **Attendees** are restaurants and retailers. They are invited by the host,
 or they find shows in their region and **request to attend without any
@@ -956,15 +1003,29 @@ wine_shows (
   lead_host_id FK → distributors,
   venue_type   enum('host_premises','partner_venue'),
   venue_id     FK → stakeholders (nullable),
-  catering_mode enum('split_by_products','host_covers','free'),
-  catering_total, capacity, menu_url,
+  venue_status enum('not_required','requested','quoted','accepted','declined'),
+  catering_total,                  -- the venue's price for room + catering.
+                                   -- Owned by the venue, entered once, never
+                                   -- retyped by the host (A1)
+  venue_quoted_at, venue_accepted_at,   -- the host's binding acceptance
+  catering_mode enum('fixed_per_product','split_by_products',
+                     'host_covers','free'),
+  catering_rate_per_product,       -- the host's number, fixed_per_product only
+  capacity, menu_url,
   staff_note                       -- reason on changes_requested
 )
 
 wine_show_hosts      ( show_id FK, distributor_id FK )
 wine_show_exhibitors ( show_id FK, producer_id FK,
-                       status enum('invited','applied','confirmed','declined'),
-                       source enum('invitation','open_call','producer_request') )
+                       status enum('invited','applied','confirmed',
+                                   'declined','lapsed'),
+                       source enum('invitation','open_call','producer_request'),
+                       -- A16.11 contribution, one per exhibitor
+                       contribution_quoted, contribution_basis,
+                       contribution_quoted_at, contribution_deadline,
+                       contribution_consented,      -- the consented ceiling
+                       contribution_consented_at,
+                       contribution_order_id FK → orders (nullable) )
 wine_show_products   ( show_id FK, producer_id FK, product_id FK → products,
                        proposed_by enum('host','producer'),
                        status enum('proposed','confirmed','declined') )
@@ -990,6 +1051,20 @@ lists which products are presented; it never holds product content.
 invitation, confirmation, decline, staff decision and reschedule writes one
 row. It is what makes a disputed show reconstructable.
 
+**The contribution fields sit on the exhibitor row, not in a table of their
+own.** There is exactly one contribution per exhibitor per show, so a
+separate table would only add a second key for the same pair — and the
+contribution has to die with the participation it belongs to. Its history
+is not lost: every quote, confirmation, recalculation and lapse writes a
+`wine_show_events` row like everything else.
+
+`contribution_consented` and `contribution_basis` are **stored on purpose**,
+against invariant 7, for the reason set out in A16.11: an amount somebody has
+agreed to pay must not move underneath them. `lapsed` is a status of its own
+rather than a reuse of `declined`, because a missed deadline and a refusal
+are different facts — one may be re-invited without ceremony, the other has
+answered.
+
 ### A16.10 Computed, never stored
 
 - **Whether a show may enter `planning`** — derived live from venue,
@@ -1001,19 +1076,180 @@ row. It is what makes a disputed show reconstructable.
   (A16.4). Never store a "whose turn" marker: it would be a second
   source for something the two existing fields already answer, and it
   would go stale the moment either side acts.
-- **A producer's catering share** — `catering_total × (own products ÷ all
-  products)`, recomputed whenever the line-up changes.
+- **A producer's contribution — computed until they agree to it, fixed
+  afterwards.** Before the quote goes out it is live: `products × rate`
+  under `fixed_per_product`, `catering_total × (own ÷ all products)` under
+  `split_by_products`, nothing under `host_covers` and `free`. At
+  confirmation the agreed figure is written to `contribution_consented` and
+  becomes a **ceiling**: what the producer owes is
+  `min(current computation, consented ceiling)`. A recalculation may lower
+  it silently and can never raise it.
+  > **Why this one is stored** (A16.11): live computation and consent are
+  > incompatible once money is involved. Leave it live, and a producer who
+  > agreed to €400 owes €500 the moment somebody else drops out — an
+  > increase they never saw, caused by a third party. The ceiling is the
+  > same deliberate exception A14.5 makes for an issued invoice PDF, and
+  > for the same reason: a figure someone has relied on is a record, not a
+  > view. The *shape* stays computed — only the agreed number is pinned.
+- **Whether the show is committed** — derived, never a flag: true as soon
+  as one `contribution_consented` exists or `venue_accepted_at` is set.
+  This is what closes off `cancelled` and `rescheduled` (A16.2).
+- **The host's coverage** — `catering_total − Σ contributions`. Positive is
+  the gap the host carries, negative the margin they keep. Under
+  `split_by_products` it is zero until the host absorbs a gap; under
+  `fixed_per_product` it is the host's own commercial call.
+- **Whether a show may be submitted for approval** — every contribution
+  settled (A16.11), on top of the existing readiness checks. Never a flag:
+  it is the sum over the exhibitor rows.
 - **Waitlist position** — derived from request order and current capacity.
 - **What a given viewer sees** — computed from `stage` and the viewer's role,
   per A16.6. Never two stored versions of the same show.
 
-### A16.11 Still open
+### A16.11 Catering settlement
 
-- **Payment flow for the catering contribution.** The split is defined; how
-  it is invoiced is not. Likely an order document (A14.5) between venue and
-  exhibitors, but that needs deciding.
-- **Ticketing or attendance fees** — not modelled. Shows are currently free
-  to attend.
+The one place in a Wine Show where money moves. It runs on the vocabulary of
+A16.5: the **host** is the organising distributor, the **venue** is the
+restaurant or retailer providing room and catering.
+
+**Two relations, never merged into one number:**
+
+```
+VENUE ──── quotes room + catering ────► HOST ──── charges a contribution ────► EXHIBITORS
+       (one price, the venue's number)        (per exhibitor, the host's number)
+```
+
+The venue never bills a producer and never learns what a producer paid. The
+producer never sees the venue's quote unless it is the declared basis of
+their own amount. What the two numbers do not cover, the host carries.
+
+#### The flow
+
+| # | Who | Act | What it writes |
+|---|---|---|---|
+| 1 | Host | Requests a partnered restaurant or retailer as venue (A16.5) | `venue_id`, `venue_status = requested` |
+| 2 | **Venue** | Names one price for room and catering, and organises the catering | `catering_total`, `venue_quoted_at`, `venue_status = quoted` — and **notifies the host**. The figure enters the show directly; the host does not retype it (A1) |
+| 3 | Host | Picks the mode and, for `fixed_per_product`, the rate | `catering_mode`, `catering_rate_per_product` |
+| 4 | Host | **Dispatches the contributions.** Possible only once the venue has quoted **and** every exhibitor's product is confirmed (A16.4) — both computed, not ticked | `contribution_quoted`, `contribution_basis`, `contribution_deadline` per exhibitor |
+| 5 | — | The producer is told **twice**: under Messages and in their Wine Shows section | one notification, two surfaces — not two records (A1) |
+| 6 | **Producer** / **Host** | The binding step, both sides: the producer confirms their amount, the host accepts the venue's offer. **Mechanics exactly as A6:** a modal stating the obligation, a checkbox, and a confirm button hard-disabled until it is ticked | `contribution_consented(_at)` · `venue_accepted_at`, `venue_status = accepted` |
+| 7 | Host | Issues each producer a **prepayment invoice** (A14.5 `PP`) | payment status → `invoiced`, due date set |
+| 8 | Host | Marks each contribution **paid** or **settled otherwise** (A14.7) | `order_payments` row, or the `settled_otherwise` status |
+| 9 | **Bottle Lobby staff** | Release the show — A16.1 unchanged, only its precondition grew: no show goes public with contributions outstanding | `stage = published` |
+
+Steps 1–2 are A16.5's venue request; steps 3–9 are this section. Note the
+order: the participation confirmation of A16.4 comes **first** and is about
+the wine, the contribution confirmation here comes second and is about the
+money. They are never merged — a producer agrees to exhibit before anybody
+can say what exhibiting costs, and asking for both in one click would be
+asking for consent to an amount that does not exist yet.
+
+#### The commitment point
+
+**From the first consent — a producer's, or the host's acceptance of the
+venue's offer, whichever lands first — the show is committed.** It is not a
+stage and not a flag; it is derived (A16.10) from those two facts.
+
+What it locks:
+
+| | Before | After |
+|---|---|---|
+| `cancelled` / `rescheduled` | Available | **Gone** (A16.2) |
+| A consented amount | May change freely | May only fall, never rise |
+| `catering_mode`, rate, venue quote | Editable | Frozen |
+| An exhibitor leaving | Free | Only by agreement — the participation is as binding as the payment. Swapping the wine (A16.4) stays open; showing nothing does not |
+| Covering a shortfall | Recalculate, or absorb | **Absorb only** |
+
+#### When an exhibitor drops out
+
+The obvious answer — remove them, recalculate, send it round again — can
+loop: if a second producer falls away in the second round, everybody
+confirms a third time, days before the fair. Four rules together make that
+impossible rather than merely unlikely.
+
+**1. `fixed_per_product` is the default mode.** A fixed amount per presented
+wine means a dropout changes **nobody's** amount — only the host's coverage.
+The cascade is ruled out by construction, not managed after the fact, and it
+matches how fairs actually work: a stand costs what it costs, it is not a
+share of the organiser's invoice. `split_by_products` stays for hosts who
+want to pass the venue's bill through one-to-one; rules 2 and 3 exist for
+them.
+
+**2. Every quote carries a deadline.** Whoever has not confirmed by then
+drops out automatically — `status = lapsed`. The host never has to throw
+anybody out, which is the point: removing a partner by hand is a
+relationship act, and it should not be the price of an unanswered email.
+
+**3. A fresh consent is needed only for an increase.** A recalculation that
+lowers an amount passes through in silence — consent to €400 covers €350.
+One that would raise a consented amount is **refused**, not applied; for an
+exhibitor who has not confirmed yet it replaces the quote and restarts their
+deadline.
+
+**4. The host may carry the difference.** Instead of recalculating, the host
+absorbs the gap: everyone else keeps their amount and hears nothing about
+it. It is a decision per show — whether calm and a settled line-up are worth
+more than the shortfall.
+
+> Rule 4 is not a convenience. After the commitment point it is the **only**
+> remaining route, because rule 3 has closed the other one. Build it as part
+> of the lifecycle, not as a nice-to-have button.
+
+#### Invoicing — proposed: an `orders` record
+
+*Recommendation, to be confirmed before the invoicing pass is built.*
+
+**Use `orders`, with `source: 'wine_show'` and a `wine_show_id`.** Everything
+the settlement needs already exists there and works for all four roles:
+the `PP` prepayment invoice with its own number sequence (A14.5), the payment
+chain with partial payments and derived `overdue` (A14.7), the two-sided
+single record (invariant 8) — the host sees a sale, the producer a purchase,
+of one row. A parallel invoicing path would mean a second document sequence,
+a second payment table and a second UI: precisely the duplication invariant 1
+exists to prevent.
+
+Three things must be true for it to hold:
+
+1. **`order_items.product_id` becomes nullable**, for service lines carrying
+   a description instead — *"Wine Show participation · Grande Rioja · 2
+   wines"*. Invariant 2 is untouched: where a line names a product it is
+   still a foreign key, never a copy.
+2. **A `wine_show` order can never carry product lines.** That is the guard
+   that keeps it from looking like a supply-chain shortcut, and it makes the
+   direction inversion safe: here the distributor is the seller and the
+   producer the buyer, the reverse of A3's flow. **A3 constrains the flow of
+   goods, not the flow of money.** A service invoice between two partnered
+   parties is not a channel for products.
+3. **It stays out of the shipping and stock KPIs** (A14.8). There is nothing
+   to pack and nothing in transit; "Ready to Ship" and every bottle count
+   must skip these orders. They belong in the list with a source chip of
+   their own, because the producer has to find and pay the invoice.
+
+The show's own surface still shows the contribution and its status directly —
+it links to the order rather than re-rendering it.
+
+#### Not this: attendance fees
+
+**Restaurants and retailers attend a Wine Show free of charge.** The paid-
+entry model belongs to own events (A16.8), where an owner may charge for
+their own occasion. It must not migrate here: A16.5's waitlist exists because
+a Wine Show is an entry point into the network, and a fair that charges its
+buyers to walk in is a different product. The only money in a Wine Show flows
+producer → host → venue.
+
+#### Still open
+
+- **Legal effect of the click confirmation.** Sufficient for the prototype,
+  undecided as law: whether ticking a box and pressing a button creates an
+  enforceable payment obligation is a question for a lawyer, not for this
+  document. Open with it: whether the host needs a **signed acceptance of
+  the venue's offer** on top, given that Bottle Lobby already sends real
+  contracts for partnerships (A6). Two very different amounts are involved —
+  a producer's contribution and a venue's whole invoice — and they may not
+  deserve the same instrument.
+- **The `orders` recommendation above**, until confirmed.
+- **Cross-border VAT on the contribution.** A14.6 sets `tax_mode` per order;
+  a German distributor charging an Italian producer for a fair in Düsseldorf
+  is a case nobody has worked through yet.
 
 ### A16.12 Prototype state
 
@@ -1064,10 +1300,12 @@ by side. `exhibitorTurn(show, exhibitor)` is the single computed answer to
 "who is at turn"; both dashboards, the sidebar badges, the list sort and
 the per-exhibitor chips read it, so the two sides can never disagree.
 
-**Not built yet** — each its own later pass, none of them blocked by
-anything above: open calls with master-data filters (A16.4), venue requests
-to restaurants and retailers (A16.5), the catering split, attendee
-invitations and the waitlist, and own events (A16.8).
+**Not built yet** — each its own later pass: open calls with master-data
+filters (A16.4), attendee invitations and the waitlist (A16.5), own events
+(A16.8), and the **catering settlement (A16.11)**. The settlement is the one
+chain among them, not a single pass: the venue request and its quote
+(A16.5, steps 1–2) come first and everything else in A16.11 stands on them.
+The rest are independent of each other and of it.
 
 **A16.7 was built in three passes, all done.** The shared assets above were
 the first. The public Wine Shows page is the second — an Upcoming Shows
@@ -1613,6 +1851,9 @@ directory is the repo root, so everything committed is served unless blocked.
 | D21 | Winery, Restaurant and Retail sidebars had one combined **"Network"** section, unprefixed labels (Basic Information, Wine Portfolio, Active Distributors, Distributor Requests …), an Orders section low in the list, and profile nav items that were scroll targets rather than sub-pages | **B8** — the same eight-section structure, the same "My ___" convention and the same sub-page mechanics as the distributor, minus whatever a role has nothing for | Four dashboards that behaved differently taught the user four navigations for one product, and the divergence was accidental — the distributor was simply rebuilt first (D16, D17, D18). Merging the two request directions into one **My Requests** section per role also removed a real inconsistency: the same partnership record was reachable under two different section names depending on who sent it. |
 | D22 | C3 stated flatly that `bottle-lobby-dashboard.html` **"cannot be pushed at all"**, with a file-size table measured before the Wine Shows pass | **C3** — the limit belongs to the MCP connector, not to the repo. From Claude Code `git push` handles the file like any other; the whole-file constraint and the size table apply to **chat sessions only** | The unqualified wording pushed work onto the manual-upload route even where a local clone was available — slower, and it needs a step from Serge for no reason. The sizes were stale too: the dashboard had grown from ~415 KB to ~473 KB, and the recorded composition was wrong (D15). |
 | D23 | A product named on a Wine Show was settled by **one side alone**: the prototype's `saveCounter` wrote `status:'confirmed'` for a wine the producer chose, and the producer's `Confirm` accepted the host's wine without the host ever being asked again. Accepting an invitation was also possible **without naming a product** | **A16.4** — whoever proposes a product, the *other* side confirms it; `confirmed` means both sides agreed. Accepting a place and naming a product are one act, so a confirmed exhibitor always has a product on the table | The one-sided version contradicted the sentence directly above it in A16.4 — that a named product is a proposal, not an instruction — and it only held that view in the host→producer direction. It also carried a real defect: inviting without a wine and then confirming left `products` empty, so `showReadiness` never saw a confirmed product and the show sat in `draft` for good with no way out. `proposed_by` and `status` were already two separate fields (A16.9); the fix was to start reading them together rather than to change the schema. |
+| D24 | The catering contribution had three modes, of which `split_by_products` was the only one that charged exhibitors, and a producer's share was **live-computed throughout** — `catering_total × (own ÷ all products)`, "recomputed whenever the line-up changes" (A16.10) | **A16.5 / A16.10 / A16.11** — four modes with `fixed_per_product` as the default, and the amount computed only **until the producer consents to it**, then held as a ceiling that may fall but never rise | Live computation and consent cannot coexist once money is involved: a producer who agreed to €400 owed €500 the moment a third party dropped out, without ever seeing the increase. Recalculating and re-collecting consent instead had no natural end — a second dropout restarts the round for everyone, days before the fair. `fixed_per_product` removes the cascade by construction rather than managing it, and matches how a stand is really booked: at a price, not as a share of the organiser's invoice. `split_by_products` survives for hosts who pass the venue's bill through one-to-one. |
+| D25 | `cancelled` and `rescheduled` were available to the host at any time, with `rescheduled` resetting every confirmation | **A16.2** — both barred from the commitment point (A16.11); unwinding a committed show is a credit note handled by staff, not a lifecycle transition | Resetting confirmations was right while a confirmation only meant "I will come". Once it is a payment obligation, the reset revokes something a third party has already acted on — the venue has booked staff, the host has invoiced. The mechanism did not become wrong, its reach did. |
+| D26 | A16.5 called the restaurant or retailer providing the room the **"venue host"**, while A16.3 calls the organising distributor the **host** | **A16.5 / A16.11** — **host** is the distributor, **venue** is the restaurant or retailer; "venue host" is not used | Harmless while only one of them acted. The settlement flow (A16.11) has both parties acting in the same nine steps, quoting to and confirming with each other, and one word for two roles in one flow is a defect waiting to be read the wrong way. The prototype's field names (`venueType`, `venueName`) were already on the right side of this. |
 
 ---
 

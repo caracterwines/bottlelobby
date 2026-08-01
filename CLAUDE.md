@@ -76,8 +76,11 @@ An active partnership gates everything commercial, including the ability to orde
 Promo unlock status, deal free-goods entitlement, deal discount thresholds, Guide
 facet counts, component hub statistics — all computed live from the underlying tables.
 A stored flag goes stale the moment an input changes.
-The one deliberate exception: an **issued invoice PDF is frozen and archived**, because
-it is a legal record.
+Two deliberate exceptions, both the same shape — a figure someone has already relied on
+is a record, not a view: an **issued invoice PDF is frozen and archived** because it is a
+legal record (A14.5), and a **catering contribution is pinned at the moment the producer
+consents to it** (A16.11), so that a third party dropping out cannot raise what somebody
+already agreed to pay.
 
 **8. One order record, two perspectives.**
 Buyer and seller read the same row and render it from their own side. Never two copies,
