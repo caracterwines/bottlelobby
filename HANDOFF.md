@@ -273,6 +273,17 @@ Kein Build-Command, Publish-Directory = Repo-Root.
   Solange nichts entschieden ist, verwaltet `check-static.js` sie in
   `KNOWN_UNSTYLED` — mit Pruefung in beide Richtungen, die Liste kann das Problem
   also nicht ueberleben.
+- **A16.12 zweite Fassung (01.08.): der Ablauf ist geklaert.** Vier Ergaenzungen von
+  Serge, alle in der Spec: (1) die **Winzer-Partnerschaft geht der Show voraus** —
+  jetzt ausdrueckliche Voraussetzung in A16.4, und der Grund, warum die
+  Sammelbestellung ueberhaupt ueber die Plattform laufen darf; (2) **zwei Arten von
+  Wein auf derselben Show** — im Portfolio = Bestellung, zum Test = Vorbestellung,
+  je Zeile berechnet, und die zweite Spalte IST das Instrument (A16.0 praezisiert);
+  (3) **Zuruecklegen statt Fallenlassen**, mit Begruendung an den **Winzer** als
+  Verhandlungsangebot, Meldungen bleiben erhalten (Anhang D **D29**);
+  (4) **Neukunde**: Angebot → Vorkasse → Versand, und die Vorkasse ist
+  **voreingestellt**, solange es zwischen den beiden noch keinen bezahlten Auftrag
+  gibt (A14.7 nachgezogen — abgeleitet, aber einmalig bei Anlage, nicht live).
 - **NAECHSTE KETTE: die Bestellliste (A16.12), spezifiziert, nicht gebaut.**
   Entschieden am 1.8.: das Instrument kommt vor der Nebenrechnung, Catering wird
   dafuer unterbrochen. Der Entwurf beantwortet die vier offenen Punkte:

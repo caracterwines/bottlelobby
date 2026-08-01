@@ -524,6 +524,8 @@ Wine-specific extras for the real build: excise duty number on documents, deposi
 
 `not_invoiced` → `invoiced` → `partial` → `paid`, with `overdue` **derived from the due date**, not stored as a stage. Payments are rows in `order_payments`, so partial payments accumulate naturally and the outstanding amount is always `total − sum(payments)`. A prepayment flag on the order blocks dispatch until paid in full.
 
+**Prepayment defaults to on where the two parties have no settled trading history** — no order between them that has reached `delivered` and `paid`. It is preset at order creation, stored from then on as the decision it is, and the seller may clear it. The condition is derived rather than a "new customer" flag, which would go stale the day it stopped being true; and it is evaluated once rather than live, or the flag would clear itself mid-order while the goods were still on the shelf. This is what makes the first order to a partner won at a Wine Show (A16.12) run quotation → prepayment → dispatch without anybody remembering to set it.
+
 `settled_otherwise` is a fifth terminal status alongside `paid`: the seller records that the balance was cleared outside the platform — offset, cash, an arrangement between two people who know each other. It closes the order without inventing a payment row, and it is what stops an unpayable invoice blocking a Wine Show release (A16.11, step 8). It never means "waived silently": the seller has to set it, and it lands in `order_events` like everything else.
 
 ### A14.8 UI structure — non-negotiable
@@ -752,6 +754,15 @@ Wine Show ──► orders collected from restaurants and retailers
 Wine Show is the run-up to an order rather than an occasion in its own
 right.
 
+**Where the risk actually sits, precisely.** Two kinds of wine stand on the
+same table (A16.12): ones the distributor already lists, which a guest can
+simply order, and the ones they are testing, which nobody has bought yet.
+Only the second column is the instrument. What it produces is a number the
+distributor has never had before — **how many bottles of an unlisted wine
+their own customer base actually wants** — and it turns the first order to a
+new producer from an estimate into a total. That is the sentence the whole
+of A16.12 exists to make true.
+
 **What follows for the build — Restaurants and Retail are the demand side.**
 They have to be able to *find* shows, or the instrument does not work at
 all. Their dashboards therefore list **every show A16.6 makes visible to
@@ -841,7 +852,31 @@ approval; all hosts appear as organisers.
 
 ### A16.4 Exhibitors
 
-Exhibitors are **producers** (A15). A distributor gets them two ways:
+Exhibitors are **producers** (A15).
+
+**An exhibitor must already be an active partner of the host (A6), before
+the show.** This is a precondition, not a detail: the distributor invites
+the producer, the two conclude a partnership, and only then does the
+producer exhibit. Everything downstream depends on it — the wines shown are
+drawn from the producer's own range, which needs the partnership to be
+visible at all; and the consolidated order the show produces (A16.12) is an
+order between two parties, which A6 permits only between active partners. A
+show is where a partnership is **used**, not where one is skipped.
+
+> A producer may still approach a distributor unprompted and ask to exhibit
+> (below). Where no partnership exists yet, that approach is a **partnership
+> request first** (A6) and an exhibitor invitation after it — never an
+> exhibitor row that quietly stands in for one.
+
+**This is deliberately not symmetric with attendees.** A restaurant or
+retailer attends with no partnership at all (A16.5) and needs one only to
+buy (A16.12). A producer needs one to exhibit in the first place. The
+difference is what each is doing there: a guest is a guest, while an
+exhibitor's goods are being presented for sale on the distributor's behalf,
+which is precisely what a partnership authorises. Do not "tidy" the two into
+one rule.
+
+A distributor gets exhibitors two ways:
 
 **Direct invitation** to a specific producer, optionally naming a wanted
 product. The producer confirms, declines, or **confirms with a different
@@ -876,7 +911,9 @@ A producer cannot take a place on a show without naming a product. There
 is no state in which somebody is exhibiting but presenting nothing — the
 acceptance and the product choice are one act. See Appendix D (D23).
 
-**Open call** to a filtered set of the distributor's partnered producers.
+**Open call** to a filtered set of the distributor's partnered producers —
+partnered, because of the precondition above; an open call reaches the
+producers a distributor already works with, not the open market.
 Filters, all drawn from existing master data (A4, A15):
 
 | Filter | Source |
@@ -1441,6 +1478,36 @@ product, which the producer owns (A2).
 places.** They see the final figure before placing, so no version of the
 consent problem A16.11 had to solve can arise here.
 
+#### Two kinds of wine on the same table
+
+This is the distinction everything else in this section turns on, and the
+attendee has to see it on every line:
+
+| | In the host's portfolio already | Being tested at this show |
+|---|---|---|
+| What a line is | an **order** | a **pre-order** |
+| Stock | held; A3's relation already exists | none — the host has not bought it |
+| Delivery | as usual | after the show, at the lead time below |
+| What it feeds | the sales order alone | the **consolidated purchase order**, and then the sales order |
+| What it is worth to the host | ordinary revenue | **the instrument** (A16.0): how many bottles of an unlisted wine their customers actually want |
+
+**Which of the two a line is, is computed** — from whether the product is in
+the host's portfolio at that moment (A3), never a flag on the show. A wine
+can move from the second column to the first between one show and the next,
+and that is the mechanism working.
+
+**The attendee is told per line, in plain words:** *"In stock — delivered as
+usual"* against *"Pre-order — about 14 days after the show"*. Getting this
+wrong is not cosmetic: somebody waits weeks for a wine they could have had
+on Tuesday, or clears shelf space for one that has not been bought yet.
+
+> Both kinds may sit on **one** sales order — a guest orders what they
+> tasted, and where it comes from is the host's problem, not theirs. A14
+> already carries that: `partial` ship status is a part-shipment (A14.2),
+> and the stocked half goes out while the pre-ordered half is still coming.
+> Splitting into two orders would produce two records from one act for no
+> gain the buyer can see.
+
 #### The tally is computed
 
 *"Rioja Reserva 2019 · 7 houses · 138 bottles"* is `SUM(qty)` over the
@@ -1449,18 +1516,51 @@ entering while the host is reading it.
 
 #### Closing the show
 
-From `completed` (A16.2) the host works the tally, per wine:
+From `completed` (A16.2) the host works the tally, per **pre-ordered** wine —
+stocked lines need no decision, they simply sell:
 
-- **Take it** — with the quantity **raised** if they want full cases or a
+- **Place it** — with the quantity **raised** if they want full cases or a
   buffer. Raising is their commercial decision.
-- **Drop it** — demand was too thin. The interests lapse and the attendees
-  are told plainly that the wine will not be listed. **This is the
-  instrument working, not a failure**: the whole point was to find that out
-  before paying for stock.
+- **Hold it back, with a reason** — the numbers did not carry the listing
+  this time.
 
-Lowering the consolidated quantity below what was asked for is not a
-closing decision — that case is under-supply, below, and it belongs to the
-producer, not to the host.
+Lowering the consolidated quantity below what was asked for is not a closing
+decision — that case is the producer's inability to supply, below.
+
+**Holding back is not a refusal, and the model must not render it as one.**
+It opens a negotiation. The reason goes **to the producer**, who can answer
+it: carry the freight, improve the terms, accept a smaller first delivery —
+a listing can be worth more to them than the margin on one pallet. Some
+wines need two or three shows before they carry themselves, and the held
+pre-orders are the argument for the next round, which is why they are kept
+(see *A held-back interest is kept*, below, and A8).
+
+> So the reason is a **message to a partner, not an archive entry**. A
+> distributor who writes "only 18 bottles, I need 60 to justify the freight"
+> has said something the producer can act on. The same fact filed away says
+> nothing to anybody.
+
+**What the pre-orderer is told — decided, with the argument, because both
+answers are defensible.** A flat *"not available"* is honest and wrong: the
+wine may well arrive after the next show, and a guest told "no" stops
+asking, which destroys the demand signal that A8 and the next round both
+live on. So the line is not refused; it is **not ordered yet**:
+
+> *"Not ordered this time. Your note is kept, and you will hear if that
+> changes."*
+
+Three constraints keep that from becoming a false promise:
+
+1. **No date and no "coming soon".** Nothing may imply the wine will be
+   listed, because nobody knows yet.
+2. **The line leaves the prepared order.** A line sitting in an order looks
+   like an obligation; a kept note looks like interest, which is what it is.
+3. **The tally is not quoted in the message.** *"96 bottles were asked for"*
+   would hand one guest the room's demand, which is the host's book (A16.5,
+   rule 4) — the near-miss worth naming, because the sentence writes itself.
+
+The pre-orderer keeps one action: withdraw the note. Nothing may hang on a
+list for ever without the person who wrote it being able to take it off.
 
 #### One act, two directions
 
@@ -1482,10 +1582,35 @@ specifies; nothing new is needed for that.
 buyer and every other transition to the seller, and that rule survives
 here intact: the host **prepares** each attendee's order from their own
 interests, and the attendee places it with one action after seeing the
-final price and quantity. An interest is a signal; placing is an act; the
-two are not merged. For an attendee with no active partnership the prepared
-order simply waits — the partnership request comes first (A6), which is
-precisely the pipeline A16.5 means by "entry point into the network".
+final price, the quantity and — per line — whether it ships from stock or
+is a pre-order. An interest is a signal; placing is an act; the two are not
+merged.
+
+#### Why any of this is allowed: the partnerships are already there
+
+Both ends of a show are settled before an order can exist, and they are
+settled at different times:
+
+| | When | Rule |
+|---|---|---|
+| **Producer** | **Before the show.** Invited, partnership concluded, then exhibits | A16.4 — exhibiting requires an active partnership. So when the consolidated order is placed, the producer **is** a partner and A6 is satisfied without anything special happening |
+| **Attendee** | **After the show, if at all.** Attends as a guest with no partnership; needs one only to buy | A16.5 for attending, A6 for buying |
+
+That asymmetry is the reason A16.12 works at all, and it is worth stating
+because it is invisible in the flow: the upstream order needs no new
+permission, while the downstream one may have to wait for a partnership that
+does not exist yet.
+
+**For an attendee who is not a partner, the prepared order waits.** The
+partnership request goes first (A6) — precisely the pipeline A16.5 means by
+"entry point into the network" — and the order becomes placeable when it
+goes active. Nothing is lost in the meantime: the interest keeps its place.
+
+**And for that first order, the route is quotation → prepayment → dispatch**
+(A14.5 `QU`, then `PP`; A14.7's prepayment flag blocks dispatch until paid
+in full). Not an invoice on account. Nothing needs building — the documents
+and the flag exist; what is new is only which of them a show-sourced order
+reaches for by default.
 
 #### What the attendee actually has to be told: how long it takes
 
@@ -1495,8 +1620,10 @@ it after the show. Somebody who tasted a wine on Thursday and wants it on
 their list needs to know whether that means next week or next month.
 
 So the host names a **lead time** at closing — *"about 14 days after the
-show"* — and the attendee sees it **before placing** their order. That is a
-figure on the show, not a mechanism:
+show"* — and the attendee sees it **before placing** their order, on the
+lines it applies to. It belongs to **pre-order lines only**: a wine already
+in the portfolio ships as usual and saying "14 days" about it would be
+wrong in the other direction. That is a figure on the show, not a mechanism:
 
 | | |
 |---|---|
@@ -1539,6 +1666,28 @@ from looking like a supply-chain shortcut (A3) — while a `wine_show_order`
 must carry them. A single `wine_show` value with one guard covering both
 was the earlier draft and is superseded (Appendix D, D27).
 
+#### Prepayment is the default for a first order, and that default is computed
+
+**Recommendation, and the answer to "should it be preset":** yes — preset,
+visible, and switchable off by the seller.
+
+The condition is not "is this a new customer", which would be a stored flag
+going stale the day it stops being true. It is derived: **prepayment defaults
+to on while there is no settled trading history between these two parties** —
+no order between them that has reached `delivered` and `paid`. The first
+order to a freshly won partner therefore arrives with the flag set, and the
+second one, after the first has been paid, does not. Nobody maintains
+anything.
+
+> **The distinction that matters:** the flag on the order is **stored** —
+> it is a decision, and it must not change under a live order. What is
+> computed is only its **initial value**. A live-computed flag would clear
+> itself the moment the first invoice was paid, possibly while the goods were
+> still on the shelf. Set at creation, then left alone.
+
+Defaulting is not forcing. The seller can clear it, and clearing it is then a
+deliberate act by the party carrying the risk — which is the point.
+
 #### Tables
 
 ```sql
@@ -1548,10 +1697,15 @@ wine_show_interests (
   product_id  FK → products,              -- reference, never a copy
   qty,
   entered_by  enum('attendee','host'),
-  status      enum('open','ordered','lapsed'),
+  status      enum('open','ordered','held_back','withdrawn'),
+  hold_reason,                            -- goes to the PRODUCER, not to an archive
   order_id    FK → orders (nullable)      -- set when it becomes a sales line
 )
 ```
+
+`held_back` replaces the earlier `lapsed`: a wine not taken this round is a
+decision with a reason and an open negotiation, not an expiry (Appendix D,
+D29).
 
 `wine_show_products` gains `indicative_price` (host-owned, non-binding);
 `wine_shows` gains `delivery_lead`, named at closing. `orders` already
@@ -1566,8 +1720,15 @@ An interest is only ever written while the show is `published` or
 - **The proposed allocation under short supply** — pro rata, recomputed
   whenever the delivered quantity changes. What the host *decides* is
   stored, as order lines; the proposal never is.
+- **Whether a line is an order or a pre-order** — from the product being in
+  the host's portfolio at that moment (A3). Never stored on the show: a wine
+  taken on between two shows changes column by itself, which is the whole
+  mechanism.
 - **Whether an attendee may place their prepared order** — from the
   partnership being active (A6), not from a flag on the interest.
+- **Whether prepayment is preset on a new order** — from there being no
+  settled order between the two parties yet. Computed once, at creation,
+  and then stored as the decision it is.
 - **What is still outstanding against a purchase order** — from the order's
   own lines and ship status (A14), not from anything held on the show.
 
@@ -1592,12 +1753,13 @@ is a different thing wearing the same name, and allowing both would mix them
 in one column with no way to tell them apart afterwards. A pre-order page is
 a decision of its own, not a side effect of this one.
 
-**A lapsed interest is kept, never deleted.** *"Three restaurants wanted
+**A held-back interest is kept, never deleted.** *"Three restaurants wanted
 this wine and it came to nothing"* is precisely the market intelligence A8
 trades in — arguably worth more than a fulfilled one, because it names
-demand nobody is currently serving. `status = 'lapsed'` is therefore a
-resting state, not a tombstone, and the rows stay put like every other
-history in this model (A16.4's declined products, `order_events`,
+demand nobody is currently serving. `status = 'held_back'` is therefore a
+resting state, not a tombstone: it is the evidence the host takes back to the
+producer, and the starting figure for the next show. The rows stay put like
+every other history in this model (A16.4's declined products, `order_events`,
 `wine_show_events`).
 
 ### A16.13 Prototype state
@@ -2287,6 +2449,7 @@ directory is the repo root, so everything committed is served unless blocked.
 | D24 | The catering contribution had three modes, of which `split_by_products` was the only one that charged exhibitors, and a producer's share was **live-computed throughout** — `catering_total × (own ÷ all products)`, "recomputed whenever the line-up changes" (A16.10) | **A16.5 / A16.10 / A16.11** — four modes with `fixed_per_product` as the default, and the amount computed only **until the producer consents to it**, then held as a ceiling that may fall but never rise | Live computation and consent cannot coexist once money is involved: a producer who agreed to €400 owed €500 the moment a third party dropped out, without ever seeing the increase. Recalculating and re-collecting consent instead had no natural end — a second dropout restarts the round for everyone, days before the fair. `fixed_per_product` removes the cascade by construction rather than managing it, and matches how a stand is really booked: at a price, not as a share of the organiser's invoice. `split_by_products` survives for hosts who pass the venue's bill through one-to-one. |
 | D25 | `cancelled` and `rescheduled` were available to the host at any time, with `rescheduled` resetting every confirmation | **A16.2** — both barred from the commitment point (A16.11); unwinding a committed show is a credit note handled by staff, not a lifecycle transition | Resetting confirmations was right while a confirmation only meant "I will come". Once it is a payment obligation, the reset revokes something a third party has already acted on — the venue has booked staff, the host has invoiced. The mechanism did not become wrong, its reach did. |
 | D26 | A16.5 called the restaurant or retailer providing the room the **"venue host"**, while A16.3 calls the organising distributor the **host** | **A16.5 / A16.11** — **host** is the distributor, **venue** is the restaurant or retailer; "venue host" is not used | Harmless while only one of them acted. The settlement flow (A16.11) has both parties acting in the same nine steps, quoting to and confirming with each other, and one word for two roles in one flow is a defect waiting to be read the wrong way. The prototype's field names (`venueType`, `venueName`) were already on the right side of this. |
+| D29 | A16.12 closed a wine the tally did not carry by letting the interests **`lapse`**, with the attendees "told plainly that the wine will not be listed" | **A16.12** — the host **holds it back with a reason**, the reason goes to the **producer** as a message they can answer, the interests are kept as `held_back`, and the pre-orderer is told *"not ordered this time, your note is kept"* rather than refused | "Lapsed" described an expiry, and the flat refusal ended a conversation that in this trade has barely started: a producer can carry the freight or improve the terms, and some wines need two or three shows before they carry themselves. Both of the old behaviours also destroyed the signal — a guest told "no" stops asking, and A8 loses exactly the demand nobody is serving yet. Only the wording of the guest's message was ever in doubt; the reason reaching the producer was the substantive change. |
 | D28 | `wine_show_attendees.status` carried **`waitlisted`** as a stored value, alongside a rule that the waitlist "moves up automatically" | **A16.5 / A16.9 / A16.10** — the status records only the decision (`invited` · `requested` · `confirmed` · `declined` · `withdrawn`); holding a seat or a waitlist place is computed from request order against capacity | The two could not both be true. A stored `waitlisted` has to be rewritten for everyone behind a departing attendee, which is a cascade, not an automatic move-up — and it is stale between the withdrawal and the rewrite. Computing it makes the promise in A16.5 literally true. `withdrawn` was added in the same breath: leaving of your own accord and being turned down are different facts, and only one of them may be re-invited without ceremony (the same distinction `lapsed` draws in A16.11). **Superseded before it was ever built.** |
 | D27 | `orders.source` was to gain a single **`wine_show`** value, guarded by "a `wine_show` order can never carry product lines" (A16.11) | **A16.12 / A14.3** — two opposite values, `wine_show_order` (goods, down the chain, always product lines) and `wine_show_catering` (service, against the chain, never product lines), each with its own guard | The single value was drafted while the catering settlement was the only money a show produced, and it was already wrong: the show's *purpose* is the consolidated purchase (A16.0), which is a product order sourced from a show. One value would have forced the guard to be either useless or false. **Superseded before it was ever built** — noted here because the decision was taken, not because code changed. |
 
