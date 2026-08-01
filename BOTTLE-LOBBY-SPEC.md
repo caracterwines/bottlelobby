@@ -726,6 +726,57 @@ the business decides otherwise.
 The nav items stay separate in every dashboard: **Wine Shows** for fairs,
 **Client Events** / **My Events** for a role's own occasions (B8).
 
+### A16.0 Why a Wine Show exists
+
+Read this first. Everything below is shaped by it, and without it the
+feature reads as marketing — which it is not.
+
+**A Wine Show is the distributor's instrument for minimising risk.** A
+distributor wants to work with a producer they do not yet list. Buying in
+on a hunch means paying for stock that may not move. So instead they put on
+a show, present the producer's wines to their own restaurant and retail
+customers, and **collect orders during the event** — an order list goes
+round the room. What comes back is consolidated into **one targeted order to
+the producer** (A14). They buy only what somebody has already asked for.
+
+```
+Wine Show ──► orders collected from restaurants and retailers
+                        │
+                        └──► ONE consolidated order to the producer (A14)
+```
+
+**Demand first, purchase after.** That is the whole point, and it is why a
+Wine Show is the run-up to an order rather than an occasion in its own
+right.
+
+**What follows for the build — Restaurants and Retail are the demand side.**
+They have to be able to *find* shows, or the instrument does not work at
+all. Their dashboards therefore list **every show A16.6 makes visible to
+them** — anonymised from `planning`, full from `published` — exactly as a
+visitor sees them on the public page, and not merely the ones they are
+involved in. Discovery is the feature.
+
+> Do not narrow this to "shows I take part in". It reads as the tidy
+> implementation and quietly removes the audience the show exists to reach.
+> The rule is the same one A16.6 states for the public surfaces, applied
+> to a dashboard: same records, same two levels, same function.
+
+**Being the venue is a separate thing, layered on top.** It is a gesture
+from a distributor to an existing customer they supply heavily, and it pays
+that customer three ways: contact with other restaurants and retailers,
+a closer relationship with the wineries, and the standing that comes from
+hosting a show carrying Bottle Lobby's name (A16.1). A venue is asked
+directly and individually — which is why the venue relation reaches a
+restaurant through `venue_id` and never through the public listing, while
+*seeing* the show needs no relation at all.
+
+> **Not modelled yet: the order list itself.** Collecting orders during a
+> show and consolidating them into one order to the producer is the
+> mechanism this section describes, and A14 has no notion of it — no
+> show-sourced order, no consolidation step, no link from `wine_shows` to
+> the resulting `orders` row. It needs its own decision and its own pass.
+> Until then the platform supports the *occasion* but not the *instrument*.
+
 ### A16.1 Why Wine Shows carry an approval gate
 
 A Wine Show is a **Bottle Lobby product**. The platform vouches for it, so
@@ -880,7 +931,8 @@ how they are invoiced — is **A16.11**.
 **Attendees** are restaurants and retailers. They are invited by the host,
 or they find shows in their region and **request to attend without any
 existing partnership** — a Wine Show is an entry point into the network,
-not only an instrument between existing partners.
+not only an instrument between existing partners. Finding them is not a
+courtesy: they are the demand the show is convened to measure (A16.0).
 
 The host sets a **capacity**. Requests beyond it join a **waitlist** and
 move up automatically when someone withdraws. Turning applicants away
@@ -965,6 +1017,14 @@ the **host** is told from `planning`, because the host is public from
 > Never derive the feed from "shows my stars take part in". That reads as
 > the obvious implementation and quietly turns the announcement channel
 > into the one place A16.6 does not hold.
+
+**In the Restaurant and Retail dashboards.** Their Wine Shows sub-view lists
+the same shows a visitor sees, at the same two levels — they are the demand
+side and have to find shows (A16.0). This is a **fourth surface** and the
+rule holds on it unchanged: it renders through the same visibility functions
+as the public page, the profiles and the feed, and a dashboard is not a
+licence to show more. A show they are additionally the **venue** of carries
+its own detail section on top, because that is a relation and not a listing.
 
 **On the public website.** Shows in `planning` and `published` appear on the
 Wine Shows page as cards with the hero image the distributor uploads when
@@ -1278,11 +1338,24 @@ producer → host → venue.
 ### A16.12 Prototype state
 
 **Prototype blueprint:** the `SHOW_ROLES` registry — same shape as
-`ORDER_ROLES` (A14.8) — `showWineShows()` / `renderWineShows()` /
+`ORDER_ROLES` (A14.8), now all four roles across three `side` values
+(`host` · `producer` · `venue`) — `showWineShows()` / `renderWineShows()` /
 `renderShowDetail()` for the two-level list-and-detail sub-view,
 `showReadiness()` + `promoteIfReady()` for A16.10, and the
-`wine-show-modal` / `show-invite-modal` / `show-product-modal` trio. All in
-`bottle-lobby-dashboard.html`.
+`wine-show-modal` / `show-invite-modal` / `show-product-modal` trio plus
+`wine-show-venue-modal` / `wine-show-quote-modal` for the venue relation.
+All in `bottle-lobby-dashboard.html`.
+
+**Who sees which show is one function per question, never a filter written
+twice:** `showsForRole()` (which shows reach a role at all),
+`isShowParticipant()` (working detail or the visitor pane),
+`showAwaits()` (list sort, row chip, KPI and sidebar badge — four readers,
+one answer) and `visibleTrail()` (which rows of the append-only trail a side
+may read). The last one exists because the first version of the venue pass
+hid the line-up in the exhibitor box and then printed it in the history box
+two boxes below: **a rule enforced in one renderer and forgotten in the next
+is not a weaker rule, it is none** — the same sentence A16.6 makes about
+surfaces, one level down.
 
 **Shared, because the public surfaces need the same records (A16.7):**
 
@@ -1324,12 +1397,28 @@ by side. `exhibitorTurn(show, exhibitor)` is the single computed answer to
 "who is at turn"; both dashboards, the sidebar badges, the list sort and
 the per-exhibitor chips read it, so the two sides can never disagree.
 
+**Built for the venue relation (A16.11 steps 1–2):** Restaurant and Retail
+have their own Wine Shows sub-view. It lists **every show A16.6 makes
+visible to them** (A16.0) and opens a browsed show as the public listing,
+rendered by the same `publicShowTeaser()` / `publicShowCard()` the website
+uses — the dashboard is the fourth surface and gets no licence of its own.
+A show they are the **venue** of is added whatever its stage, sorts first
+and carries the request box: name one price for room and catering, or
+decline. The price lands in the show record and the host reads it there,
+with a chip naming the amount on their list row — the quote is announced,
+never a silent update. Three disclosure rules hold around it, all tested in
+`tests/venue-request.js`: an exhibitor never sees the venue's quote, a venue
+sees head counts rather than names until the show is released, and the
+search box matches producer names only where the viewer may already read
+them.
+
 **Not built yet** — each its own later pass: open calls with master-data
 filters (A16.4), attendee invitations and the waitlist (A16.5), own events
-(A16.8), and the **catering settlement (A16.11)**. The settlement is the one
-chain among them, not a single pass: the venue request and its quote
-(A16.5, steps 1–2) come first and everything else in A16.11 stands on them.
-The rest are independent of each other and of it.
+(A16.8), the rest of the **catering settlement (A16.11 steps 3–9)**, and the
+**order list of A16.0** — collecting orders during a show and consolidating
+them into one order to the producer, which A14 has no notion of yet. The
+settlement is the one chain among them: everything after step 2 stands on
+the venue request that is now built. The rest are independent.
 
 **A16.7 was built in three passes, all done.** The shared assets above were
 the first. The public Wine Shows page is the second — an Upcoming Shows

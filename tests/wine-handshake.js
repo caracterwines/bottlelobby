@@ -45,6 +45,19 @@ w.showWineShows('distributor','current');
   else ok('no false chips on the other rows');
 }
 
+/* WS-2604 is the draft this file drives to `planning`, and its venue is
+   a partner that has been asked but has not answered. Settle that first
+   — otherwise the promotion checked further down cannot happen for a
+   reason that has nothing to do with the wine handshake (A16.11). */
+console.log('\n── the venue answers first, so the wine can be the only variable');
+w.showWineShows('restaurant','current');
+w.openShowDetail('WS-2604');
+w.openVenueQuoteModal('WS-2604');
+d.getElementById('vq-amount').value = '900';
+w.saveVenueQuote();
+if (!w.eval('venueSettled')(S('WS-2604'))) bad('venue still unsettled after the quote');
+else ok('Bistro Laurent quoted — the venue is no longer the blocker');
+
 console.log('\n── THE REPORTED BUG: invite without a wine, then confirm');
 w.showWineShows('distributor','current');
 w.openShowDetail('WS-2604');                      // draft, no exhibitors
@@ -175,35 +188,41 @@ else ok('showReadiness unchanged and satisfied by the two-sided yes');
    exhibitorTurn()'s return value, so a side that exhibitorTurn can
    never return makes every such comparison silently dead.
 ═══════════════════════════════════════════════════════════════════ */
-console.log('\n── vocabulary contract: SHOW_ROLES.side vs exhibitorTurn()');
+console.log('\n── vocabulary contract: SHOW_ROLES.side vs the turn functions');
 {
   const src = require('fs').readFileSync(DASHBOARD,'utf8');
-  const m = src.match(/function exhibitorTurn\(show, e\) \{([\s\S]*?)\n\}/);
-  if (!m) bad('could not read exhibitorTurn from the source');
-  else {
-    // every string literal exhibitorTurn can hand back
+  /* Two relations, two turn functions: the wine (exhibitorTurn) and the
+     venue (venueTurn). A role's side has to be a value ONE of them can
+     return, or every comparison against it is dead — which is exactly
+     what this contract exists to catch. */
+  const m  = src.match(/function exhibitorTurn\(show, e\) \{([\s\S]*?)\n\}/);
+  const mv = src.match(/function venueTurn\(show\) \{([\s\S]*?)\n\}/);
+  if (!m)  bad('could not read exhibitorTurn from the source');
+  if (!mv) bad('could not read venueTurn from the source');
+  if (m && mv) {
+    // every string literal the turn functions can hand back
     const returns = new Set();
-    m[1].replace(/return\s+([^;]+);/g, (_, expr) => {
+    (m[1] + mv[1]).replace(/return\s+([^;]+);/g, (_, expr) => {
       (expr.match(/'([^']+)'/g) || []).forEach(q => returns.add(q.slice(1,-1)));
       if (/^\s*null\s*$/.test(expr)) returns.add(null);
       return '';
     });
     const turnValues = [...returns].filter(x => x !== null);
-    console.log('    exhibitorTurn returns:', JSON.stringify(turnValues));
+    console.log('    turn functions return:', JSON.stringify(turnValues));
     const roles = w.eval('SHOW_ROLES');
     const sides = Object.keys(roles).map(r => [r, roles[r].side]);
     console.log('    SHOW_ROLES sides    :', JSON.stringify(Object.fromEntries(sides)));
     sides.forEach(([r, side]) => {
       if (!turnValues.includes(side))
-        bad('SHOW_ROLES.' + r + '.side = "' + side + '" is never returned by exhibitorTurn — every comparison against it is dead');
-      else ok('SHOW_ROLES.' + r + '.side "' + side + '" is a value exhibitorTurn can return');
+        bad('SHOW_ROLES.' + r + '.side = "' + side + '" is never returned by a turn function — every comparison against it is dead');
+      else ok('SHOW_ROLES.' + r + '.side "' + side + '" is a value a turn function can return');
     });
     // and the reverse: no turn value without a role that owns it
     turnValues.forEach(v => {
       if (!sides.some(([, s]) => s === v))
-        bad('exhibitorTurn can return "' + v + '" but no role claims that side');
+        bad('a turn function can return "' + v + '" but no role claims that side');
     });
-    if (turnValues.every(v => sides.some(([, s]) => s === v))) ok('every turn value is claimed by exactly one role');
+    if (turnValues.every(v => sides.some(([, s]) => s === v))) ok('every turn value is claimed by a role');
   }
 }
 

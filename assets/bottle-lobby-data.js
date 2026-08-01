@@ -37,21 +37,38 @@ const SHOW_HERO_FALLBACK = 'images/duesseldorf-tasting-wide.jpg';
 
 /* One record per show. `exhibitors[].products[].name` is a REFERENCE by
    name into the producer's own range (`partnerWinesPool` in the
-   dashboard), never product content — A16.9, invariant 2. */
+   dashboard), never product content — A16.9, invariant 2.
+
+   VENUE FIELDS (A16.9, A16.11 steps 1–2). `venueEntity` is the join key
+   standing in for `venue_id`; `venueName` is only the display address.
+   `venueStatus` runs `not_required → requested → quoted → accepted`,
+   with `declined` off to the side. `cateringTotal` is the VENUE'S
+   number: it is entered once, by the venue, and read everywhere else —
+   the host never retypes it (A1).
+
+   The three states are all present on purpose, so every side of the
+   flow has something to show without clicking first:
+     WS-2604  requested  → Bistro Laurent has a request to answer
+     WS-2602  quoted     → the host has a price to look at
+     WS-2599  accepted   → Weinhaus Müller has hosted one, in history */
 let wineShows = [
-  { id:'WS-2604', title:'Sicilia Prima', date:'14 Mar 2027', city:'Hamburg',
+  { id:'WS-2604', title:'Sicilia Prima', date:'14 Mar 2027', city:'Frankfurt',
     focus:'Sicilian indigenous varieties for the on-trade',
     heroImage:'images/hamburg-glasses.jpg',
     stage:'draft', leadHost:'Hawesko GmbH',
-    venueType:'host_premises', venueName:'Hawesko Tasting Loft, Hamburg',
+    venueType:'partner_venue', venueEntity:'Bistro Laurent',
+    venueName:'Bistro Laurent, Frankfurt', venueStatus:'requested',
     capacity:60, exhibitors:[],
-    events:[ { at:'30 Jul 2026', actor:'Hawesko GmbH', text:'Show created as a draft' } ] },
+    events:[
+      { at:'30 Jul 2026', actor:'Hawesko GmbH', text:'Show created as a draft' },
+      { at:'30 Jul 2026', actor:'Hawesko GmbH', text:'Venue request sent to Bistro Laurent' } ] },
 
   { id:'WS-2601', title:'Grande Rioja', date:'05 Dec 2026', city:'Düsseldorf',
     focus:'Premium reds from Rioja and Sicily',
     heroImage:'images/duesseldorf-tasting-wide.jpg',
     stage:'planning', leadHost:'Hawesko GmbH',
-    venueType:'host_premises', venueName:'Hawesko Tasting Loft, Hamburg',
+    venueType:'host_premises', venueEntity:null,
+    venueName:'Hawesko Tasting Loft, Hamburg', venueStatus:'not_required',
     capacity:80,
     exhibitors:[
       { producer:'Bodegas Ruiz', status:'confirmed', source:'invitation',
@@ -76,7 +93,9 @@ let wineShows = [
     focus:'Mediterranean whites for Scandinavian kitchens',
     heroImage:'images/duesseldorf-pouring.jpg',
     stage:'pending_approval', leadHost:'Hawesko GmbH',
-    venueType:'host_premises', venueName:'Hawesko Nordic Office, Copenhagen',
+    venueType:'partner_venue', venueEntity:'Vinstuen København',
+    venueName:'Vinstuen København, Copenhagen', venueStatus:'quoted',
+    cateringTotal:1250, venueQuotedAt:'27 Jul 2026',
     capacity:50,
     exhibitors:[
       { producer:'Cantina Rossi', status:'confirmed', source:'invitation',
@@ -88,13 +107,16 @@ let wineShows = [
       { at:'02 Jul 2026', actor:'Hawesko GmbH', text:'Show created as a draft' },
       { at:'08 Jul 2026', actor:'Cantina Rossi', text:'Confirmed with Grillo Sicilia DOC 2023 instead of the proposed wine' },
       { at:'09 Jul 2026', actor:'Henri Dubois Domaine', text:'Confirmed with Pouilly-Fumé 2023' },
-      { at:'21 Jul 2026', actor:'Hawesko GmbH', text:'Submitted to Bottle Lobby for release' } ] },
+      { at:'21 Jul 2026', actor:'Hawesko GmbH', text:'Submitted to Bottle Lobby for release' },
+      { at:'24 Jul 2026', actor:'Hawesko GmbH', text:'Venue request sent to Vinstuen København' },
+      { at:'27 Jul 2026', actor:'Vinstuen København', text:'Quoted € 1,250 for room and catering' } ] },
 
   { id:'WS-2603', title:'Loire & Mosel', date:'18 Sep 2026', city:'Hamburg',
     focus:'Cool-climate whites, two rivers',
     heroImage:'images/hamburg-tasting-room.jpg',
     stage:'published', leadHost:'Hawesko GmbH',
-    venueType:'host_premises', venueName:'Hawesko Tasting Loft, Hamburg',
+    venueType:'host_premises', venueEntity:null,
+    venueName:'Hawesko Tasting Loft, Hamburg', venueStatus:'not_required',
     capacity:70,
     exhibitors:[
       { producer:'Henri Dubois Domaine', status:'confirmed', source:'invitation',
@@ -113,7 +135,9 @@ let wineShows = [
     focus:'Italian spring releases',
     heroImage:'images/duesseldorf-presenter.jpg',
     stage:'completed', leadHost:'Hawesko GmbH',
-    venueType:'host_premises', venueName:'Hawesko Süd, Munich',
+    venueType:'partner_venue', venueEntity:'Weinhaus Müller',
+    venueName:'Weinhaus Müller, Munich', venueStatus:'accepted',
+    cateringTotal:780, venueQuotedAt:'09 Feb 2026', venueAcceptedAt:'11 Feb 2026',
     capacity:65,
     exhibitors:[
       { producer:'Cantina Rossi', status:'confirmed', source:'invitation',
@@ -121,6 +145,9 @@ let wineShows = [
     ],
     events:[
       { at:'02 Feb 2026', actor:'Hawesko GmbH', text:'Show created as a draft' },
+      { at:'06 Feb 2026', actor:'Hawesko GmbH', text:'Venue request sent to Weinhaus Müller' },
+      { at:'09 Feb 2026', actor:'Weinhaus Müller', text:'Quoted € 780 for room and catering' },
+      { at:'11 Feb 2026', actor:'Hawesko GmbH', text:"Accepted Weinhaus Müller's offer" },
       { at:'19 Feb 2026', actor:'Cantina Rossi', text:"Confirmed with Nero d'Avola Sicilia DOC 2022" },
       { at:'01 Mar 2026', actor:'Bottle Lobby', text:'Released — full details are now public' },
       { at:'13 Apr 2026', actor:'Bottle Lobby', text:'Show completed' } ] }

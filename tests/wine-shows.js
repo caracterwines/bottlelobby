@@ -92,13 +92,29 @@ else ok('published → full card by default');
 
 // ── 6. readiness checklist is computed (A16.10)
 console.log('\n── readiness checklist');
-w.openShowDetail('WS-2604');                       // draft, no exhibitors
+w.openShowDetail('WS-2604');                       // draft, venue asked, no exhibitors
 let rows = [...d.querySelectorAll('#dshow-detail-pane .ws-check-row')];
 if (rows.length !== 3) bad('expected 3 checklist rows, got ' + rows.length);
-const met = rows.map(r => r.classList.contains('met'));
-if (JSON.stringify(met) !== JSON.stringify([true,false,false])) bad('draft checklist wrong: ' + met);
-else ok('draft: venue ✓, exhibitor ✗, wine ✗');
+let met = rows.map(r => r.classList.contains('met'));
+if (JSON.stringify(met) !== JSON.stringify([false,false,false])) bad('draft checklist wrong: ' + met);
+else ok('draft: venue ✗ (asked, not answered), exhibitor ✗, wine ✗');
+if (!rows[0].textContent.includes('Bistro Laurent')) bad('venue row does not name who is being waited on');
+else ok('venue row names the partner it waits on');
 if (byId('WS-2604').stage !== 'draft') bad('draft promoted too early');
+
+// the venue answers → the first check flips, and only that one
+w.showWineShows('restaurant','current');
+w.openShowDetail('WS-2604');
+w.openVenueQuoteModal('WS-2604');
+d.getElementById('vq-amount').value = '900';
+w.saveVenueQuote();
+w.showWineShows('distributor','current');
+w.openShowDetail('WS-2604');
+met = [...d.querySelectorAll('#dshow-detail-pane .ws-check-row')].map(r => r.classList.contains('met'));
+if (JSON.stringify(met) !== JSON.stringify([true,false,false])) bad('checklist after the quote: ' + met);
+else ok('venue quoted → venue ✓, the other two untouched');
+if (byId('WS-2604').stage !== 'draft') bad('a venue alone must not promote the show');
+else ok('still draft — a venue is not an exhibitor');
 
 // ── 7. full flow: invite → producer confirms with a different wine → auto-promote
 console.log('\n── invite / counter-propose / auto-promotion');

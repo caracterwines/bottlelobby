@@ -23,6 +23,27 @@ Kein Build-Command, Publish-Directory = Repo-Root.
 
 ## Zuletzt abgeschlossen
 
+- **A16.11, Durchgang 1 — Location-Anfrage und Bepreisung** (A16.11 Schritte 1–2).
+  Restaurant und Retail haben jetzt eine eigene Wine-Shows-Unteransicht; `SHOW_ROLES`
+  hat vier Eintraege und drei `side`-Werte (host · producer · venue). Der Distributor
+  fragt eine partnerschaftliche Location an, die nennt EINEN Preis fuer Raum und
+  Catering, der Betrag landet im Show-Datensatz und der Host liest ihn dort — Chip
+  „Venue quoted €X" auf seiner Listenzeile, kein stiller Vorgang. Neu abgeleitet:
+  `venueTurn()`, `venueSettled()` (eine bloss angefragte Location erfuellt die
+  Readiness NICHT mehr), `isMyVenue()`, `isShowParticipant()`, `showAwaits()` als
+  einzige Antwort fuer Sortierung/Chip/KPI/Badge.
+  **Die Korrektur mittendrin, und der eigentliche Ertrag des Durchgangs:** Restaurant
+  und Retail sehen *alle* oeffentlich sichtbaren Shows, nicht nur die, bei denen sie
+  Location sind — sie sind die Nachfrageseite (neu: **A16.0**). Die erste Fassung
+  filterte ueber `venueEntity` und haette genau das Publikum ausgesperrt, fuer das
+  eine Show stattfindet.
+  **Drei Lecks, alle beim Bauen gefunden, keins davon offensichtlich:** der
+  History-Trail zeigte jeder Seite alles (Location las die Ausstellerliste, Winzer
+  las den Location-Preis) → `visibleTrail()`; die Listenzeile zeigte Location und
+  Weinzahl auch bei anonymisierten Shows; die Suche traf Produzentennamen in
+  anonymisierten Shows, war also ein Nachschlagewerk fuer genau das, was A16.6
+  zurueckhaelt. Neues Harness `tests/venue-request.js`, gegen zehn Mutationen
+  verifiziert.
 - **A16.11 „Catering settlement" — Spec zuerst, Bau folgt.** Neun Schritte von der
   Location-Anfrage bis zur Staff-Freigabe, der **verbindliche Punkt** (erste Zusage
   oder Angebotsannahme, abgeleitet — kein Flag) und was er sperrt, vier Regeln gegen
@@ -214,12 +235,23 @@ Kein Build-Command, Publish-Directory = Repo-Root.
   Solange nichts entschieden ist, verwaltet `check-static.js` sie in
   `KNOWN_UNSTYLED` — mit Pruefung in beide Richtungen, die Liste kann das Problem
   also nicht ueberleben.
-- **Wine Shows — die naechsten Durchgaenge.** Gebaut sind der erste Dashboard-Durchgang
-  und **A16.7 vollstaendig** (vier Durchgaenge, siehe unten). Offen: Open Call mit
-  Master-Data-Filtern (A16.4), Teilnehmer-Einladungen und Warteliste (A16.5), eigene
-  Events fuer alle vier Rollen (A16.8) — die drei unabhaengig voneinander — und die
-  **Catering-Abrechnung (A16.11)**, die als Einzige eine Kette ist: Location-Anfrage
-  und Bepreisung (A16.5 Schritte 1–2) tragen alles Weitere.
+- **DIE GROESSTE OFFENE LUECKE: die Bestellliste aus A16.0.** Waehrend der Show
+  Bestellungen von Restaurants und Retailern einsammeln und daraus EINE
+  Sammelbestellung beim Winzer machen — das ist der Zweck der Wine Show, und A14
+  kennt davon nichts: kein show-basierter Auftrag, kein Konsolidierungsschritt, keine
+  Verbindung von `wine_shows` zur entstehenden `orders`-Zeile. Braucht eine eigene
+  Entscheidung vor dem Bau. Bis dahin traegt die Plattform den *Anlass*, aber nicht
+  das *Instrument*.
+- **Wine Shows — die naechsten Durchgaenge.** Gebaut sind der erste Dashboard-Durchgang,
+  **A16.7 vollstaendig** und **A16.11 Schritte 1–2** (Location-Anfrage + Bepreisung).
+  Offen: Open Call mit Master-Data-Filtern (A16.4), Teilnehmer-Einladungen und
+  Warteliste (A16.5), eigene Events (A16.8), die Bestellliste oben — und die
+  **Catering-Abrechnung ab Schritt 3**: Modus + Satz, Versand der Beitraege, die
+  verbindlichen Bestaetigungen mit A6-Mechanik, Rechnung und Zahlung.
+  **Beim naechsten Durchgang nicht vergessen:** `showAwaits()` zaehlt ein
+  vorliegendes Location-Angebot bewusst NICHT als Aufgabe des Hosts, weil er es noch
+  nicht annehmen kann. Sobald die verbindliche Annahme existiert, gehoert
+  `venueTurn(show) === 'host'` dort hinein — die Stelle ist im Code so kommentiert.
   Restaurant und Retail bekommen ihre Wine-Shows-Unteransicht erst mit den Location-
   und Teilnehmer-Schritten — deshalb hat `SHOW_ROLES` bisher nur zwei Eintraege, und
   deshalb bleiben ihre sieben Profilseiten beim handgeschriebenen Leerzustand.
