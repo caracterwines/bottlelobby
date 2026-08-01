@@ -272,6 +272,42 @@ Kein Build-Command, Publish-Directory = Repo-Root.
 ## Offene Punkte
 
 ### Arbeit
+
+### ▶ NAECHSTER EINSTIEG BEI A16 — Stand 1. August 2026
+
+**Gebaut und live gegengeprueft:** erster Dashboard-Durchgang, **A16.7 vollstaendig**,
+**A16.11 Schritte 1–2** (Location-Anfrage + Bepreisung), **A16.5 Teilnehmer und
+Warteliste**, und die **A16.12-Kette komplett** (Bestellliste → zwei Spalten →
+Abschluss mit beiden Order-Richtungen → Zuruecklegen). Die Kette traegt end-to-end.
+
+**Offen, in der Reihenfolge, die ich empfehlen wuerde:**
+
+1. **Catering ab Schritt 3 (A16.11)** — Modus + Satz waehlen, Beitraege versenden,
+   die verbindlichen Bestaetigungen mit A6-Mechanik (Checkbox, Knopf hart
+   deaktiviert), der abgeleitete verbindliche Punkt und was er sperrt.
+   **Warum zuerst:** vollstaendig spezifiziert, keine offene Entscheidung, und es ist
+   das einzige angefangene Stueck — Schritte 1–2 liegen fertig da. Angefangenes zu
+   Ende bringen, bevor Neues aufgemacht wird.
+2. **Catering Schritte 7–9** (Vorkasse-Rechnung, Zahlung, Freigabe-Vorbedingung).
+   **Der Reihenfolge-Zwang ist erfuellt:** er haengt an `orders.source`, und die zwei
+   Werte sind mit A16.12 entschieden **und** halb gebaut — `wine_show_order` steht,
+   `wine_show_catering` fehlt. Laesst sich mit 1 zusammenlegen, wenn dir groessere
+   Pruefungen im Browser lieber sind.
+3. **Oeffentliche Profile von Restaurant und Retail (A16.7 abschliessen)** — klein
+   und **genau jetzt entsperrt**: A16.13 haelt fest, dass sie auf dem handgeschriebenen
+   Leerzustand bleiben, „bis A16.5 und die Teilnehmerlisten existieren". Beides
+   existiert seit heute. **ABER: erst entscheiden, siehe unten.**
+4. **Open Call mit Master-Data-Filtern (A16.4)** — unabhaengig, mittelgross; braucht
+   Filter ueber Master-Daten, die es als echte Tabellen im Prototyp nicht gibt.
+   Vorher klaeren, wie tief das nachgebaut wird.
+5. **Eigene Events (A16.8)** — unabhaengig, groesste Flaeche fuer das wenigste neue
+   Modell (vier Rollen, kein Freigabe-Gate). Gut, wenn ein breiter, risikoarmer
+   Durchgang ansteht.
+
+### ⚠ ZUERST ZU ENTSCHEIDEN: A16.7 widerspricht A16.5 Regel 4
+
+Beim Bau der Teilnehmerliste heute entstanden, beide Saetze stehen so in der Spec:
+
 - **CACHE: NICHT erledigt — am 01.08. erneut aufgetreten.** Nach dem Push kam wieder
   die alte Fassung, erst `?v=cab9b93` holte die neue. Die Formulierung „praktisch
   erledigt" stand hier seit dem 31.07. und war zu optimistisch: gemessen war damals
@@ -294,8 +330,13 @@ Kein Build-Command, Publish-Directory = Repo-Root.
 - **LATENT: `exhibitorTurn()` kuerzt bei mehreren Weinen ab.** Die Funktion sagt
   "irgendein `confirmed` Wein → niemand am Zug". Liegt neben einem bestaetigten Wein
   ein weiterer Vorschlag, ist der fuer beide Seiten unsichtbar — kein Kasten, kein
-  Chip, kein Badge. Heute nicht erreichbar, weil ein Aussteller genau einen Wein
-  fuehrt und der Winzer nach der Einigung keinen Knopf mehr hat.
+  Chip, kein Badge.
+  **Seit dem 01.08. naeher dran:** WS-2599 fuehrt jetzt einen Aussteller mit DREI
+  Weinen (Cantina Rossi), alle `confirmed` — der Mehr-Wein-Fall existiert also in den
+  Daten, nur der ausloesende Zustand (ein Vorschlag NEBEN einem bestaetigten Wein)
+  nicht — die drei Weine wurden alle vom Host vorgeschlagen und bestaetigt, und der
+  Winzer hat nach der Einigung keinen Knopf mehr, mit dem er einen vierten
+  vorschlagen koennte.
   **Wird erreichbar, sobald ein Aussteller mehrere Weine praesentieren kann** — und
   das sieht A16.4 ausdruecklich vor ("three wineries with two wines each"). Dann muss
   `exhibitorTurn` pro Wein statt pro Aussteller antworten, und die Kaesten muessen
@@ -342,24 +383,23 @@ Kein Build-Command, Publish-Directory = Repo-Root.
   (4) **Neukunde**: Angebot → Vorkasse → Versand, und die Vorkasse ist
   **voreingestellt**, solange es zwischen den beiden noch keinen bezahlten Auftrag
   gibt (A14.7 nachgezogen — abgeleitet, aber einmalig bei Anlage, nicht live).
-- **NAECHSTE KETTE: die Bestellliste (A16.12), spezifiziert, nicht gebaut.**
-  Entschieden am 1.8.: das Instrument kommt vor der Nebenrechnung, Catering wird
-  dafuer unterbrochen. Der Entwurf beantwortet die vier offenen Punkte:
-  Richtpreis auf der Bedarfsmeldung (sichtbar, ausdruecklich unverbindlich; verbindlich
-  erst in der Verkaufs-Order), Unterdeckung (Verteilung entscheidet der Distributor,
-  Vorschlag pro rata berechnet, Uebersteuerung landet in `order_events`; der Kunde
-  erfaehrt Kuerzung **samt Grund** und darf abspringen, sieht aber nie fremde Mengen),
-  zwei `source`-Werte statt einem, und A16 statt A14 als Ort.
-  **Reihenfolge-Zwang daraus:** Catering-Durchgang 4 (Rechnung) muss NACH A16.12
-  kommen — beide haengen an `orders.source` und der Wache daran (Anhang D **D27**).
-- **Wine Shows — die naechsten Durchgaenge.** Gebaut sind der erste Dashboard-Durchgang,
-  **A16.7 vollstaendig** und **A16.11 Schritte 1–2** (Location-Anfrage + Bepreisung).
-  Als Naechstes die Bestellliste-Kette (oben), deren erster Durchgang die
-  **Teilnehmerliste (A16.5)** ist — sie ist Voraussetzung, keine unabhaengige Aufgabe:
-  eine Bedarfsmeldung kommt von jemandem, der auf der Show war.
-  Danach frei: **Catering ab Schritt 3** (Modus + Satz, Versand der Beitraege, die
-  verbindlichen Bestaetigungen mit A6-Mechanik — Schritt 9 Rechnung erst nach A16.12),
-  Open Call mit Master-Data-Filtern (A16.4), eigene Events (A16.8).
+- **A16.7:** „Auf dem oeffentlichen Profil **jedes Beteiligten** — Host, Aussteller,
+  Location und **Teilnehmer** gleichermassen."
+- **A16.5 Regel 4:** „Die Teilnehmerliste ist das Buch des Hosts. Sie ist **nicht
+  oeffentlich**, und kein Teilnehmer sieht einen anderen."
+
+Beides zugleich geht nicht, und Punkt 3 oben laeuft genau hinein. Die Frage ist nicht
+formal: darf ein Restaurant auf dem **eigenen** Profil zeigen „war auf der Grande
+Rioja"? Als eigene Tatsache waere das plausibel — die Liste bliebe beim Host, die
+Teilnahme gehoert dem Teilnehmer. **Aber** A16.6s Kernargument ist, dass sich Flaechen
+zusammenlesen lassen: fuenfzehn Profile, die je „war dort" sagen, ergeben die
+Gaesteliste, die Regel 4 zurueckhaelt. Denkbare Antworten: (a) Teilnehmer erscheinen
+gar nicht, A16.7 wird korrigiert; (b) erst ab `completed`, wenn die Show gelaufen ist
+und die Liste nichts mehr wert ist; (c) nur mit eigener Zustimmung je Show.
+**Meine Neigung: (b)** — sie erhaelt den Credential-Gedanken von A16.7 („drei Messen
+auf dem Profil sind ein Ausweis"), ohne dass die Liste vor oder waehrend der Show
+rekonstruierbar wird. Entschieden ist nichts; das ist eine Sichtbarkeitsfrage und
+gehoert dir.
   **Beim naechsten Durchgang nicht vergessen:** `showAwaits()` zaehlt ein
   vorliegendes Location-Angebot bewusst NICHT als Aufgabe des Hosts, weil er es noch
   nicht annehmen kann. Sobald die verbindliche Annahme existiert, gehoert
@@ -383,9 +423,10 @@ Kein Build-Command, Publish-Directory = Repo-Root.
   die **Rechtswirkung der Klick-Bestaetigung** (Jurist, plus die Frage, ob der
   Distributor eine unterschriebene Angebotsannahme braucht), **grenzueberschreitende
   Umsatzsteuer** auf den Beitrag, und die **`orders`-Empfehlung** aus A16.11 —
-  Catering-Beitrag als `orders`-Datensatz mit `source: 'wine_show'` statt eigener
-  Tabelle. Die ersten beiden Bau-Durchgaenge (Location-Anfrage, Bepreisung) haengen
-  nicht daran; der Rechnungs-Durchgang schon.
+  Catering-Beitrag als `orders`-Datensatz. **Die `orders`-Empfehlung ist inzwischen
+  angenommen und halb gebaut:** `wine_show_order` steht (A16.12), fuer das Catering
+  fehlt nur noch `wine_show_catering` samt der Wache „nie Produktzeilen" (Anhang D
+  **D27**). Der Reihenfolge-Zwang „Rechnung erst nach A16.12" ist damit erfuellt.
   **Tickets bleiben draussen** — bezahlter Eintritt gehoert zu eigenen Events (A16.8),
   steht jetzt ausdruecklich so in A16.11.
 - **Marge-Block fuer die Winery** bleibt bewusst aus (`ORDER_ROLES.winery.margin = false`):
@@ -407,9 +448,13 @@ Kein Build-Command, Publish-Directory = Repo-Root.
 
 - **Alle Pruefungen liegen in `tests/`** und brauchen einmalig
   `cd tests && npm install` (nur jsdom). Danach ist **`npm test` der komplette
-  Durchlauf** — `check-static.js` zuerst (Syntax, doppelte IDs, div-Balance und
-  Verschachtelung, onclick, CSS-Cross-Check, Enum-Klassen), dann die vier
-  Verhaltens-Harnesses. Nichts davon muss noch von Hand nachgebaut werden.
+  Durchlauf** — `check-static.js` zuerst (Syntax, doppelte IDs — inzwischen auch gegen IDs, die
+  Skripte als Literal ins Markup schreiben —, div-Balance und Verschachtelung,
+  onclick, CSS-Cross-Check, Enum-Klassen), dann die **zehn Verhaltens-Harnesses**.
+  Neu in dieser Sitzung: `venue-request.js`, `attendees.js`, `order-list.js`.
+  **Jedes neue Harness wird gegen absichtlich kaputte Fassungen gefahren, bevor es
+  als fertig gilt** — in dieser Sitzung haben dabei dreimal Mutationen ueberlebt,
+  die Pruefung war also jeweils schwaecher als sie aussah. Nichts davon muss noch von Hand nachgebaut werden.
   `tests/node_modules/` ist git-ignoriert, `netlify.toml` sperrt `/tests/*` auf
   der Live-Seite. Neue Zusicherungen gehoeren dorthin, nicht in den Scratchpad
   (Spec C7) — und eine neue Pruefung erst als fertig melden, wenn sie an einer
