@@ -1118,9 +1118,33 @@ VENUE ──── quotes room + catering ────► HOST ──── char
        (one price, the venue's number)        (per exhibitor, the host's number)
 ```
 
-The venue never bills a producer and never learns what a producer paid. The
-producer never sees the venue's quote unless it is the declared basis of
-their own amount. What the two numbers do not cover, the host carries.
+The venue never bills a producer and never learns what a producer paid. What
+the two numbers do not cover, the host carries.
+
+**What an exhibitor is shown is the basis actually used — no more.** Under
+`split_by_products` that is the venue's total and the product count, because
+the amount *is* that division and quoting a share without its divisor would
+be unreadable. Under `fixed_per_product` it is the rate and the number of
+wines: `2 × €250`. The venue's quote is **deliberately not shown** there, and
+neither is the host's coverage.
+
+> **This is a decision, not a side effect of the mode — do not "fix" it.**
+> Under a fixed price the producer is buying a stand at a stated price, the
+> same way a stand is booked at any fair: the price is the price, and what it
+> costs the organiser to provide it is the organiser's business. Disclosing
+> the venue's quote alongside would invite a negotiation about the host's
+> margin that the producer is not party to — and it would leak the venue's
+> commercial terms to a third party who is not in that relationship. It would
+> also make the host's own risk public: under `fixed_per_product` the
+> coverage moves with every dropout (A16.10), so the number would swing for
+> reasons that have nothing to do with the producer and change nothing about
+> what they owe.
+>
+> The producer is not left in the dark about *their own* amount. The rate,
+> the wine count and the arithmetic are all on the quote, and a fixed rate is
+> the one mode where the amount is fully predictable before the line-up is
+> even settled. Traceability of one's own figure is what is owed here;
+> visibility into somebody else's cost base is not.
 
 #### The flow
 
