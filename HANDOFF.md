@@ -23,6 +23,27 @@ Kein Build-Command, Publish-Directory = Repo-Root.
 
 ## Zuletzt abgeschlossen
 
+- **A16.12-Kette, Durchgang 3c — Zuruecklegen. Die Kette ist damit komplett.**
+  Entscheidung je vorbestelltem Wein beim Abschluss: bestellen oder mit Begruendung
+  zuruecklegen. Ohne Begruendung wird abgelehnt — eine Begruendung, die niemand
+  beantworten kann, ist eine Ablage. Der Winzer liest sie in seiner eigenen
+  Show-Ansicht, der Gast liest „Not ordered this time · your note is kept" und hat
+  einen Withdraw daneben, `releaseHeldWine()` ist die gelungene Verhandlung.
+  **Serges Rennen-Frage strukturell beantwortet:** platzierbar ist eine
+  Vorbestell-Zeile erst, wenn sie **tatsaechlich bestellt** ist — nicht wenn der Host
+  es vorhat. Damit kann Zuruecklegen nie eine platzierte Order kuerzen, und ein Host,
+  der erst naechste Woche entscheidet, erzeugt dazwischen kein Risiko. Ist ein Wein
+  einmal oben bestellt, wird Zuruecklegen nicht mehr angeboten; ab da ist ein Ausfall
+  Sache des Winzers und laeuft ueber A14.
+  **Drei Befunde beim Testen:** (1) der Gast verlor die zurueckgelegte Notiz, sobald
+  er den Rest platziert hatte — der eine Zweig, in dem eine „aufbewahrte" Notiz
+  stillschweigend aufhoerte, aufbewahrt zu sein; (2) meine Leck-Pruefung am
+  Winzer-Kasten war ein **Fehlalarm** — sie schlug auf der Zahl an, die der Host
+  selbst in seine Begruendung geschrieben hatte, und haette uns beigebracht, die
+  falsche Regel zu lockern; sie prueft jetzt nur, was das System beitraegt;
+  (3) der Riegel „platzierbar = bestellt" war ungetestet, weil der Status ihn
+  ohnehin abdeckt — der Test baut den Zustand jetzt direkt, sonst liest er sich
+  als toter Code und faellt beim naechsten Durchgang raus.
 - **A16.12-Kette, Durchgang 3b — Abschluss und beide Order-Richtungen.**
   `closeShowOrderList()` legt **je Winzer eine Sammelbestellung** an, ausschliesslich
   aus der Vorbestell-Spalte, und oeffnet die Gaesteseite. Die vorbereitete Order ist

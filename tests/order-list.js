@@ -303,15 +303,41 @@ console.log('\n── THE ARITHMETIC TRAP: only the pre-order column is bought')
   }
 }
 
-console.log('\n── closing places one purchase order per producer');
+console.log('\n── closing decides per wine: place, or hold back with a reason');
 {
   const before = w.eval('orders').length;
+  const box = boxWithHead('dshow','Close the Order List');
+  const holds = [...box.querySelectorAll('.cl-hold')];
+  if (holds.length !== 2) bad('expected a decision per pre-ordered wine, got ' + holds.length);
+  else ok('one decision per pre-ordered wine, the stocked one is not up for one');
+
+  /* Refuse a hold-back with no reason: the reason is the whole point —
+     it is a message the producer can answer (A16.12). */
+  const catarratto = holds.find(el => /Catarratto/.test(el.getAttribute('data-wine')));
+  catarratto.checked = true;
+  const said = [];
+  const real = w.showToast; w.showToast = m => said.push(m);
+  w.closeShowOrderList('WS-2599');
+  if (w.eval('orders').length !== before) bad('a closing without a reason went through anyway');
+  else if (!said.length || !/reason/i.test(said[0])) bad('holding back with no reason was not refused: ' + said[0]);
+  else ok('a hold-back with no reason is refused: "' + said[0] + '"');
+  w.showToast = real;
+
+  [...box.querySelectorAll('.cl-reason')]
+    .find(el => /Catarratto/.test(el.getAttribute('data-wine')))
+    .value = 'Only 6 bottles — I need 36 to justify the freight';
   w.closeShowOrderList('WS-2599');
   const made = w.eval('orders').filter(o => o.wineShowId === 'WS-2599');
   if (!made.length) bad('closing produced no orders');
   const bought = made.filter(o => o.buyer === 'Hawesko GmbH');
   if (bought.length !== 1) bad('expected one purchase order (one producer), got ' + bought.length);
   else ok('one consolidated order per producer: ' + bought[0].id + ' to ' + bought[0].seller);
+  if (bought[0].items.some(i => /Catarratto/.test(i.wine)))
+    bad('a held-back wine was ordered anyway');
+  else ok('the held-back wine is not on the purchase order');
+  const heldRows = interests('WS-2599').filter(i => i.status === 'held_back');
+  if (heldRows.length !== 1 || !heldRows[0].holdReason) bad('the hold-back was not recorded with its reason');
+  else ok('held_back with the reason kept on the row — a resting state, not a tombstone');
   if (bought[0].source !== 'wine_show_order') bad('source should be wine_show_order, is ' + bought[0].source);
   else ok('source wine_show_order, wineShowId set — a goods order down the chain (D27)');
 
@@ -385,16 +411,24 @@ w.openShowDetail('WS-2599');
   if (mine.length !== 1) bad('the guest\u2019s order was not created');
   else {
     ok('guest placed ' + mine[0].id + ' — the buyer\u2019s own act (A14.2)');
-    if (mine[0].items.length !== 2) bad('both columns should be on one sales order, got ' + mine[0].items.length);
-    else ok('one sales order carrying both the stocked and the pre-ordered line');
+    if (mine[0].items.length !== 2) bad('expected the two deliverable lines, got ' + mine[0].items.length);
+    else ok('one sales order carrying the stocked line and the pre-ordered one that was bought');
+    if (mine[0].items.some(i => /Catarratto/.test(i.wine)))
+      bad('THE RACE: a held-back wine reached a placed order');
+    else ok('the held-back line was never placeable, so it cannot strike the order');
     if (mine[0].payment.prepayment) bad('prepayment was set for an established customer');
     else ok('prepayment left off, per the computed default');
     if (mine[0].stage !== 'pending') bad('a placed order should be pending, is ' + mine[0].stage);
   }
   const rows = interests('WS-2599').filter(i => i.attendee === 'Bistro Laurent');
-  if (rows.some(i => i.status !== 'ordered')) bad('the interests were not marked ordered');
-  else if (!rows[0].orderId) bad('the interest does not point at the order it became');
-  else ok('the interests are marked ordered and point at ' + rows[0].orderId);
+  const placedRows = rows.filter(i => i.status === 'ordered');
+  const heldRow    = rows.filter(i => i.status === 'held_back');
+  if (placedRows.length !== 2) bad('the placed interests were not marked ordered: ' +
+    JSON.stringify(rows.map(i => i.product + '=' + i.status)));
+  else if (!placedRows[0].orderId) bad('the interest does not point at the order it became');
+  else ok('the two deliverable notes are `ordered` and point at ' + placedRows[0].orderId);
+  if (heldRow.length !== 1) bad('the held note should be untouched by the placing');
+  else ok('the held note stays `held_back` — placing an order does not consume it');
 }
 
 console.log('\n── a guest with no partnership waits (A6)');
@@ -428,7 +462,113 @@ console.log('\n── closing happens once, and only once the show is over');
   w.showToast = real;
 }
 
-/* ── 10. B12: the guards speak ─────────────────────────────────── */
+/* ── 10. HOLDING BACK — the three sides of it (A16.12, pass 3c) ── */
+console.log('\n── what each side sees of a wine held back');
+w.showWineShows('restaurant','history');
+w.openShowDetail('WS-2599');
+{
+  const t = paneText('rshow');
+  if (!/Not ordered this time/i.test(t)) bad('the pre-orderer is not told their wine was not taken on');
+  else if (/not available|cannot|unavailable/i.test(t)) bad('the guest is given a refusal — A16.12 chose otherwise');
+  else ok('the guest reads "Not ordered this time", not a refusal');
+  if (!/note is kept/i.test(t)) bad('the guest is not told the note is kept');
+  else ok('and that the note is kept, with no date and no promise');
+  /* the near-miss the spec names: the room's demand must not be quoted */
+  const all = w.eval('showTally')(S('WS-2599')).bottles;
+  if (new RegExp('\\b' + all + '\\b').test(t))
+    bad('the message quotes the room\u2019s demand (' + all + ') to one guest');
+  else ok('the message carries no tally — that stays the host\u2019s book');
+}
+/* the producer is told, because the reason is a message */
+w.showWineShows('winery','history');
+w.openShowDetail('WS-2599');
+{
+  const box = boxWithHead('wshow','Not Taken On This Time');
+  if (!box) bad('the producer is not shown that their wine was held back');
+  else if (!/justify the freight/i.test(box.textContent))
+    bad('the reason did not reach the producer — it must be a message, not an archive entry');
+  else ok('the producer reads the reason and can answer it');
+  /* The reason is HOST-AUTHORED and may quote whatever the host
+     chooses (A16.12) — so the leak test has to look at what the system
+     contributes, with the host's sentence taken out. Testing the whole
+     box would have failed on the host's own "36", which is a false
+     alarm and would have taught us to loosen the wrong thing. */
+  const reason = interests('WS-2599').filter(i => i.status === 'held_back')[0].holdReason;
+  const systemText = box ? box.textContent.split(reason).join(' ') : '';
+  const askedFor = w.eval('productTally')(S('WS-2599'), 'Catarratto Biologico 2023').bottles;
+  if (askedFor && new RegExp('\\b' + askedFor + '\\b').test(systemText))
+    bad('the system told the producer how many bottles were asked for');
+  else ok('the system contributes no figure of its own; only the host\u2019s sentence carries one');
+}
+
+console.log('\n── holding back is not offered once a wine is on its way');
+{
+  if (w.eval('mayHoldBack')(S('WS-2599'), "Nero d'Avola Sicilia DOC 2022"))
+    bad('a wine already ordered upstream can still be held back — that is the race');
+  else ok('a wine already ordered upstream cannot be held back');
+  if (!w.eval('mayHoldBack')(S('WS-2599'), 'Catarratto Biologico 2023'))
+    bad('a held wine should still be holdable — nothing was ordered');
+  else ok('an unordered wine can be');
+}
+
+/* The guard that makes "decide later" safe. In today's UI closing
+   decides everything at once, so an open pre-order line always has a
+   purchase order behind it and `held_back` alone would appear to be
+   enough. The rule in A16.12 is deliberately wider — placeable means
+   ORDERED, not intended — so the state is built here directly. Without
+   this, the guard reads as dead code and the next pass deletes it. */
+console.log('\n── an undecided line is not placeable either');
+{
+  const row = interests('WS-2599').find(i => i.status === 'held_back');
+  const keptStatus = row.status, keptReason = row.holdReason;
+  row.status = 'open'; delete row.holdReason;          // decided by nobody, ordered by nobody
+  const prep = w.eval('preparedOrderFor')(S('WS-2599'), 'Bistro Laurent');
+  if (prep.lines.some(l => /Catarratto/.test(l.name)))
+    bad('a pre-order line with no purchase order behind it was offered for placing');
+  else ok('open but unordered → not placeable, so a host may decide next week without exposure');
+  if (!prep.waiting.some(l => /Catarratto/.test(l.name)))
+    bad('the line vanished entirely rather than waiting');
+  else ok('it waits rather than disappearing');
+  row.status = keptStatus; row.holdReason = keptReason;
+}
+
+console.log('\n── the negotiation succeeding');
+{
+  const before = w.eval('orders').length;
+  w.showWineShows('distributor','history');
+  w.openShowDetail('WS-2599');
+  w.releaseHeldWine('WS-2599','Catarratto Biologico 2023');
+  const made = w.eval('orders').filter(o => o.wineShowId === 'WS-2599' && o.buyer === 'Hawesko GmbH');
+  if (made.length !== 2) bad('releasing did not place a purchase order, got ' + made.length);
+  else ok('releasing places the purchase order at THAT point: ' + made[1].id);
+  const row = interests('WS-2599').find(i => i.product === 'Catarratto Biologico 2023');
+  if (row.status !== 'open') bad('the kept note was not reopened, is ' + row.status);
+  else if (row.holdReason) bad('the old reason is still hanging on the row');
+  else ok('the kept note is open again — "you will hear if that changes" made good');
+  w.showWineShows('restaurant','history');
+  w.openShowDetail('WS-2599');
+  const prep = w.eval('preparedOrderFor')(S('WS-2599'), 'Bistro Laurent');
+  if (!prep.lines.some(l => /Catarratto/.test(l.name)))
+    bad('the reopened line is still not placeable');
+  else ok('and the guest can now place it');
+}
+
+console.log('\n── a note nobody is stuck with');
+{
+  w.showWineShows('restaurant','history');
+  const before = interests('WS-2599').length;
+  w.withdrawInterest('WS-2599','Catarratto Biologico 2023');
+  if (interests('WS-2599').length !== before - 1) bad('the note was not withdrawn');
+  else ok('a guest can take their own note off the list');
+  const said = [];
+  const real = w.showToast; w.showToast = m => said.push(m);
+  w.withdrawInterest('WS-2599',"Nero d'Avola Sicilia DOC 2022");   // already ordered
+  if (!said.length || !/order/i.test(said[0])) bad('withdrawing an ordered line was not refused: ' + said[0]);
+  else ok('one already on an order is refused: "' + said[0] + '"');
+  w.showToast = real;
+}
+
+/* ── 11. B12: the guards speak ─────────────────────────────────── */
 console.log('\n── an action that does nothing says why (B12)');
 {
   const said = [];

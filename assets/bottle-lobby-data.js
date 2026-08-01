@@ -204,7 +204,17 @@ let wineShows = [
         products:[ { name:"Nero d'Avola Sicilia DOC 2022", proposedBy:'host', status:'confirmed',
                      indicativePrice:11.5 },
                    { name:'Primitivo Sicilia IGT 2022', proposedBy:'host', status:'confirmed',
-                     indicativePrice:13.9 } ] }
+                     indicativePrice:13.9 },
+                   /* The thin one, on purpose: six bottles from a single
+                      house is exactly the case a host holds back and takes
+                      to the producer (A16.12). It belongs to Cantina Rossi
+                      rather than a fourth winery so the producer's own side
+                      of the negotiation is reachable in the demo — the
+                      winery dashboard IS Cantina Rossi. A show where
+                      everything clears would demonstrate the closing but
+                      never the negotiation. */
+                   { name:'Catarratto Biologico 2023', proposedBy:'host', status:'confirmed',
+                     indicativePrice:9.9 } ] }
     ],
     /* The show that gets CLOSED in the demo: it is over (`completed`),
        both columns carry demand, and the two figures are deliberately
@@ -222,7 +232,9 @@ let wineShows = [
       { attendee:'Bistro Laurent', product:'Primitivo Sicilia IGT 2022',
         qty:24, enteredBy:'attendee', status:'open', at:'12 Apr 2026' },
       { attendee:'Vinoteca Alster', product:"Nero d'Avola Sicilia DOC 2022",
-        qty:36, enteredBy:'host', status:'open', at:'12 Apr 2026' }
+        qty:36, enteredBy:'host', status:'open', at:'12 Apr 2026' },
+      { attendee:'Bistro Laurent', product:'Catarratto Biologico 2023',
+        qty:6, enteredBy:'attendee', status:'open', at:'12 Apr 2026' }
     ],
     events:[
       { at:'02 Feb 2026', actor:'Hawesko GmbH', text:'Show created as a draft' },

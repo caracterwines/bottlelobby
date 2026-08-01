@@ -7974,6 +7974,23 @@ function mayClose(show) {
   return show.stage === 'completed' && !isClosed(show) && interestsOf(show).length > 0;
 }
 
+/* PLACEABLE MEANS ORDERED, NOT INTENDED (A16.12).
+   A pre-ordered line may be placed only once a purchase order for it
+   exists. That single rule removes the race the closing would
+   otherwise open: holding a wine back can never shorten an order
+   somebody has placed, because the line was never placeable — and a
+   host who decides next week creates no exposure this week. Once a
+   wine IS ordered upstream, holding it back stops being offered; from
+   there a failure is the producer's, and A14 already handles it. */
+function orderedUpstream(show, productName) {
+  if (typeof orders === 'undefined') return false;
+  return orders.some(o => o.wineShowId === show.id && o.buyer === show.leadHost &&
+    o.items.some(i => i.wine === productName));
+}
+function mayHoldBack(show, productName) {
+  return !orderedUpstream(show, productName);
+}
+
 /* THE PREPARED ORDER IS NOT A RECORD. It is the guest's own interests
    rendered as an order they may place — computed on every read, so
    there is nothing to keep in step with the interests it comes from
@@ -7982,15 +7999,22 @@ function mayClose(show) {
    rest. */
 function preparedOrderFor(show, attendee) {
   const wines = orderListProducts(show);
-  const lines = interestsOf(show)
-    .filter(i => i.attendee === attendee && i.status === 'open')
-    .map(function (i) {
-      const w = wines.find(x => x.product.name === i.product);
-      return { name: i.product, producer: w ? w.producer : '',
-               kind: w ? w.kind : 'preorder', qty: i.qty,
-               unit: w && w.product.indicativePrice != null ? w.product.indicativePrice : 0 };
-    });
-  return { lines: lines,
+  const asLine = function (i) {
+    const w = wines.find(x => x.product.name === i.product);
+    return { name: i.product, producer: w ? w.producer : '',
+             kind: w ? w.kind : 'preorder', qty: i.qty,
+             unit: w && w.product.indicativePrice != null ? w.product.indicativePrice : 0,
+             reason: i.holdReason || '' };
+  };
+  const open = interestsOf(show).filter(i => i.attendee === attendee && i.status === 'open');
+  /* Only what the host can actually deliver — stock, or a pre-order
+     that is on its way. The rest is a note, not an order line. */
+  const lines = open.filter(i => lineKind(show, i.product) === 'stock' ||
+                                 orderedUpstream(show, i.product)).map(asLine);
+  const waiting = open.filter(i => lines.every(l => l.name !== i.product)).map(asLine);
+  const held = interestsOf(show)
+    .filter(i => i.attendee === attendee && i.status === 'held_back').map(asLine);
+  return { lines: lines, waiting: waiting, held: held,
            total: lines.reduce((n, l) => n + l.qty * l.unit, 0),
            prepayment: prepaymentDefault(attendee, show.leadHost),
            partnered: isActivePartner(attendee) };
@@ -8589,6 +8613,7 @@ function closingBox(s) {
         '<span class="right">' + s.closedAt + '</span></div><div class="odt-box-body">' +
       '<div class="edit-section-sub" style="margin:0 0 0.9rem">The order list is closed. Purchase orders went out ' +
       'on the pre-order column alone; the guests place their own (A14.2), so some of these will still be coming.</div>' +
+      heldRows(s) +
       bought.map(o => '<div class="odt-kv"><span>Bought from ' + o.seller + '</span><span>' +
         o.items.reduce((n, i) => n + i.qty, 0) + ' btl · ' + o.id + '</span></div>').join('') +
       (sold.length
@@ -8618,9 +8643,21 @@ function closingBox(s) {
     'door for every guest to place their own. Nothing you already stock is bought again — those bottles are on ' +
     'your shelf and only travel outwards.</div>' +
     (producers.length
-      ? '<div class="ord-track" style="margin-top:0"><b>You will order</b><br>' +
-        producers.map(pr => byProducer[pr].map(l => l.qty + ' × ' + l.name).join(', ') + ' — from ' + pr).join('<br>') +
-        '</div>'
+      ? '<div class="wn-group-title">Decide per wine</div>' +
+        producers.map(pr => byProducer[pr].map(function (l) {
+          const esc = l.name.replace(/"/g, '&quot;');
+          return '<div style="padding:0.6rem 0;border-bottom:1px solid rgba(247,243,238,0.05)">' +
+            '<div style="display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap">' +
+              '<span style="font-size:0.82rem;color:var(--paper);flex:1;min-width:150px">' + l.qty + ' × ' + l.name +
+                '<em class="otbl-dim" style="display:block;font-size:0.68rem;font-style:normal">from ' + pr + '</em></span>' +
+              '<label style="font-size:0.72rem;color:var(--dim);display:flex;align-items:center;gap:0.35rem">' +
+                '<input type="checkbox" class="cl-hold" data-wine="' + esc + '"> hold back</label>' +
+            '</div>' +
+            '<input class="field-input cl-reason" data-wine="' + esc + '" type="text" ' +
+              'style="margin-top:0.4rem;padding:0.35rem 0.5rem;font-size:0.74rem" ' +
+              'placeholder="Reason — goes to ' + pr + ', who can answer it">' +
+          '</div>';
+        }).join('')).join('')
       : '<div class="ord-track" style="margin-top:0">Nothing to buy in: every wine asked for is already in your ' +
         'portfolio. Closing only opens the guests\u2019 orders.</div>') +
     '<div class="wn-group-title" style="margin-top:1rem">The guests</div>' + guestRows +
@@ -8633,6 +8670,65 @@ function closingBox(s) {
         '</div>'
       : '<div class="ws-demo-note" style="margin-top:0.8rem">A show is closed once it is over. This one is ' +
         SHOW_STAGE_LABEL[s.stage].toLowerCase() + ', so the list is still open.</div>') +
+  '</div></div>';
+}
+
+/* What was held back, and the way out of it. Held wines are the
+   argument for the next round, so they sit in front of the host rather
+   than in an archive (A16.12). */
+function heldRows(s) {
+  const names = [...new Set(interestsOf(s).filter(i => i.status === 'held_back').map(i => i.product))];
+  if (!names.length) return '';
+  return '<div class="wn-group-title" style="margin-top:1rem">Held back</div>' +
+    names.map(function (n) {
+      const rows = interestsOf(s).filter(i => i.product === n && i.status === 'held_back');
+      const qty = rows.reduce((a, i) => a + i.qty, 0);
+      const producer = (orderListProducts(s).find(w => w.product.name === n) || {}).producer || '';
+      return '<div style="padding:0.6rem 0;border-bottom:1px solid rgba(247,243,238,0.05)">' +
+        '<div style="display:flex;align-items:center;gap:0.7rem;flex-wrap:wrap">' +
+          '<span style="font-size:0.8rem;color:var(--paper);flex:1;min-width:150px">' + n +
+            '<em class="otbl-dim" style="display:block;font-size:0.68rem;font-style:normal">' +
+            qty + ' btl asked for · ' + producer + ' · "' + (rows[0].holdReason || '') + '"</em></span>' +
+          '<button class="btn-sm btn-outline" onclick="releaseHeldWine(\'' + s.id + '\',\'' +
+            n.replace(/'/g, "\\'") + '\')">Order it after all</button>' +
+        '</div>' +
+      '</div>';
+    }).join('') +
+    '<div class="edit-section-sub" style="margin:0.7rem 0 0">The notes are kept. If the producer improves the ' +
+    'terms, ordering it here places the purchase order and everyone who asked for it can order — which is what ' +
+    'makes "you will hear if that changes" a mechanism rather than a courtesy.</div>';
+}
+
+/* Same row, two callers — the guest whose list is part held and the
+   one whose list is entirely held. */
+function heldRow2(s) {
+  return function (l) {
+    return '<div class="odt-kv"><span>' + l.name +
+      '<em class="otbl-dim" style="display:block;font-size:0.66rem;font-style:normal">Not ordered this time</em>' +
+      '</span><span style="text-align:right">' + l.qty + ' bottles ' +
+      '<button class="icon-btn" onclick="withdrawInterest(\'' + s.id + '\',\'' +
+        l.name.replace(/'/g, "\\'") + '\')">Withdraw</button></span></div>';
+  };
+}
+
+/* What a producer is told when their wine did not carry the listing.
+   The reason reaches them because it is a message, not a filing (A16.12). */
+function producerHeldBox(role, s) {
+  const me = SHOW_ROLES[role].entity;
+  const mine = orderListProducts(s).filter(w => w.producer === me).map(w => w.product.name);
+  const names = [...new Set(interestsOf(s)
+    .filter(i => i.status === 'held_back' && mine.indexOf(i.product) !== -1).map(i => i.product))];
+  if (!names.length) return '';
+  return '<div class="odt-box"><div class="odt-box-head">Not Taken On This Time</div><div class="odt-box-body">' +
+    names.map(function (n) {
+      const r = interestsOf(s).find(i => i.product === n && i.status === 'held_back');
+      return '<div class="odt-kv"><span>' + n + '</span><span style="text-align:right;flex:1">' +
+        (r.holdReason || '') + '</span></div>';
+    }).join('') +
+    '<div class="edit-section-sub" style="margin:0.9rem 0 0">' + s.leadHost + ' did not take this on after the ' +
+    'show and has said why. It is an opening, not a refusal: carrying the freight, better terms or a smaller ' +
+    'first delivery are all answers, and a listing can be worth more than the margin on one pallet. The interest ' +
+    'from the room is kept.</div>' +
   '</div></div>';
 }
 
@@ -8662,12 +8758,29 @@ function myOrderListBox(role, s) {
       (lineKind(s, i.product) === 'preorder' ? 'Pre-order — ' + preorderLeadText(s) : 'In stock') +
       '</em></span><span>' + i.qty + ' bottles</span></div>';
 
+    /* Computed once and appended to EVERY branch. A guest who has
+       placed their deliverable lines still has a note in the balance,
+       and the branch that congratulated them on ordering used to drop
+       it — the one place a kept note could quietly stop being kept. */
+    const heldBlock2 = prep.held.length
+      ? '<div class="wn-group-title" style="margin-top:1rem">Not ordered this time</div>' +
+        prep.held.map(heldRow2(s)).join('') +
+        '<div class="edit-section-sub" style="margin:0.7rem 0 0">' + s.leadHost + ' did not take ' +
+        (prep.held.length === 1 ? 'this one' : 'these') + ' on this time. <b style="color:var(--paper)">Your note ' +
+        'is kept, and you will hear if that changes.</b> Nothing is owed either way.</div>'
+      : '';
+
+    if (!open.length && !placed.length && prep.held.length) {
+      return '<div class="odt-box"><div class="odt-box-head">Not Ordered This Time</div>' +
+        '<div class="odt-box-body">' + heldBlock2 + '</div></div>';
+    }
     if (placed.length && !open.length) {
       return '<div class="odt-box"><div class="odt-box-head">Ordered</div><div class="odt-box-body">' +
         placed.map(lineRow).join('') +
         '<div class="edit-section-sub" style="margin:0.9rem 0 0">Placed with ' + s.leadHost + ' as ' +
         [...new Set(placed.map(i => i.orderId))].join(', ') + '. It is an ordinary order from here — you can ' +
         'follow it under My Purchases.</div>' +
+        heldBlock2 +
       '</div></div>';
     }
     return '<div class="odt-box"><div class="odt-box-head">' +
@@ -8690,6 +8803,7 @@ function myOrderListBox(role, s) {
               'becomes placeable the moment it is active. Nothing is lost in the meantime.</div>')
         : '<div class="edit-section-sub" style="margin:0.9rem 0 0">Recorded at the show. ' +
           'It becomes an order you place yourself once ' + s.leadHost + ' has closed the list.</div>') +
+      heldBlock2 +
     '</div></div>';
   }
 
@@ -9003,7 +9117,8 @@ function renderShowDetail(id) {
         (isVenue ? myAttendanceBox(role, s) : '') +
         (isVenue ? myOrderListBox(role, s) : '') +
         (isHost  ? hostVenueBox(s)    : '') +
-        exhActions + hostProposalBox + readinessBox + gateBox +
+        exhActions + (cfg.side === 'producer' ? producerHeldBox(role, s) : '') +
+        hostProposalBox + readinessBox + gateBox +
         '<div class="odt-box"><div class="odt-box-head">Exhibitors &amp; Wines' +
           (hostActions ? '<span class="right">' + hostActions + '</span>' : '') +
         '</div><div class="odt-box-body">' + exhRows +
@@ -9255,9 +9370,37 @@ function closeShowOrderList(id) {
   if (s.stage !== 'completed') {
     actionSay('A show is closed once it is over — this one is ' + SHOW_STAGE_LABEL[s.stage].toLowerCase()); return;
   }
+  /* One decision per pre-ordered wine, taken BEFORE anything is
+     created and before the guests' door opens (A16.12). */
+  const held = {};
+  [].forEach.call(document.querySelectorAll('.cl-hold'), function (el) {
+    if (!el.checked) return;
+    const name = el.getAttribute('data-wine');
+    /* Matched by attribute rather than by selector: wine names carry
+       apostrophes, em dashes and spaces, and escaping them into a
+       selector is a bug waiting for the one name that breaks it. */
+    let r = null;
+    [].forEach.call(document.querySelectorAll('.cl-reason'), function (x) {
+      if (x.getAttribute('data-wine') === name) r = x;
+    });
+    held[name] = (r && r.value.trim()) || '';
+  });
+  const unreasoned = Object.keys(held).filter(n => !held[n]);
+  if (unreasoned.length) {
+    actionSay('A wine held back needs a reason — it goes to the producer, who can answer it'); return;
+  }
+
   const byProducer = consolidatedOrders(s);
+  Object.keys(byProducer).forEach(function (pr) {
+    byProducer[pr] = byProducer[pr].filter(l => !(l.name in held));
+    if (!byProducer[pr].length) delete byProducer[pr];
+  });
   const producers = Object.keys(byProducer);
   if (!producers.length && !interestsOf(s).length) { actionSay('Nothing was asked for at this show'); return; }
+
+  Object.keys(held).forEach(function (name) {
+    holdWineBack(s, name, held[name]);
+  });
 
   producers.forEach(function (producer) {
     const lines = byProducer[producer];
@@ -9289,6 +9432,64 @@ function closeShowOrderList(id) {
   showToast(producers.length
     ? '✓ Closed — ' + producers.length + ' purchase order(s) placed, guests can now order'
     : '✓ Closed — nothing to pre-order, guests can now place their orders');
+}
+
+/* Holding a wine back. The reason is a MESSAGE TO THE PRODUCER, not an
+   archive entry — it goes into the show's trail, which producers read
+   (visibleTrail), so they can answer it: carry the freight, improve the
+   terms, take a smaller first delivery. The interests are kept, because
+   they are the argument for the next round (A8, A16.12). */
+function holdWineBack(show, productName, reason) {
+  let n = 0;
+  interestsOf(show).forEach(function (i) {
+    if (i.product === productName && i.status === 'open') {
+      i.status = 'held_back'; i.holdReason = reason; n += i.qty;
+    }
+  });
+  const producer = (orderListProducts(show).find(w => w.product.name === productName) || {}).producer || '';
+  logShow(show, show.leadHost, 'Held back ' + productName + ' (' + n + ' btl asked for) — to ' +
+    producer + ': "' + reason + '"');
+  return n;
+}
+
+/* The negotiation succeeding. Places the purchase order at THIS point
+   and makes the kept notes placeable again — which is what turns "you
+   will hear if that changes" from a politeness into a mechanism. */
+function releaseHeldWine(id, productName) {
+  const s = actionShow(id); if (!s) return;
+  const rows = interestsOf(s).filter(i => i.product === productName && i.status === 'held_back');
+  if (!rows.length) { actionSay('Nothing is held back on that wine'); return; }
+  const producer = (orderListProducts(s).find(w => w.product.name === productName) || {}).producer || '';
+  const qty = rows.reduce((n, i) => n + i.qty, 0);
+  const o = {
+    id: nextOrderId(), placed: todayISO(),
+    buyer: s.leadHost, buyerType:'distributor',
+    seller: producer, sellerType:'winery',
+    stage:'pending', source:'wine_show_order', wineShowId: s.id,
+    note:'Held back at ' + s.title + ', ordered after agreeing terms',
+    items: [ orderItemRaw(productName, producer, qty, purchasePriceFor(productName)) ]
+  };
+  orders.unshift(normalizeOrder(o));
+  logEvent(o, 'Ordered after the terms were agreed — held back at ' + s.title);
+  rows.forEach(function (i) { i.status = 'open'; delete i.holdReason; });
+  logShow(s, s.leadHost, 'Ordered ' + productName + ' after all: ' + qty + ' btl from ' + producer +
+    ' (' + o.id + ') — the guests who asked for it can place their orders');
+  refreshShows();
+  if (typeof renderAllOrders === 'function') renderAllOrders();
+  showToast('✓ ' + qty + ' × ' + productName + ' ordered — everyone who asked for it can order now');
+}
+
+/* A note nobody may be stuck with for ever. */
+function withdrawInterest(id, productName) {
+  const role = activeShowRole, cfg = SHOW_ROLES[role];
+  const s = actionShow(id); if (!s) return;
+  const row = interestsOf(s).find(i => i.attendee === cfg.entity && i.product === productName);
+  if (!row) { actionSay('You have no note on that wine'); return; }
+  if (row.status === 'ordered') { actionSay('That one is already on an order — cancel the order instead'); return; }
+  s.interests.splice(s.interests.indexOf(row), 1);
+  logShow(s, cfg.entity, 'Withdrew their note for ' + productName);
+  refreshShows();
+  showToast('Note withdrawn');
 }
 
 /* `wineUnitPrice` is keyed WITHOUT the vintage; show products carry it.

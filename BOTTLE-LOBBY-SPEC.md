@@ -1529,6 +1529,32 @@ stocked lines need no decision, they simply sell:
 Lowering the consolidated quantity below what was asked for is not a closing
 decision — that case is the producer's inability to supply, below.
 
+#### Holding back cannot strike an order somebody has already placed
+
+Closing does two things at once — purchase orders out, the guests' door
+open — so the obvious worry is a race: a guest places, and the host then
+holds that wine back, leaving an order for goods nobody will ever buy in.
+
+**One rule removes it: a pre-order line is placeable only once the host has
+actually ordered it.** Not "decided to", not "intends to" — ordered, with a
+purchase order to point at. It follows that:
+
+- a held-back line was **never placeable**, so holding back cannot shorten
+  anything; there is nothing to cancel and nobody to apologise to;
+- an **undecided** line is not placeable either, so a host who closes now and
+  makes up their mind next week creates no exposure in between;
+- once a wine **is** ordered upstream, holding it back is no longer offered.
+  From that moment the only thing that can go wrong is the producer failing
+  to supply, which is a different event with a different cause and is already
+  routed into A14 (`declined`, or lines edited while they are still editable,
+  or a credit note). **Do not let that case be renamed "held back"** — one is
+  the host choosing not to buy, the other is the producer unable to sell.
+
+A guest's prepared order therefore contains exactly what the distributor can
+actually deliver: their stocked lines, plus the pre-ordered lines that are on
+their way. The rest is a note, not an order line — which is the same
+distinction the message to the pre-orderer makes below.
+
 **Holding back is not a refusal, and the model must not render it as one.**
 It opens a negotiation. The reason goes **to the producer**, who can answer
 it: carry the freight, improve the terms, accept a smaller first delivery —
@@ -1563,6 +1589,20 @@ Three constraints keep that from becoming a false promise:
 
 The pre-orderer keeps one action: withdraw the note. Nothing may hang on a
 list for ever without the person who wrote it being able to take it off.
+
+**And the negotiation can succeed.** A held-back wine may be **released
+later** — the producer carried the freight, or the terms improved — which
+places the purchase order at that point and makes the kept notes placeable
+again. That is what turns *"you will hear if that changes"* from a
+politeness into a mechanism. It is also why the interests were kept: without
+them the second round would start from nothing.
+
+> **One caution about the reason text.** The system never shows a producer
+> the tally (above). The host writing *"only 18 bottles, I need 60 to justify
+> the freight"* is disclosing a figure **by choice**, in a message they are
+> composing to a partner, which is theirs to make. The rule is about what the
+> platform reveals on its own, not about what a distributor may decide to
+> tell somebody.
 
 #### One act, two directions
 
@@ -1730,6 +1770,9 @@ An interest is only ever written while the show is `published` or
   the host's portfolio at that moment (A3). Never stored on the show: a wine
   taken on between two shows changes column by itself, which is the whole
   mechanism.
+- **Whether a pre-ordered line may be placed at all** — from a purchase
+  order for that wine existing, not from the host's intention. This is what
+  makes holding back safe at any moment (above).
 - **Whether an attendee may place their prepared order** — from the
   partnership being active (A6), not from a flag on the interest.
 - **Whether prepayment is preset on a new order** — from there being no
@@ -1868,6 +1911,16 @@ Three disclosure rules, each tested: a guest sees only their own lines, the
 producer sees no tally at all, and the public card carries none of it.
 `indicativePrice` lives on the show product, never on the producer's own
 record.
+
+**Built for holding back (A16.12):** the closing takes a decision per
+pre-ordered wine — place it, or hold it back with a reason — **before**
+anything is created and before the guests' door opens. The reason goes to
+the producer, who reads it in their own show detail; a hold-back with no
+reason is refused, because a reason nobody can answer is a filing. Held
+interests rest as `held_back` and the guest reads *"not ordered this time,
+your note is kept"* on every branch of their own box, with a withdraw
+beside it. `releaseHeldWine()` is the negotiation succeeding: it places the
+purchase order at that point and reopens the kept notes.
 
 **Built for the closing (A16.12):** `closeShowOrderList()` places **one
 purchase order per producer out of the pre-order column alone** and opens the
