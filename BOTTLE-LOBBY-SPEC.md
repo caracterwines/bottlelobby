@@ -110,7 +110,7 @@ Consequences for the build:
 
 **Own-Label:** A separate flag/relation layered on top of the winery→distributor wine link (which distributor exclusively licensed which wine). Never a separate copy of the wine.
 
-**This rule governs the flow of goods, not the flow of money.** A distributor invoicing a producer for a service — a Wine Show catering contribution, A16.11 — runs against the arrows above and is not a breach of them: no product changes hands, and such an order may not carry product lines at all. Only a route by which wine reaches a buyer is a supply chain shortcut.
+**This rule governs the flow of goods, not the flow of money.** A distributor invoicing a producer for a service — a Wine Show catering contribution, `source: 'wine_show_catering'` (A16.11) — runs against the arrows above and is not a breach of them: no product changes hands, and such an order may not carry product lines at all. Only a route by which wine reaches a buyer is a supply chain shortcut. Wine bought off the back of a show (`wine_show_order`, A16.12) runs the arrows the normal way and is an ordinary purchase.
 
 ---
 
@@ -442,8 +442,9 @@ A separate `ship_status` runs alongside the stage for warehouse reality:
 orders (
   id, buyer_id, buyer_type, seller_id, seller_type,
   stage        enum('pending','accepted','shipped','delivered','declined','cancelled'),
-  source       enum('manual','reorder','deal','offer','promo','wine_show'),
-  wine_show_id FK → wine_shows (nullable),   -- source = 'wine_show' only (A16.11)
+  source       enum('manual','reorder','deal','offer','promo',
+                    'wine_show_order','wine_show_catering'),
+  wine_show_id FK → wine_shows (nullable),   -- both show sources (A16.11, A16.12)
   placed_at,
   tax_mode     enum('net','vat'),          -- per order, see A14.6
   vat_rate, discount_pct, shipping_cost,
@@ -455,7 +456,9 @@ orders (
 order_items (
   order_id FK, wine_id FK→wines,           -- reference, never a copy.
                                            -- Nullable ONLY on a service order
-                                           -- (source = 'wine_show', A16.11)
+                                           -- (source = 'wine_show_catering',
+                                           -- A16.11). A 'wine_show_order' row
+                                           -- always names a product (A16.12)
   description,                             -- service lines only, where wine_id is null
   qty, unit_price, cost_price,             -- cost_price drives the margin block
   discount_pct, is_free                    -- is_free = deal free goods, priced at 0
@@ -539,7 +542,7 @@ The KPI set follows the same split and is computed live (invariant 7), never sto
 | Selling | Open Orders · Awaiting Payment (with outstanding amount) · Ready to Ship (with bottle count) · Revenue |
 | Buying | Open Orders · In Transit (with bottle count) · To Pay (with outstanding amount) · Spend |
 
-**Service orders are listed but not shipped.** A `source: 'wine_show'` order (A16.11) has no lines with a product on them, so every bottle count and both shipping KPIs — Ready to Ship, In Transit — must skip it, and the shipping block and delivery note do not apply. It still appears in the list with its own source chip and still counts towards Revenue, Spend and the payment KPIs, because the money is real and the producer has to find the invoice to pay it.
+**Service orders are listed but not shipped.** A `source: 'wine_show_catering'` order (A16.11) has no lines with a product on them, so every bottle count and both shipping KPIs — Ready to Ship, In Transit — must skip it, and the shipping block and delivery note do not apply. It still appears in the list with its own source chip and still counts towards Revenue, Spend and the payment KPIs, because the money is real and the producer has to find the invoice to pay it.
 
 **Level 2 — order detail.** The working surface:
 
@@ -770,12 +773,8 @@ directly and individually — which is why the venue relation reaches a
 restaurant through `venue_id` and never through the public listing, while
 *seeing* the show needs no relation at all.
 
-> **Not modelled yet: the order list itself.** Collecting orders during a
-> show and consolidating them into one order to the producer is the
-> mechanism this section describes, and A14 has no notion of it — no
-> show-sourced order, no consolidation step, no link from `wine_shows` to
-> the resulting `orders` row. It needs its own decision and its own pass.
-> Until then the platform supports the *occasion* but not the *instrument*.
+> **The mechanism is specified in A16.12 and not yet built.** Until it is,
+> the platform supports the *occasion* but not the *instrument*.
 
 ### A16.1 Why Wine Shows carry an approval gate
 
@@ -1282,7 +1281,8 @@ more than the shortfall.
 
 *Recommendation, to be confirmed before the invoicing pass is built.*
 
-**Use `orders`, with `source: 'wine_show'` and a `wine_show_id`.** Everything
+**Use `orders`, with `source: 'wine_show_catering'` and a `wine_show_id`.**
+Everything
 the settlement needs already exists there and works for all four roles:
 the `PP` prepayment invoice with its own number sequence (A14.5), the payment
 chain with partial payments and derived `overdue` (A14.7), the two-sided
@@ -1297,12 +1297,16 @@ Three things must be true for it to hold:
    a description instead — *"Wine Show participation · Grande Rioja · 2
    wines"*. Invariant 2 is untouched: where a line names a product it is
    still a foreign key, never a copy.
-2. **A `wine_show` order can never carry product lines.** That is the guard
-   that keeps it from looking like a supply-chain shortcut, and it makes the
-   direction inversion safe: here the distributor is the seller and the
-   producer the buyer, the reverse of A3's flow. **A3 constrains the flow of
-   goods, not the flow of money.** A service invoice between two partnered
+2. **A `wine_show_catering` order can never carry product lines.** That is
+   the guard that keeps it from looking like a supply-chain shortcut, and it
+   makes the direction inversion safe: here the distributor is the seller and
+   the producer the buyer, the reverse of A3's flow. **A3 constrains the flow
+   of goods, not the flow of money.** A service invoice between two partnered
    parties is not a channel for products.
+   > The guard belongs to **this value**, not to shows in general. Orders that
+   > come out of a show's order list (`wine_show_order`, A16.12) run the
+   > normal way down the chain and always carry product lines. One value for
+   > both would have made the guard wrong the moment A16.12 was built.
 3. **It stays out of the shipping and stock KPIs** (A14.8). There is nothing
    to pack and nothing in transit; "Ready to Ship" and every bottle count
    must skip these orders. They belong in the list with a source chip of
@@ -1335,7 +1339,196 @@ producer → host → venue.
   a German distributor charging an Italian producer for a fair in Düsseldorf
   is a case nobody has worked through yet.
 
-### A16.12 Prototype state
+### A16.12 The order list — from a show to an order
+
+A16.0 says why a Wine Show exists: present an unlisted producer's wines,
+collect orders on the spot, buy only what somebody has asked for. This
+section is that mechanism. It is the **instrument**; A16.11 is the
+housekeeping around it.
+
+#### What is written on the show floor is not an order
+
+Three reasons, all of them already rules elsewhere:
+
+| | |
+|---|---|
+| The person entering may not be a partner | A Wine Show is an entry point into the network (A16.5) — but ordering needs an **active** partnership (A6) |
+| The wine is not in the distributor's portfolio | Only wines actually taken on appear there, and it is the purchase that creates the relation (A3). Testing an unlisted producer is the whole point |
+| Nobody has committed to supply anything | An order has a seller who stands behind it. At the moment of entry, no one does |
+
+So the show floor writes an **interest** — one row per attendee per product,
+in `wine_show_interests`. It is not an order in a different coat: it may
+come from a stranger, it may never convert, and one that lapses must leave
+no trace in order history or in any KPI. Modelling it as an `orders` row
+with a special stage would put all three of those problems inside the table
+A14 keeps clean.
+
+#### Who may enter one
+
+| Who | Case |
+|---|---|
+| The attendee | on their own device |
+| The host's staff | at the stand, on the attendee's behalf — the real-world normal case |
+| **Never the producer** | they do not hold the distributor's customer relationships (A2, A3) |
+
+`entered_by` records which. What can be picked is not a form but the show's
+own line-up: the **confirmed `wine_show_products`** (A16.4). References
+again, never product content.
+
+#### The indicative price
+
+A quantity entered without a price is a wish, not a demand signal — the
+attendee has no idea what they are letting themselves in for, and the
+distributor cannot read the number as intent. A binding price is equally
+impossible: the distributor has not bought the wine yet and does not know
+what it costs him.
+
+So: **`wine_show_products.indicative_price`, set by the host, shown to the
+attendee, and explicitly non-binding.** It is the host's number about
+somebody else's product — the same ownership shape as the catering rate in
+A16.11, and the reason it sits on the show-product row rather than on the
+product, which the producer owns (A2).
+
+**The binding price appears exactly once: in the sales order the attendee
+places.** They see the final figure before placing, so no version of the
+consent problem A16.11 had to solve can arise here.
+
+#### The tally is computed
+
+*"Rioja Reserva 2019 · 7 houses · 138 bottles"* is `SUM(qty)` over the
+interests, live (invariant 7). Never a stored total: attendees are still
+entering while the host is reading it.
+
+#### Closing the show
+
+From `completed` (A16.2) the host works the tally, per wine:
+
+- **Take it** — with the quantity **raised** if they want full cases or a
+  buffer. Raising is their commercial decision.
+- **Drop it** — demand was too thin. The interests lapse and the attendees
+  are told plainly that the wine will not be listed. **This is the
+  instrument working, not a failure**: the whole point was to find that out
+  before paying for stock.
+
+Lowering the consolidated quantity below what was asked for is not a
+closing decision — that case is under-supply, below, and it belongs to the
+producer, not to the host.
+
+#### One act, two directions
+
+```
+interests ──► CLOSING ──┬──► 1 order   Distributor → Producer    (purchase)
+                        └──► N orders  Distributor → Attendees   (sales)
+```
+
+**Upstream** is an ordinary A14 order — `source: 'wine_show_order'`,
+`wine_show_id` set, lines with real `product_id`s. It is also the act that
+brings the wine into the distributor's portfolio, which A3 already
+specifies; nothing new is needed for that.
+
+**Downstream the buyer still places the order.** A14.2 gives placing to the
+buyer and every other transition to the seller, and that rule survives
+here intact: the host **prepares** each attendee's order from their own
+interests, and the attendee places it with one action after seeing the
+final price and quantity. An interest is a signal; placing is an act; the
+two are not merged. For an attendee with no active partnership the prepared
+order simply waits — the partnership request comes first (A6), which is
+precisely the pipeline A16.5 means by "entry point into the network".
+
+#### When the producer under-supplies
+
+This will happen, so it is specified rather than left open.
+
+**Who decides the allocation: the host.** It is their commercial
+relationship on both sides, and A14.2 puts every seller-side transition
+with the seller. But never silently, and never by arithmetic alone:
+
+- **The default is computed and proposed** — pro rata by requested
+  quantity. It is a proposal, not a rule: a customer who takes a pallet a
+  year may be protected ahead of one who took two bottles, and that
+  judgement is the host's to make.
+- **An override is explicit and logged.** It writes an `order_events` row on
+  each affected order (A14.3), so the decision is reconstructable.
+
+**What the attendee sees:**
+
+| | |
+|---|---|
+| Before placing | The final quantity and price. Nothing is committed on their side before this |
+| If cut after placing | The reduced quantity **with its reason** — *"short supply from the producer: 138 requested, 96 delivered"* — and the choice to accept it or cancel, while the line is still editable (A14.8) |
+| If the wine falls away entirely | Told plainly. A prepared order is voided; a placed one is `declined` by the seller (A14.2) with the reason attached |
+| **Never** | Another attendee's quantity, or the allocation across customers. That is the distributor's book, not a shared document |
+
+> **Why the buyer gets a choice rather than a smaller delivery:** a
+> restaurant that ordered 24 bottles may have built a list around them, and
+> 9 is a different proposition, not a smaller version of the same one.
+> Reducing without asking is the same defect A16.11 names for the catering
+> contribution — changing a number somebody has already acted on — with the
+> direction reversed. The cost of asking is one notification.
+
+#### Two `source` values, not one
+
+`orders.source` gets **both** show values, and they are opposites:
+
+| Value | Direction | Lines | Purpose |
+|---|---|---|---|
+| `wine_show_order` | Distributor **buys** from the producer, and sells on to attendees — the normal chain (A3) | **Always** product lines | The instrument |
+| `wine_show_catering` | Distributor **invoices** the producer for a service — against the chain | **Never** product lines | The settlement (A16.11) |
+
+**The guard is per value, not per feature:** a `wine_show_catering` order
+may never carry a product line — that is what keeps the direction inversion
+from looking like a supply-chain shortcut (A3) — while a `wine_show_order`
+must carry them. A single `wine_show` value with one guard covering both
+was the earlier draft and is superseded (Appendix D, D27).
+
+#### Tables
+
+```sql
+wine_show_interests (
+  show_id     FK → wine_shows,
+  attendee_id FK → wine_show_attendees,   -- who was at the show, A16.5
+  product_id  FK → products,              -- reference, never a copy
+  qty,
+  entered_by  enum('attendee','host'),
+  status      enum('open','ordered','lapsed'),
+  order_id    FK → orders (nullable)      -- set when it becomes a sales line
+)
+```
+
+`wine_show_products` gains `indicative_price` (host-owned, non-binding).
+`orders` already carries `wine_show_id` from A16.11; both show sources use
+it.
+
+#### Computed, never stored
+
+- **The tally per wine** — `SUM(qty)` over open interests.
+- **The proposed allocation under short supply** — pro rata, recomputed
+  whenever the delivered quantity changes. What the host *decides* is
+  stored, as order lines; the proposal never is.
+- **Whether an attendee may place their prepared order** — from the
+  partnership being active (A6), not from a flag on the interest.
+
+#### Where this section lives, and why
+
+**In A16, not A14.** The process has no life without the show — its
+`wine_show_id` is never null, it starts on the show floor and it ends when
+the show is closed. A14 describes what an order *is*; this describes an act
+that *produces* orders, and what comes out the other end is an ordinary A14
+order in every respect. Putting it in A14 would give that section a second
+creation path and a special case, for a mechanism that belongs to the show.
+A14 gains only the mechanical parts: the two `source` values and the
+`wine_show_id` column.
+
+#### Still open
+
+- **Whether interests may be entered before the show**, from the public
+  listing. Tempting, and it would make the tally readable earlier — but it
+  turns a fair into a pre-order page and needs deciding on its own.
+- **What happens to a lapsed interest as a signal.** A wine dropped for
+  want of demand is exactly the market intelligence A8 trades in, and
+  throwing it away would waste it. Not modelled.
+
+### A16.13 Prototype state
 
 **Prototype blueprint:** the `SHOW_ROLES` registry — same shape as
 `ORDER_ROLES` (A14.8), now all four roles across three `side` values
@@ -1412,13 +1605,21 @@ sees head counts rather than names until the show is released, and the
 search box matches producer names only where the viewer may already read
 them.
 
-**Not built yet** — each its own later pass: open calls with master-data
-filters (A16.4), attendee invitations and the waitlist (A16.5), own events
-(A16.8), the rest of the **catering settlement (A16.11 steps 3–9)**, and the
-**order list of A16.0** — collecting orders during a show and consolidating
-them into one order to the producer, which A14 has no notion of yet. The
-settlement is the one chain among them: everything after step 2 stands on
-the venue request that is now built. The rest are independent.
+**Not built yet.** Two chains and two loose ends:
+
+**The order list (A16.12)** — the instrument, and the agreed next chain.
+It stands on the **attendee list (A16.5)**, which is therefore its first
+pass rather than an independent one: an interest is written by somebody who
+was at the show, so `wine_show_attendees` has to exist before anything can
+point at it.
+
+**The rest of the catering settlement (A16.11 steps 3–9)** — steps 1–2 are
+built. Steps 3–8 touch nothing the order list touches; **step 9, the
+invoicing, must come after A16.12**, because both share `orders.source` and
+the guard that hangs off it (D27).
+
+Loose ends, independent of both: open calls with master-data filters
+(A16.4) and own events (A16.8).
 
 **A16.7 was built in three passes, all done.** The shared assets above were
 the first. The public Wine Shows page is the second — an Upcoming Shows
@@ -1967,6 +2168,7 @@ directory is the repo root, so everything committed is served unless blocked.
 | D24 | The catering contribution had three modes, of which `split_by_products` was the only one that charged exhibitors, and a producer's share was **live-computed throughout** — `catering_total × (own ÷ all products)`, "recomputed whenever the line-up changes" (A16.10) | **A16.5 / A16.10 / A16.11** — four modes with `fixed_per_product` as the default, and the amount computed only **until the producer consents to it**, then held as a ceiling that may fall but never rise | Live computation and consent cannot coexist once money is involved: a producer who agreed to €400 owed €500 the moment a third party dropped out, without ever seeing the increase. Recalculating and re-collecting consent instead had no natural end — a second dropout restarts the round for everyone, days before the fair. `fixed_per_product` removes the cascade by construction rather than managing it, and matches how a stand is really booked: at a price, not as a share of the organiser's invoice. `split_by_products` survives for hosts who pass the venue's bill through one-to-one. |
 | D25 | `cancelled` and `rescheduled` were available to the host at any time, with `rescheduled` resetting every confirmation | **A16.2** — both barred from the commitment point (A16.11); unwinding a committed show is a credit note handled by staff, not a lifecycle transition | Resetting confirmations was right while a confirmation only meant "I will come". Once it is a payment obligation, the reset revokes something a third party has already acted on — the venue has booked staff, the host has invoiced. The mechanism did not become wrong, its reach did. |
 | D26 | A16.5 called the restaurant or retailer providing the room the **"venue host"**, while A16.3 calls the organising distributor the **host** | **A16.5 / A16.11** — **host** is the distributor, **venue** is the restaurant or retailer; "venue host" is not used | Harmless while only one of them acted. The settlement flow (A16.11) has both parties acting in the same nine steps, quoting to and confirming with each other, and one word for two roles in one flow is a defect waiting to be read the wrong way. The prototype's field names (`venueType`, `venueName`) were already on the right side of this. |
+| D27 | `orders.source` was to gain a single **`wine_show`** value, guarded by "a `wine_show` order can never carry product lines" (A16.11) | **A16.12 / A14.3** — two opposite values, `wine_show_order` (goods, down the chain, always product lines) and `wine_show_catering` (service, against the chain, never product lines), each with its own guard | The single value was drafted while the catering settlement was the only money a show produced, and it was already wrong: the show's *purpose* is the consolidated purchase (A16.0), which is a product order sourced from a show. One value would have forced the guard to be either useless or false. **Superseded before it was ever built** — noted here because the decision was taken, not because code changed. |
 
 ---
 

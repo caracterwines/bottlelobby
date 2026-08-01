@@ -98,7 +98,7 @@ Kein Build-Command, Publish-Directory = Repo-Root.
   Datensatz berechnet (Location + bestaetigter Aussteller + bestaetigter Wein) und als
   Checkliste angezeigt, nicht per Hand geschaltet. Beide Sichtbarkeitsstufen aus A16.6
   stehen im Detail nebeneinander, aus einem Datensatz gerendert. Weine sind
-  Referenzen in `partnerWinesPool`, nie Kopien. Spec um A16.12 (Prototyp-Stand) ergaenzt.
+  Referenzen in `partnerWinesPool`, nie Kopien. Spec um den Prototyp-Stand-Abschnitt ergaenzt (heute A16.13).
 - **Spec-Abschnitt A16 "Wine Shows & Events"** angelegt (nach A15, vor Teil B). Trennt Messen
   mit Staff-Freigabe von eigenen Veranstaltungen ohne Freigabe, definiert Lifecycle,
   Aussteller-Einladung und Open Call, Location/Catering-Aufteilung, Warteliste, die zwei
@@ -132,7 +132,7 @@ Kein Build-Command, Publish-Directory = Repo-Root.
   in den naechsten Durchgaengen dieselben Datensaetze und **denselben**
   `publicShowCard()` lesen, statt sie 21-fach zu kopieren.
   **Der riskante Teil war die Testinfrastruktur** — siehe unten.
-  Spec A16.7 und A16.12 nachgezogen.
+  Spec A16.7 und der Prototyp-Stand nachgezogen.
 - **A16.7, Durchgang 1 — die oeffentliche Wine-Shows-Seite.** Neuer Abschnitt
   „What's Coming" **unter** der Case Study (die Seite muss das Format erklaeren,
   bevor echte Termine etwas bedeuten), Vergangenes darunter, Detailschicht klappt
@@ -173,7 +173,7 @@ Kein Build-Command, Publish-Directory = Repo-Root.
   **Neue Demo-Kante mit Absicht:** Weinhaus Mueller folgt Bodegas Ruiz, die bei
   Grande Rioja bestaetigt sind — der Feed bleibt leer. Ohne dieses Paar liefe
   `tests/follow-feed.js` ins Leere, deshalb faellt es durch, wenn die Kante
-  verschwindet. A16.7 und A16.12 nachgezogen.
+  verschwindet. A16.7 und der Prototyp-Stand nachgezogen.
 - **Spec-Pflege 31.07.:** C3 unterscheidet jetzt die beiden Push-Kanaele (git aus Claude Code
   ohne Groessengrenze, MCP-Connector mit) statt pauschal "nicht pushbar"; Dateigroessen neu
   gemessen; Anhang D nach D18/D19 sortiert und um **D22** ergaenzt; der ueberholte
