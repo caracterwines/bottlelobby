@@ -1408,6 +1408,21 @@ A14 keeps clean.
 own line-up: the **confirmed `wine_show_products`** (A16.4). References
 again, never product content.
 
+**Only an attendee who holds a seat** (A16.5) may enter one — not somebody
+on the waitlist, and not somebody who merely found the show in their
+dashboard. This falls straight out of what the signal is for: its worth is
+that the person **tasted the wine**, and a waitlisted account was not in the
+room. It is the same rule as "never from the public listing" below, applied
+to the one case that looks like an exception and is not.
+
+**The producer is not shown the tally.** They see that they are exhibiting
+and, in time, an order; they do not see how many houses asked for what
+before that order is placed. The consolidated purchase is the distributor's
+negotiating position, and handing over the demand behind it before he has
+bought would be handing over his hand. What the producer eventually
+receives — one order for a stated quantity — says everything they need and
+nothing they are not party to.
+
 #### The indicative price
 
 A quantity entered without a price is a wish, not a demand signal — the
@@ -1675,9 +1690,22 @@ standing.
 
 **Not built yet.** Two chains and two loose ends:
 
-**The order list (A16.12)** — the instrument, and the agreed next chain.
-Its first pass is built: `wine_show_attendees` now exists, which is what an
-interest points at.
+**Built for the order list (A16.12):** the show floor writes interests and
+the host reads the tally. `writeInterest()` is the single mutation, so the
+attendee's own list and the host writing at the stand cannot enforce the
+rules twice and differently; a quantity of zero removes the row rather than
+storing one. `mayWriteOrderList()` admits an attendee **holding a seat** at a
+released show and nobody else — not the waitlist, who were not in the room.
+Three disclosure rules, each tested: a guest sees only their own lines, the
+producer sees no tally at all, and the public card carries none of it.
+`indicativePrice` lives on the show product, never on the producer's own
+record.
+
+**Not built yet.** Two chains and two loose ends:
+
+**The order list (A16.12) — the closing.** One consolidated order per
+producer, a prepared order per attendee that the attendee places
+themselves, and `delivery_lead` shown before they do.
 
 **The rest of the catering settlement (A16.11 steps 3–9)** — steps 1–2 are
 built. Steps 3–8 touch nothing the order list touches; **step 9, the

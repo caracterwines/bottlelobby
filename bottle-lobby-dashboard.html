@@ -7827,6 +7827,57 @@ function attendable(show) {
   return PUBLIC_UPCOMING_STAGES.indexOf(show.stage) !== -1;
 }
 
+/* ══ THE ORDER LIST (A16.12) ═════════════════════════════════════ */
+/* The reason a Wine Show exists (A16.0): what the room asks for is
+   collected here, and one consolidated order per producer comes out of
+   it — demand first, purchase after. This pass writes the interests
+   and reads the tally; the closing and the two order directions are
+   the next one.
+
+   An interest is NOT an order. The person may be nobody's partner
+   (A6 would forbid the order), the wine is not in the distributor's
+   portfolio yet (A3), and nobody has committed to supply anything. */
+function interestsOf(show) { return show.interests || []; }
+
+/* Every wine that can be asked for: confirmed exhibitor, confirmed
+   wine (A16.4). One list, so the picker and the tally can never offer
+   different sets. */
+function orderListProducts(show) {
+  const out = [];
+  confirmedExhibitors(show).forEach(e =>
+    e.products.filter(p => p.status === 'confirmed').forEach(p =>
+      out.push({ producer: e.producer, product: p })));
+  return out;
+}
+
+/* The tally — SUM over open interests, never stored (A16.10). The
+   house count is as much the signal as the bottles: 60 bottles from
+   one buyer and from six are different findings. */
+function productTally(show, name) {
+  const rows = interestsOf(show).filter(i => i.product === name && i.status === 'open');
+  return { bottles: rows.reduce((n, i) => n + i.qty, 0), houses: rows.length };
+}
+function showTally(show) {
+  const rows = interestsOf(show).filter(i => i.status === 'open');
+  return { bottles: rows.reduce((n, i) => n + i.qty, 0),
+           houses: new Set(rows.map(i => i.attendee)).size };
+}
+function myInterests(role, show) {
+  const cfg = SHOW_ROLES[role];
+  return interestsOf(show).filter(i => i.attendee === cfg.entity);
+}
+
+/* WHO MAY WRITE ONE (A16.12): an attendee holding a SEAT, while the
+   show is running or just over. The worth of the signal is that they
+   tasted the wine — which rules out the waitlist, who were not in the
+   room, and the public listing, which is a different feature. */
+function ORDER_LIST_STAGES() { return ['published'].concat(SHOW_PAST_STAGES); }
+function mayWriteOrderList(role, show) {
+  if (SHOW_ROLES[role].side !== 'venue') return false;
+  if (ORDER_LIST_STAGES().indexOf(show.stage) === -1) return false;
+  return attendeeStanding(show, myAttendance(role, show)) === 'seat';
+}
+
 /* Whether a draft may move to `planning` is derived from the show's
    own relations every time it is asked — there is no readiness flag. */
 function venueSettled(show) {
@@ -8326,6 +8377,97 @@ function myAttendanceBox(role, s) {
   '</div></div>';
 }
 
+/* THE HOST'S SIDE OF THE ORDER LIST: the tally, and the price he is
+   quoting for each wine. The price is his number about somebody else's
+   product (A16.12) — non-binding, and it is what makes a quantity
+   readable as demand rather than as a wish. */
+function orderListBook(s) {
+  const wines = orderListProducts(s);
+  if (!wines.length) return '';
+  const t = showTally(s);
+  const live = ORDER_LIST_STAGES().indexOf(s.stage) !== -1;
+
+  const rows = wines.map(function (w, i) {
+    const tal = productTally(s, w.product.name);
+    const px  = w.product.indicativePrice;
+    return '<div style="padding:0.75rem 0;border-bottom:1px solid rgba(247,243,238,0.05)">' +
+      '<div style="display:flex;align-items:center;gap:0.7rem;flex-wrap:wrap">' +
+        '<span style="font-size:0.84rem;color:var(--paper);flex:1;min-width:150px">' + w.product.name +
+          '<em class="otbl-dim" style="display:block;font-size:0.68rem;font-style:normal">' + w.producer + '</em></span>' +
+        '<input class="field-input ol-price" data-wine="' + i + '" type="number" min="0" step="0.10" ' +
+          'style="width:96px;padding:0.35rem 0.5rem" placeholder="price" value="' + (px == null ? '' : px) + '">' +
+        '<span class="ord-stage ' + (tal.bottles ? 'ws-seat' : 'wse-withdrawn') + '" style="min-width:118px;text-align:center">' +
+          (tal.bottles ? tal.houses + ' house(s) · ' + tal.bottles + ' btl' : 'nothing yet') + '</span>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+
+  return '<div class="odt-box"><div class="odt-box-head">Order List' +
+      '<span class="right">' + t.houses + ' house(s) · ' + t.bottles + ' bottles' +
+      (live ? ' <button class="btn-sm btn-outline" onclick="openInterestModal(\'' + s.id + '\')">+ Add for a guest</button>' : '') +
+      '</span></div><div class="odt-box-body">' +
+    '<div class="edit-section-sub" style="margin:0 0 0.9rem">What the room asked for. The price you quote is ' +
+    '<b style="color:var(--paper)">not binding</b> — it lets a guest read what they are letting themselves in for, ' +
+    'and it is what turns a number into a demand signal. The totals are counted live and become one order per ' +
+    'producer when you close the show.</div>' +
+    rows +
+    '<div class="ord-actions" style="margin-top:0.9rem">' +
+      '<button class="btn-sm btn-outline" onclick="saveIndicativePrices(\'' + s.id + '\')">Save prices</button>' +
+    '</div>' +
+    '<div class="ws-demo-note" style="margin-top:0.8rem">Closing the show — one consolidated order per producer, ' +
+    'and a prepared order for every guest — is A16.12 and comes in the next pass. The producer is never shown ' +
+    'these totals.</div>' +
+  '</div></div>';
+}
+
+/* An attendee's own list. They see their own lines and no others —
+   the same rule as the guest list itself (A16.5, rule 4). */
+function myOrderListBox(role, s) {
+  if (SHOW_ROLES[role].side !== 'venue') return '';
+  const mine = myInterests(role, s);
+  const may  = mayWriteOrderList(role, s);
+  if (!may && !mine.length) return '';
+
+  const wines = orderListProducts(s);
+  const qtyOf = n => { const r = mine.find(i => i.product === n); return r ? r.qty : ''; };
+  const total = mine.reduce((n, i) => {
+    const w = wines.find(x => x.product.name === i.product);
+    const px = w && w.product.indicativePrice;
+    return px ? n + px * i.qty : n;
+  }, 0);
+
+  if (!may) {
+    return '<div class="odt-box"><div class="odt-box-head">Your Order List</div><div class="odt-box-body">' +
+      mine.map(i => '<div class="odt-kv"><span>' + i.product + '</span><span>' + i.qty + ' bottles</span></div>').join('') +
+      '<div class="edit-section-sub" style="margin:0.9rem 0 0">Recorded at the show. ' +
+      'It becomes an order you place yourself once ' + s.leadHost + ' has closed the show.</div>' +
+    '</div></div>';
+  }
+
+  const rows = wines.map(function (w, i) {
+    const px = w.product.indicativePrice;
+    return '<div style="display:flex;align-items:center;gap:0.7rem;padding:0.6rem 0;border-bottom:1px solid rgba(247,243,238,0.05)">' +
+      '<span style="font-size:0.82rem;color:var(--paper);flex:1;min-width:140px">' + w.product.name +
+        '<em class="otbl-dim" style="display:block;font-size:0.68rem;font-style:normal">' + w.producer +
+        (px == null ? ' · price on request' : ' · ' + eur(px) + ' a bottle, indicative') + '</em></span>' +
+      '<input class="field-input ol-qty" data-wine="' + i + '" type="number" min="0" step="6" ' +
+        'style="width:88px;padding:0.35rem 0.5rem" placeholder="0" value="' + qtyOf(w.product.name) + '">' +
+    '</div>';
+  }).join('');
+
+  return '<div class="odt-box"><div class="odt-box-head">Your Order List</div><div class="odt-box-body">' +
+    '<div class="edit-section-sub" style="margin:0 0 0.9rem">Note what you would take, in bottles. ' +
+    'Prices are <b style="color:var(--paper)">indicative</b>: ' + s.leadHost + ' buys from the producer after the ' +
+    'show, and the binding price appears on the order you place yourself. Nothing here commits you to anything.</div>' +
+    rows +
+    (total ? '<div class="odt-kv" style="margin-top:0.7rem"><span>At the indicative prices</span><span>' +
+      eur(total) + '</span></div>' : '') +
+    '<div class="ord-actions" style="margin-top:0.9rem">' +
+      '<button class="btn-sm btn-gold" onclick="saveMyOrderList(\'' + s.id + '\')">Save my list</button>' +
+    '</div>' +
+  '</div></div>';
+}
+
 /* WHO MAY READ WHICH ROW OF THE TRAIL.
    `wine_show_events` is one append-only record (A16.9) — but who may
    READ a row is a visibility question like any other, and therefore
@@ -8407,6 +8549,7 @@ function renderShowVisitorDetail(s, cfg) {
       '</div>' +
       '<div>' +
         myAttendanceBox(activeShowRole, s) +
+        myOrderListBox(activeShowRole, s) +
         '<div class="odt-box"><div class="odt-box-head">What is public</div><div class="odt-box-body">' +
           '<div class="edit-section-sub" style="margin:0">' +
           (level === 'anonymised'
@@ -8599,6 +8742,7 @@ function renderShowDetail(id) {
       '<div>' +
         (isVenue && isMyVenue(role, s) ? venueRequestBox(s) : '') +
         (isVenue ? myAttendanceBox(role, s) : '') +
+        (isVenue ? myOrderListBox(role, s) : '') +
         (isHost  ? hostVenueBox(s)    : '') +
         exhActions + hostProposalBox + readinessBox + gateBox +
         '<div class="odt-box"><div class="odt-box-head">Exhibitors &amp; Wines' +
@@ -8607,6 +8751,7 @@ function renderShowDetail(id) {
           '<div class="edit-section-sub" style="margin:1rem 0 0">Every wine here is a reference to the producer\'s own ' +
           'record — the show never holds a copy.</div>' +
         '</div></div>' +
+        (isHost ? orderListBook(s) : '') +
         (isHost ? attendeeBook(s) : '') +
         '<div class="odt-box"><div class="odt-box-head">History</div><div class="odt-box-body">' + trail + '</div></div>' +
       '</div>' +
@@ -8737,6 +8882,101 @@ function hostRespondToProduct(showId, producer, action) {
   promoteIfReady(s);
   refreshShows();
   showToast('✓ ' + proposal.name + ' confirmed for ' + producer);
+}
+
+/* ── THE ORDER LIST (A16.12) ──────────────────────────────────
+   One writer per row and one place it lives. `writeInterest` is the
+   single mutation: everything else — the attendee's own list, the
+   host writing on a guest's behalf — goes through it, so the rules
+   about who may write cannot be enforced twice and differently. */
+function writeInterest(show, attendee, product, qty, by) {
+  show.interests = interestsOf(show);
+  const row = show.interests.find(i => i.attendee === attendee && i.product === product);
+  if (qty > 0) {
+    if (row) { row.qty = qty; row.enteredBy = by; row.at = SHOW_TODAY; }
+    else show.interests.push({ attendee: attendee, product: product, qty: qty,
+                               enteredBy: by, status:'open', at: SHOW_TODAY });
+    return 'set';
+  }
+  if (row) { show.interests.splice(show.interests.indexOf(row), 1); return 'removed'; }
+  return 'none';
+}
+
+function saveMyOrderList(id) {
+  const role = activeShowRole, cfg = SHOW_ROLES[role];
+  const s = actionShow(id); if (!s) return;
+  if (!mayWriteOrderList(role, s)) {
+    actionSay('Only a guest with a place at the show can write an order list'); return;
+  }
+  const wines = orderListProducts(s);
+  let changed = 0;
+  [].forEach.call(document.querySelectorAll('.ol-qty'), function (el) {
+    const w = wines[parseInt(el.getAttribute('data-wine'), 10)];
+    if (!w) return;
+    const qty = parseInt(el.value, 10) || 0;
+    if (writeInterest(s, cfg.entity, w.product.name, qty, 'attendee') !== 'none') changed++;
+  });
+  if (!changed) { actionSay('Nothing to save — note a quantity first'); return; }
+  const mine = myInterests(role, s);
+  logShow(s, cfg.entity, mine.length
+    ? 'Wrote an order list: ' + mine.map(i => i.qty + ' × ' + i.product).join(', ')
+    : 'Cleared their order list');
+  refreshShows();
+  showToast('✓ Order list saved — ' + s.leadHost + ' consolidates it after the show');
+}
+
+/* The host's prices. Non-binding, and his own number (A16.12). */
+function saveIndicativePrices(id) {
+  const s = actionShow(id); if (!s) return;
+  const wines = orderListProducts(s);
+  let changed = 0;
+  [].forEach.call(document.querySelectorAll('.ol-price'), function (el) {
+    const w = wines[parseInt(el.getAttribute('data-wine'), 10)];
+    if (!w) return;
+    const v = el.value === '' ? null : parseFloat(el.value);
+    if (v !== w.product.indicativePrice) { w.product.indicativePrice = v; changed++; }
+  });
+  if (!changed) { actionSay('No price changed'); return; }
+  logShow(s, s.leadHost, 'Updated the indicative prices on the order list');
+  refreshShows();
+  showToast('✓ Prices saved — guests see them as indicative, never binding');
+}
+
+/* The host writing at the stand, on a guest's behalf. Same row, same
+   function, only `enteredBy` differs (A16.12). */
+let interestShowId = null;
+function openInterestModal(id) {
+  interestShowId = id;
+  const s = actionShow(id); if (!s) return;
+  const seated = attendeeQueue(s).seated;
+  document.getElementById('oif-show').textContent = s.title + ' · ' + s.date + ' · ' + s.city;
+  document.getElementById('oif-guest').innerHTML = seated.length
+    ? seated.map(a => '<option value="' + a.stakeholder + '">' + a.stakeholder + '</option>').join('')
+    : '<option value="">Nobody holds a place at this show yet</option>';
+  const wines = orderListProducts(s);
+  document.getElementById('oif-wine').innerHTML = wines.length
+    ? wines.map((w, i) => '<option value="' + i + '">' + w.product.name + ' · ' + w.producer + '</option>').join('')
+    : '<option value="">No confirmed wine to order yet</option>';
+  document.getElementById('oif-qty').value = '';
+  document.getElementById('wine-show-interest-modal').classList.add('active');
+}
+function closeInterestModal() { document.getElementById('wine-show-interest-modal').classList.remove('active'); }
+
+function saveInterestForGuest() {
+  const s = actionShow(interestShowId); if (!s) return;
+  const who = document.getElementById('oif-guest').value;
+  const idx = document.getElementById('oif-wine').value;
+  const qty = parseInt(document.getElementById('oif-qty').value, 10) || 0;
+  if (!who) { actionSay('Pick a guest first'); return; }
+  if (idx === '') { actionSay('Pick a wine first'); return; }
+  if (qty <= 0) { actionSay('Note how many bottles'); return; }
+  const w = orderListProducts(s)[parseInt(idx, 10)];
+  if (!w) { actionSay('That wine is no longer on the show'); return; }
+  writeInterest(s, who, w.product.name, qty, 'host');
+  logShow(s, s.leadHost, 'Wrote an order list for ' + who + ': ' + qty + ' × ' + w.product.name);
+  closeInterestModal();
+  refreshShows();
+  showToast('✓ ' + qty + ' × ' + w.product.name + ' noted for ' + who);
 }
 
 /* ── ATTENDEES (A16.5) ────────────────────────────────────────
@@ -9325,6 +9565,38 @@ renderAppearanceWidgets();
     <div class="modal-footer">
       <button class="btn-sm btn-outline" onclick="closeVenueModal()">Cancel</button>
       <button class="btn-sm btn-gold" onclick="sendVenueRequest()">Send Request →</button>
+    </div>
+  </div>
+</div>
+
+<!-- Host notes an order-list line for a guest at the stand (A16.12) -->
+<div class="modal-overlay" id="wine-show-interest-modal">
+  <div class="modal-panel" style="max-width:620px">
+    <div class="modal-header">
+      <div class="modal-title">Note an <span>Order</span></div>
+      <button class="modal-close" onclick="closeInterestModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="ord-track" style="margin-top:0"><b id="oif-show"></b></div>
+      <div class="edit-section-sub">What a guest asked for at the stand. It is not an order: you have not bought the wine yet, and they have committed to nothing. It becomes an order they place themselves once you close the show.</div>
+
+      <div class="form-row">
+        <div class="form-field"><div class="field-label">Guest</div>
+          <select class="field-input" id="oif-guest"></select>
+        </div>
+        <div class="form-field"><div class="field-label">Bottles</div>
+          <input class="field-input" id="oif-qty" type="number" min="1" step="6" placeholder="e.g. 24">
+        </div>
+      </div>
+      <div class="form-row full">
+        <div class="form-field"><div class="field-label">Wine</div>
+          <select class="field-input" id="oif-wine"></select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-sm btn-outline" onclick="closeInterestModal()">Cancel</button>
+      <button class="btn-sm btn-gold" onclick="saveInterestForGuest()">Note It →</button>
     </div>
   </div>
 </div>

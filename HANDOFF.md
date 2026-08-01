@@ -23,6 +23,20 @@ Kein Build-Command, Publish-Directory = Repo-Root.
 
 ## Zuletzt abgeschlossen
 
+- **A16.12-Kette, Durchgang 2 — die Bestellliste auf der Show.** Gast mit Platz
+  traegt seine Mengen selbst ein, der Host am Stand fuer ihn (`enteredBy`), beide
+  ueber dieselbe Funktion `writeInterest()`. Auszaehlung live: Haeuser **und**
+  Flaschen, weil 60 Flaschen von einem und von sechs Kaeufern verschiedene Befunde
+  sind. Richtpreis liegt auf dem Show-Produkt, nie am Weinstamm des Winzers.
+  **Drei Sichtbarkeitsregeln, alle geprueft:** ein Gast sieht nur seine eigenen
+  Zeilen, der **Winzer sieht die Auszaehlung gar nicht** (sie ist die
+  Verhandlungsposition des Distributors), die oeffentliche Karte nichts davon.
+  Schreiben darf nur, wer einen **Platz** hat — nicht die Warteliste, die nicht im
+  Raum war. Neues Harness `tests/order-list.js`, gegen sieben Mutationen verifiziert.
+  **Ein Eigenfehler dabei, der Erwaehnung verdient:** eine globale Umbenennung von
+  `of-wine` traf die Offers-Form mit; `check-static` fing die doppelte ID, aber
+  nicht den auf das falsche Element zeigenden Verweis. Repariert. Fuer die
+  Offers-Form gibt es kein Verhaltens-Harness — das ist die eigentliche Luecke.
 - **A16.12-Kette, Durchgang 1 — Teilnehmer und Warteliste (A16.5).** Host laedt ein
   oder beantwortet Anfragen, Restaurant/Retail fragen von der Besucheransicht aus
   einen Platz an, nehmen Einladungen an, springen wieder ab.

@@ -59,7 +59,15 @@ const SHOW_HERO_FALLBACK = 'images/duesseldorf-tasting-wide.jpg';
    order; nothing else records it.
 
    Attending needs no partnership, and the fixtures say so: Restaurant
-   Hafenkante and Vinoteca Alster appear nowhere in `activePartners`. */
+   Hafenkante and Vinoteca Alster appear nowhere in `activePartners`.
+
+   THE ORDER LIST (A16.12). `indicativePrice` sits on the confirmed
+   product and belongs to the HOST — it is his number about somebody
+   else's wine, and it is never binding. `interests` are what the show
+   floor writes: one row per (attendee, product), `status:'open'`
+   until a closing turns them into order lines. WS-2603 carries a
+   worked example because it is the only released show with a full
+   room — the tally there is what a host reads on the evening. */
 let wineShows = [
   { id:'WS-2604', title:'Sicilia Prima', date:'14 Mar 2027', city:'Frankfurt',
     focus:'Sicilian indigenous varieties for the on-trade',
@@ -145,9 +153,22 @@ let wineShows = [
     ],
     exhibitors:[
       { producer:'Henri Dubois Domaine', status:'confirmed', source:'invitation',
-        products:[ { name:'Sancerre Rouge 2022', proposedBy:'host', status:'confirmed' } ] },
+        products:[ { name:'Sancerre Rouge 2022', proposedBy:'host', status:'confirmed',
+                     indicativePrice:14.5 } ] },
       { producer:'Weingut Schmitt', status:'confirmed', source:'invitation',
-        products:[ { name:'Müller-Thurgau — Mosel 2023', proposedBy:'host', status:'confirmed' } ] }
+        products:[ { name:'Müller-Thurgau — Mosel 2023', proposedBy:'host', status:'confirmed',
+                     indicativePrice:8.9 } ] }
+    ],
+    /* Two houses have written a list, a third has not yet — so the
+       tally shows something and the demo still has an empty seat to
+       fill by hand. */
+    interests:[
+      { attendee:'Restaurant Hafenkante', product:'Sancerre Rouge 2022',
+        qty:24, enteredBy:'attendee', status:'open', at:'18 Sep 2026' },
+      { attendee:'Restaurant Hafenkante', product:'Müller-Thurgau — Mosel 2023',
+        qty:12, enteredBy:'attendee', status:'open', at:'18 Sep 2026' },
+      { attendee:'Vinoteca Alster', product:'Sancerre Rouge 2022',
+        qty:36, enteredBy:'host', status:'open', at:'18 Sep 2026' }
     ],
     events:[
       { at:'20 May 2026', actor:'Hawesko GmbH', text:'Show created as a draft' },
@@ -155,7 +176,9 @@ let wineShows = [
       { at:'04 Jun 2026', actor:'Henri Dubois Domaine', text:'Confirmed with Sancerre Rouge 2022' },
       { at:'11 Jun 2026', actor:'Hawesko GmbH', text:'Submitted to Bottle Lobby for release' },
       { at:'15 Jun 2026', actor:'Bottle Lobby', text:'Released — full details are now public' },
-      { at:'28 Jul 2026', actor:'Weinhaus Müller', text:'Requested a place at the show' } ] },
+      { at:'28 Jul 2026', actor:'Weinhaus Müller', text:'Requested a place at the show' },
+      { at:'18 Sep 2026', actor:'Restaurant Hafenkante', text:'Wrote an order list: 24 × Sancerre Rouge 2022, 12 × Müller-Thurgau — Mosel 2023' },
+      { at:'18 Sep 2026', actor:'Hawesko GmbH', text:'Wrote an order list for Vinoteca Alster: 36 × Sancerre Rouge 2022' } ] },
 
   { id:'WS-2599', title:'Primavera Italiana', date:'12 Apr 2026', city:'Munich',
     focus:'Italian spring releases',
@@ -171,7 +194,15 @@ let wineShows = [
     ],
     exhibitors:[
       { producer:'Cantina Rossi', status:'confirmed', source:'invitation',
-        products:[ { name:"Nero d'Avola Sicilia DOC 2022", proposedBy:'host', status:'confirmed' } ] }
+        products:[ { name:"Nero d'Avola Sicilia DOC 2022", proposedBy:'host', status:'confirmed',
+                     indicativePrice:11.5 } ] }
+    ],
+    /* A past show with a written list — the producer exhibiting here is
+       the dashboard's own winery, which is how the rule that a producer
+       never sees the tally gets tested rather than asserted. */
+    interests:[
+      { attendee:'Bistro Laurent', product:"Nero d'Avola Sicilia DOC 2022",
+        qty:18, enteredBy:'attendee', status:'open', at:'12 Apr 2026' }
     ],
     events:[
       { at:'02 Feb 2026', actor:'Hawesko GmbH', text:'Show created as a draft' },
