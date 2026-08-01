@@ -1619,9 +1619,13 @@ distributor simply does not have it yet, because the whole model is to order
 it after the show. Somebody who tasted a wine on Thursday and wants it on
 their list needs to know whether that means next week or next month.
 
-So the host names a **lead time** at closing — *"about 14 days after the
-show"* — and the attendee sees it **before placing** their order, on the
-lines it applies to. It belongs to **pre-order lines only**: a wine already
+So the host names a **lead time** — *"about 14 days after the show"* — and
+the attendee sees it on the lines it applies to. **By closing at the
+latest**, and earlier if the host already knows it: guests write their lists
+during the show, and a pre-order line that can say "about 14 days" while
+they are standing there is worth more than one that says so afterwards. Until
+it is named the line reads *"delivered after the show"*, with no figure
+invented to fill the gap. It belongs to **pre-order lines only**: a wine already
 in the portfolio ships as usual and saying "14 days" about it would be
 wrong in the other direction. That is a figure on the show, not a mechanism:
 
@@ -1862,6 +1866,16 @@ Three disclosure rules, each tested: a guest sees only their own lines, the
 producer sees no tally at all, and the public card carries none of it.
 `indicativePrice` lives on the show product, never on the producer's own
 record.
+
+**Built for the two columns (A16.12):** `lineKind()` reads the host's
+portfolio and answers stock or pre-order per line; nothing about the column
+is stored, so a wine taken on between two shows changes column by itself.
+The guest's list says which in words on every line and carries the lead time
+on pre-order lines only — the mistake in the other direction is claiming
+"14 days" for a wine on the shelf. The host's box separates ordinary revenue
+from `preorderTally()`, the figure their first order to an unlisted producer
+rests on (A16.0). The demo fixture puts both columns on **one** show, because
+a distinction split across two shows is present but never demonstrated.
 
 **Not built yet.** Two chains and two loose ends:
 

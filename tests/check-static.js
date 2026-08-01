@@ -86,13 +86,16 @@ console.log('\n── ids');
   if (dupes.length) bad('duplicate ids: ' + dupes.join(', '));
   else ok(ids.length + ' ids, all unique');
 
-  /* getElementById('literal') must resolve. Ids built by string
-     concatenation (the order/show shells) are not literals and are
-     covered by the runtime harnesses instead. */
-  const known = new Set(ids);
+  /* getElementById('literal') must resolve — against the markup AND
+     against ids the scripts emit as literals into innerHTML, which are
+     just as real once a box has rendered. Ids built by string
+     concatenation (the order/show shells, `p + '-table'`) are not
+     literals and are covered by the runtime harnesses instead. */
+  const emitted = [...src.matchAll(/\bid=\\?"([a-z][\w-]*)\\?"/g)].map(m => m[1]);
+  const known = new Set(ids.concat(emitted));
   const missing = [...new Set([...src.matchAll(/getElementById\('([a-z][\w-]*)'\)/g)].map(m => m[1]))]
     .filter(id => !known.has(id));
-  if (missing.length) bad('getElementById targets absent from the markup: ' + missing.join(', '));
+  if (missing.length) bad('getElementById targets that exist nowhere: ' + missing.join(', '));
   else ok('every literal getElementById target exists');
 }
 

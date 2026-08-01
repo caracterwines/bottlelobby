@@ -145,6 +145,10 @@ let wineShows = [
        A16.5 promises — that a withdrawal promotes the next person with
        nobody doing anything. */
     capacity:3,
+    /* Named while the show is still running, which A16.12 allows and
+       prefers: a guest writing a list at the table can read "about 14
+       days" there and then. */
+    deliveryLead:14,
     attendees:[
       { stakeholder:'Bistro Laurent',        source:'invitation', status:'confirmed', at:'02 Jun 2026' },
       { stakeholder:'Restaurant Hafenkante', source:'request',    status:'confirmed', at:'09 Jun 2026' },

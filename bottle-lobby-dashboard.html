@@ -4511,7 +4511,14 @@ let currentWinePortfolio = [
   { winery:'Domaine Lefèvre', name:'Chardonnay — Chablis Premier Cru', vintage:2022, ownLabel:true, url:'bottle-lobby-wine-chardonnay-chablis-premier-cru.html' },
   { winery:'Cantina Rossi', name:'Primitivo Sicilia IGT', vintage:2022, ownLabel:true, url:'bottle-lobby-wine-primitivo-sicilia-igt.html' },
   { winery:'Bodegas Ruiz', name:'Tempranillo — Rioja Crianza', vintage:2021, ownLabel:false, url:'bottle-lobby-wine-tempranillo-rioja-crianza.html' },
-  { winery:'Weingut Schmitt', name:'Riesling Spätlese — Mosel', vintage:2023, ownLabel:false, url:'bottle-lobby-wine-riesling-spatlese-mosel.html' }
+  { winery:'Weingut Schmitt', name:'Riesling Spätlese — Mosel', vintage:2023, ownLabel:false, url:'bottle-lobby-wine-riesling-spatlese-mosel.html' },
+  /* Listed on purpose: it is one of the two wines on the released show
+     WS-2603, so that show carries BOTH columns of A16.12 side by side —
+     this one sells from stock, the Sancerre next to it is a pre-order.
+     A distinction split across two shows would be present but never
+     demonstrated. The name must match the show product exactly, em dash
+     included; A14.4 records what string drift costs here. */
+  { winery:'Weingut Schmitt', name:'Müller-Thurgau — Mosel', vintage:2023, ownLabel:false, url:'bottle-lobby-wine-muller-thurgau-mosel.html' }
 ];
 
 const activePartners = [
@@ -7839,15 +7846,54 @@ function attendable(show) {
    portfolio yet (A3), and nobody has committed to supply anything. */
 function interestsOf(show) { return show.interests || []; }
 
+/* TWO KINDS OF WINE ON THE SAME TABLE (A16.12) — the distinction the
+   whole section turns on, and it is COMPUTED, never a flag on the
+   show: a wine the host lists already is an ordinary order, one they
+   are testing is a pre-order they have not bought yet. A wine taken on
+   between two shows changes column by itself, which is the mechanism
+   rather than an edge case.
+
+   The lookup is the host's portfolio. In the prototype there is one
+   distributor, so that is `currentWinePortfolio`; in the real build it
+   is the portfolio relation of `show.leadHost` (A3). The match is by
+   name + vintage, and A14.4 is the warning about what a stray space
+   or a hyphen-for-em-dash costs in exactly this kind of join. */
+function hostPortfolio(show) {
+  return typeof currentWinePortfolio !== 'undefined' ? currentWinePortfolio : [];
+}
+function lineKind(show, productName) {
+  return hostPortfolio(show).some(w => (w.name + ' ' + w.vintage) === productName)
+    ? 'stock' : 'preorder';
+}
+/* What the host promises for a pre-order. Named by closing at the
+   latest; until then a pre-order line says so without inventing a
+   figure (A16.12). */
+function preorderLeadText(show) {
+  return show.deliveryLead
+    ? 'about ' + show.deliveryLead + ' days after the show'
+    : 'delivered after the show';
+}
+
 /* Every wine that can be asked for: confirmed exhibitor, confirmed
-   wine (A16.4). One list, so the picker and the tally can never offer
-   different sets. */
+   wine (A16.4). One list, so the picker, the tally and both order-list
+   boxes can never disagree about what is on offer — or about which
+   column a wine is in. */
 function orderListProducts(show) {
   const out = [];
   confirmedExhibitors(show).forEach(e =>
     e.products.filter(p => p.status === 'confirmed').forEach(p =>
-      out.push({ producer: e.producer, product: p })));
+      out.push({ producer: e.producer, product: p, kind: lineKind(show, p.name) })));
   return out;
+}
+/* The instrument's own number (A16.0): what the room wants of the
+   wines the host does NOT yet list. Ordinary revenue is not part of
+   it — it was never at risk. */
+function preorderTally(show) {
+  const names = orderListProducts(show).filter(w => w.kind === 'preorder')
+    .map(w => w.product.name);
+  const rows = interestsOf(show).filter(i => i.status === 'open' && names.indexOf(i.product) !== -1);
+  return { bottles: rows.reduce((n, i) => n + i.qty, 0),
+           houses: new Set(rows.map(i => i.attendee)).size };
 }
 
 /* The tally — SUM over open interests, never stored (A16.10). The
@@ -8390,33 +8436,51 @@ function orderListBook(s) {
   const rows = wines.map(function (w, i) {
     const tal = productTally(s, w.product.name);
     const px  = w.product.indicativePrice;
+    const pre = w.kind === 'preorder';
     return '<div style="padding:0.75rem 0;border-bottom:1px solid rgba(247,243,238,0.05)">' +
       '<div style="display:flex;align-items:center;gap:0.7rem;flex-wrap:wrap">' +
         '<span style="font-size:0.84rem;color:var(--paper);flex:1;min-width:150px">' + w.product.name +
           '<em class="otbl-dim" style="display:block;font-size:0.68rem;font-style:normal">' + w.producer + '</em></span>' +
+        '<span class="ord-stage ' + (pre ? 'ws-waitlist' : 'ws-seat') + '" style="min-width:86px;text-align:center">' +
+          (pre ? 'pre-order' : 'in stock') + '</span>' +
         '<input class="field-input ol-price" data-wine="' + i + '" type="number" min="0" step="0.10" ' +
           'style="width:96px;padding:0.35rem 0.5rem" placeholder="price" value="' + (px == null ? '' : px) + '">' +
-        '<span class="ord-stage ' + (tal.bottles ? 'ws-seat' : 'wse-withdrawn') + '" style="min-width:118px;text-align:center">' +
+        '<span class="ord-stage ' + (tal.bottles ? (pre ? 'wse-proposed' : 'wse-withdrawn') : 'wse-withdrawn') + '" ' +
+          'style="min-width:118px;text-align:center">' +
           (tal.bottles ? tal.houses + ' house(s) · ' + tal.bottles + ' btl' : 'nothing yet') + '</span>' +
       '</div>' +
     '</div>';
   }).join('');
 
+  const pre = preorderTally(s);
+  const nPre = wines.filter(w => w.kind === 'preorder').length;
+
   return '<div class="odt-box"><div class="odt-box-head">Order List' +
       '<span class="right">' + t.houses + ' house(s) · ' + t.bottles + ' bottles' +
       (live ? ' <button class="btn-sm btn-outline" onclick="openInterestModal(\'' + s.id + '\')">+ Add for a guest</button>' : '') +
       '</span></div><div class="odt-box-body">' +
-    '<div class="edit-section-sub" style="margin:0 0 0.9rem">What the room asked for. The price you quote is ' +
-    '<b style="color:var(--paper)">not binding</b> — it lets a guest read what they are letting themselves in for, ' +
-    'and it is what turns a number into a demand signal. The totals are counted live and become one order per ' +
-    'producer when you close the show.</div>' +
+    '<div class="edit-section-sub" style="margin:0 0 0.9rem">Two kinds of wine stand on this table. The ones you ' +
+    'already list sell from stock and ship as usual. The ones you are <b style="color:var(--paper)">testing</b> ' +
+    'are pre-orders — you have not bought them, and that column is the whole point of the show: it says how many ' +
+    'bottles of an unlisted wine your customers actually want. Which is which is read from your portfolio, not set ' +
+    'here. The price you quote is <b style="color:var(--paper)">not binding</b>.</div>' +
+    (nPre
+      ? '<div class="ord-track" style="margin-top:0"><b>Pre-order demand · ' + pre.houses + ' house(s) · ' +
+        pre.bottles + ' bottles</b> across ' + nPre + ' wine(s) you do not list yet. This is the figure your ' +
+        'first order to ' + (nPre === 1 ? 'that producer' : 'those producers') + ' rests on — not an estimate.</div>'
+      : '<div class="ord-track" style="margin-top:0">Every wine here is already in your portfolio, so this show ' +
+        'is selling rather than testing. Nothing is at risk, and nothing new is learnt.</div>') +
     rows +
-    '<div class="ord-actions" style="margin-top:0.9rem">' +
-      '<button class="btn-sm btn-outline" onclick="saveIndicativePrices(\'' + s.id + '\')">Save prices</button>' +
+    '<div style="display:flex;align-items:center;gap:0.7rem;margin-top:0.9rem;flex-wrap:wrap">' +
+      '<span class="otbl-dim" style="font-size:0.72rem">Pre-order lead time, in days</span>' +
+      '<input class="field-input" id="ol-lead" type="number" min="1" style="width:96px;padding:0.35rem 0.5rem" ' +
+        'placeholder="e.g. 14" value="' + (s.deliveryLead || '') + '">' +
+      '<button class="btn-sm btn-outline" onclick="saveIndicativePrices(\'' + s.id + '\')">Save prices &amp; lead time</button>' +
     '</div>' +
-    '<div class="ws-demo-note" style="margin-top:0.8rem">Closing the show — one consolidated order per producer, ' +
-    'and a prepared order for every guest — is A16.12 and comes in the next pass. The producer is never shown ' +
-    'these totals.</div>' +
+    '<div class="ws-demo-note" style="margin-top:0.8rem">Guests see the lead time on pre-order lines only — saying ' +
+    '"14 days" about a wine that is on your shelf would be the same mistake in the other direction. Until you name ' +
+    'one it reads "delivered after the show", with no figure invented. Closing — one consolidated order per ' +
+    'producer from the pre-order column alone — is the next pass. The producer is never shown these totals.</div>' +
   '</div></div>';
 }
 
@@ -8438,18 +8502,29 @@ function myOrderListBox(role, s) {
 
   if (!may) {
     return '<div class="odt-box"><div class="odt-box-head">Your Order List</div><div class="odt-box-body">' +
-      mine.map(i => '<div class="odt-kv"><span>' + i.product + '</span><span>' + i.qty + ' bottles</span></div>').join('') +
+      mine.map(i => '<div class="odt-kv"><span>' + i.product +
+        '<em class="otbl-dim" style="display:block;font-size:0.66rem;font-style:normal">' +
+        (lineKind(s, i.product) === 'preorder' ? 'Pre-order — ' + preorderLeadText(s) : 'In stock') +
+        '</em></span><span>' + i.qty + ' bottles</span></div>').join('') +
       '<div class="edit-section-sub" style="margin:0.9rem 0 0">Recorded at the show. ' +
       'It becomes an order you place yourself once ' + s.leadHost + ' has closed the show.</div>' +
     '</div></div>';
   }
 
+  /* The difference in plain words, on every line. Getting it wrong is
+     not cosmetic: somebody waits weeks for a wine they could have had
+     on Tuesday, or clears shelf space for one nobody has bought yet
+     (A16.12). */
   const rows = wines.map(function (w, i) {
     const px = w.product.indicativePrice;
+    const pre = w.kind === 'preorder';
     return '<div style="display:flex;align-items:center;gap:0.7rem;padding:0.6rem 0;border-bottom:1px solid rgba(247,243,238,0.05)">' +
       '<span style="font-size:0.82rem;color:var(--paper);flex:1;min-width:140px">' + w.product.name +
         '<em class="otbl-dim" style="display:block;font-size:0.68rem;font-style:normal">' + w.producer +
-        (px == null ? ' · price on request' : ' · ' + eur(px) + ' a bottle, indicative') + '</em></span>' +
+        (px == null ? ' · price on request' : ' · ' + eur(px) + ' a bottle, indicative') + '</em>' +
+        '<em style="display:block;font-size:0.68rem;font-style:normal;margin-top:0.15rem;color:' +
+          (pre ? 'var(--gold)' : '#4caf7d') + '">' +
+          (pre ? '⏳ Pre-order — ' + preorderLeadText(s) : '✓ In stock — delivered as usual') + '</em></span>' +
       '<input class="field-input ol-qty" data-wine="' + i + '" type="number" min="0" step="6" ' +
         'style="width:88px;padding:0.35rem 0.5rem" placeholder="0" value="' + qtyOf(w.product.name) + '">' +
     '</div>';
@@ -8457,8 +8532,10 @@ function myOrderListBox(role, s) {
 
   return '<div class="odt-box"><div class="odt-box-head">Your Order List</div><div class="odt-box-body">' +
     '<div class="edit-section-sub" style="margin:0 0 0.9rem">Note what you would take, in bottles. ' +
-    'Prices are <b style="color:var(--paper)">indicative</b>: ' + s.leadHost + ' buys from the producer after the ' +
-    'show, and the binding price appears on the order you place yourself. Nothing here commits you to anything.</div>' +
+    'Prices are <b style="color:var(--paper)">indicative</b>, and the binding one appears on the order you place ' +
+    'yourself — nothing here commits you to anything. Watch the line under each wine: some are on ' +
+    s.leadHost + '\u2019s shelf and travel like any other order, and some are being shown for the first time, ' +
+    'so they are bought after the show.</div>' +
     rows +
     (total ? '<div class="odt-kv" style="margin-top:0.7rem"><span>At the indicative prices</span><span>' +
       eur(total) + '</span></div>' : '') +
@@ -8936,8 +9013,14 @@ function saveIndicativePrices(id) {
     const v = el.value === '' ? null : parseFloat(el.value);
     if (v !== w.product.indicativePrice) { w.product.indicativePrice = v; changed++; }
   });
-  if (!changed) { actionSay('No price changed'); return; }
-  logShow(s, s.leadHost, 'Updated the indicative prices on the order list');
+  const leadEl = document.getElementById('ol-lead');
+  if (leadEl) {
+    const lead = leadEl.value === '' ? null : parseInt(leadEl.value, 10);
+    if (lead !== (s.deliveryLead || null)) { s.deliveryLead = lead; changed++; }
+  }
+  if (!changed) { actionSay('No price and no lead time changed'); return; }
+  logShow(s, s.leadHost, 'Updated the order list: indicative prices and a pre-order lead time of ' +
+    (s.deliveryLead ? s.deliveryLead + ' days' : 'none yet'));
   refreshShows();
   showToast('✓ Prices saved — guests see them as indicative, never binding');
 }

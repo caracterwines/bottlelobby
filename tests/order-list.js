@@ -198,7 +198,90 @@ w.openShowDetail('WS-2603');
   else ok('the producer\'s own record was not touched');
 }
 
-/* ── 8. B12: the guards speak ──────────────────────────────────── */
+/* ── 8. TWO KINDS OF WINE ON THE SAME TABLE (A16.12) ───────────── */
+console.log('\n── stock and pre-order, side by side on one show');
+{
+  const wines = w.eval('orderListProducts')(S('WS-2603'));
+  const kinds = wines.map(x => x.product.name + '=' + x.kind);
+  const pre = wines.filter(x => x.kind === 'preorder');
+  const stk = wines.filter(x => x.kind === 'stock');
+  /* The fixture has to DEMONSTRATE the distinction, not merely contain
+     it: both columns on the same show, or nothing is being shown. */
+  if (!pre.length || !stk.length)
+    bad('WS-2603 must carry both columns to demonstrate anything, got ' + kinds.join(', '));
+  else ok('one show, both columns: ' + kinds.join(', '));
+
+  /* and it is a lookup, not a stored flag */
+  if (JSON.stringify(S('WS-2603')).indexOf('preorder') !== -1)
+    bad('the column was written into the show record — it must be read from the portfolio');
+  else ok('nothing about the column is stored on the show');
+
+  const portfolio = w.eval('currentWinePortfolio');
+  const listed = portfolio.some(x => (x.name + ' ' + x.vintage) === stk[0].product.name);
+  if (!listed) bad('a wine called "in stock" is not in the portfolio at all');
+  else ok('the in-stock wine really is in the host\u2019s portfolio (A3)');
+
+  /* take it out again and the wine changes column by itself */
+  const idx = portfolio.findIndex(x => (x.name + ' ' + x.vintage) === stk[0].product.name);
+  const removed = portfolio.splice(idx, 1)[0];
+  if (w.eval('lineKind')(S('WS-2603'), stk[0].product.name) !== 'preorder')
+    bad('removing the wine from the portfolio did not move it to the pre-order column');
+  else ok('a wine leaving the portfolio changes column with nothing else touched');
+  portfolio.splice(idx, 0, removed);
+}
+
+console.log('\n── the instrument counts only what is not listed yet');
+{
+  const all = w.eval('showTally')(S('WS-2603'));
+  const pre = w.eval('preorderTally')(S('WS-2603'));
+  if (pre.bottles >= all.bottles)
+    bad('the pre-order tally should exclude the stocked wine: ' + pre.bottles + ' vs ' + all.bottles);
+  else ok('pre-order demand ' + pre.bottles + ' btl of ' + all.bottles + ' asked for — stock is not at risk');
+}
+
+console.log('\n── the guest is told which is which, in words');
+w.showWineShows('restaurant','current');
+w.openShowDetail('WS-2603');
+{
+  const box = boxWithHead('rshow','Your Order List');
+  const t = box ? box.textContent : '';
+  if (!/In stock/i.test(t)) bad('no in-stock wording on the guest list');
+  else if (!/Pre-order/i.test(t)) bad('no pre-order wording on the guest list');
+  else ok('both phrasings appear on the guest\u2019s own list');
+  if (!/about 14 days after the show/i.test(t)) bad('the lead time is not shown to the guest');
+  else ok('the lead time is named: "about 14 days after the show"');
+  /* Per LINE, not per box: nested divs mean an ancestor holding both
+     wines matches everything, which is how this check first passed for
+     the wrong reason. A row is the div that owns exactly one quantity
+     field. */
+  const rows = [...box.querySelectorAll('div')]
+    .filter(el => el.querySelectorAll('input.ol-qty').length === 1);
+  const rowFor = name => rows.filter(el => el.textContent.includes(name)).pop();
+  const stockRow = rowFor(MOSEL), preRow = rowFor(SANCERRE);
+  if (!stockRow || !preRow) bad('could not isolate one row per wine');
+  else {
+    if (!/In stock/i.test(stockRow.textContent)) bad('the stocked wine is not marked in stock');
+    else if (/14 days|Pre-order/i.test(stockRow.textContent))
+      bad('the lead time is claimed for a wine that is already on the shelf');
+    else ok('the in-stock row carries no lead time — the mistake in the other direction');
+    if (!/Pre-order/i.test(preRow.textContent) || !/14 days/.test(preRow.textContent))
+      bad('the pre-order row does not carry its lead time');
+    else ok('the pre-order row carries "about 14 days after the show"');
+  }
+}
+/* with no lead time named, no figure is invented */
+{
+  const show = S('WS-2603'), keep = show.deliveryLead;
+  show.deliveryLead = null;
+  w.openShowDetail('WS-2603');
+  const t = boxWithHead('rshow','Your Order List').textContent;
+  if (/\d+ days/.test(t)) bad('a lead time appeared from nowhere once the field was cleared');
+  else if (!/delivered after the show/i.test(t)) bad('a pre-order line says nothing about when');
+  else ok('unnamed lead time reads "delivered after the show", with no figure invented');
+  show.deliveryLead = keep;
+}
+
+/* ── 9. B12: the guards speak ──────────────────────────────────── */
 console.log('\n── an action that does nothing says why (B12)');
 {
   const said = [];
