@@ -1446,8 +1446,10 @@ own line-up: the **confirmed `wine_show_products`** (A16.4). References
 again, never product content.
 
 **Only an attendee who holds a seat** (A16.5) may enter one — not somebody
-on the waitlist, and not somebody who merely found the show in their
-dashboard. This falls straight out of what the signal is for: its worth is
+on the waitlist, not somebody who merely found the show in their dashboard,
+and **not anybody once the list is closed**: the host has bought against
+those figures, so a line added afterwards would be an order with no stock
+behind it. From closing on the list is placed, not edited. This falls straight out of what the signal is for: its worth is
 that the person **tasted the wine**, and a waitlisted account was not in the
 room. It is the same rule as "never from the public listing" below, applied
 to the one case that looks like an exception and is not.
@@ -1866,6 +1868,24 @@ Three disclosure rules, each tested: a guest sees only their own lines, the
 producer sees no tally at all, and the public card carries none of it.
 `indicativePrice` lives on the show product, never on the producer's own
 record.
+
+**Built for the closing (A16.12):** `closeShowOrderList()` places **one
+purchase order per producer out of the pre-order column alone** and opens the
+guests' side; `preparedOrderFor()` is **computed, not a record** — the
+guest's own interests rendered as an order they place themselves, which is
+what keeps A14.2's rule intact. Both show sources carry `wine_show_order`
+and a `wineShowId`. Prepayment is preset from `prepaymentDefault()` — no
+settled order between the two parties — evaluated once at creation and
+stored from then on. A guest with no active partnership is refused **in the
+action**, not merely denied the button. Closing ends the writing window.
+
+> The column filter sits on the purchase path **twice**, in
+> `consolidatedOrders()` and again in `preorderInterests()`. Deliberate:
+> either alone produces the right order, so dropping one keeps every test
+> green while leaving the rule on a single point of failure — and the
+> failure it guards against is buying wine that is already on the shelf,
+> which surfaces at the loading bay weeks later. `tests/order-list.js`
+> proves the pair by mutating both at once.
 
 **Built for the two columns (A16.12):** `lineKind()` reads the host's
 portfolio and answers stock or pre-order per line; nothing about the column

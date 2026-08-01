@@ -7921,7 +7921,91 @@ function ORDER_LIST_STAGES() { return ['published'].concat(SHOW_PAST_STAGES); }
 function mayWriteOrderList(role, show) {
   if (SHOW_ROLES[role].side !== 'venue') return false;
   if (ORDER_LIST_STAGES().indexOf(show.stage) === -1) return false;
+  /* Closing ends the writing window: the host has bought against these
+     figures, so a line added afterwards would be an order nobody has
+     stock for (A16.12). From here the list is placed, not edited. */
+  if (isClosed(show)) return false;
   return attendeeStanding(show, myAttendance(role, show)) === 'seat';
+}
+
+/* ══ CLOSING: FROM A SHOW TO ORDERS (A16.12) ═════════════════════ */
+/* One act, two directions — one purchase order per producer out of the
+   PRE-ORDER column alone, and a prepared order for every guest out of
+   both columns.
+
+   ⚠ THE ARITHMETIC TRAP. Two totals live a line apart in the host's
+   box: everything asked for, and the pre-order part of it. Only the
+   second may ever reach a purchase order — the first includes wine
+   already on the shelf, and ordering it again is the kind of mistake
+   nobody notices until the pallets arrive. Every function below that
+   feeds a purchase order therefore starts from `preorderInterests()`,
+   and `showTally()` is not called anywhere in the closing path. */
+function preorderInterests(show, producer) {
+  const names = orderListProducts(show)
+    .filter(w => w.kind === 'preorder' && (!producer || w.producer === producer))
+    .map(w => w.product.name);
+  return interestsOf(show).filter(i => i.status === 'open' && names.indexOf(i.product) !== -1);
+}
+/* Which producers a closing would order from, and how much of what.
+
+   The column filter appears TWICE on this path — here, and again
+   inside `preorderInterests()`. That is on purpose and not redundancy
+   to tidy away: either one alone still yields the right purchase
+   order, so removing one leaves a green test suite and a live rule
+   with a single point of failure. The mistake it guards against is
+   ordering wine already on the shelf, and it surfaces at the loading
+   bay, weeks later. Two locks on the door nobody watches. */
+function consolidatedOrders(show) {
+  const out = {};
+  orderListProducts(show).filter(w => w.kind === 'preorder').forEach(function (w) {
+    const qty = preorderInterests(show)
+      .filter(i => i.product === w.product.name)
+      .reduce((n, i) => n + i.qty, 0);
+    if (!qty) return;
+    (out[w.producer] = out[w.producer] || []).push({ name: w.product.name, qty: qty });
+  });
+  return out;
+}
+/* A show is closed once, and the fact is recorded rather than derived:
+   it is an act with a date, like `venueAcceptedAt` (A16.11). */
+function isClosed(show) { return !!show.closedAt; }
+/* In the real build the trigger is the event date passing (A16.2). */
+function mayClose(show) {
+  return show.stage === 'completed' && !isClosed(show) && interestsOf(show).length > 0;
+}
+
+/* THE PREPARED ORDER IS NOT A RECORD. It is the guest's own interests
+   rendered as an order they may place — computed on every read, so
+   there is nothing to keep in step with the interests it comes from
+   (invariant 7). Placing it is what creates the `orders` row, which
+   keeps A14.2's rule intact: the buyer places, the seller does the
+   rest. */
+function preparedOrderFor(show, attendee) {
+  const wines = orderListProducts(show);
+  const lines = interestsOf(show)
+    .filter(i => i.attendee === attendee && i.status === 'open')
+    .map(function (i) {
+      const w = wines.find(x => x.product.name === i.product);
+      return { name: i.product, producer: w ? w.producer : '',
+               kind: w ? w.kind : 'preorder', qty: i.qty,
+               unit: w && w.product.indicativePrice != null ? w.product.indicativePrice : 0 };
+    });
+  return { lines: lines,
+           total: lines.reduce((n, l) => n + l.qty * l.unit, 0),
+           prepayment: prepaymentDefault(attendee, show.leadHost),
+           partnered: isActivePartner(attendee) };
+}
+function isActivePartner(name) {
+  return typeof activePartners !== 'undefined' && activePartners.some(p => p.winery === name);
+}
+/* A14.7: prepayment is preset while the two parties have no settled
+   trading history — no order between them that reached `delivered` and
+   `paid`. Computed ONCE, at creation, and stored from then on as the
+   decision it is; live, it would clear itself mid-order. */
+function prepaymentDefault(buyer, seller) {
+  if (typeof orders === 'undefined') return true;
+  return !orders.some(o => o.buyer === buyer && o.seller === seller &&
+    o.stage === 'delivered' && o.payment && o.payment.status === 'paid');
 }
 
 /* Whether a draft may move to `planning` is derived from the show's
@@ -8141,6 +8225,10 @@ function showKpis(role) {
 
 function renderWineShows(role) {
   const cfg = SHOW_ROLES[role], p = cfg.prefix, st = showState[role];
+  /* Nothing to paint until the shell exists. A renderer may be silent
+     (B12): an action reached before this role's view was ever opened —
+     from a harness, from the console — should still complete. */
+  if (!st.built) return;
 
   document.getElementById(p + '-tabs').innerHTML = cfg.tabs.map(t =>
     '<button class="ord-tab' + (st.tab === t.key ? ' active' : '') +
@@ -8484,6 +8572,70 @@ function orderListBook(s) {
   '</div></div>';
 }
 
+/* THE CLOSING BOX. Deliberately built from `consolidatedOrders()` and
+   `preorderInterests()` only: the figure for everything asked for does
+   not appear anywhere on this box, because it must not be the one
+   anybody reads while placing a purchase order (A16.12). */
+function closingBox(s) {
+  if (!interestsOf(s).length && !isClosed(s)) return '';
+  const byProducer = consolidatedOrders(s);
+  const producers = Object.keys(byProducer);
+
+  if (isClosed(s)) {
+    const made = (typeof orders !== 'undefined' ? orders : []).filter(o => o.wineShowId === s.id);
+    const bought = made.filter(o => o.buyer === s.leadHost);
+    const sold   = made.filter(o => o.seller === s.leadHost);
+    return '<div class="odt-box"><div class="odt-box-head">Closed' +
+        '<span class="right">' + s.closedAt + '</span></div><div class="odt-box-body">' +
+      '<div class="edit-section-sub" style="margin:0 0 0.9rem">The order list is closed. Purchase orders went out ' +
+      'on the pre-order column alone; the guests place their own (A14.2), so some of these will still be coming.</div>' +
+      bought.map(o => '<div class="odt-kv"><span>Bought from ' + o.seller + '</span><span>' +
+        o.items.reduce((n, i) => n + i.qty, 0) + ' btl · ' + o.id + '</span></div>').join('') +
+      (sold.length
+        ? sold.map(o => '<div class="odt-kv"><span>Ordered by ' + o.buyer + '</span><span>' +
+            o.items.reduce((n, i) => n + i.qty, 0) + ' btl · ' + o.id + '</span></div>').join('')
+        : '<div class="edit-section-sub" style="margin:0.6rem 0 0">No guest has placed their order yet.</div>') +
+    '</div></div>';
+  }
+
+  const guests = [...new Set(interestsOf(s).filter(i => i.status === 'open').map(i => i.attendee))];
+  const guestRows = guests.map(function (g) {
+    const prep = preparedOrderFor(s, g);
+    const chip = !prep.partnered
+      ? '<span class="ord-stage wse-requested">partnership first</span>'
+      : (prep.prepayment ? '<span class="ord-stage ws-waitlist">prepayment</span>'
+                         : '<span class="ord-stage ws-seat">on account</span>');
+    return '<div style="display:flex;align-items:center;gap:0.7rem;padding:0.55rem 0;border-bottom:1px solid rgba(247,243,238,0.05)">' +
+      '<span style="font-size:0.8rem;color:var(--paper);flex:1">' + g + '</span>' +
+      '<span class="otbl-dim" style="font-size:0.72rem">' + prep.lines.reduce((n, l) => n + l.qty, 0) + ' btl</span>' +
+      chip +
+    '</div>';
+  }).join('');
+
+  return '<div class="odt-box"><div class="odt-box-head">Close the Order List</div><div class="odt-box-body">' +
+    '<div class="edit-section-sub" style="margin:0 0 0.9rem">Closing does two things at once: it places ' +
+    '<b style="color:var(--paper)">one order per producer</b> for the wines you do not list yet, and it opens the ' +
+    'door for every guest to place their own. Nothing you already stock is bought again — those bottles are on ' +
+    'your shelf and only travel outwards.</div>' +
+    (producers.length
+      ? '<div class="ord-track" style="margin-top:0"><b>You will order</b><br>' +
+        producers.map(pr => byProducer[pr].map(l => l.qty + ' × ' + l.name).join(', ') + ' — from ' + pr).join('<br>') +
+        '</div>'
+      : '<div class="ord-track" style="margin-top:0">Nothing to buy in: every wine asked for is already in your ' +
+        'portfolio. Closing only opens the guests\u2019 orders.</div>') +
+    '<div class="wn-group-title" style="margin-top:1rem">The guests</div>' + guestRows +
+    '<div class="edit-section-sub" style="margin:0.8rem 0 0">A guest with no active partnership cannot buy yet ' +
+    '(A6) — their list waits, and the partnership request comes first. A first order to a partner you have no ' +
+    'settled history with is preset to prepayment (A14.7); you can clear that on the order itself.</div>' +
+    (mayClose(s)
+      ? '<div class="ord-actions" style="margin-top:0.9rem">' +
+        '<button class="btn-sm btn-gold" onclick="closeShowOrderList(\'' + s.id + '\')">Close the order list &amp; place the orders</button>' +
+        '</div>'
+      : '<div class="ws-demo-note" style="margin-top:0.8rem">A show is closed once it is over. This one is ' +
+        SHOW_STAGE_LABEL[s.stage].toLowerCase() + ', so the list is still open.</div>') +
+  '</div></div>';
+}
+
 /* An attendee's own list. They see their own lines and no others —
    the same rule as the guest list itself (A16.5, rule 4). */
 function myOrderListBox(role, s) {
@@ -8501,13 +8653,43 @@ function myOrderListBox(role, s) {
   }, 0);
 
   if (!may) {
-    return '<div class="odt-box"><div class="odt-box-head">Your Order List</div><div class="odt-box-body">' +
-      mine.map(i => '<div class="odt-kv"><span>' + i.product +
-        '<em class="otbl-dim" style="display:block;font-size:0.66rem;font-style:normal">' +
-        (lineKind(s, i.product) === 'preorder' ? 'Pre-order — ' + preorderLeadText(s) : 'In stock') +
-        '</em></span><span>' + i.qty + ' bottles</span></div>').join('') +
-      '<div class="edit-section-sub" style="margin:0.9rem 0 0">Recorded at the show. ' +
-      'It becomes an order you place yourself once ' + s.leadHost + ' has closed the show.</div>' +
+    const placed = mine.filter(i => i.status === 'ordered');
+    const open   = mine.filter(i => i.status === 'open');
+    const prep   = preparedOrderFor(s, SHOW_ROLES[role].entity);
+    const ready  = isClosed(s) && open.length;
+    const lineRow = i => '<div class="odt-kv"><span>' + i.product +
+      '<em class="otbl-dim" style="display:block;font-size:0.66rem;font-style:normal">' +
+      (lineKind(s, i.product) === 'preorder' ? 'Pre-order — ' + preorderLeadText(s) : 'In stock') +
+      '</em></span><span>' + i.qty + ' bottles</span></div>';
+
+    if (placed.length && !open.length) {
+      return '<div class="odt-box"><div class="odt-box-head">Ordered</div><div class="odt-box-body">' +
+        placed.map(lineRow).join('') +
+        '<div class="edit-section-sub" style="margin:0.9rem 0 0">Placed with ' + s.leadHost + ' as ' +
+        [...new Set(placed.map(i => i.orderId))].join(', ') + '. It is an ordinary order from here — you can ' +
+        'follow it under My Purchases.</div>' +
+      '</div></div>';
+    }
+    return '<div class="odt-box"><div class="odt-box-head">' +
+        (ready ? 'Your Order Is Ready' : 'Your Order List') + '</div><div class="odt-box-body">' +
+      open.map(lineRow).join('') +
+      (ready
+        ? '<div class="odt-kv" style="margin-top:0.7rem"><span>Total at the agreed prices</span><span>' +
+            eur(prep.total) + '</span></div>' +
+          (prep.partnered
+            ? '<div class="edit-section-sub" style="margin:0.9rem 0 0">' + s.leadHost + ' has closed the list. ' +
+              'Placing it is your own act — nothing was ordered in your name.' +
+              (prep.prepayment
+                ? ' Because this is your first order together, it goes out against a <b style="color:var(--paper)">prepayment invoice</b>: quotation, payment, then dispatch.'
+                : '') + '</div>' +
+              '<div class="ord-actions" style="margin-top:0.9rem">' +
+              '<button class="btn-sm btn-gold" onclick="placePreparedOrder(\'' + s.id + '\')">Place this order</button>' +
+              '</div>'
+            : '<div class="ord-track" style="margin-top:0.9rem">Your list is waiting on a partnership with ' +
+              s.leadHost + '. A place at a show needs none, buying does (A6) — send the request and the order ' +
+              'becomes placeable the moment it is active. Nothing is lost in the meantime.</div>')
+        : '<div class="edit-section-sub" style="margin:0.9rem 0 0">Recorded at the show. ' +
+          'It becomes an order you place yourself once ' + s.leadHost + ' has closed the list.</div>') +
     '</div></div>';
   }
 
@@ -8829,6 +9011,7 @@ function renderShowDetail(id) {
           'record — the show never holds a copy.</div>' +
         '</div></div>' +
         (isHost ? orderListBook(s) : '') +
+        (isHost ? closingBox(s) : '') +
         (isHost ? attendeeBook(s) : '') +
         '<div class="odt-box"><div class="odt-box-head">History</div><div class="odt-box-body">' + trail + '</div></div>' +
       '</div>' +
@@ -9060,6 +9243,101 @@ function saveInterestForGuest() {
   closeInterestModal();
   refreshShows();
   showToast('✓ ' + qty + ' × ' + w.product.name + ' noted for ' + who);
+}
+
+/* ── CLOSING THE ORDER LIST (A16.12) ──────────────────────────
+   The one act that turns a show into orders. Upstream only, here:
+   the guests place their own (A14.2), so closing opens that door
+   rather than walking through it for them. */
+function closeShowOrderList(id) {
+  const s = actionShow(id); if (!s) return;
+  if (isClosed(s)) { actionSay('This show has already been closed'); return; }
+  if (s.stage !== 'completed') {
+    actionSay('A show is closed once it is over — this one is ' + SHOW_STAGE_LABEL[s.stage].toLowerCase()); return;
+  }
+  const byProducer = consolidatedOrders(s);
+  const producers = Object.keys(byProducer);
+  if (!producers.length && !interestsOf(s).length) { actionSay('Nothing was asked for at this show'); return; }
+
+  producers.forEach(function (producer) {
+    const lines = byProducer[producer];
+    const o = {
+      id: nextOrderId(),
+      placed: todayISO(),
+      buyer: s.leadHost, buyerType:'distributor',
+      seller: producer,  sellerType:'winery',
+      stage:'pending', source:'wine_show_order', wineShowId: s.id,
+      note:'Consolidated from ' + s.title + ' — ' + s.date,
+      /* Quantities come from the PRE-ORDER column alone. The purchase
+         PRICE is not something a show knows: it follows from the
+         partnership terms, so it is taken from the agreed list where
+         one exists and left for the host to fill in where it does not
+         — never invented (A1). */
+      items: lines.map(l => orderItemRaw(l.name, producer, l.qty, purchasePriceFor(l.name)))
+    };
+    orders.unshift(normalizeOrder(o));
+    logEvent(o, 'Consolidated from ' + s.title + ': ' +
+      lines.map(l => l.qty + ' × ' + l.name).join(', '));
+    logShow(s, s.leadHost, 'Ordered from ' + producer + ': ' +
+      lines.map(l => l.qty + ' × ' + l.name).join(', ') + ' (' + o.id + ')');
+  });
+
+  s.closedAt = SHOW_TODAY;
+  logShow(s, s.leadHost, 'Order list closed — guests can place their orders');
+  refreshShows();
+  if (typeof renderAllOrders === 'function') renderAllOrders();
+  showToast(producers.length
+    ? '✓ Closed — ' + producers.length + ' purchase order(s) placed, guests can now order'
+    : '✓ Closed — nothing to pre-order, guests can now place their orders');
+}
+
+/* `wineUnitPrice` is keyed WITHOUT the vintage; show products carry it.
+   A14.4 is the warning about exactly this kind of join, so the trim is
+   explicit rather than hopeful. */
+function purchasePriceFor(showProductName) {
+  const bare = showProductName.replace(/\s+(19|20)\d{2}$/, '');
+  return (typeof wineUnitPrice !== 'undefined' && wineUnitPrice[bare]) || 0;
+}
+function nextOrderId() {
+  const nums = orders.map(o => parseInt(String(o.id).replace(/\D/g, ''), 10)).filter(n => !isNaN(n));
+  return 'ORD-' + (Math.max.apply(null, nums.concat([2000])) + 1);
+}
+
+/* The guest places their own prepared order. This is the act A14.2
+   reserves for the buyer, and it is why the prepared order was never a
+   record in the first place. */
+function placePreparedOrder(id) {
+  const role = activeShowRole, cfg = SHOW_ROLES[role];
+  const s = actionShow(id); if (!s) return;
+  if (!isClosed(s)) { actionSay(s.leadHost + ' has not closed the order list yet'); return; }
+  const prep = preparedOrderFor(s, cfg.entity);
+  if (!prep.lines.length) { actionSay('You have nothing on this show\u2019s order list'); return; }
+  if (!prep.partnered) {
+    actionSay('Your partnership with ' + s.leadHost + ' has to be active before you can order'); return;
+  }
+  const o = {
+    id: nextOrderId(),
+    placed: todayISO(),
+    buyer: cfg.entity, buyerType: role,
+    seller: s.leadHost, sellerType:'distributor',
+    stage:'pending', source:'wine_show_order', wineShowId: s.id,
+    note:'Ordered at ' + s.title + ' — ' + s.date,
+    items: prep.lines.map(l => orderItemRaw(l.name, l.producer, l.qty, l.unit))
+  };
+  normalizeOrder(o);
+  /* A14.7: preset, then left alone — it is a decision from here on. */
+  o.payment.prepayment = prep.prepayment;
+  orders.unshift(o);
+  logEvent(o, 'Placed from the order list of ' + s.title +
+    (prep.prepayment ? ' — prepayment required, no settled history between the two parties yet' : ''));
+  interestsOf(s).forEach(function (i) {
+    if (i.attendee === cfg.entity && i.status === 'open') { i.status = 'ordered'; i.orderId = o.id; }
+  });
+  logShow(s, cfg.entity, 'Placed their order (' + o.id + ')');
+  refreshShows();
+  if (typeof renderAllOrders === 'function') renderAllOrders();
+  showToast('✓ ' + o.id + ' placed with ' + s.leadHost +
+    (prep.prepayment ? ' — prepayment invoice to follow' : ''));
 }
 
 /* ── ATTENDEES (A16.5) ────────────────────────────────────────

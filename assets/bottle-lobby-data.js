@@ -197,16 +197,32 @@ let wineShows = [
       { stakeholder:'Vinoteca Alster', source:'request',    status:'confirmed', at:'01 Mar 2026' }
     ],
     exhibitors:[
+      /* Two wines from one exhibitor, which A16.4 allows outright, and
+         they sit in the two different columns of A16.12: the Primitivo
+         is in the distributor's portfolio, the Nero d'Avola is not. */
       { producer:'Cantina Rossi', status:'confirmed', source:'invitation',
         products:[ { name:"Nero d'Avola Sicilia DOC 2022", proposedBy:'host', status:'confirmed',
-                     indicativePrice:11.5 } ] }
+                     indicativePrice:11.5 },
+                   { name:'Primitivo Sicilia IGT 2022', proposedBy:'host', status:'confirmed',
+                     indicativePrice:13.9 } ] }
     ],
-    /* A past show with a written list — the producer exhibiting here is
-       the dashboard's own winery, which is how the rule that a producer
-       never sees the tally gets tested rather than asserted. */
+    /* The show that gets CLOSED in the demo: it is over (`completed`),
+       both columns carry demand, and the two figures are deliberately
+       far apart — 54 bottles of pre-order against 78 asked for in all.
+       Only the 54 may ever reach the purchase order, and numbers this
+       distinguishable are what makes a mix-up visible rather than
+       plausible.
+
+       Vinoteca Alster is in no partnership with Hawesko, so their
+       prepared order has to wait for one (A6) — the case A16.12
+       describes and the reason the show is called an entry point. */
     interests:[
       { attendee:'Bistro Laurent', product:"Nero d'Avola Sicilia DOC 2022",
-        qty:18, enteredBy:'attendee', status:'open', at:'12 Apr 2026' }
+        qty:18, enteredBy:'attendee', status:'open', at:'12 Apr 2026' },
+      { attendee:'Bistro Laurent', product:'Primitivo Sicilia IGT 2022',
+        qty:24, enteredBy:'attendee', status:'open', at:'12 Apr 2026' },
+      { attendee:'Vinoteca Alster', product:"Nero d'Avola Sicilia DOC 2022",
+        qty:36, enteredBy:'host', status:'open', at:'12 Apr 2026' }
     ],
     events:[
       { at:'02 Feb 2026', actor:'Hawesko GmbH', text:'Show created as a draft' },

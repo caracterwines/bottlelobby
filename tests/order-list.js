@@ -281,7 +281,154 @@ w.openShowDetail('WS-2603');
   show.deliveryLead = keep;
 }
 
-/* ── 9. B12: the guards speak ──────────────────────────────────── */
+/* ── 9. CLOSING — one act, two directions (A16.12, pass 3b) ────── */
+console.log('\n── THE ARITHMETIC TRAP: only the pre-order column is bought');
+{
+  const all = w.eval('showTally')(S('WS-2599'));
+  const pre = w.eval('preorderTally')(S('WS-2599'));
+  if (all.bottles === pre.bottles)
+    bad('fixture drift: WS-2599 must have a stocked line, or the trap cannot be sprung');
+  else ok('two figures a line apart: ' + all.bottles + ' asked for, ' + pre.bottles + ' of it pre-order');
+
+  w.showWineShows('distributor','history');
+  w.openShowDetail('WS-2599');
+  const box = boxWithHead('dshow','Close the Order List');
+  if (!box) bad('no closing box on a completed show with a list');
+  else {
+    /* The number for everything asked for must not be readable where
+       somebody is about to place a purchase order. */
+    if (new RegExp('\\b' + all.bottles + '\\b').test(box.textContent))
+      bad('the total asked for (' + all.bottles + ') appears on the closing box — the exact mix-up A16.12 warns about');
+    else ok('the closing box never shows the ' + all.bottles + ', only what will be bought');
+  }
+}
+
+console.log('\n── closing places one purchase order per producer');
+{
+  const before = w.eval('orders').length;
+  w.closeShowOrderList('WS-2599');
+  const made = w.eval('orders').filter(o => o.wineShowId === 'WS-2599');
+  if (!made.length) bad('closing produced no orders');
+  const bought = made.filter(o => o.buyer === 'Hawesko GmbH');
+  if (bought.length !== 1) bad('expected one purchase order (one producer), got ' + bought.length);
+  else ok('one consolidated order per producer: ' + bought[0].id + ' to ' + bought[0].seller);
+  if (bought[0].source !== 'wine_show_order') bad('source should be wine_show_order, is ' + bought[0].source);
+  else ok('source wine_show_order, wineShowId set — a goods order down the chain (D27)');
+
+  const qty = bought[0].items.reduce((n, i) => n + i.qty, 0);
+  const pre = w.eval('preorderTally')(S('WS-2599')).bottles;
+  const all = w.eval('showTally')(S('WS-2599')).bottles;
+  if (qty === all) bad('THE TRAP SPRUNG: the purchase order bought everything asked for, including stock');
+  else if (qty !== pre) bad('purchase quantity ' + qty + ' matches neither figure (pre-order is ' + pre + ')');
+  else ok('bought exactly the pre-order column: ' + qty + ' bottles, not ' + all);
+  if (bought[0].items.some(i => w.eval('lineKind')(S('WS-2599'), i.wine) === 'stock'))
+    bad('a wine already in the portfolio was ordered again');
+  else ok('no stocked wine on the purchase order');
+  /* the guests' orders are NOT created by closing */
+  if (made.some(o => o.seller === 'Hawesko GmbH'))
+    bad('closing placed an order in a guest\u2019s name — A14.2 gives placing to the buyer');
+  else ok('no sales order yet: the guests place their own');
+  if (w.eval('orders').length !== before + 1) bad('unexpected number of orders created');
+}
+
+console.log('\n── closing ends the writing window');
+{
+  if (w.eval('mayWriteOrderList')('restaurant', S('WS-2599')))
+    bad('a guest can still edit their list after the host bought against it');
+  else ok('no more writing once the list is closed');
+  const said = [];
+  const real = w.showToast; w.showToast = m => said.push(m);
+  w.showWineShows('restaurant','history');
+  w.saveMyOrderList('WS-2599');
+  if (!said.length) bad('saving into a closed list was silent');
+  else ok('and saving into it is refused with a reason');
+  w.showToast = real;
+}
+
+console.log('\n── the guest places their own, and prepayment is preset');
+w.showWineShows('restaurant','history');
+w.openShowDetail('WS-2599');
+{
+  const box = boxWithHead('rshow','Your Order Is Ready');
+  if (!box) bad('the guest is not offered their prepared order after closing');
+  else ok('guest sees "Your Order Is Ready" once the list is closed');
+  /* Bistro Laurent has a delivered+paid order with Hawesko already */
+  if (w.eval('prepaymentDefault')('Bistro Laurent','Hawesko GmbH'))
+    bad('an established customer should not be preset to prepayment');
+  else ok('settled history → no prepayment preset');
+  if (w.eval('prepaymentDefault')('Vinoteca Alster','Hawesko GmbH')) ok('no history → prepayment preset');
+  else bad('a party with no settled order should be preset to prepayment');
+
+  /* Strip the partnership for a moment: the guard has to be in the
+     ACTION, not only in the box that renders the button. Anything
+     reachable from a console or a second entry point must be refused
+     there too (B12, A6). */
+  {
+    const ap = w.eval('activePartners');
+    const idx = ap.findIndex(x => x.winery === 'Bistro Laurent');
+    const kept = ap.splice(idx, 1)[0];
+    const said = [];
+    const real = w.showToast; w.showToast = m => said.push(m);
+    const n = w.eval('orders').length;
+    w.placePreparedOrder('WS-2599');
+    if (w.eval('orders').length !== n)
+      bad('an order was placed for a party with no active partnership (A6)');
+    else if (!said.length || !/partnership/i.test(said[0]))
+      bad('placing without a partnership was refused without saying why: ' + said[0]);
+    else ok('the action itself refuses a non-partner, not just the button: "' + said[0] + '"');
+    w.showToast = real;
+    ap.splice(idx, 0, kept);
+  }
+
+  w.placePreparedOrder('WS-2599');
+  const mine = w.eval('orders').filter(o => o.buyer === 'Bistro Laurent' && o.wineShowId === 'WS-2599');
+  if (mine.length !== 1) bad('the guest\u2019s order was not created');
+  else {
+    ok('guest placed ' + mine[0].id + ' — the buyer\u2019s own act (A14.2)');
+    if (mine[0].items.length !== 2) bad('both columns should be on one sales order, got ' + mine[0].items.length);
+    else ok('one sales order carrying both the stocked and the pre-ordered line');
+    if (mine[0].payment.prepayment) bad('prepayment was set for an established customer');
+    else ok('prepayment left off, per the computed default');
+    if (mine[0].stage !== 'pending') bad('a placed order should be pending, is ' + mine[0].stage);
+  }
+  const rows = interests('WS-2599').filter(i => i.attendee === 'Bistro Laurent');
+  if (rows.some(i => i.status !== 'ordered')) bad('the interests were not marked ordered');
+  else if (!rows[0].orderId) bad('the interest does not point at the order it became');
+  else ok('the interests are marked ordered and point at ' + rows[0].orderId);
+}
+
+console.log('\n── a guest with no partnership waits (A6)');
+{
+  const prep = w.eval('preparedOrderFor')(S('WS-2599'), 'Vinoteca Alster');
+  if (prep.partnered) bad('fixture drift: Vinoteca Alster should be no partner of Hawesko');
+  else ok('a non-partner\u2019s prepared order is marked as waiting on a partnership');
+  if (!prep.lines.length) bad('their list should still be there — nothing is lost while they wait');
+  else ok('their 36 bottles stay on the list in the meantime');
+  const said = [];
+  const real = w.showToast; w.showToast = m => said.push(m);
+  w.showWineShows('distributor','history');
+  w.placePreparedOrder('WS-2599');       // distributor is not a guest here
+  if (!said.length) bad('placing as the wrong role was silent');
+  else ok('refused with a reason: "' + said[0] + '"');
+  w.showToast = real;
+}
+
+console.log('\n── closing happens once, and only once the show is over');
+{
+  const said = [];
+  const real = w.showToast; w.showToast = m => said.push(m);
+  w.closeShowOrderList('WS-2599');
+  if (!said.length || !/already/i.test(said[0])) bad('closing twice was not refused: ' + said[0]);
+  else ok('a second closing is refused: "' + said[0] + '"');
+  said.length = 0;
+  w.closeShowOrderList('WS-2603');       // published, not over
+  if (!said.length || !/over/i.test(said[0])) bad('closing a running show was not refused: ' + said[0]);
+  else ok('a show that is not over cannot be closed: "' + said[0] + '"');
+  if (w.eval('orders').some(o => o.wineShowId === 'WS-2603')) bad('the refused closing created orders anyway');
+  w.showToast = real;
+}
+
+/* ── 10. B12: the guards speak ─────────────────────────────────── */
 console.log('\n── an action that does nothing says why (B12)');
 {
   const said = [];

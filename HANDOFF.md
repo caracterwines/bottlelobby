@@ -23,6 +23,24 @@ Kein Build-Command, Publish-Directory = Repo-Root.
 
 ## Zuletzt abgeschlossen
 
+- **A16.12-Kette, Durchgang 3b — Abschluss und beide Order-Richtungen.**
+  `closeShowOrderList()` legt **je Winzer eine Sammelbestellung** an, ausschliesslich
+  aus der Vorbestell-Spalte, und oeffnet die Gaesteseite. Die vorbereitete Order ist
+  **kein Datensatz**, sondern berechnet — die eigenen Bedarfsmeldungen des Gastes als
+  Order dargestellt, die er selbst platziert; damit bleibt A14.2 unangetastet
+  („Platzieren gehoert dem Kaeufer"). Vorkasse voreingestellt aus
+  `prepaymentDefault()`, einmal bei Anlage ausgewertet. Ein Gast ohne aktive
+  Partnerschaft wird **in der Aktion** abgewiesen, nicht nur um den Knopf gebracht.
+  Abschluss beendet das Schreiben der Liste.
+  **Serges Warnung ernstgenommen:** die Gesamtsumme (78 Flaschen) taucht auf dem
+  Abschluss-Kasten nirgends auf, nur die Vorbestell-Zahl (54). Die Fixture setzt die
+  beiden Zahlen bewusst weit auseinander, damit eine Verwechslung sichtbar statt
+  plausibel waere. Der Spaltenfilter sitzt auf dem Einkaufspfad **doppelt** — eine
+  einzelne Mutation blieb gruen, deshalb pruefen die Tests beide zugleich, und im
+  Code steht, warum das keine Redundanz ist.
+  **Nebenbei repariert:** `renderWineShows` stuerzte ab, wenn eine Aktion lief, bevor
+  die Ansicht dieser Rolle je geoeffnet war (Konsole, Harness). Renderer duerfen
+  still zurueckkehren (B12).
 - **A16.12-Kette, Durchgang 3a — die zwei Spalten sichtbar.** `lineKind()` liest das
   Portfolio des Hosts und antwortet je Zeile „stock" oder „preorder"; nichts davon
   wird gespeichert, also wechselt ein aufgenommener Wein die Spalte von selbst.
