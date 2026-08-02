@@ -353,6 +353,62 @@ Kein Build-Command, Publish-Directory = Repo-Root.
 
 ### Arbeit
 
+### ▶ MESSAGES existiert nicht — aufgefallen 02.08., noch nicht gebaut
+
+**Befund.** Es gibt `bumpMsgBadge()` und `clearMsgBadge()` und sonst nichts: kein
+Array, kein Postfach, keine einzige echte Nachricht. Beim Nachsehen kamen zwei
+Punkte dazu, die Serges Beschreibung noch unterbieten:
+
+- **Der Nav-Eintrag „Messages" hat in allen vier Rollen kein `onclick`.** Er ist
+  nicht leer, er ist tot — ein Klick tut nichts.
+- **Winzer und Distributor haben fest verdrahtete Badges (`2` und `3`) ganz ohne
+  `id`.** `bumpMsgBadge()` kann sie also gar nicht erreichen; verkabelt sind nur
+  Restaurant (`rmsg-badge`) und Retail (`tmsg-badge`).
+- Das „Messages"-Widget auf der Winzer-Uebersicht ist **handgeschriebenes
+  Markup** mit drei erfundenen Nachrichten — darunter ausgerechnet
+  „Vinoteca Roma started following you" und eine Show-Bestaetigung. Beides
+  Ereignisse, zu denen es laengst echte Datensaetze gibt (`wineFollowGraph`,
+  `wineShows.events`). Das ist ein A1-Verstoss, der im Markup sitzt.
+- „View All →" ist ebenfalls tot.
+
+**Betroffene Zusagen:** A16.11 Schritt 5 (Catering-Nachricht), Weinrueckweisung
+(A16.4), Partnerschaftsanfragen (A6), Follow-Ereignis (A7 — „X started following
+you" ist dort woertlich zugesagt).
+
+**Einschaetzung: „Messages" sind zwei Features unter einem Namen, und nur eines
+davon ist ein eigener Durchgang.**
+
+**(a) Benachrichtigungen — abgeleitet, kein neuer Datensatz.** A16.11 Schritt 5
+entscheidet das bereits selbst: *„one notification, two surfaces — not two
+records (A1)"*. Eine Nachrichtentabelle waere eine Kopie dessen, was in
+`wineShows.events`, `order_events`, den Anfrage-Stufen und `wineFollowGraph`
+schon steht — und sie wuerde veralten: „Cantina Rossi schlaegt Grillo vor" bliebe
+stehen, nachdem der Wein bestaetigt oder abgelehnt ist. Das ist Invariante 7,
+woertlich. Messages gehoert also als **Abfrageschicht** ueber die vorhandenen
+Sektionen gebaut, genau wie A10 den Wine Guide als Query-Layer ueber Produkte
+beschreibt — nicht als Postfach.
+**Eine einzige Sache muss dabei wirklich gespeichert werden:** ob ich etwas schon
+gesehen habe. Das ist aus den Ereignissen nicht ableitbar. Es ist aber auch kein
+Postfach, sondern ein **Lesezeiger** je Stakeholder (ein Zeitstempel oder eine
+Menge gesehener Ereignis-Ids) — und damit genau die Art Zustand, die in den
+`BLStore.register`-Block gehoert (C8). Erst damit wird das Badge ehrlich.
+Aufwand: ueberschaubar. Die Ereignisse existieren und werden anderswo bereits
+gerendert; es kommen ein Renderer, ein Lesezeiger und vier tote Nav-Eintraege
+hinzu, die lebendig werden.
+
+**(b) Korrespondenz — ein echter, eigener Datensatz.** „Hawesko GmbH: We'd love
+to schedule a tasting for your Primitivo…" ist aus nichts ableitbar; das hat
+jemand geschrieben. Das waere eine neue Tabelle, ein Verfassen-Dialog, Threads —
+**und ein eigener Durchgang.** Vor allem aber eine offene Geschaeftsentscheidung:
+Wer darf wem schreiben? Laeuft das an der Partnerschaft (A6) und am
+Lieferweg (A3) vorbei? Ein Postfach, in dem ein Distributor einen Winzer ohne
+Partnerschaft anschreiben kann, waere eine echte Aenderung am Modell und keine
+Oberflaeche. **Nichts in A1–A16 verlangt (b) heute.**
+
+**Empfehlung:** (a) als eigenen, mittelgrossen Durchgang bauen und dabei das
+handgeschriebene Widget ersetzen. (b) nicht anfassen, bis es einen
+Geschaeftsgrund gibt — und den dann zuerst in die Spec, nicht in den Code.
+
 ### ▶ Persistenz, moeglicher zweiter Durchgang — oeffentliche Seiten
 
 Bewusst nicht mit ausgeliefert, damit ein Fehler eindeutig zuzuordnen bleibt (C4c).
