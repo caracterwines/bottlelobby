@@ -2480,6 +2480,7 @@ Diagnosed 30 July 2026 after repeated `403 Resource not accessible by integratio
 | Multi-file changes | Python scripting in the container, then push |
 | JS verification | `cd tests && npm test` — structural checks and DOM harnesses in one run (jsdom) |
 | Test harnesses | `tests/` in the repo root |
+| Prototype persistence | `localStorage` via `assets/bottle-lobby-store.js` — demo only, see C8 |
 
 **Harnesses live in `tests/`, never in a scratchpad.** They load the real
 `bottle-lobby-dashboard.html`, run its scripts and drive the actual functions.
@@ -2522,6 +2523,90 @@ of the "usual checks" is one command and nothing is re-derived by hand.
 directory is the repo root, so everything committed is served unless blocked.
 
 **OpenArt limitation:** No true alpha-channel transparency — "transparent background" renders a visible checkerboard as image content. Workaround: match the exact background hex in the prompt, or use chroma-key green (`#00FF00`) for external removal.
+
+## C8. Prototype persistence — `localStorage`
+
+**Scope: the prototype only. This is deleted, not ported, when Supabase arrives.**
+
+Until 2 Aug 2026 the dashboard forgot everything on reload: every change lived in
+a JS variable and nowhere else. Preparing a Wine Show before a meeting and then
+working on it *during* the meeting was impossible, which was the prototype's
+largest single weakness as a demo. Supabase is the right answer, but the data
+model is still moving — A16.12 was recut three times in one day — and migrations
+for a model that has not settled are expensive. `assets/bottle-lobby-store.js`
+buys the demo behaviour now at a fraction of that cost.
+
+**A1 is untouched.** Nothing ever *reads* from `localStorage`; every consumer goes
+on reading the same arrays it always read. What is stored is a serialisation of
+those same records, written back into the same bindings on the next load. There
+is no second truth and no copy — only a longer lifetime for the one record.
+
+| | |
+|---|---|
+| Persists | 20 collections: `wineShows`, `orders` (+ the `orderSeq` / `docSeq` counters), the four roles' portfolios, partnership requests, promo materials and progress, offers, deals, press, follow graph |
+| Never persists | the active role, the open sub-view, the open tab, and every modal's target id — a reload starts the dashboard normally |
+| Size | 24.3 KB measured 2 Aug 2026, so the whole snapshot is always written; no dirty tracking |
+| Reset | `↺ Reset demo` in the demo bar, next to "View as:" — clears storage and reloads, in every open tab |
+
+**Nobody calls `save()`.** Wiring each array by hand would be fifteen places to
+forget, and the failure would be silent. The store listens on `document` in the
+bubble phase and writes a debounced snapshot; state in the prototype only ever
+changes as a consequence of a user action, so this is complete without any
+mutation site knowing the store exists.
+
+**No save button anywhere, but a receipt.** The actions already *are* the
+confirmation — "Send Invitation", "Close the order list", "Confirm this wine". A
+second click afterwards would only ask whether you meant it, and would invent a
+state — *invited but not saved* — that does not exist in this model. Instead a
+"Saved" marker flashes in the demo bar, and only on a write that really happened.
+The forms keep their own existing save buttons ("Save prices & lead time"); those
+sit at the right level and are unaffected.
+
+**A stale snapshot must never read like a code bug.** After a push the browser
+holds yesterday's data, possibly without fields today's code expects. Two guards,
+neither relying on anyone remembering anything: a `VERSION` constant for
+deliberate invalidation, and a **shape fingerprint per collection computed from
+the pristine fixtures** — add a field to `bottle-lobby-data.js` and the
+fingerprint changes by itself, because the fixture is always the shape the new
+code expects. A mismatch discards **everything, all or nothing**, and says so in
+the toast. A partial restore would leave a half-migrated demo, which is worse
+than starting clean. A snapshot that breaks rendering is thrown away and the page
+reloads once.
+
+**Cross-tab, without a reload.** `localStorage` is shared across tabs of one
+origin, so F5 would do — but redrawing without the F5 is what makes two tabs side
+by side a moment rather than an instruction: the distributor loads a wine and it
+appears in the winery tab. The `storage` event drives it. While a modal is open
+or a field has the focus the receiving tab takes in **nothing** — neither the
+redraw nor the data, because re-assigning the arrays under an open form would
+leave that form writing into a discarded object — and the change lands as soon as
+the tab is free.
+
+> **Known limit, deliberately not solved:** the whole snapshot is written at
+> once, so it is last-writer-wins. Two tabs changing different things at the same
+> moment means the later write takes the earlier one with it. For "one side acts,
+> the other watches" that is right; this is not a sync engine and should not be
+> mistaken for a preview of one.
+
+**One place, and a check that keeps it one place.** What persists is listed in a
+single `BLStore.register` block at the end of the dashboard's script — necessary
+because a top-level `let` in a classic script is not a property of `window`, so
+the store cannot find state by name and the page must hand over getter/setter
+pairs. `tests/persistence.js` fails the build when a new top-level `let` appears
+that is neither registered nor on its explicit transient list with a reason, and
+when a `const` collection is mutated behind the registry's back.
+
+**Persistence is off in every harness.** A harness writing state that the next
+one reads back would turn the safety net into the thing that hides the break.
+`tests/load-dashboard.js` — the one door all harnesses go through — injects
+`window.BL_NO_PERSIST` itself, so no harness has to remember and a future harness
+that gives jsdom a `url:` cannot silently switch persistence back on.
+`tests/persistence.js` opts back in for itself and asserts the isolation from
+both sides, against a real `localStorage`.
+
+**When Supabase arrives:** delete `assets/bottle-lobby-store.js`, the register
+block, `redrawAll()`, the demo-bar controls and `tests/persistence.js`. Nothing
+else refers to any of it — that is what "never reads from storage" bought.
 
 
 ---

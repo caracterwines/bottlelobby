@@ -63,6 +63,35 @@ body {
 .demo-btn.active { background: var(--gold); color: var(--ink); border-color: var(--gold); font-weight: 500; }
 .demo-btn:hover:not(.active) { border-color: rgba(247,243,238,0.2); color: var(--paper); }
 
+/* ── Demo persistence controls (C8) ──────────────────────────────
+   Deliberately in the demo bar and nowhere near "+ Host Wine Show":
+   down there a reset would read as a product function, and nobody
+   should have to explain to an investor why the application has one.
+   Up here it sits with "View as:" — visibly part of the demo frame. */
+.demo-tools { margin-left: auto; display: flex; align-items: center; gap: 0.9rem; }
+/* No save button anywhere: the actions ARE the confirmation ("Send
+   Invitation", "Close the order list"). A second click afterwards
+   would only ask whether you meant it, and would invent a state —
+   "invited but not saved" — that does not exist today. This is the
+   receipt for a write that already happened. */
+.demo-saved {
+  font-size: 0.62rem; letter-spacing: 0.18em; text-transform: uppercase;
+  color: rgba(184,151,90,0.75); display: flex; align-items: center; gap: 0.4rem;
+  opacity: 0; transition: opacity 0.25s ease; pointer-events: none;
+}
+.demo-saved.show { opacity: 1; }
+.demo-saved::before {
+  content: ''; width: 5px; height: 5px; border-radius: 50%;
+  background: var(--gold); display: inline-block;
+}
+.demo-reset {
+  font-size: 0.62rem; letter-spacing: 0.14em; text-transform: uppercase;
+  background: transparent; border: 1px solid var(--line);
+  color: rgba(247,243,238,0.3); padding: 0.35rem 0.8rem; border-radius: 2px;
+  cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.2s;
+}
+.demo-reset:hover { border-color: rgba(247,243,238,0.25); color: var(--paper); }
+
 /* ── LAYOUT ── */
 .app { display: flex; height: calc(100vh - 37px); overflow: hidden; }
 
@@ -1101,6 +1130,11 @@ body {
     <button class="demo-btn" onclick="switchDashboard('distributor', this)">🚚 Distributor</button>
     <button class="demo-btn" onclick="switchDashboard('restaurant', this)">🍽 Restaurant</button>
     <button class="demo-btn" onclick="switchDashboard('retail', this)">🏪 Retail</button>
+  </div>
+  <!-- Demo persistence (C8) — the receipt, and the way back. -->
+  <div class="demo-tools">
+    <span class="demo-saved" id="demo-saved">Saved</span>
+    <button class="demo-reset" id="demo-reset" onclick="resetDemoData()">↺ Reset demo</button>
   </div>
 </div>
 
@@ -3943,20 +3977,28 @@ With an annual production capacity of over 1.2 million bottles, Cantina Rossi is
 <div class="save-toast" id="save-toast"></div>
 
 <!-- ══ SHARED ASSETS ══════════════════════════════════════════════
-     Loaded before the page's own block and in this order: the data
-     first, then the public renderer that reads it. Both are classic
-     scripts on purpose — the prototype is opened over file:// as well
-     as over http, and file:// blocks modules.
+     Loaded before the page's own block and in this order: the store
+     first (machinery only, it acts at the very end), then the data,
+     then the public renderer that reads it. All classic scripts on
+     purpose — the prototype is opened over file:// as well as over
+     http, and file:// blocks modules.
 
-     These same two files are what the public Wine Shows page and the
-     public profiles will load, so a show exists exactly once (A16.7,
-     invariant 1).
+     The data and the renderer are what the public Wine Shows page and
+     the public profiles load too, so a show exists exactly once
+     (A16.7, invariant 1).
+
+     bottle-lobby-store.js has to be first because the register block
+     at the end of this page's own script calls into it — but it does
+     nothing until then. It is the prototype's stand-in for a database
+     and is deleted, not ported, when Supabase arrives (C8).
 
      NOTE FOR THE TEST HARNESSES: jsdom does not fetch <script src> by
      default, so an external file is silently absent unless the harness
      inlines it. tests/load-dashboard.js does that, and check-static.js
-     fails the run if either asset is missing or empty. See tests/README.
+     fails the run if any asset is missing or empty. That same file
+     also switches persistence off for every harness. See tests/README.
 -->
+<script src="assets/bottle-lobby-store.js"></script>
 <script src="assets/bottle-lobby-data.js"></script>
 <script src="assets/bottle-lobby-public-shows.js"></script>
 
@@ -5751,8 +5793,15 @@ renderIncomingRequestsT();
    field holds the name of the FOLLOWED account (kept as "winery" for
    backward compatibility since most entries follow a winery); the
    optional "followedType" field defaults to 'winery' when omitted.
+
+   `let`, not `const`, only so demo persistence can put a stored graph
+   back into this binding (C8). Nothing in the prototype writes to it
+   today — following is not yet a clickable action — so persisting it
+   is a no-op until it becomes one. It is registered anyway, because
+   the day Follow becomes a button is not the day anyone will remember
+   this file.
 ══════════════════════════════════════════════════════════════════ */
-const wineFollowGraph = [
+let wineFollowGraph = [
   { follower:'Bistro Laurent', followerType:'restaurant', avatar:'BL', location:'Frankfurt, Germany', winery:'Cantina Rossi', url:'bottle-lobby-restaurant-bistro-laurent.html' },
   { follower:'Bistro Laurent', followerType:'restaurant', avatar:'BL', location:'Frankfurt, Germany', winery:'Château Belrieu', url:'bottle-lobby-restaurant-bistro-laurent.html' },
   { follower:'Weinhaus Müller', followerType:'retail', avatar:'WM', location:'Munich, Germany', winery:'Cantina Rossi', url:'bottle-lobby-retail-weinhaus-mueller.html' },
@@ -9923,6 +9972,138 @@ Object.keys(SHOW_ROLES).forEach(r => {
    sub-view: A16.7's example is a restaurant following a winery, and
    the restaurant is precisely the role that cannot host or exhibit. */
 renderAppearanceWidgets();
+
+
+/* ══════════════════════════════════════════════════════════════════
+   DEMO PERSISTENCE (C8) — prototype only
+   ------------------------------------------------------------------
+   The last block in the file on purpose: every binding below exists by
+   now, `orders` has been through normalizeOrder(), and every fixture
+   has rendered once. That means the fingerprints BLStore takes here
+   describe the shape this code actually expects.
+
+   Everything about how persistence works lives in
+   assets/bottle-lobby-store.js. This is only the list of what belongs
+   to it, plus the four places the page wants a say.
+
+   Deleted, not ported, when Supabase arrives.
+════════════════════════════════════════════════════════════════════ */
+
+/* Everything the page draws from persisted state, in one call. It is
+   the same set of renderers that run once while this file is being
+   evaluated — if a new one is added there, it belongs here too.
+
+   The two sub-views that build their own shell handle themselves:
+   refreshShows() redraws whichever Wine Shows view is open and only
+   touches the badges of the ones that were never opened, and
+   renderAllOrders() is wrapped further up to do the same for Orders. */
+function redrawAll() {
+  renderPressList();
+  renderWinePortfolioD();
+  renderWineryNetwork();
+  renderPartnerNetwork();
+  renderIncomingRequests();
+  renderWineListR();
+  renderRestaurantNetwork();
+  renderIncomingRequestsR();
+  renderWineSelectionT();
+  renderRetailNetwork();
+  renderIncomingRequestsT();
+  renderWineryFans();
+  renderDistributorFans();
+  renderRestaurantFans();
+  renderRetailFans();
+  renderWineryWineStars();
+  renderDistributorWineStars();
+  renderRestaurantWineStars();
+  renderRetailWineStars();
+  renderDistributorOpportunities();
+  renderDistributorPromo();
+  renderRestaurantPromo();
+  renderRetailPromo();
+  renderDistributorOffers();
+  renderDistributorDeals();
+  renderExclusiveOffersRestaurant();
+  renderExclusiveOffersRetail();
+  renderExclusiveDealsRestaurant();
+  renderExclusiveDealsRetail();
+  renderAllOrders();
+  refreshShows();
+  renderAppearanceWidgets();
+}
+
+/* The one list. A top-level `let` that is neither here nor on the
+   transient list in tests/persistence.js fails the build — that check
+   is what keeps "one place" true in six months' time. */
+BLStore.register({
+  /* Wine Shows, with their exhibitors, guests, products, interests,
+     venue and event log (A16). Lives in assets/bottle-lobby-data.js. */
+  wineShows:              [function () { return wineShows; },              function (v) { wineShows = v; }],
+
+  /* Orders — one record, both perspectives (invariant 8). The two
+     counters have to travel with them: without them a reload would
+     start handing out ORD- and invoice numbers that already exist. */
+  orders:                 [function () { return orders; },                 function (v) { orders = v; }],
+  orderSeq:               [function () { return orderSeq; },               function (v) { orderSeq = v; }],
+  docSeq:                 [function () { return docSeq; },                 function (v) { docSeq = v; }],
+
+  /* Winery */
+  pressData:              [function () { return pressData; },              function (v) { pressData = v; }],
+  wineryRequests:         [function () { return wineryRequests; },         function (v) { wineryRequests = v; }],
+  wineryPartners:         [function () { return wineryPartners; },         function (v) { wineryPartners = v; }],
+  wineryOutgoingRequests: [function () { return wineryOutgoingRequests; }, function (v) { wineryOutgoingRequests = v; }],
+
+  /* Distributor */
+  currentWinePortfolio:   [function () { return currentWinePortfolio; },   function (v) { currentWinePortfolio = v; }],
+  incomingRequests:       [function () { return incomingRequests; },       function (v) { incomingRequests = v; }],
+  promoMaterials:         [function () { return promoMaterials; },         function (v) { promoMaterials = v; }],
+  exclusiveOffers:        [function () { return exclusiveOffers; },        function (v) { exclusiveOffers = v; }],
+  exclusiveDeals:         [function () { return exclusiveDeals; },         function (v) { exclusiveDeals = v; }],
+
+  /* Restaurant */
+  rCurrentWineList:       [function () { return rCurrentWineList; },       function (v) { rCurrentWineList = v; }],
+  rIncomingRequests:      [function () { return rIncomingRequests; },      function (v) { rIncomingRequests = v; }],
+  rPromoProgress:         [function () { return rPromoProgress; },         function (v) { rPromoProgress = v; }],
+
+  /* Retail */
+  tCurrentWineSelection:  [function () { return tCurrentWineSelection; },  function (v) { tCurrentWineSelection = v; }],
+  tIncomingRequests:      [function () { return tIncomingRequests; },      function (v) { tIncomingRequests = v; }],
+  tPromoProgress:         [function () { return tPromoProgress; },         function (v) { tPromoProgress = v; }],
+
+  /* My Stars / My Fans (A7). Read-only in the prototype today —
+     see the note at the declaration. */
+  wineFollowGraph:        [function () { return wineFollowGraph; },        function (v) { wineFollowGraph = v; }]
+});
+
+/* The "Saved" receipt in the demo bar. Fires only on a write that
+   really happened, so it never flashes at a click that changed
+   nothing. */
+let demoSavedTimer = null;
+function demoSavedFlash() {
+  const el = document.getElementById('demo-saved');
+  if (!el) return;
+  el.classList.add('show');
+  clearTimeout(demoSavedTimer);
+  demoSavedTimer = setTimeout(function () { el.classList.remove('show'); }, 1400);
+}
+
+/* Reset is destructive and one click away from the role switcher, so
+   it asks first. */
+function resetDemoData() {
+  if (!confirm('Reset the demo to its original data?\n\nEverything created or changed in this browser will be discarded — in every open tab.')) return;
+  BLStore.reset();
+}
+
+BLStore.start({
+  redraw:     redrawAll,
+  /* A restored order predates nothing, but normalizeOrder() is the one
+     thing that ran over the fixtures after they were declared, and it
+     is idempotent — so run it again rather than assume. */
+  afterRestore: function () { orders.forEach(normalizeOrder); },
+  onSaved:    demoSavedFlash,
+  notify:     showToast,
+  onExternal: function () { showToast('↻ Updated in another tab'); }
+});
 </script>
 
 <!-- ══ SHIP ORDER MODAL — seller marks an order as shipped ══ -->

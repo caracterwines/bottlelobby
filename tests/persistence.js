@@ -1,0 +1,498 @@
+/* ═══════════════════════════════════════════════════════════════════
+   DEMO PERSISTENCE — assets/bottle-lobby-store.js (spec C8)
+
+   The prototype now survives a reload. That buys one thing and risks
+   three, and this file is about the three.
+
+     · ISOLATION. jsdom harnesses share a process. If persistence were
+       live in here, one harness would write state the next one reads
+       back — and the checks that are supposed to be the safety net
+       would become the thing that hides the break. This is the worst
+       failure mode the feature can have, so it is checked first and
+       checked from both sides: that the switch works, and that
+       load-dashboard.js actually sets it.
+
+     · STALENESS. After a push the browser holds yesterday's snapshot,
+       possibly without fields today's code reads. That has to end as
+       "discarded, starting fresh", never as an afternoon spent
+       debugging new code against old data.
+
+     · COMPLETENESS. The register block is one place, which is the
+       point — but one place is still a place to forget. The static
+       check at the end fails the build when a new top-level `let`
+       appears that nobody has classified.
+
+   Everything here drives the real store against a real page. The
+   localStorage below is a stub only because jsdom does not offer one
+   at an opaque origin — it behaves like the real thing, including
+   firing `storage` at the OTHER tab and not at the writer.
+═══════════════════════════════════════════════════════════════════ */
+const fs = require('fs');
+const path = require('path');
+const { JSDOM, VirtualConsole } = require('jsdom');
+const { loadDashboard, KILL_SWITCH } = require('./load-dashboard');
+
+let fail = 0;
+const bad = m => { console.log('  ✗ ' + m); fail++; };
+const ok  = m => console.log('  ✓ ' + m);
+
+/* ── A shared localStorage, so two pages can be two tabs ─────────── */
+function makeStorageArea() {
+  const area = { _data: Object.create(null), _tabs: [] };
+  const fire = (key, tab) => area._tabs.forEach(t => {
+    /* The writing tab never hears its own event — that is what the
+       real one does, and the store relies on it. */
+    if (t.w !== tab && t.w.__onStorage) t.w.__onStorage(key);
+  });
+  area.api = tabWindow => ({
+    getItem: k => (k in area._data ? area._data[k] : null),
+    setItem: (k, v) => { area._data[k] = String(v); fire(k, tabWindow()); },
+    removeItem: k => { delete area._data[k]; fire(k, tabWindow()); },
+    clear: () => { area._data = Object.create(null); fire(null, tabWindow()); },
+    key: i => Object.keys(area._data)[i] ?? null,
+    get length() { return Object.keys(area._data).length; }
+  });
+  return area;
+}
+
+/* Opens the dashboard as a "tab". `persist:true` keeps the kill switch
+   out so the store really runs; `area` shares storage between tabs.
+
+   `location` and `location.reload` cannot be replaced in jsdom — the
+   property is non-configurable and a plain assignment silently does
+   nothing. A reload therefore has to be observed rather than stubbed:
+   jsdom reports it as "Not implemented: navigation" on the virtual
+   console, which is how `reloads` is counted below. Everything else on
+   that channel is a real script error and stops the run. */
+function openTab(area, opts) {
+  opts = opts || {};
+  const errs = [];
+  const nav = [];
+  /* Off unless explicitly asked for: the default must be exactly what
+     the other harnesses get, or this file would be testing a setup
+     nobody else uses. */
+  const html = loadDashboard(null, { persist: opts.persist === true }).html;
+  const dom = new JSDOM(html, {
+    runScripts: 'dangerously', pretendToBeVisual: true,
+    /* A real URL on purpose, and not just so history.replaceState works.
+       At an opaque origin jsdom hands out no localStorage at all, which
+       would let the kill-switch checks pass for the wrong reason — they
+       would be proving that jsdom has no storage, not that the switch
+       works. With a URL the storage is real, so the switch has to be. */
+    url: 'http://localhost/bottle-lobby-dashboard.html',
+    beforeParse(w) {
+      if (area) {
+        const self = () => w;
+        Object.defineProperty(w, 'localStorage', { value: area.api(self), configurable: true });
+      }
+      if (opts.killSwitch) w.BL_NO_PERSIST = true;
+      w.scrollTo = () => {};
+      w.confirm = () => true;
+    },
+    virtualConsole: new VirtualConsole().on('jsdomError', e => {
+      if (/Not implemented: navigation/.test(e.message)) nav.push(e.message);
+      else errs.push(e.message);
+    })
+  });
+  const w = dom.window;
+  /* Bridge the stub's notifications onto the real `storage` listener
+     the store installed via addEventListener. */
+  w.__onStorage = key => {
+    const ev = new w.Event('storage');
+    ev.key = key;
+    w.dispatchEvent(ev);
+  };
+  if (area) area._tabs.push({ w });
+  if (errs.length) { console.log('SCRIPT ERRORS:\n' + errs.join('\n')); process.exit(1); }
+  return { dom, w, d: w.document, errs, reloads: () => nav.length };
+}
+
+/* The store debounces by 200 ms; jsdom timers are real timers. */
+const settle = (w, ms) => new Promise(r => w.setTimeout(r, ms == null ? 320 : ms));
+/* Nothing in the page changes state without an event, so this is how
+   the harness "acts like a user" for the autosave listener. */
+const nudge = w => w.document.dispatchEvent(new w.Event('click', { bubbles: true }));
+/* Every state change in the page is reached through an onclick, so a
+   harness that calls the function directly has to supply the click
+   the store listens for. */
+const act = (w, code) => { w.eval(code); nudge(w); };
+/* A freshly opened page has the role picker up, and the store treats
+   any open modal as "do not touch this tab yet". A demo dismisses it
+   by picking a role, so a two-tab test has to as well. */
+const enter = tab => { tab.w.eval('closeRolePicker()'); return tab; };
+
+const KEY = 'bottle-lobby-demo';
+const read = area => { try { return JSON.parse(area._data[KEY]); } catch (e) { return null; } };
+
+(async function run() {
+
+/* ── 1. Isolation from the harnesses ───────────────────────────── */
+console.log('── isolation: a harness can never inherit another\'s state');
+{
+  /* Poison the storage with a snapshot that would be very visible. */
+  const area = makeStorageArea();
+  const seed = openTab(area, { persist: true });
+  act(seed.w, "simulateStaffRelease('WS-2602')");
+  await settle(seed.w);
+  const snap = read(area);
+  if (!snap) bad('could not seed a snapshot to poison with — the rest of this section is meaningless');
+  else {
+    snap.data.wineShows = snap.data.wineShows.filter(s => s.id === 'WS-2603');
+    area._data[KEY] = JSON.stringify(snap);
+
+    /* (a) explicit kill switch */
+    const t = openTab(area, { persist: true, killSwitch: true });
+    const n = t.w.eval('wineShows.length');
+    if (n === 1) bad('BL_NO_PERSIST did not stop the store — poisoned data was read');
+    else if (n === 5) ok('BL_NO_PERSIST ignores a poisoned localStorage (5 fixture shows, not 1)');
+    else bad('unexpected show count with the kill switch set: ' + n);
+    if (t.w.eval('BLStore.isActive()')) bad('BLStore reports itself active with BL_NO_PERSIST set');
+    else ok('BLStore.isActive() is false with the kill switch set');
+    /* And it must not write either. */
+    const before = area._data[KEY];
+    nudge(t.w); await settle(t.w);
+    if (area._data[KEY] !== before) bad('a disabled store still wrote to localStorage');
+    else ok('a disabled store writes nothing');
+
+    /* (b) the default every other harness gets, with no switch passed
+       by hand — this is the check that protects the other 11 files. */
+    const plain = openTab(area, {});
+    const pn = plain.w.eval('wineShows.length');
+    if (pn === 5) ok('loadDashboard() defaults to persistence off — the other harnesses are safe');
+    else bad('loadDashboard() default did NOT disable persistence (shows: ' + pn + ')');
+    const before2 = area._data[KEY];
+    nudge(plain.w); await settle(plain.w);
+    if (area._data[KEY] !== before2) bad('a default-loaded harness page wrote to localStorage');
+    else ok('a default-loaded harness page writes nothing');
+  }
+}
+
+/* Belt and braces: the switch is in the shared loader, not in each
+   harness, and it is first in document order. */
+{
+  const html = loadDashboard().html;
+  if (!html.includes(KILL_SWITCH)) bad('loadDashboard() does not inject the kill switch');
+  else if (html.indexOf(KILL_SWITCH) > html.indexOf('bottle-lobby-store.js'))
+    bad('the kill switch is injected AFTER the store script — too late to matter');
+  else ok('the kill switch is injected before the store script loads');
+
+  const harnesses = fs.readdirSync(__dirname)
+    .filter(f => f.endsWith('.js') && !['run-all.js', 'load-dashboard.js', 'persistence.js'].includes(f));
+  const optedIn = harnesses.filter(f =>
+    /loadDashboard\([^)]*persist/.test(fs.readFileSync(path.join(__dirname, f), 'utf8')));
+  if (optedIn.length) bad('these harnesses opt back into persistence: ' + optedIn.join(', '));
+  else ok('none of the other ' + harnesses.length + ' harnesses opts back in');
+}
+
+/* Two pages in ONE process, sharing one storage, must not see each
+   other — the concrete shape of the fear. */
+{
+  const area = makeStorageArea();
+  const a = openTab(area, {});
+  a.w.eval("wineShows.push({ id:'WS-LEAK', title:'Leak', exhibitors:[], attendees:[], events:[] })");
+  nudge(a.w); await settle(a.w);
+  const b = openTab(area, {});
+  if (b.w.eval("wineShows.some(s => s.id === 'WS-LEAK')"))
+    bad('state leaked from one harness page into the next');
+  else ok('two pages in one process stay independent');
+}
+
+/* ── 2. The round trip ─────────────────────────────────────────── */
+console.log('\n── what is written comes back');
+{
+  const area = makeStorageArea();
+  const a = openTab(area, { persist: true });
+  if (!a.w.eval('BLStore.isActive()')) bad('the store is not active on a page that should persist');
+  else ok('the store is active when localStorage exists');
+
+  /* Drive a real action rather than assigning a variable: releasing a
+     show is a stage change plus an event-log entry, so it proves the
+     nesting survives too. */
+  act(a.w, "simulateStaffRelease('WS-2602')");
+  await settle(a.w);
+  const snap = read(area);
+  if (!snap) { bad('nothing was written after a real action'); }
+  else {
+    const s = snap.data.wineShows.find(x => x.id === 'WS-2602');
+    if (!s || s.stage !== 'published') bad('the stage change did not reach the snapshot');
+    else ok('a real action reaches localStorage without anyone calling save()');
+
+    const b = openTab(area, { persist: true });
+    const back = b.w.eval("wineShows.find(s => s.id === 'WS-2602')");
+    if (!back || back.stage !== 'published') bad('the change did not come back on the next load');
+    else ok('the change is there after a reload');
+    if (!back.events.some(e => /Released/.test(e.text)))
+      bad('the nested event log did not survive the round trip');
+    else ok('nested records (events, exhibitors, interests) survive');
+
+    /* The counters matter as much as the arrays: without them a
+       reload starts re-issuing order numbers that already exist. */
+    const seq = b.w.eval('orderSeq');
+    if (seq !== a.w.eval('orderSeq')) bad('orderSeq did not survive (' + seq + ')');
+    else ok('orderSeq and docSeq survive, so IDs stay unique across a reload');
+  }
+}
+
+/* An order placed in one tab is the same one record on the other side
+   of the supply chain after a reload (invariant 8). */
+{
+  const area = makeStorageArea();
+  const a = openTab(area, { persist: true });
+  const before = a.w.eval('orders.length');
+  act(a.w, "placeOrder('Bistro Laurent','restaurant','Hawesko GmbH','distributor',[{wine:'Rioja Reserva 2019',qty:6,unit:12}],'harness')");
+  await settle(a.w);
+  const b = openTab(area, { persist: true });
+  if (b.w.eval('orders.length') !== before + 1) bad('a placed order did not survive the reload');
+  else ok('an order placed before the reload is there after it');
+}
+
+/* ── 3. Nothing that should not be there ───────────────────────── */
+console.log('\n── the transient state stays transient');
+{
+  const area = makeStorageArea();
+  const a = openTab(area, { persist: true });
+  a.w.eval("activeShowRole = 'restaurant'; activeOrderRole = 'retail'; showState.distributor.openId = 'WS-2601';");
+  act(a.w, "simulateStaffRelease('WS-2602')");   /* something real, so a write happens */
+  await settle(a.w);
+  const snap = read(area);
+  const forbidden = ['activeShowRole', 'activeOrderRole', 'showState', 'ordState', 'filters',
+                     'interestShowId', 'venueShowId', 'editingPressId'];
+  const found = forbidden.filter(k => snap && snap.data.hasOwnProperty(k));
+  if (found.length) bad('the snapshot carries transient UI state: ' + found.join(', '));
+  else ok('no role, no open view, no modal target is stored');
+
+  const b = openTab(area, { persist: true });
+  if (b.w.eval('activeShowRole') !== 'distributor') bad('the active role was restored — the dashboard must start normally');
+  else ok('a reload starts on the default role, not where the last tab was');
+  if (b.w.eval("showState.distributor.openId") !== null)
+    bad('an open sub-view was restored');
+  else ok('a reload starts on the overview, not in the last open detail pane');
+}
+
+/* ── 4. Stale data is discarded, never merged ──────────────────── */
+console.log('\n── a stale snapshot ends as "discarded", not as a bug hunt');
+{
+  const cases = [
+    ['a shape that no longer matches', snap => { snap.fp.wineShows = 'deadbeef'; return snap; }],
+    ['a collection missing entirely', snap => { delete snap.data.orders; return snap; }],
+    ['a collection nobody registers any more', snap => { snap.data.legacyThing = [1, 2, 3]; return snap; }],
+    ['a different store version', snap => { snap.v = 999; return snap; }]
+  ];
+  for (const [label, poison] of cases) {
+    const area = makeStorageArea();
+    const seed = openTab(area, { persist: true });
+    seed.w.eval("wineShows.push({ id:'WS-STALE', title:'Stale' })");
+    nudge(seed.w); await settle(seed.w);
+    area._data[KEY] = JSON.stringify(poison(read(area)));
+
+    const t = openTab(area, { persist: true });
+    if (t.w.eval("wineShows.some(s => s.id === 'WS-STALE')"))
+      bad(label + ': stale data was restored anyway');
+    else if (t.w.eval('wineShows.length') !== 5)
+      bad(label + ': did not fall back to the fixtures (' + t.w.eval('wineShows.length') + ' shows)');
+    else ok(label + ' → fixtures');
+    if (t.errs.length) bad(label + ': the page threw while recovering');
+  }
+
+  /* Corrupt JSON is the same path. */
+  const area = makeStorageArea();
+  area._data[KEY] = '{not json at all';
+  const t = openTab(area, { persist: true });
+  if (t.w.eval('wineShows.length') !== 5) bad('unreadable JSON did not fall back to the fixtures');
+  else ok('unreadable JSON → fixtures, no crash');
+  if (area._data[KEY] !== undefined) bad('the unusable snapshot was left in storage to fail again');
+  else ok('the unusable snapshot is cleared out rather than re-read forever');
+}
+
+/* The discard has to be visible. A silent reset is the same afternoon
+   lost as a silent restore, just in the other direction. */
+{
+  const area = makeStorageArea();
+  const seed = openTab(area, { persist: true });
+  act(seed.w, "simulateStaffRelease('WS-2602')"); await settle(seed.w);
+  const snap = read(area); snap.v = 999; area._data[KEY] = JSON.stringify(snap);
+  const t = openTab(area, { persist: true });
+  const toast = t.d.getElementById('save-toast');
+  if (!toast || !/reset|updated/i.test(toast.textContent))
+    bad('nothing told the user the demo data had been reset (toast: "' + (toast && toast.textContent) + '")');
+  else ok('the reset is announced in the toast, not swallowed');
+}
+
+/* ── 5. Two tabs ───────────────────────────────────────────────── */
+console.log('\n── two tabs, no reload');
+{
+  const area = makeStorageArea();
+  const distributor = enter(openTab(area, { persist: true }));
+  const winery = enter(openTab(area, { persist: true }));
+
+  act(distributor.w, "simulateStaffRelease('WS-2602')");
+  await settle(distributor.w);
+  await settle(winery.w, 50);
+
+  const seen = winery.w.eval("wineShows.find(s => s.id === 'WS-2602').stage");
+  if (seen !== 'published') bad('the second tab did not pick up the change (stage: ' + seen + ')');
+  else ok('a change in one tab reaches the other without a reload');
+  const toast = winery.d.getElementById('save-toast');
+  if (!toast || !/another tab/i.test(toast.textContent))
+    bad('the receiving tab gave no sign that something arrived');
+  else ok('the receiving tab says where the change came from');
+  if (distributor.w.eval("wineShows.find(s => s.id === 'WS-2602').stage") !== 'published')
+    bad('the writing tab lost its own change');
+  else ok('the writing tab does not react to its own write');
+}
+
+/* The guard Serge asked for: a tab where somebody is typing must not
+   have the ground moved under it. */
+{
+  const area = makeStorageArea();
+  const a = enter(openTab(area, { persist: true }));
+  const b = enter(openTab(area, { persist: true }));
+
+  /* Tab B opens a modal and types in it. */
+  b.d.getElementById('wine-show-quote-modal').classList.add('active');
+  const field = b.d.getElementById('vq-amount');
+  field.value = '999';
+  field.focus();
+
+  act(a.w, "simulateStaffRelease('WS-2602')");
+  await settle(a.w);
+  await settle(b.w, 100);
+
+  if (b.w.eval("wineShows.find(s => s.id === 'WS-2602').stage") === 'published')
+    bad('tab B was updated while a modal was open and a field had focus');
+  else ok('an open modal blocks the update — data and redraw both wait');
+  if (b.d.getElementById('vq-amount').value !== '999')
+    bad('the half-typed value was lost');
+  else ok('what was being typed is still there');
+
+  /* Close it, and the pending change lands on the next interaction. */
+  b.d.getElementById('wine-show-quote-modal').classList.remove('active');
+  b.d.getElementById('vq-amount').blur();
+  nudge(b.w);
+  await settle(b.w, 700);
+  if (b.w.eval("wineShows.find(s => s.id === 'WS-2602').stage") !== 'published')
+    bad('the deferred change never arrived after the modal closed');
+  else ok('the deferred change lands once the tab is free again');
+}
+
+/* ── 6. Reset ──────────────────────────────────────────────────── */
+console.log('\n── the way back');
+{
+  const area = makeStorageArea();
+  const a = enter(openTab(area, { persist: true }));
+  act(a.w, "simulateStaffRelease('WS-2602')");
+  await settle(a.w);
+  if (!area._data[KEY]) bad('nothing to reset — the setup failed');
+
+  const b = enter(openTab(area, { persist: true }));   /* a second tab, open at the time */
+  a.w.eval('resetDemoData()');
+  if (area._data[KEY] !== undefined) bad('reset did not clear the stored snapshot');
+  else ok('reset clears the stored snapshot');
+  if (a.reloads() !== 1) bad('reset did not reload the page (reloads: ' + a.reloads() + ')');
+  else ok('reset reloads, so the transient state goes too');
+
+  /* Reset must not be undone by the unload write on the way out. */
+  a.w.dispatchEvent(new a.w.Event('beforeunload'));
+  if (area._data[KEY] !== undefined)
+    bad('the unload handler wrote the state straight back after a reset');
+  else ok('the unload handler does not resurrect what reset threw away');
+
+  await settle(b.w, 100);
+  if (b.reloads() !== 1) bad('the other open tab kept its stale state after a reset elsewhere');
+  else ok('a reset in one tab reloads the others too');
+
+  const reset = a.d.getElementById('demo-reset');
+  if (!reset) bad('the reset button is missing');
+  else if (!reset.closest('.demo-bar')) bad('the reset button is not in the demo bar');
+  else ok('the reset button sits in the demo bar, with "View as:"');
+}
+
+/* ── 7. The register block is complete ─────────────────────────── */
+console.log('\n── the one list stays the one list');
+{
+  /* Deliberately NOT persisted. Every name here is a decision, and the
+     reason is the point — a bare list would rot into "whatever was
+     there when someone last ran the test". */
+  const TRANSIENT = {
+    activeOrderRole:       'which Orders sub-view is on screen — a reload starts on the default',
+    activeShowRole:        'which Wine Shows sub-view is on screen — same',
+    acceptingId:           'the partnership request an open modal is about',
+    acceptingIncomingId:   'ditto, distributor side',
+    rAcceptingIncomingId:  'ditto, restaurant side',
+    tAcceptingIncomingId:  'ditto, retail side',
+    attendeeShowId:        'the show an open invite modal is about',
+    counterShowId:         'the show an open counter-proposal modal is about',
+    interestShowId:        'the show an open order-list modal is about',
+    inviteShowId:          'the show an open exhibitor-invite modal is about',
+    venueShowId:           'the show an open venue modal is about',
+    shippingOrderId:       'the order an open ship modal is about',
+    payingOrderId:         'the order an open payment modal is about',
+    awSelectedWine:        'the wine highlighted in an open picker',
+    rAwSelectedWine:       'ditto, restaurant side',
+    tAwSelectedWine:       'ditto, retail side',
+    editingPressId:        'the press entry an open editor is about',
+    editingPortfolioIndex: 'the portfolio row an open editor is about',
+    demoSavedTimer:        'the timer behind the "Saved" flash'
+  };
+
+  const files = ['../bottle-lobby-dashboard.html', 'assets-data'];
+  const src = fs.readFileSync(path.join(__dirname, '..', 'bottle-lobby-dashboard.html'), 'utf8') +
+              fs.readFileSync(path.join(__dirname, '..', 'assets', 'bottle-lobby-data.js'), 'utf8');
+
+  const registered = openTab(null, {}).w.eval('BLStore.names()');
+
+  /* Every top-level `let` is state by definition — it is declared
+     mutable at module scope. Each one is either persisted or listed
+     above; there is no third answer. */
+  const lets = [...new Set([...src.matchAll(/^let\s+([A-Za-z_$][\w$]*)/gm)].map(m => m[1]))];
+  const orphans = lets.filter(n => !registered.includes(n) && !TRANSIENT.hasOwnProperty(n));
+  if (orphans.length)
+    bad('top-level state that is neither persisted nor declared transient: ' + orphans.join(', ') +
+        '\n      → add it to the BLStore.register block, or to TRANSIENT in this file with a reason');
+  else ok('all ' + lets.length + ' top-level `let` bindings are classified (' +
+          registered.length + ' persisted, ' + Object.keys(TRANSIENT).length + ' transient)');
+
+  const stale = Object.keys(TRANSIENT).filter(n => !lets.includes(n));
+  if (stale.length) bad('TRANSIENT names things that no longer exist: ' + stale.join(', '));
+  else ok('the transient list has no leftovers');
+
+  /* A `const` array is not read-only — push() still works. If one is
+     ever mutated, it is state, and it has to be classified too. */
+  const consts = [...new Set([...src.matchAll(/^const\s+([A-Za-z_$][\w$]*)\s*=\s*[[{]/gm)].map(m => m[1]))];
+  const mutatedConsts = consts.filter(n =>
+    new RegExp('\\b' + n + '\\.(push|splice|unshift|pop|shift|sort|reverse)\\s*\\(').test(src));
+  const unclassified = mutatedConsts.filter(n => !registered.includes(n));
+  if (unclassified.length)
+    bad('mutated `const` collections that nobody persists: ' + unclassified.join(', ') +
+        '\n      → they are state; register them (and make them `let`)');
+  else ok('no `const` collection is being mutated behind the registry\'s back');
+
+  /* And the register block must actually match the running page. */
+  const missing = registered.filter(n => !new RegExp('^(let|const)\\s+' + n + '\\b', 'm').test(src));
+  if (missing.length) bad('registered names that no longer exist in the page: ' + missing.join(', '));
+  else ok('every registered name is a real binding');
+}
+
+/* ── 8. A snapshot that breaks rendering heals itself ───────────── */
+console.log('\n── a snapshot that breaks the page does not strand it');
+{
+  const area = makeStorageArea();
+  const seed = openTab(area, { persist: true });
+  act(seed.w, "simulateStaffRelease('WS-2602')"); await settle(seed.w);
+  /* Same shape, impossible content: a confirmed product referring to
+     an exhibitor list that no renderer can cope with. */
+  const snap = read(area);
+  snap.data.orders.forEach(o => { o.items = null; });
+  area._data[KEY] = JSON.stringify(snap);
+
+  const t = openTab(area, { persist: true });
+  if (t.reloads() !== 1) bad('a snapshot that broke rendering did not trigger the one-shot reload');
+  else ok('a snapshot that breaks rendering is thrown away and the page reloads once');
+  if (area._data[KEY] !== undefined) bad('the breaking snapshot was left in place to break the reload too');
+  else ok('the breaking snapshot is cleared before the reload');
+}
+
+console.log(fail ? '\n✗ ' + fail + ' failure(s)' : '\n✓ all checks passed');
+process.exit(fail ? 1 : 0);
+
+})();

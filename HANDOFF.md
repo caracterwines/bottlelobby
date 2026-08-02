@@ -4,7 +4,7 @@
 > Dateiliste, Dateianzahl und Aenderungshistorie stehen in der Git-Historie — nicht hier.
 > Dauerhafte Regeln stehen in `BOTTLE-LOBBY-SPEC.md`, kurze Invarianten in `CLAUDE.md` — nicht hier.
 
-**Letzte Aktualisierung:** 1. August 2026
+**Letzte Aktualisierung:** 2. August 2026
 
 ---
 
@@ -22,6 +22,43 @@ Kein Build-Command, Publish-Directory = Repo-Root.
 ---
 
 ## Zuletzt abgeschlossen
+
+- **02.08.: Der Prototyp vergisst nichts mehr — `localStorage`-Persistenz (Spec C8).**
+  Neu: `assets/bottle-lobby-store.js`. 20 Sammlungen ueberdauern den Reload
+  (24,3 KB gemessen), die aktive Rolle und die geoeffnete Ansicht bewusst nicht —
+  das Dashboard startet normal. **Kein Mutationspunkt ruft `save()`:** der Store
+  hoert auf `document` in der Bubble-Phase und schreibt gebuendelt, weil sich im
+  Prototyp nichts ohne Benutzeraktion aendert. **Kein Speichern-Knopf** (Serges
+  Entscheidung: die Aktionen *sind* die Bestaetigung, ein zweiter Klick erfaende
+  den Zustand „eingeladen, aber nicht gespeichert"), stattdessen eine dezente
+  „Saved"-Quittung in der demo-bar — nur bei einem Schreibvorgang, der wirklich
+  stattfand. `↺ Reset demo` sitzt oben rechts in derselben Leiste wie „View as:",
+  bewusst nicht unten bei „+ Host Wine Show", wo er wie eine Produktfunktion
+  aussaehe. Zwei Tabs aktualisieren sich ohne Reload; ist ein Modal offen oder
+  liegt der Fokus in einem Feld, wird **weder gezeichnet noch eingelesen**, und die
+  Aenderung landet, sobald der Tab frei ist.
+  **Veraltete Staende koennen nicht mehr wie Code-Fehler aussehen:** neben einer
+  `VERSION` gibt es einen Shape-Fingerprint je Sammlung, berechnet aus den
+  *Fixtures* — kommt in `bottle-lobby-data.js` ein Feld dazu, aendert er sich von
+  selbst. Abweichung heisst alles verwerfen, ganz oder gar nicht, mit Hinweis im
+  Toast. Ein Stand, der das Rendern bricht, fliegt raus und die Seite laedt einmal neu.
+  **Korrektur zur Bestandsaufnahme:** `wineFollowGraph` wird heute nirgends
+  veraendert (fuenf Referenzen, alle lesend) — auf Serges Wunsch trotzdem
+  registriert, damit My Stars / My Fans am Tag, an dem Folgen ein Knopf wird, nicht
+  vergessen werden. Bis dahin ist die Persistenz dort wirkungslos.
+- **02.08.: `tests/persistence.js` — 12 statt 11 Harnesses.**
+  Die wichtigste Zusicherung ist die Isolation: `tests/load-dashboard.js` setzt
+  `window.BL_NO_PERSIST` jetzt selbst, an der einen Stelle, durch die alle
+  Harnesses gehen — kein bestehender Harness musste angefasst werden, und ein
+  kuenftiger mit `url:` kann die Persistenz nicht stillschweigend wieder
+  einschalten. Der Test faehrt jsdom bewusst *mit* URL, damit ein echtes
+  `localStorage` existiert und der Kill-Switch etwas beweisen muss statt nur
+  jsdoms Leere. Dazu: Round-Trip, Fingerprint-/Versions-/JSON-Schaden, Zwei-Tab,
+  Tipp-Schutz, Reset. **Und eine Vollstaendigkeitspruefung:** jedes Top-Level-`let`
+  in Dashboard und `data.js` ist entweder registriert oder steht mit Begruendung auf
+  der Transient-Liste (39 klassifiziert: 20 + 19); ein mutiertes `const`-Array faellt
+  ebenfalls auf. Gegenprobe gemacht — ein eingeschmuggeltes `let sneakyNewState = []`
+  laesst den Harness rot werden.
 
 - **Entschieden 01.08.: Teilnehmer erscheinen ab `completed` auf dem eigenen Profil**
   (Anhang D **D30**). A16.7 sagte „Host, Aussteller, Location und Teilnehmer
@@ -287,6 +324,21 @@ Kein Build-Command, Publish-Directory = Repo-Root.
 ## Offene Punkte
 
 ### Arbeit
+
+### ▶ Persistenz, moeglicher zweiter Durchgang — oeffentliche Seiten
+
+Bewusst nicht mit ausgeliefert, damit ein Fehler eindeutig zuzuordnen bleibt (C4c).
+Die 16 oeffentlichen Seiten (Wine-Shows-Seite, Winzer- und Distributor-Profile)
+laden `assets/bottle-lobby-data.js` bereits. Sie koennten den gespeicherten
+`wineShows`-Stand **nur lesend** uebernehmen — dann steht eine im Dashboard
+angelegte Show sofort auf der oeffentlichen Seite. Im Investorengespraech ist das
+ein starker Moment.
+
+**Der Store kann das schon:** `BLStore.start({ strict: false })` akzeptiert einen
+Schnappschuss, der mehr Sammlungen enthaelt, als die Seite registriert. Wichtig
+dabei: diese Seiten duerfen **nie schreiben** — sie kennen nur `wineShows` und
+wuerden die uebrigen 19 Sammlungen sonst beim Speichern loeschen. Ein `readOnly`-
+Schalter im Store waere der saubere Weg, bevor das gebaut wird.
 
 ### ▶ NAECHSTER EINSTIEG BEI A16 — Stand 1. August 2026
 

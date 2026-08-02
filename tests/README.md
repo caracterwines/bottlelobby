@@ -40,7 +40,8 @@ treat the site as a Node project.
 | `public-shows-page.js` | `bottle-lobby-wine-shows.html` — the public face of A16.7, and the first public page with any coverage at all. That the section renders matters less than that it renders **less** than the dashboard: no `draft` or `pending_approval` show is listed, and a `planning` show names none of its exhibitors, none of their wines and not the venue, while still showing date, city and focus. Also the expanding listing (closed on load, independent per card, `aria-expanded` in step) and that every hero image exists in the repo. |
 | `profile-shows.js` | The Wine Shows tab on all fifteen public winery and distributor profiles (A16.7). Every page is loaded and driven, not sampled. Checks that each account is listed at exactly the shows A16.6 permits naming it at — host from `planning`, exhibitor only from `published` — that the role chip matches, that pages with nothing show the empty state, and that no page names an exhibitor, wine or venue of a still-anonymised show. Also re-checks the structure of these pages, since they were rewritten by script: div balance, duplicate ids, and no show titles left hard-coded. |
 | `follow-feed.js` | The follow graph as an announcement channel (A16.7) — the third surface a show appears on. Checks that the **From Your Stars** widget on all four overviews announces exactly what the public profiles would show: a follower of a host hears about a `planning` show, a follower of a producer confirmed at one hears nothing. Also that releasing a show reaches its host's followers immediately, and that the demo graph still contains the followed-but-anonymised pair without which the whole file passes vacuously. |
-| `load-dashboard.js` | Not a harness — the shared loader every harness reads the page through. See the section below; it is excluded from `run-all.js` on purpose, because a module that does nothing exits 0 and would read as a passing check. |
+| `persistence.js` | Demo persistence (spec C8) — and above all its **isolation from every other harness**. Checks that `load-dashboard.js` switches the store off by default, that no other harness opts back in, and that two pages in one process cannot see each other's state; then the round trip, that transient state (role, open view, modal targets) is never stored, that a stale snapshot ends as an announced discard rather than a merge, the two-tab update, the guard that freezes a tab while a modal is open or a field has focus, and reset. Ends with a completeness check: every top-level `let` in the dashboard and `bottle-lobby-data.js` is either registered or on an explicit transient list with a reason. It is the only file that opts into persistence, and it runs jsdom **with** a URL so a real `localStorage` exists — otherwise the kill-switch checks would be proving that jsdom has no storage rather than that the switch works. |
+| `load-dashboard.js` | Not a harness — the shared loader every harness reads the page through. See the section below; it is excluded from `run-all.js` on purpose, because a module that does nothing exits 0 and would read as a passing check. **It also injects `window.BL_NO_PERSIST`**, so persistence is off in every harness without any of them having to remember. |
 
 ## The pitfall: jsdom does not fetch `<script src>`
 
@@ -172,6 +173,21 @@ And three for the announcement channel:
 | Feed derived from raw participation instead of `publicParticipation()` | `follow-feed.js`: *feed announces Bodegas Ruiz at the anonymised "Grande Rioja"* |
 | `renderAppearanceWidgets()` dropped from `refreshShows()` | `follow-feed.js`: followers of the host are not told when a show is released |
 | The followed-but-anonymised fixture edge removed | `follow-feed.js` fails outright — see the note above |
+
+Persistence was verified against the fault it exists to prevent — a new piece of
+state that nobody classified:
+
+| Mutation | Caught by |
+|---|---|
+| `let sneakyNewState = []` added to the dashboard | `persistence.js`: *top-level state that is neither persisted nor declared transient: sneakyNewState* |
+
+The isolation checks need the opposite kind of care: they can pass for the wrong
+reason. At an opaque origin jsdom provides no `localStorage` at all, so a
+kill-switch check would succeed against a page that could not have persisted
+anything either way. `persistence.js` therefore gives jsdom a URL, which makes
+the storage real and the switch load-bearing. Any future check of this kind
+should ask the same question first: *would this still pass if the feature were
+removed entirely?*
 
 Two assertions in `profile-shows.js` were wrong before they were right, and
 both errors are worth knowing about. The first tried to validate
