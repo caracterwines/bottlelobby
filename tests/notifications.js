@@ -494,5 +494,87 @@ console.log('\n── counter-check: the popup must not become a fourth surface'
   }
 }
 
+/* ── 12. The overview widget (C9, pass 2b) ──────────────────────── */
+/* It used to hold three hand-written messages. One of them was
+   "Vinoteca Roma started following you", and that follow has been a
+   row in wineFollowGraph the whole time — a second copy of a record,
+   living in markup instead of in a table, which is the same A1
+   violation with a better hiding place. */
+console.log('\n── the winery overview widget');
+{
+  const s = build();
+  const host = s.document.getElementById('wnotif-widget');
+  if (!host) { bad('the overview widget container is gone — nothing paints the winery overview'); }
+  else {
+    const all = s.eval('notificationsFor("winery")');
+    const ordered = all.filter(n => n.cls === 'await').concat(all.filter(n => n.cls !== 'await'));
+    const shown = Array.from(host.querySelectorAll('.msg-item')).map(el => el.querySelector('.msg-from').textContent);
+    const want  = ordered.slice(0, 3).map(n => n.title);
+    if (shown.join('|') !== want.join('|'))
+      bad('the widget is not the derivation: shows [' + shown.join(', ') + '] for [' + want.join(', ') + ']');
+    else ok('the widget shows the first three derived entries, awaiting first');
+
+    if (host.textContent.indexOf('+ ' + (ordered.length - 3) + ' more') === -1)
+      bad('the widget cuts the list without saying how much it cut');
+    else ok('it names the ' + (ordered.length - 3) + ' it left out rather than implying there are none');
+
+    /* The one that used to be invented is now the real edge, and it
+       still says the same thing — that is what makes the replacement a
+       replacement rather than a removal. */
+    if (!all.some(n => n.kind === 'follow' && /Vinoteca Roma started following you/.test(n.title)))
+      bad('"Vinoteca Roma started following you" no longer exists — it was deleted, not derived');
+    else ok('the follow it used to fake is now the wineFollowGraph edge it always was');
+
+    /* Reading a row HERE has to count. The widget is on the overview,
+       which is reachable without the sub-view ever being built — and a
+       renderer that returns early for an unbuilt view (B12) took the
+       badge down with it. Found in Chrome, not here: the first version
+       of openNotification() redrew only its own sub-view, so a row read
+       from the widget left the badge at 13 and the dot in place. */
+    const badgeEl = s.document.getElementById('wnotif-badge');
+    const before = Number(badgeEl.textContent || 0);
+    host.querySelector('.msg-item .msg-from').click();
+    const after = Number(badgeEl.textContent || 0);
+    if (after !== before - 1)
+      bad('reading a row in the widget did not move the badge (' + before + ' → ' + after + ')');
+    /* The FIRST row — the one that was clicked. The other two are still
+       unread and must keep their dots, or the check would be asking for
+       the wrong thing. */
+    else if (host.querySelector('.msg-item').querySelector('.msg-unread'))
+      bad('reading a row in the widget left its own unread dot in place');
+    else ok('a row read in the widget counts everywhere — badge ' + before + ' → ' + after);
+  }
+
+  /* And the invented text is gone from the file, not merely covered up
+     by a renderer that happens to run. */
+  const raw = loadDashboard().html;
+  const ghosts = ["We'd love to schedule a tasting", 'Your Wine Show spot in Munich', '45m ago']
+    .filter(t => raw.indexOf(t) !== -1);
+  if (ghosts.length) bad('hand-written message content is still in the markup: ' + ghosts.join(' · '));
+  else ok('none of the three invented messages is left in the file');
+}
+
+/* ── 13. The mutation section 12 exists for ─────────────────────── */
+console.log('\n── counter-check: a hand-written message must fail this file');
+{
+  const faked = build({
+    from: '  mountNotifRows(host, role, ordered.slice(0, 3), unread,',
+    to:   '  host.innerHTML = \'<div class="msg-item"><div class="msg-content"><div class="msg-header">\' +\n' +
+          '    \'<span class="msg-from">Hawesko GmbH</span><span class="msg-time">2h ago</span></div>\' +\n' +
+          '    \'<div class="msg-preview">A tasting for your Primitivo</div></div></div>\';\n' +
+          '  if (false) mountNotifRows(host, role, ordered.slice(0, 3), unread,'
+  });
+  if (!faked) bad('the hand-written-widget mutation did not apply — this counter-check proves nothing');
+  else {
+    const shown = Array.from(faked.document.querySelectorAll('#wnotif-widget .msg-item'))
+      .map(el => el.querySelector('.msg-from').textContent);
+    const all = faked.eval('notificationsFor("winery")');
+    const ordered = all.filter(n => n.cls === 'await').concat(all.filter(n => n.cls !== 'await'));
+    if (shown.join('|') === ordered.slice(0, 3).map(n => n.title).join('|'))
+      bad('the widget was replaced by hand-written markup and section 12 did NOT notice');
+    else ok('a widget painting a message nobody derived reads "' + shown.join(', ') + '" — section 12 catches it');
+  }
+}
+
 console.log(fail ? '\n✗ ' + fail + ' failure(s)' : '\n✓ all checks passed');
 process.exit(fail ? 1 : 0);

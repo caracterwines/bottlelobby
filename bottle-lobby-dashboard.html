@@ -1552,38 +1552,21 @@ body {
             </div>
           </div>
 
-          <!-- Messages & Wine Show -->
+          <!-- Notifications & Wine Show
+               This widget used to hold three hand-written messages, one
+               of which was "Vinoteca Roma started following you" — a
+               follow edge that has existed in wineFollowGraph all along.
+               A second copy of a record IS the A1 violation, whether it
+               sits in a table or in markup; this one simply could not go
+               stale in a demo because nobody could unfollow. Painted by
+               notificationsFor() since C9 pass 2b. -->
           <div style="display:flex;flex-direction:column;gap:1.5rem">
             <div class="widget">
               <div class="widget-header">
-                <span class="widget-title">Messages</span>
-                <button class="widget-action">View All →</button>
+                <span class="widget-title">Notifications</span>
+                <button class="widget-action" onclick="showNotifications('winery')">View All →</button>
               </div>
-              <div class="widget-body" style="padding-top:0.6rem">
-                <div class="msg-item">
-                  <div class="msg-avatar" style="background:var(--wine)">♥</div>
-                  <div class="msg-content">
-                    <div class="msg-header"><span class="msg-from">Vinoteca Roma started following you</span><span class="msg-time">45m ago</span></div>
-                    <div class="msg-preview">They're now in your Wine Fans — see who else follows you under My Distributors → Wine Fans.</div>
-                  </div>
-                  <div class="msg-unread"></div>
-                </div>
-                <div class="msg-item">
-                  <div class="msg-avatar">HW</div>
-                  <div class="msg-content">
-                    <div class="msg-header"><span class="msg-from">Hawesko GmbH</span><span class="msg-time">2h ago</span></div>
-                    <div class="msg-preview">We'd love to schedule a tasting for your Primitivo...</div>
-                  </div>
-                  <div class="msg-unread"></div>
-                </div>
-                <div class="msg-item">
-                  <div class="msg-avatar">BL</div>
-                  <div class="msg-content">
-                    <div class="msg-header"><span class="msg-from">Bottle Lobby Team</span><span class="msg-time">1d ago</span></div>
-                    <div class="msg-preview">Your Wine Show spot in Munich is confirmed for Sept 12</div>
-                  </div>
-                </div>
-              </div>
+              <div class="widget-body" style="padding-top:0.6rem" id="wnotif-widget"></div>
             </div>
             <div class="widget">
               <div class="widget-header">
@@ -10500,7 +10483,13 @@ function notifDestination(role, n) {
    remove the row's dot — never bring one back. */
 function openNotification(role, n) {
   notifMarkSeen(role, n.id);
-  renderNotifications(role);
+  /* refreshNotifications(), not renderNotifications(role): the same row
+     is reachable from the overview widget, and renderNotifications()
+     returns early for a sub-view that was never opened (B12) — taking
+     the badge and the widget down with it. A row read in one place is
+     read in all of them. Measured in Chrome: reading from the widget
+     left the badge at 13. */
+  refreshNotifications();
   notifDestination(role, n);
 }
 
@@ -10567,6 +10556,46 @@ function openNotifRequests(role) {
   NOTIF_PROFILE_ROUTER[role]('requests');
 }
 
+/* Rows into a container, with their click bound. Shared by the
+   sub-view and the overview widget: two copies of this would be two
+   answers to "what does a notification look like and what does it
+   open", which is the drift mountShowCards() exists to prevent for
+   show cards.
+
+   The click is bound to the entry OBJECT, not to its id in an onclick
+   string: an id is built from free text (order notes, event lines) and
+   would have to survive an apostrophe in an HTML attribute. */
+function mountNotifRows(host, role, list, unread, emptyMsg) {
+  if (!host) return;
+  host.innerHTML = list.length
+    ? list.map(function (n) { return notifRowHtml(n, unread(n)); }).join('')
+    : '<div style="padding:0.4rem 0;font-size:0.78rem;color:var(--dim)">' + emptyMsg + '</div>';
+  Array.prototype.forEach.call(host.querySelectorAll('.msg-item'), function (row, i) {
+    if (!list[i].target) return;
+    row.addEventListener('click', function () { openNotification(role, list[i]); });
+  });
+}
+
+/* The overview widget: the first three, whatever needs the reader
+   first, and an honest count of the rest — cutting the list silently
+   would read as "that is all there is" (the note on
+   paintAppearanceWidget()). */
+function paintNotifWidget(elId, role) {
+  const host = document.getElementById(elId);
+  if (!host) return;
+  const all = notificationsFor(role);
+  const seen = notifSeen[SHOW_ROLES[role].entity] || [];
+  const unread = function (n) { return seen.indexOf(n.id) === -1; };
+  const ordered = all.filter(function (n) { return n.cls === 'await'; })
+    .concat(all.filter(function (n) { return n.cls !== 'await'; }));
+  mountNotifRows(host, role, ordered.slice(0, 3), unread,
+    'Nothing yet — this fills up as orders, shows and followers move.');
+  if (ordered.length > 3)
+    host.insertAdjacentHTML('beforeend',
+      '<div style="padding:0.6rem 0 0;font-size:0.72rem;color:var(--dim)">+ ' +
+      (ordered.length - 3) + ' more</div>');
+}
+
 function notifShellHtml(role) {
   const p = NOTIF_ROLES[role].prefix;
   return '<div class="ord-toolbar">' +
@@ -10609,20 +10638,9 @@ function renderNotifications(role) {
       const u = list.filter(unread).length;
       cnt.textContent = list.length + (u ? ' · ' + u + ' unread' : '');
     }
-    host.innerHTML = list.length
-      ? list.map(function (n) { return notifRowHtml(n, unread(n)); }).join('')
-      : '<div style="padding:0.4rem 0;font-size:0.78rem;color:var(--dim)">' + (k === 'await'
-          ? 'Nothing is waiting on you right now.'
-          : 'Nothing to report yet.') + '</div>';
-
-    /* Bound to the object rather than to its id in an onclick string:
-       a notification id is built from free text (order notes, event
-       lines) and would have to be escaped into an attribute to survive
-       an apostrophe. The row already knows which entry it is. */
-    Array.prototype.forEach.call(host.querySelectorAll('.msg-item'), function (row, i) {
-      if (!list[i].target) return;
-      row.addEventListener('click', function () { openNotification(role, list[i]); });
-    });
+    mountNotifRows(host, role, list, unread, k === 'await'
+      ? 'Nothing is waiting on you right now.'
+      : 'Nothing to report yet.');
   });
 
   const u = all.filter(unread).length;
@@ -10634,6 +10652,7 @@ function renderNotifications(role) {
   const btn = document.getElementById(p + '-markall');
   if (btn) btn.disabled = !u;
 
+  if (role === 'winery') paintNotifWidget('wnotif-widget', 'winery');
   notifBadges();
 }
 
@@ -10654,12 +10673,15 @@ function refreshNotifications() {
   Object.keys(NOTIF_ROLES).forEach(function (r) {
     if (notifState[r].built) renderNotifications(r);
   });
+  /* The overview widget is not behind a nav item — it is on screen the
+     moment the winery dashboard is, so it is repainted every time. */
+  paintNotifWidget('wnotif-widget', 'winery');
   notifBadges();
 }
 
 function markAllNotifications(role) {
   notifMarkAllSeen(role);
-  renderNotifications(role);
+  refreshNotifications();
   showToast('✓ All notifications marked as read');
 }
 
@@ -10701,6 +10723,7 @@ function hideNotifsView(role) {
    top-level `let` declared above, and reading it any earlier would hit
    the temporal dead zone. */
 notifBadges();
+paintNotifWidget('wnotif-widget', 'winery');
 
 BLStore.register({
   /* Wine Shows, with their exhibitors, guests, products, interests,

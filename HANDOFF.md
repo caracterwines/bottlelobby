@@ -23,6 +23,49 @@ Kein Build-Command, Publish-Directory = Repo-Root.
 
 ## Zuletzt abgeschlossen
 
+- **02.08.: Messages-Kette, Durchgang 2b — die Oberflaeche. Spec C9 bekommt den
+  Abschnitt „The surface".** Drei Commits, jeder einzeln im Browser gegengeprueft.
+  **Nav + Unteransicht + Badge:** „Notifications" ueber „Messages" in allen vier
+  Rollen mit eigener Badge-Id; die vier fest verdrahteten Messages-Badges sind
+  unangetastet geblieben. Die Unteransicht zeichnet die zwei Klassen getrennt und
+  fragt fuer jede Zahl auf dem Schirm `notificationsFor()` / `notifUnread()` —
+  die Flaeche kennt **keine eigene Regel**, denn eine Regel hier waere eine, die
+  die zugesicherte Ableitung nicht kennt. `NOTIF_ROLES` haelt nur die neuen Ids;
+  alles andere ueber eine Rolle wird aus `SHOW_ROLES` gelesen.
+  **Klickziele:** Wine Show → Popup, dessen Rumpf ausschliesslich
+  `publicShowCard(s, publicLevelFor(s))` ist; Profil → das A13-Embed der echten
+  Seite (`openPublicPreview()` nimmt seine Seite jetzt als Argument, die vier
+  „Preview my profile"-Knoepfe laufen durch dieselbe Funktion); Wein → einfacher
+  Link, neuer Tab; Bestellung und Anfrage → die vorhandenen Ansichten.
+  **Gemessen statt vermutet — und ein Punkt des Auftrags stimmte so nicht:**
+  keine einzige Benachrichtigung nannte einen Wein, obwohl `openProposalFor()`
+  einen in der Hand hatte und der Satz „A wine is waiting for your answer"
+  lautete. Die Await-Zeile nennt ihn jetzt beim Namen. Der Link kommt aus einem
+  neuen **`url`-Feld an `partnerWinesPool`**, nicht aus einer Slug-Ableitung —
+  Serges Entscheidung, mit der Begruendung, dass String-Zuordnung hier schon
+  zweimal stillschweigend versagt hat (Invariante 4, A14.4). Ein Wein ohne
+  Artikelseite wird genannt und nicht verlinkt.
+  **Das Widget auf der Winzer-Uebersicht** ist ersetzt; „Vinoteca Roma started
+  following you" ist jetzt die `wineFollowGraph`-Kante, die sie immer war.
+  **Ein Fehler, den erst der Browser zeigte:** ein Klick **im Widget** oeffnete
+  das Ziel, liess Badge und Punkt aber stehen — `openNotification()` zeichnete
+  nur seine eigene Unteransicht neu, und die kehrt fuer eine nie geoeffnete
+  Ansicht sofort zurueck (B12). jsdom sah das nicht, weil mein Harness die
+  Widget-Zeile nicht geklickt hatte. Behoben ueber `refreshNotifications()`,
+  und die fehlende Zusicherung ist nachgezogen.
+  **`tests/notifications.js` — 13 statt 8 Abschnitte, sechs Gegenproben**, alle
+  rot gesehen: Badge zaehlt `notificationsFor()` statt `notifUnread()`; die
+  Klassentrennung entfernt; das Popup auf Stufe `full` gezwungen; das Popup von
+  Hand gerendert statt `publicShowCard()` gefragt; einem Wein die `url`
+  weggenommen und trotzdem verlinkt; ein handgeschriebener Eintrag im Widget.
+  **Abnahme im echten Chrome** (lokaler Server, ueber die Knoepfe): Badge 13 →
+  alles gelesen markieren → F5 → Badge bleibt leer, `notifSeen` aus dem Store
+  wiederhergestellt. Dazu einzeln geprueft: Regional-Popup auf WS-2605 nennt
+  Titel, Datum, Stadt, Ausrichtung und **nichts** von Aussteller, Wein oder
+  Location; das Popup des Ausstellers Cantina Rossi auf Grande Rioja ebenfalls
+  nicht; das Follow-Popup laedt das echte Winzerprofil im Embed-Modus.
+  **Noch offen, unveraendert aus Durchgang 1:** die Show-Kanten sind nicht
+  datiert.
 - **02.08.: Messages-Kette, Durchgang 2a — die Ableitung. Spec C9 geschrieben.**
   **Die Oberflaeche fehlt noch** (siehe „Offene Punkte" → 2b). Was steht:
   `notificationsFor(role)` liefert die Liste je Rolle, abgeleitet aus Orders,
@@ -479,27 +522,18 @@ Oberflaeche. **Nichts in A1–A16 verlangt (b) heute.**
 handgeschriebene Widget ersetzen. (b) nicht anfassen, bis es einen
 Geschaeftsgrund gibt — und den dann zuerst in die Spec, nicht in den Code.
 
-**▶ NAECHSTES: Durchgang 2b — die Oberflaeche.** Die Ableitung steht und ist
-zugesichert (`tests/notifications.js`, 14 Harnesses gruen), sichtbar ist davon
-noch **nichts**. Offen:
-1. **Nav-Eintrag „Notifications" UEBER „Messages"** in allen vier Rollen, mit
-   Badge aus `notifUnread(role).length`. Die vier `Messages`-Eintraege bleiben
-   vorerst tot daneben stehen — sie sind Feature (b), Korrespondenz.
-   Zu beachten: Winzer und Distributor haben fest verdrahtete Badges **ohne
-   `id`** (`2` und `3`), die neuen brauchen welche.
-2. **Die Unteransicht** je Rolle, nach dem Muster der Orders-/Shows-Ansicht
-   (`*_SECTION_EL` / `*_NAV_EL` / `*_TITLES` / `*_GROUPS`), zwei Klassen
-   getrennt dargestellt: „Awaiting you" und „For information".
-3. **Das handgeschriebene Messages-Widget** auf der Winzer-Uebersicht ersetzen —
-   es enthaelt drei erfundene Nachrichten, darunter „Vinoteca Roma started
-   following you", zu der es laengst einen echten Datensatz gibt. A1-Verstoss
-   im Markup, und der Renderer dafuer existiert jetzt.
-**Beim Abnehmen (Serges Vorgabe):** Badge auf n → alles gelesen markieren → F5 →
-Badge bleibt 0. Die Lesezeiger-**Logik** ist zugesichert (Markieren, Id-Stabilitaet
-ueber eine Neuableitung, ein neues Ereignis wird wieder ungelesen, Registrierung
-bei `BLStore`) — **der Weg ueber die Oberflaeche und ein echtes F5 ist es nicht.**
-Genau dort war der Unterschied zwischen jsdom und Browser bisher am groessten
-(C8: der Ausloeser, den das Harness gruen sah und der im Browser nicht schrieb).
+**▶ ERLEDIGT: Durchgang 2b — die Oberflaeche steht.** Nav-Eintrag, Unteransicht,
+Popup und Widget-Ersatz sind gebaut, `tests/notifications.js` haelt sie mit
+sechs Gegenproben. Der Abnahmeweg ist im echten Chrome ueber die Knoepfe
+gefahren, nicht ueber die Konsole. Details unter „Zuletzt abgeschlossen".
+
+**▶ NAECHSTES aus dieser Kette: Feature (b), Korrespondenz — und zwar erst,
+wenn die Geschaeftsfrage beantwortet ist.** Die vier `Messages`-Nav-Eintraege
+stehen weiter tot neben „Notifications". Sie lebendig zu machen heisst, eine
+Nachrichtentabelle, einen Verfassen-Dialog und Threads zu bauen — und vorher zu
+entscheiden, **wer wem schreiben darf**. Ein Postfach, in dem ein Distributor
+einen Winzer ohne Partnerschaft anschreiben kann, ist eine Aenderung am Modell
+(A6, A3) und keine Oberflaeche. Die Antwort gehoert zuerst in die Spec.
 
 **▶ ERLEDIGT in Durchgang 2 — und die urspruengliche Diagnose war falsch.
 `acceptOrder()` war toter Code, nicht eine Luecke im Audit-Trail.**

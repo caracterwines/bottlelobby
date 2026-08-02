@@ -2737,6 +2737,44 @@ the regional class A8's first real application.
 > into it. Resolving "they asked for it, so they may see more" would be the
 > silent A16.6 leak this whole section exists to prevent.
 
+### The surface — and the one rule that is load-bearing
+
+The list is a **worklist above a record**: "Awaiting you" and "For information"
+are drawn apart, never interleaved. Mixing them hands the reader the sorting job
+the two classes already did. The sidebar badge counts the **unread** part, not
+the derivation — a badge that counts everything looks right on day one and stops
+being actionable the moment anything is read.
+
+**A row opens the thing it is about, on the surface that already renders it.**
+Notifications is a query layer; it must not become a place where things are
+rendered a second time.
+
+| The row is about | It opens | Never |
+|---|---|---|
+| A wine show | A popup whose body is the **public show card at the level the show's stage grants** — the same renderer the public Wine Shows page and the public profiles call | Its own rendering of the show |
+| A stakeholder | That stakeholder's **real public profile page, embedded** | A second profile renderer |
+| A wine | A **plain link** to the wine's article page, new tab | A popup |
+| An order, a partnership request | The Orders view / the Requests section that already exists | A copy of either |
+
+**The wine show popup is where this pass could have gone wrong, and the reason
+is condition 3.** The list reaches a restaurant that merely browses (A16.0) and,
+through the regional exception, a house with no relation to the show at all. A
+popup that rendered the show itself would be a **fourth surface** — the one place
+where A16.6's anonymisation does not hold — and it would leak silently, because
+a fuller card looks like a better card. So the popup shows the public card **to
+everybody, participants included**, and the way to the working view is a link
+into the existing Wine Shows route, which decides for itself what that viewer
+may see. A participant losing one click is the price of the rule holding
+everywhere at once.
+
+**A link to a wine is a reference, not a string.** The article page comes from a
+`url` on the product record. Deriving it from the product's name — slugifying
+"Primitivo Riserva" into a filename — would make a cross-feature link depend on
+string equality, which is what invariant 4 exists to prevent, and this project
+has already paid for it once (A14.4, the em dash in "Riesling Spätlese — Mosel").
+**A product with no article page is named without a link.** No link beats a
+guessed one.
+
 ### What this requires of the sources
 
 Every source has to answer two questions about every event: **who** and **when**.
