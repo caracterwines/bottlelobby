@@ -144,7 +144,7 @@ console.log('── isolation: a harness can never inherit another\'s state');
     const t = openTab(area, { persist: true, killSwitch: true });
     const n = t.w.eval('wineShows.length');
     if (n === 1) bad('BL_NO_PERSIST did not stop the store — poisoned data was read');
-    else if (n === 5) ok('BL_NO_PERSIST ignores a poisoned localStorage (5 fixture shows, not 1)');
+    else if (n === 6) ok('BL_NO_PERSIST ignores a poisoned localStorage (6 fixture shows, not 1)');
     else bad('unexpected show count with the kill switch set: ' + n);
     if (t.w.eval('BLStore.isActive()')) bad('BLStore reports itself active with BL_NO_PERSIST set');
     else ok('BLStore.isActive() is false with the kill switch set');
@@ -158,7 +158,7 @@ console.log('── isolation: a harness can never inherit another\'s state');
        by hand — this is the check that protects the other 11 files. */
     const plain = openTab(area, {});
     const pn = plain.w.eval('wineShows.length');
-    if (pn === 5) ok('loadDashboard() defaults to persistence off — the other harnesses are safe');
+    if (pn === 6) ok('loadDashboard() defaults to persistence off — the other harnesses are safe');
     else bad('loadDashboard() default did NOT disable persistence (shows: ' + pn + ')');
     const before2 = area._data[KEY];
     nudge(plain.w); await settle(plain.w);
@@ -374,7 +374,7 @@ console.log('\n── a stale snapshot ends as "discarded", not as a bug hunt');
     const t = openTab(area, { persist: true });
     if (t.w.eval("wineShows.some(s => s.id === 'WS-STALE')"))
       bad(label + ': stale data was restored anyway');
-    else if (t.w.eval('wineShows.length') !== 5)
+    else if (t.w.eval('wineShows.length') !== 6)
       bad(label + ': did not fall back to the fixtures (' + t.w.eval('wineShows.length') + ' shows)');
     else ok(label + ' → fixtures');
     if (t.errs.length) bad(label + ': the page threw while recovering');
@@ -384,7 +384,7 @@ console.log('\n── a stale snapshot ends as "discarded", not as a bug hunt');
   const area = makeStorageArea();
   area._data[KEY] = '{not json at all';
   const t = openTab(area, { persist: true });
-  if (t.w.eval('wineShows.length') !== 5) bad('unreadable JSON did not fall back to the fixtures');
+  if (t.w.eval('wineShows.length') !== 6) bad('unreadable JSON did not fall back to the fixtures');
   else ok('unreadable JSON → fixtures, no crash');
   if (area._data[KEY] !== undefined) bad('the unusable snapshot was left in storage to fail again');
   else ok('the unusable snapshot is cleared out rather than re-read forever');

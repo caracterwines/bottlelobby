@@ -8111,7 +8111,7 @@ function showReadiness(show) {
 function promoteIfReady(show) {
   if (show.stage === 'draft' && showReadiness(show).ready) {
     show.stage = 'planning';
-    logShow(show, 'Bottle Lobby', 'Venue, exhibitor and product confirmed — show moved to Planning');
+    logShow(show, 'Bottle Lobby', 'Venue, exhibitor and product confirmed — show moved to Planning', 'show');
     return true;
   }
   return false;
@@ -8130,8 +8130,19 @@ function actionShow(id) {
 function actionSay(msg) { showToast('✗ ' + msg); }
 
 const SHOW_TODAY = '31 Jul 2026';
-function logShow(show, actor, text) {
-  show.events.push({ at: SHOW_TODAY, actor: actor, text: text });
+/* `scope` answers condition 2 of C9 in the record instead of in a text
+   heuristic: 'show' marks an event about the show ITSELF — a stage
+   change — which every participant may read, because it changes their
+   relation to the thing. Everything else is an edge event and defaults
+   to undefined: it belongs to the one party it is about and is never
+   forwarded to the others. "Bistro Laurent invited to attend" is the
+   case that decides this — it sits in a record an exhibitor is part of
+   and is still the host's book (A16.5 rule 4), so notificationsFor()
+   reads only scope:'show' out of this log. */
+function logShow(show, actor, text, scope) {
+  const e = { at: SHOW_TODAY, actor: actor, text: text };
+  if (scope) e.scope = scope;
+  show.events.push(e);
 }
 
 function showProductCount(show) {
@@ -9246,7 +9257,7 @@ function submitShowForRelease(id) {
   const s = actionShow(id); if (!s) return;
   if (!showReadiness(s).ready) { showToast('✗ A show needs a venue, a confirmed exhibitor and a confirmed wine first.'); return; }
   s.stage = 'pending_approval';
-  logShow(s, s.leadHost, 'Submitted to Bottle Lobby for release');
+  logShow(s, s.leadHost, 'Submitted to Bottle Lobby for release', 'show');
   refreshShows();
   showToast('✓ Submitted — Bottle Lobby staff will review the show');
 }
@@ -9256,7 +9267,7 @@ function submitShowForRelease(id) {
 function simulateStaffRelease(id) {
   const s = actionShow(id); if (!s) return;
   s.stage = 'published';
-  logShow(s, 'Bottle Lobby', 'Released — full details are now public');
+  logShow(s, 'Bottle Lobby', 'Released — full details are now public', 'show');
   refreshShows();
   showToast('✓ Released — the show is now fully public');
 }
@@ -10045,6 +10056,245 @@ function redrawAll() {
 /* The one list. A top-level `let` that is neither here nor on the
    transient list in tests/persistence.js fails the build — that check
    is what keeps "one place" true in six months' time. */
+/* ══════════════════════════════════════════════════════════════════
+   NOTIFICATIONS (spec C9) — a query, never a table
+
+   Nothing here is stored except the read marker at the bottom. Every
+   entry is computed from records that already exist, so a notification
+   cannot outlive the fact it reports: confirm the wine and the "waiting
+   on you" line is gone on the next render, with nothing to clean up.
+
+   The three conditions of C9, and where each one lives:
+
+     1. Somebody else caused it — actor !== my entity. Applied in
+        notifPush(), once, so no source can forget it.
+     2. It touches MY relation to the thing. This is why the derivation
+        runs PER RELATION below (my order, my exhibitor edge, my
+        attendance, my venue request, my follower) instead of walking a
+        shared event log and handing it to everyone attached. The one
+        place a shared log is read is scope:'show' — see logShow().
+     3. I may see it anyway. Shows come from showsForRole(), which is
+        the same visibility gate the Wine Shows view uses; orders are
+        filtered to my own two sides. The regional exception is the
+        only entry built from a show I am NOT party to, and it is
+        capped to the public fields — see notifRegional().
+══════════════════════════════════════════════════════════════════ */
+
+/* Where each demo role sits. Only the four playable roles need this —
+   the regional rule asks "is this show in MY city", never anybody
+   else's. On the real platform this is `stakeholders.city`; here the
+   entity's location is otherwise scattered across the follow graph and
+   SELLER_PROFILES, and adding a fifth copy for a general lookup would
+   be the A1 violation this file warns about everywhere else. */
+const ROLE_CITY = {
+  winery:      'Alcamo',
+  distributor: 'Hamburg',
+  restaurant:  'Frankfurt',
+  retail:      'Munich'
+};
+
+/* Two date formats still reach this function: ISO from orders, follows
+   and partnership requests (moved there 2 Aug 2026), and the shows'
+   "30 Jul 2026". Sorting one list built from both needs one comparable
+   value, so this parses rather than assumes. Returns 0 for anything it
+   cannot read, which sorts such an entry last instead of dropping it —
+   a notification with a broken date is still a notification. */
+const NOTIF_MONTHS = { Jan:0, Feb:1, Mar:2, Apr:3, May:4, Jun:5, Jul:6, Aug:7, Sep:8, Oct:9, Nov:10, Dec:11 };
+function notifTime(v) {
+  if (!v) return 0;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(v)) return new Date(v + 'T00:00:00').getTime() || 0;
+  const m = /^(\d{1,2}) ([A-Z][a-z]{2}) (\d{4})$/.exec(v);
+  if (m && NOTIF_MONTHS[m[2]] !== undefined)
+    return new Date(+m[3], NOTIF_MONTHS[m[2]], +m[1]).getTime() || 0;
+  return 0;
+}
+
+/* A stable id per notification. It has to survive a reload and a
+   re-derivation unchanged, or the read marker would forget what it has
+   already seen every time the page reloads — which is the one job it
+   has. Built from the source and the fact, never from the list index. */
+function notifId(kind, key, at) { return kind + '|' + key + '|' + (at || ''); }
+
+/* Condition 1 lives here and nowhere else. */
+function notifPush(list, me, n) {
+  if (n.actor === me) return;
+  list.push(n);
+}
+
+/* ── The regional exception (C9) ─────────────────────────────────
+   The single deliberate breach of condition 2: it goes to houses that
+   have NOTHING to do with the show. That is exactly why condition 3 is
+   load-bearing here rather than incidental — the entry may carry only
+   what A16.6 shows the public on an anonymised show. It therefore
+   reads title, date, city and focus and NOTHING else: no exhibitors,
+   no wines, no venue. Adding a field here is adding a leak. */
+/* Do I have a real relation to this show? Condition 2 turns on this
+   answer, and it is NOT the same question as "may I see this show".
+   showsForRole() is deliberately wide for restaurants and retail —
+   A16.0 makes them the demand side, so they see every publicly listed
+   show whether or not they are in it. Filtering condition 2 through
+   that would have told Weinhaus Müller that Grande Rioja moved to
+   planning, a show it has nothing to do with. Measured, not guessed:
+   the first version of this file did exactly that. */
+function notifHasEdge(show, me) {
+  return show.leadHost === me ||
+         show.venueEntity === me ||
+         attendeesOf(show).some(function (a) { return a.stakeholder === me; }) ||
+         show.exhibitors.some(function (e) { return e.producer === me; });
+}
+
+function notifRegional(role, list) {
+  if (role !== 'restaurant' && role !== 'retail') return;
+  const cfg = SHOW_ROLES[role], city = ROLE_CITY[role];
+  if (!city) return;
+  wineShows.forEach(function (s) {
+    if (s.city !== city) return;
+    /* Not party to it — otherwise it is an ordinary condition-2 entry
+       and would appear twice, once as mine and once as "in your area". */
+    if (notifHasEdge(s, cfg.entity)) return;
+    /* Condition 3: only shows a stranger may see at all. */
+    if (!publicShows([s], false).length && !publicShows([s], true).length) return;
+    notifPush(list, cfg.entity, {
+      id: notifId('regional', s.id, s.date),
+      kind: 'regional', cls: 'info', at: s.date, actor: s.leadHost,
+      title: 'New Wine Show in your region',
+      /* Public fields only. */
+      text: s.title + ' · ' + s.date + ' · ' + s.city + (s.focus ? ' — ' + s.focus : ''),
+      goto: null
+    });
+  });
+}
+
+/* ── The derivation ──────────────────────────────────────────────── */
+function notificationsFor(role) {
+  const cfg = SHOW_ROLES[role], me = cfg.entity, out = [];
+
+  /* 1. Orders — one record, two perspectives (invariant 8). Both
+     parties are an edge of the same row, so every log line is about
+     the relation itself; condition 1 removes the ones I caused. */
+  orders.forEach(function (o) {
+    if (o.buyer !== me && o.seller !== me) return;
+    (o.log || []).forEach(function (e) {
+      notifPush(out, me, {
+        id: notifId('order', o.id + '·' + e.text, e.at),
+        kind: 'order', cls: 'info', at: e.at, actor: e.actor,
+        title: o.id + ' — ' + (o.buyer === me ? o.seller : o.buyer),
+        text: e.text, goto: null
+      });
+    });
+  });
+
+  /* 2. Shows, "awaiting you" — showAwaits() is asked rather than
+     re-derived, so this list and the Wine Shows badge can never give
+     two answers to "does this need me?" (C9, A16.10). */
+  showsForRole(role).forEach(function (s) {
+    if (showAwaits(role, s)) {
+      out.push({
+        id: notifId('await', s.id, s.stage),
+        kind: 'show', cls: 'await', at: s.date, actor: null,
+        title: 'Waiting for you — ' + s.title,
+        text: notifAwaitReason(role, s), goto: s.id
+      });
+    }
+    /* 3. Shows, "for information" — ONLY scope:'show', and only where
+       I actually have an edge. The edge events in the same log belong
+       to whoever they are about (condition 2). */
+    if (!notifHasEdge(s, me)) return;
+    (s.events || []).forEach(function (e) {
+      if (e.scope !== 'show') return;
+      notifPush(out, me, {
+        id: notifId('show', s.id + '·' + e.text, e.at),
+        kind: 'show', cls: 'info', at: e.at, actor: e.actor,
+        title: s.title, text: e.text, goto: s.id
+      });
+    });
+  });
+
+  /* 4. Partnership requests (A6). The incoming ones wait on me. */
+  notifRequests(role, me, out);
+
+  /* 5. Follows (A7) — "X started following you", the notification the
+     spec promises by name. The edge is the fact; `at` came with the
+     2 Aug 2026 pass that made this derivable at all. */
+  wineFollowGraph.forEach(function (f) {
+    if (f.winery !== me) return;
+    notifPush(out, me, {
+      id: notifId('follow', f.follower + '→' + f.winery, f.at),
+      kind: 'follow', cls: 'info', at: f.at, actor: f.follower,
+      title: f.follower + ' started following you',
+      text: (followRoleLabel[f.followerType] || '') + (f.location ? ' · ' + f.location : ''),
+      goto: null
+    });
+  });
+
+  /* 6. The named exception. */
+  notifRegional(role, out);
+
+  return out.sort(function (a, b) { return notifTime(b.at) - notifTime(a.at); });
+}
+
+/* Why a show is waiting, in the words of the side that is waiting.
+   Reads the same two functions the chips and badges read. */
+function notifAwaitReason(role, s) {
+  const cfg = SHOW_ROLES[role];
+  if (cfg.side === 'venue') {
+    const me = myAttendance(role, s);
+    if (me && me.status === 'invited') return 'You have been invited to attend';
+    if (venueTurn(s) === 'venue') return 'A venue request is waiting for your answer';
+  }
+  if (cfg.side === 'host' && attendeesOf(s).some(function (a) { return a.status === 'requested'; }))
+    return 'Someone has asked for a place';
+  return 'A wine is waiting for your answer';
+}
+
+/* The incoming request array of each role, reached through a getter
+   rather than by name: these are top-level `let`s in a classic script,
+   so they are not properties of `window` and a name lookup would
+   silently find nothing — the same trap C8 documents for the store. */
+const NOTIF_REQUESTS = {
+  winery:      function () { return wineryRequests; },
+  distributor: function () { return incomingRequests; },
+  restaurant:  function () { return rIncomingRequests; },
+  retail:      function () { return tIncomingRequests; }
+};
+function notifRequests(role, me, out) {
+  const get = NOTIF_REQUESTS[role];
+  const rows = get ? get() : null;
+  (rows || []).forEach(function (r) {
+    if (r.stage !== 'pending') return;
+    const who = r.name || r.winery;
+    out.push({
+      id: notifId('request', who, r.received),
+      kind: 'request', cls: 'await', at: r.received, actor: null,
+      title: 'Partnership request — ' + who,
+      text: (r.roleLabel || r.type || '') + (r.region ? ' · ' + r.region : ''),
+      goto: null
+    });
+  });
+}
+
+/* ── The read marker — the ONE thing that is stored (C9) ──────────
+   Whether I have seen something cannot be derived from the events, so
+   this is real state. It is still not an inbox: it holds ids, not
+   messages, and an id that no longer matches any derived notification
+   simply stops being consulted. Keyed by entity rather than by role so
+   that it stays true if a role ever plays a different house. */
+let notifSeen = { 'Cantina Rossi':[], 'Hawesko GmbH':[], 'Bistro Laurent':[], 'Weinhaus Müller':[] };
+
+function notifUnread(role) {
+  const me = SHOW_ROLES[role].entity, seen = notifSeen[me] || [];
+  return notificationsFor(role).filter(function (n) { return seen.indexOf(n.id) === -1; });
+}
+function notifMarkAllSeen(role) {
+  const me = SHOW_ROLES[role].entity;
+  const ids = notificationsFor(role).map(function (n) { return n.id; });
+  const seen = notifSeen[me] || [];
+  /* Union, not replace: an entry that scrolled out of the derivation
+     must not become unread again if it ever comes back. */
+  ids.forEach(function (id) { if (seen.indexOf(id) === -1) seen.push(id); });
+  notifSeen[me] = seen;
+}
+
 BLStore.register({
   /* Wine Shows, with their exhibitors, guests, products, interests,
      venue and event log (A16). Lives in assets/bottle-lobby-data.js. */
@@ -10082,7 +10332,11 @@ BLStore.register({
 
   /* My Stars / My Fans (A7). Read-only in the prototype today —
      see the note at the declaration. */
-  wineFollowGraph:        [function () { return wineFollowGraph; },        function (v) { wineFollowGraph = v; }]
+  wineFollowGraph:        [function () { return wineFollowGraph; },        function (v) { wineFollowGraph = v; }],
+
+  /* The notification read marker (C9). The only stored part of
+     Notifications — everything else is derived on read. */
+  notifSeen:              [function () { return notifSeen; },              function (v) { notifSeen = v; }]
 });
 
 /* The "Saved" receipt in the demo bar. Fires only on a write that

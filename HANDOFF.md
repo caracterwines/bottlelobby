@@ -23,6 +23,36 @@ Kein Build-Command, Publish-Directory = Repo-Root.
 
 ## Zuletzt abgeschlossen
 
+- **02.08.: Messages-Kette, Durchgang 2a — die Ableitung. Spec C9 geschrieben.**
+  **Die Oberflaeche fehlt noch** (siehe „Offene Punkte" → 2b). Was steht:
+  `notificationsFor(role)` liefert die Liste je Rolle, abgeleitet aus Orders,
+  Show-Ereignissen, Anfragen und Follow-Graph; `notifUnread()` / `notifMarkAllSeen()`
+  darueber. Der **Lesezeiger `notifSeen`** ist im `BLStore.register`-Block und das
+  einzige Gespeicherte — Ids, keine Nachrichten.
+  **Bedingung 2 im Datensatz statt in einer Textheuristik:** `logShow()` nimmt ein
+  viertes Argument `scope`. Nur `scope:'show'` (Stage-Wechsel) geht an alle
+  Beteiligten; die 24 uebrigen Log-Zeilen sind Kanten-Ereignisse und werden gar
+  nicht gelesen. „Bistro Laurent invited to attend" erreicht Bodegas Ruiz damit
+  nie — Serges Gegenbeispiel, jetzt strukturell ausgeschlossen statt per Filter.
+  **Ein eigener Fehler, von der Probe gefunden:** die erste Fassung filterte
+  Klasse 2 ueber `showsForRole()`. Das ist fuer Restaurant und Retail bewusst
+  **weit** (A16.0, Nachfrageseite sieht alle oeffentlichen Shows) — Weinhaus
+  Mueller bekam dadurch „Grande Rioja auf planning", eine Show ohne jede
+  Beziehung zu ihm. Genau die Verletzung, gegen die Bedingung 2 geschrieben ist,
+  und sie stand in meinem eigenen Code. Jetzt entscheidet `notifHasEdge()`;
+  „darf ich es sehen" und „habe ich eine Beziehung dazu" sind zwei Fragen.
+  **Neue Fixture WS-2605 „Rhein & Main Selection"** (Frankfurt, `planning`) — der
+  einzige Regional-Fall in den Daten, weil jedes Haus in seiner eigenen Stadt
+  sonst schon Location ist. Gemessen: der Eintrag nennt Titel, Datum, Stadt,
+  Ausrichtung und **weder Aussteller noch Location**. Bewusst spaet datiert, sonst
+  verdraengt sie „Nordic Selection" aus dem Stars-Feed und `follow-feed.js` faellt
+  aus einem Grund um, der nichts mit ihr zu tun hat.
+  Vier Harnesses zaehlten Shows hart und wurden nachgezogen (nicht bloss
+  hochgezaehlt: `venue-request.js` benennt die neue Show jetzt).
+  **Noch offen aus Durchgang 1:** die Show-Kanten sind nicht datiert — Aussteller,
+  Weinvorschlaege und `venueStatus` haben kein `at`, nur `attendees[].at`. Fuer
+  Klasse 1 faellt das nicht auf, weil `showAwaits()` einen Zustand beantwortet und
+  kein Datum braucht. Sobald eine Kante ein Datum zeigen soll, ist es ein Thema.
 - **02.08.: Messages-Kette, Durchgang 1 — die Felder, aus denen Benachrichtigungen
   abgeleitet werden koennen (Groundwork zu C9).** Rein mechanisch; sichtbar aendert
   sich nur das Datumsformat. Drei Quellen konnten die zwei Fragen, die eine
@@ -431,6 +461,25 @@ Oberflaeche. **Nichts in A1–A16 verlangt (b) heute.**
 **Empfehlung:** (a) als eigenen, mittelgrossen Durchgang bauen und dabei das
 handgeschriebene Widget ersetzen. (b) nicht anfassen, bis es einen
 Geschaeftsgrund gibt — und den dann zuerst in die Spec, nicht in den Code.
+
+**▶ NAECHSTES: Durchgang 2b — die Oberflaeche.** Die Ableitung steht und ist
+geprueft (13 Harnesses gruen), sichtbar ist davon noch **nichts**. Offen:
+1. **Nav-Eintrag „Notifications" UEBER „Messages"** in allen vier Rollen, mit
+   Badge aus `notifUnread(role).length`. Die vier `Messages`-Eintraege bleiben
+   vorerst tot daneben stehen — sie sind Feature (b), Korrespondenz.
+   Zu beachten: Winzer und Distributor haben fest verdrahtete Badges **ohne
+   `id`** (`2` und `3`), die neuen brauchen welche.
+2. **Die Unteransicht** je Rolle, nach dem Muster der Orders-/Shows-Ansicht
+   (`*_SECTION_EL` / `*_NAV_EL` / `*_TITLES` / `*_GROUPS`), zwei Klassen
+   getrennt dargestellt: „Awaiting you" und „For information".
+3. **Das handgeschriebene Messages-Widget** auf der Winzer-Uebersicht ersetzen —
+   es enthaelt drei erfundene Nachrichten, darunter „Vinoteca Roma started
+   following you", zu der es laengst einen echten Datensatz gibt. A1-Verstoss
+   im Markup, und der Renderer dafuer existiert jetzt.
+4. **`tests/notifications.js`** — noch nicht geschrieben. Muss die drei
+   Bedingungen, die zwei Klassen, die Regional-Ausnahme (samt Leck-Probe) und
+   den Lesezeiger halten, und gegen absichtlich kaputte Fassungen laufen.
+   Bis dahin ist die Ableitung nur von Hand gemessen, nicht zugesichert.
 
 **▶ ERLEDIGT in Durchgang 2 — und die urspruengliche Diagnose war falsch.
 `acceptOrder()` war toter Code, nicht eine Luecke im Audit-Trail.**

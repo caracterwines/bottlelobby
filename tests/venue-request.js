@@ -93,7 +93,12 @@ w.showWineShows('restaurant','current');
   else ok('pending_approval absent — nothing is listed before it is listable');
   if (!has('Sicilia Prima')) bad('the show it is the venue for is missing — a draft reaches it by relation');
   else ok('its own venue request is listed too, draft though it is');
-  if (rows.length !== 3) bad('expected 3 rows (2 public + 1 relation), got ' + rows.length);
+  /* WS-2605 is the C9 regional fixture: a Frankfurt planning show this
+     restaurant has no relation to. It is publicly listed, so it belongs
+     in this count for exactly the reason Grande Rioja does. */
+  if (!has('Rhein')) bad('the second planning show must be listed too — anonymised, but listed');
+  else ok('the regional-fixture show is listed like any other planning show');
+  if (rows.length !== 4) bad('expected 4 rows (3 public + 1 relation), got ' + rows.length);
 
   /* the venue request sorts first and is labelled as what it is */
   if (!rows[0].textContent.includes('Sicilia Prima')) bad('the request should sort to the top: ' + rows[0].textContent.slice(0,40));
@@ -117,8 +122,8 @@ w.showWineShows('restaurant','current');
 w.showWineShows('retail','current');
 {
   const rows = [...d.querySelectorAll('#tshow-table .otbl-row')];
-  if (rows.length !== 2) bad('retail should see the 2 publicly listed shows, got ' + rows.length);
-  else ok('retail sees the same 2 public shows — it is the venue of none of them');
+  if (rows.length !== 3) bad('retail should see the 3 publicly listed shows, got ' + rows.length);
+  else ok('retail sees the same 3 public shows — it is the venue of none of them');
   if (rows.some(r => r.textContent.includes('Sicilia Prima'))) bad('LEAK: a draft show reached a role with no relation to it');
   else ok('the draft stays with the venue it was sent to');
 }

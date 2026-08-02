@@ -80,6 +80,36 @@ let wineShows = [
       { at:'30 Jul 2026', actor:'Hawesko GmbH', text:'Show created as a draft' },
       { at:'30 Jul 2026', actor:'Hawesko GmbH', text:'Venue request sent to Bistro Laurent' } ] },
 
+  /* Deliberate fixture for C9's regional exception. Bistro Laurent sits
+     in Frankfurt and has NOTHING to do with this show — not host, not
+     venue, not exhibitor, not guest. It is the only pair in the data
+     that produces a "New Wine Show in your region" entry, and without
+     it the exception would be covered by construction only, exactly
+     like the Bodegas Ruiz follow edge for A16.6. `planning` on purpose:
+     the show is publicly listed but anonymised, so the notification is
+     the capped one — title, date, city, focus and nothing else.
+     tests/notifications.js asserts this pair exists and fails if it
+     is removed. */
+  /* Dated after the other upcoming shows on purpose: the "From Your
+     Stars" feed shows only the next few, and an earlier date here would
+     push Nordic Selection out of it — which is what tests/follow-feed.js
+     asserts about, not about this show. The regional rule does not care
+     when the show is, only where. */
+  { id:'WS-2605', title:'Rhein & Main Selection', date:'20 Feb 2027', city:'Frankfurt',
+    focus:'German riesling and pinot for the Rhein-Main on-trade',
+    heroImage:'images/hamburg-glasses.jpg',
+    stage:'planning', leadHost:'Hawesko GmbH',
+    venueType:'host_premises', venueEntity:null,
+    venueName:'Hawesko Rhein-Main Loft, Frankfurt', venueStatus:'not_required',
+    capacity:50, attendees:[],
+    exhibitors:[
+      { producer:'Weingut Schmitt', status:'confirmed', source:'invitation',
+        products:[ { name:'Spätburgunder — Mosel 2022', proposedBy:'host', status:'confirmed' } ] } ],
+    events:[
+      { at:'20 Jul 2026', actor:'Hawesko GmbH', text:'Show created as a draft' },
+      { at:'26 Jul 2026', actor:'Weingut Schmitt', text:'Confirmed with Spätburgunder — Mosel 2022' },
+      { at:'26 Jul 2026', actor:'Bottle Lobby', text:'Venue, exhibitor and product confirmed — show moved to Planning', scope:'show' } ] },
+
   { id:'WS-2601', title:'Grande Rioja', date:'05 Dec 2026', city:'Düsseldorf',
     focus:'Premium reds from Rioja and Sicily',
     heroImage:'images/duesseldorf-tasting-wide.jpg',
@@ -105,7 +135,7 @@ let wineShows = [
       { at:'14 Jul 2026', actor:'Hawesko GmbH', text:'Bodegas Ruiz invited with Rioja Reserva 2019' },
       { at:'17 Jul 2026', actor:'Bodegas Ruiz', text:'Confirmed with Rioja Reserva 2019' },
       { at:'17 Jul 2026', actor:'Hawesko GmbH', text:'Confirmed Rioja Reserva 2019 for Bodegas Ruiz' },
-      { at:'17 Jul 2026', actor:'Bottle Lobby', text:'Venue, exhibitor and product confirmed — show moved to Planning' },
+      { at:'17 Jul 2026', actor:'Bottle Lobby', text:'Venue, exhibitor and product confirmed — show moved to Planning', scope:'show' },
       { at:'24 Jul 2026', actor:'Hawesko GmbH', text:'Weingut Schmitt invited — no wine proposed' },
       { at:'26 Jul 2026', actor:'Weingut Schmitt', text:'Proposed Spätburgunder — Mosel 2022' },
       { at:'28 Jul 2026', actor:'Hawesko GmbH', text:'Cantina Rossi invited with Primitivo Riserva 2020' },
@@ -129,7 +159,7 @@ let wineShows = [
       { at:'02 Jul 2026', actor:'Hawesko GmbH', text:'Show created as a draft' },
       { at:'08 Jul 2026', actor:'Cantina Rossi', text:'Confirmed with Grillo Sicilia DOC 2023 instead of the proposed wine' },
       { at:'09 Jul 2026', actor:'Henri Dubois Domaine', text:'Confirmed with Pouilly-Fumé 2023' },
-      { at:'21 Jul 2026', actor:'Hawesko GmbH', text:'Submitted to Bottle Lobby for release' },
+      { at:'21 Jul 2026', actor:'Hawesko GmbH', text:'Submitted to Bottle Lobby for release', scope:'show' },
       { at:'24 Jul 2026', actor:'Hawesko GmbH', text:'Venue request sent to Vinstuen København' },
       { at:'27 Jul 2026', actor:'Vinstuen København', text:'Quoted € 1,250 for room and catering' } ] },
 
@@ -178,8 +208,8 @@ let wineShows = [
       { at:'20 May 2026', actor:'Hawesko GmbH', text:'Show created as a draft' },
       { at:'02 Jun 2026', actor:'Weingut Schmitt', text:'Confirmed with Müller-Thurgau — Mosel 2023' },
       { at:'04 Jun 2026', actor:'Henri Dubois Domaine', text:'Confirmed with Sancerre Rouge 2022' },
-      { at:'11 Jun 2026', actor:'Hawesko GmbH', text:'Submitted to Bottle Lobby for release' },
-      { at:'15 Jun 2026', actor:'Bottle Lobby', text:'Released — full details are now public' },
+      { at:'11 Jun 2026', actor:'Hawesko GmbH', text:'Submitted to Bottle Lobby for release', scope:'show' },
+      { at:'15 Jun 2026', actor:'Bottle Lobby', text:'Released — full details are now public', scope:'show' },
       { at:'28 Jul 2026', actor:'Weinhaus Müller', text:'Requested a place at the show' },
       { at:'18 Sep 2026', actor:'Restaurant Hafenkante', text:'Wrote an order list: 24 × Sancerre Rouge 2022, 12 × Müller-Thurgau — Mosel 2023' },
       { at:'18 Sep 2026', actor:'Hawesko GmbH', text:'Wrote an order list for Vinoteca Alster: 36 × Sancerre Rouge 2022' } ] },
@@ -242,6 +272,6 @@ let wineShows = [
       { at:'09 Feb 2026', actor:'Weinhaus Müller', text:'Quoted € 780 for room and catering' },
       { at:'11 Feb 2026', actor:'Hawesko GmbH', text:"Accepted Weinhaus Müller's offer" },
       { at:'19 Feb 2026', actor:'Cantina Rossi', text:"Confirmed with Nero d'Avola Sicilia DOC 2022" },
-      { at:'01 Mar 2026', actor:'Bottle Lobby', text:'Released — full details are now public' },
-      { at:'13 Apr 2026', actor:'Bottle Lobby', text:'Show completed' } ] }
+      { at:'01 Mar 2026', actor:'Bottle Lobby', text:'Released — full details are now public', scope:'show' },
+      { at:'13 Apr 2026', actor:'Bottle Lobby', text:'Show completed', scope:'show' } ] }
 ];

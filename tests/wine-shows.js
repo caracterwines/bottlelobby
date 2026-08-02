@@ -61,7 +61,7 @@ if (dup.length) bad('duplicate ids at runtime: ' + [...new Set(dup)]); else ok('
 console.log('\n── list per role');
 w.showWineShows('distributor','current');
 const dRows = d.querySelectorAll('#dshow-table .otbl-row').length;
-if (dRows !== 4) bad('distributor current tab: expected 4 rows, got ' + dRows); else ok('distributor sees 4 active shows');
+if (dRows !== 5) bad('distributor current tab: expected 5 rows, got ' + dRows); else ok('distributor sees 5 active shows');
 w.showWineShows('distributor','history');
 if (d.querySelectorAll('#dshow-table .otbl-row').length !== 1) bad('distributor history should hold 1'); else ok('distributor history = 1');
 w.showWineShows('winery','current');
