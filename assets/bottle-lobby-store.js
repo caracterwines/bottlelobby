@@ -32,10 +32,33 @@
 
    NOBODY CALLS save(). Fifteen arrays wired by hand would be fifteen
    places to forget, and the failure would be silent. Instead the store
-   listens on `document` in the bubble phase — after the inline onclick
-   handlers have run — and writes a debounced snapshot. State in this
-   prototype only ever changes as a consequence of a user action, so
-   this is complete without any mutation site knowing we exist.
+   watches for work to do, in two independent ways — and the second one
+   exists because the first was not enough.
+
+     · DOM events on `document`, bubble phase, so they arrive after the
+       inline onclick handlers have run. This is what makes a save feel
+       immediate.
+     · A HEARTBEAT that simply compares the state to what is in storage
+       and writes if they differ.
+
+   The heartbeat is not belt-and-braces, it is the actual guarantee.
+   The first version had only the event listener, and it was wrong in a
+   way that measured perfectly and still lost data: it saved only when
+   an event arrived AFTER the change. Every ordinary action does bubble
+   a click afterwards, so it looked complete — but anything that
+   changed state without a trailing event was never written at all, and
+   nothing anywhere said so. Tying persistence to how a change was
+   triggered was the mistake; the heartbeat asks the only question that
+   actually matters — does storage still match the state?
+
+   COMPARE AGAINST STORAGE, NEVER AGAINST A VARIABLE. The same version
+   remembered its last write in memory and skipped writing when the new
+   snapshot matched it. Clear localStorage in devtools — the first
+   thing anyone does when testing persistence — and the store went on
+   believing its work was already saved, writing nothing until the
+   state happened to change again. A cache of what is in storage is a
+   second source of truth about storage, and it went stale exactly like
+   any other copy (invariant 1, applied to ourselves).
 
    The whole snapshot measured 24.3 KB on 2 Aug 2026, so it is always
    written whole. No dirty tracking, nothing that can drift apart.
@@ -81,18 +104,19 @@
 window.BLStore = (function () {
   'use strict';
 
-  var KEY      = 'bottle-lobby-demo';
-  var VERSION  = 1;
-  var DEBOUNCE = 200;   /* ms after the last event before a write */
-  var POLL     = 500;   /* ms between retries while the tab is busy */
-  var HEAL_KEY = 'bottle-lobby-demo-healed';
+  var KEY       = 'bottle-lobby-demo';
+  var VERSION   = 1;
+  var DEBOUNCE  = 200;   /* ms after the last event before a write */
+  var HEARTBEAT = 2000;  /* ms between "does storage still match?" checks */
+  var POLL      = 500;   /* ms between retries while the tab is busy */
+  var HEAL_KEY  = 'bottle-lobby-demo-healed';
 
   var entries      = [];   /* { name, get, set } in registration order */
   var fixtureFp    = {};   /* name → hash of the pristine fixture shape */
   var hooks        = {};   /* redraw / afterRestore / onSaved / notify / onExternal */
   var strict       = true;
-  var lastWritten  = null; /* serialised body of the last successful write */
   var saveTimer    = null;
+  var beatTimer    = null;
   var pollTimer    = null;
   var applying     = false;/* true while an external change is being taken in */
   var pendingExt   = false;
@@ -175,7 +199,6 @@ window.BLStore = (function () {
   function discard(why) {
     var ls = storage();
     if (ls) { try { ls.removeItem(KEY); } catch (e) {} }
-    lastWritten = null;
     if (window.console && console.info)
       console.info('[BLStore] stored demo data discarded — ' + why);
     return 'discarded';
@@ -215,28 +238,48 @@ window.BLStore = (function () {
 
     entries.forEach(function (e) { e.set(p.data[e.name]); });
     if (hooks.afterRestore) hooks.afterRestore();
-    lastWritten = serialise();
+    /* Nothing to remember here: the next save() reads storage itself
+       and finds it already matching, so a restore never bounces back
+       out as a write. */
     return 'restored';
   }
 
   /* ── Writing ─────────────────────────────────────────────────────
-     Silent when nothing actually changed, so the "Saved" flash means
-     something was really written rather than something was clicked. */
+     The comparison is against what is IN STORAGE, so the answer stays
+     true no matter what happened to storage behind our back — cleared
+     in devtools, wiped by another tab, never written in the first
+     place. Silent when storage already matches, so the "Saved" flash
+     means something was really written rather than something was
+     clicked.
+
+     serialise() is inside the try on purpose: it used to sit outside,
+     where a throw would escape through the timer callback, kill the
+     pending save and leave nothing behind but a console line. */
   function save() {
     if (applying) return false;
     var ls = storage();
     if (!ls) return false;
-    var body = serialise();
-    if (body === lastWritten) return false;
+
+    var payload;
     try {
-      ls.setItem(KEY, '{"v":' + VERSION + ',"fp":' + JSON.stringify(fixtureFp) +
-                      ',"data":' + body + '}');
+      payload = '{"v":' + VERSION + ',"fp":' + JSON.stringify(fixtureFp) +
+                ',"data":' + serialise() + '}';
     } catch (e) {
+      if (window.console && console.warn)
+        console.warn('[BLStore] could not serialise the demo state — ' + (e && e.message));
+      return false;
+    }
+
+    var current = null;
+    try { current = ls.getItem(KEY); } catch (e) {}
+    if (current === payload) return false;
+
+    try { ls.setItem(KEY, payload); }
+    catch (e) {
       if (window.console && console.warn)
         console.warn('[BLStore] could not write — ' + (e && e.message));
       return false;
     }
-    lastWritten = body;
     if (hooks.onSaved) hooks.onSaved();
     return true;
   }
@@ -303,9 +346,13 @@ window.BLStore = (function () {
   function reset() {
     var ls = storage();
     if (ls) { try { ls.removeItem(KEY); } catch (e) {} }
-    /* Stop beforeunload from writing the state straight back. */
+    /* Stop beforeunload AND the heartbeat from writing the state
+       straight back — the heartbeat would otherwise notice within two
+       seconds that storage no longer matches and helpfully undo the
+       reset. */
     applying = true;
     clearTimeout(saveTimer);
+    clearInterval(beatTimer);
     window.location.reload();
   }
 
@@ -351,9 +398,17 @@ window.BLStore = (function () {
     if (outcome === 'discarded' && hooks.notify)
       hooks.notify('↺ Demo data was reset — the prototype has been updated');
 
+    /* Immediacy … */
     ['click', 'change', 'submit', 'keyup', 'input'].forEach(function (t) {
       document.addEventListener(t, scheduleSave, false);
     });
+    /* … and the guarantee. An event tells us a change was LIKELY; this
+       asks whether one actually happened, which is the only question
+       that cannot be answered wrongly. A change made with no event
+       after it — from a timer, from the console, from a handler that
+       swallows its own click — is written within HEARTBEAT ms rather
+       than never. */
+    beatTimer = setInterval(save, HEARTBEAT);
     window.addEventListener('beforeunload', function () {
       clearTimeout(saveTimer);
       save();

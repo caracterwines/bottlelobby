@@ -23,6 +23,34 @@ Kein Build-Command, Publish-Directory = Repo-Root.
 
 ## Zuletzt abgeschlossen
 
+- **02.08. (nach Serges Browser-Test): Der Ausloeser war falsch gebaut — behoben.**
+  Serge meldete, dass beim Anlegen einer Show nichts gespeichert wird, waehrend
+  `BLStore.save()` von Hand sofort schreibt. **Im echten Chrome (lokal und live,
+  ueber das DevTools-Protokoll gefahren) liess sich genau dieser Fall nicht
+  nachstellen** — der Klick auf „Create Show →" blubbert nach `saveShow()` und
+  speichert. Die Suche danach foerderte aber zwei echte Fehler zutage, die beide
+  exakt Serges Messungen erklaeren:
+  1. **Aenderung ohne nachfolgendes Event wurde NIE gespeichert.** Der Ausloeser
+     haing daran, dass nach der Aenderung noch ein Event kommt — Serges dritte
+     Messung, woertlich. Behoben durch einen **Heartbeat alle 2 s**, der nicht
+     fragt, *ob geklickt wurde*, sondern *ob der Speicher noch zum Zustand passt*.
+     Persistenz an die Art der Ausloesung zu binden war der eigentliche Fehler.
+  2. **Nach einem Leeren des localStorage schrieb der Store nie wieder**, weil er
+     seinen letzten Schreibvorgang im Arbeitsspeicher merkte. Genau das, was man
+     beim Testen von Persistenz als Erstes tut — Serges erste Messung, die er
+     grosszuegig als „richtig, nichts geaendert" gelesen hatte. Sie war es nicht.
+     Verglichen wird jetzt gegen den **Speicherinhalt selbst**. Eine gemerkte
+     Kopie des Speicherstands ist eine zweite Wahrheit ueber den Speicher — A1,
+     auf den Store selbst angewandt.
+  Beides im echten Browser gegengeprueft, vorher und nachher.
+  **Und die Zusicherung, die gefehlt hat:** `tests/persistence.js` hatte den
+  Round-Trip geprueft, indem es die Aktion aufrief **und den Klick selbst
+  hinterherschickte** — es bewies damit, dass der Store serialisieren kann, und
+  nannte das „der Ausloeser funktioniert". Neu ist ein Abschnitt, der die
+  **echten Knoepfe** drueckt und danach nichts mehr anfasst, plus ein Fall ganz
+  ohne Event. Gegenprobe gemacht: mit der alten Logik faellt er um.
+  Merksatz fuer aehnliche Faelle: **einem Mechanismus, der auf Events reagiert,
+  nie das Event liefern, das er selbst bemerken soll.**
 - **02.08.: Der Prototyp vergisst nichts mehr — `localStorage`-Persistenz (Spec C8).**
   Neu: `assets/bottle-lobby-store.js`. 20 Sammlungen ueberdauern den Reload
   (24,3 KB gemessen), die aktive Rolle und die geoeffnete Ansicht bewusst nicht —

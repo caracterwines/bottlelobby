@@ -174,12 +174,22 @@ And three for the announcement channel:
 | `renderAppearanceWidgets()` dropped from `refreshShows()` | `follow-feed.js`: followers of the host are not told when a show is released |
 | The followed-but-anonymised fixture edge removed | `follow-feed.js` fails outright — see the note above |
 
-Persistence was verified against the fault it exists to prevent — a new piece of
-state that nobody classified:
+Persistence was verified against the faults it exists to prevent — including two
+that shipped and were found in the browser rather than here:
 
 | Mutation | Caught by |
 |---|---|
 | `let sneakyNewState = []` added to the dashboard | `persistence.js`: *top-level state that is neither persisted nor declared transient: sneakyNewState* |
+| The save heartbeat removed | `persistence.js`: *a change with no event after it was never saved* |
+| The last write remembered in memory instead of compared against storage | `persistence.js`: *after the storage was cleared behind its back, the store never wrote again* |
+
+> **Never supply the event the mechanism is supposed to notice.** The save
+> trigger passed a round-trip check that called the action and then dispatched
+> the click *itself* — proving only that the store could serialise. Both faults
+> above lived behind that. The checks now press the real buttons and touch
+> nothing afterwards, and one changes state with no event at all. Note that the
+> real-button check alone still passes against the broken version, because that
+> click does bubble afterwards; it took the no-event case to expose it.
 
 The isolation checks need the opposite kind of care: they can pass for the wrong
 reason. At an opaque origin jsdom provides no `localStorage` at all, so a

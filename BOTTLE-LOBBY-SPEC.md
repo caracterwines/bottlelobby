@@ -2549,10 +2549,27 @@ is no second truth and no copy — only a longer lifetime for the one record.
 | Reset | `↺ Reset demo` in the demo bar, next to "View as:" — clears storage and reloads, in every open tab |
 
 **Nobody calls `save()`.** Wiring each array by hand would be fifteen places to
-forget, and the failure would be silent. The store listens on `document` in the
-bubble phase and writes a debounced snapshot; state in the prototype only ever
-changes as a consequence of a user action, so this is complete without any
-mutation site knowing the store exists.
+forget, and the failure would be silent. The store watches for work instead, in
+two independent ways: DOM events on `document` in the bubble phase, which make a
+save feel immediate, and a **heartbeat** every two seconds that simply asks
+whether storage still matches the state.
+
+> **The heartbeat is the guarantee, not a belt-and-braces extra.** The first
+> version had only the event listener, on the reasoning that state never changes
+> except as a consequence of a user action. That reasoning is true of the
+> prototype today and still produced a shipped bug: the save was triggered by the
+> event arriving *after* the change, so anything that changed state without a
+> trailing event was never written at all, and nothing anywhere said so. Tying
+> persistence to *how* a change was triggered is the error. The heartbeat asks
+> the only question that cannot be answered wrongly — does storage still match?
+
+> **Compare against storage, never against a variable.** That same version
+> remembered its last write in memory and skipped writing when the new snapshot
+> matched it. Clearing `localStorage` in devtools — the first thing anyone does
+> when testing persistence — left the store believing its work was already saved,
+> writing nothing until the state happened to change again. A remembered copy of
+> what is in storage is a second source of truth about storage, and it went stale
+> exactly like any other copy. This is invariant 1 applied to the store itself.
 
 **No save button anywhere, but a receipt.** The actions already *are* the
 confirmation — "Send Invitation", "Close the order list", "Confirm this wine". A
@@ -2587,6 +2604,14 @@ the tab is free.
 > moment means the later write takes the earlier one with it. For "one side acts,
 > the other watches" that is right; this is not a sync engine and should not be
 > mistaken for a preview of one.
+
+**A harness must trigger the action, not stand in for it.** The trigger bug above
+survived a harness that looked thorough, because the harness called the action
+and *then dispatched the click itself* — so it proved the store could serialise
+and called that "the trigger works". The checks now drive the real buttons and
+touch nothing afterwards, and one of them changes state with no event at all.
+The general rule when testing a mechanism that reacts to events: **never supply
+the event the mechanism is supposed to notice on its own.**
 
 **One place, and a check that keeps it one place.** What persists is listed in a
 single `BLStore.register` block at the end of the dashboard's script — necessary

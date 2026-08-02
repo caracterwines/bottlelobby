@@ -197,7 +197,93 @@ console.log('── isolation: a harness can never inherit another\'s state');
   else ok('two pages in one process stay independent');
 }
 
-/* ── 2. The round trip ─────────────────────────────────────────── */
+/* ── 2. The trigger ────────────────────────────────────────────────
+   This section exists because of a bug that shipped. The first version
+   saved only when a DOM event arrived AFTER the change, and every
+   check here passed anyway, because the harness produced that event
+   itself: it called the action, then dispatched a click, then looked
+   at storage. It was testing the store's ability to serialise, and
+   calling it "the trigger works".
+
+   So these drive the REAL buttons and then touch nothing. If saving
+   depends on what the user happens to do next, this section fails. */
+console.log('\n── the trigger fires without being helped');
+
+/* Walks the create-show flow the way a person does. Returns the tab
+   with a new show in it and NOTHING clicked afterwards. */
+function createShowByHand(tab, title) {
+  const w = tab.w, d = tab.d;
+  w.eval("closeRolePicker(); switchDashboard('distributor', document.querySelectorAll('.demo-btn')[1]); showWineShows('distributor','current');");
+  const open = [...d.querySelectorAll('button')].find(b => /Host a Wine Show/.test(b.textContent));
+  if (!open) return null;
+  open.click();
+  const set = (id, v) => {
+    const el = d.getElementById(id);
+    el.value = v;
+    ['input', 'keyup', 'change'].forEach(t => el.dispatchEvent(new w.Event(t, { bubbles: true })));
+  };
+  set('sf-title', title); set('sf-date', '2027-10-10'); set('sf-city', 'Graz');
+  const create = [...d.querySelectorAll('button')].find(b => /Create Show/.test(b.textContent));
+  if (!create) return null;
+  create.click();                 /* the last thing that happens. */
+  return tab;
+}
+
+{
+  const area = makeStorageArea();
+  const t = openTab(area, { persist: true });
+  const before = t.w.eval('wineShows.length');
+  const ok_ = createShowByHand(t, 'Real Button Show');
+  if (!ok_) bad('could not drive the create-show flow — the buttons moved');
+  else if (t.w.eval('wineShows.length') !== before + 1)
+    bad('the create-show flow did not create a show; the rest of this check is meaningless');
+  else {
+    await settle(t.w);
+    const snap = read(area);
+    if (!snap) bad('creating a show through the real buttons stored NOTHING');
+    else if (!snap.data.wineShows.some(s => s.title === 'Real Button Show'))
+      bad('a snapshot was written, but without the show that was just created');
+    else ok('a show created through the real buttons is in storage, with nothing clicked afterwards');
+  }
+}
+
+/* The general case, and the one the event listener alone got wrong:
+   a change with no event after it at all. Nothing in a prototype
+   guarantees that every mutation is followed by a click — and if it
+   is only usually true, the failures are silent and look like a bug
+   in whatever was being demonstrated. */
+{
+  const area = makeStorageArea();
+  const t = openTab(area, { persist: true });
+  await settle(t.w);                      /* let the initial state settle */
+  t.w.eval("wineShows[0].capacity = 4242;");   /* no click, no keypress, nothing */
+  await settle(t.w, 2600);                     /* one heartbeat */
+  const snap = read(area);
+  const cap = snap && snap.data.wineShows[0].capacity;
+  if (cap !== 4242) bad('a change with no event after it was never saved (capacity in storage: ' + cap + ')');
+  else ok('a change with no following event is saved anyway, within one heartbeat');
+}
+
+/* And the reason the in-memory "last written" cache had to go: clear
+   the storage from devtools — the first thing anyone does when testing
+   persistence — and the store believed its work was already saved. */
+{
+  const area = makeStorageArea();
+  const t = openTab(area, { persist: true });
+  t.w.eval("wineShows[0].capacity = 77;");
+  nudge(t.w); await settle(t.w);
+  if (!read(area)) bad('setup failed — nothing was written to clear');
+
+  delete area._data[KEY];                 /* devtools "clear site data" */
+  nudge(t.w); await settle(t.w);
+  const snap = read(area);
+  if (!snap) bad('after the storage was cleared behind its back, the store never wrote again');
+  else if (snap.data.wineShows[0].capacity !== 77)
+    bad('the store rewrote, but not the current state');
+  else ok('storage cleared behind its back is noticed and rewritten');
+}
+
+/* ── 3. The round trip ─────────────────────────────────────────── */
 console.log('\n── what is written comes back');
 {
   const area = makeStorageArea();
@@ -246,7 +332,7 @@ console.log('\n── what is written comes back');
   else ok('an order placed before the reload is there after it');
 }
 
-/* ── 3. Nothing that should not be there ───────────────────────── */
+/* ── 4. Nothing that should not be there ───────────────────────── */
 console.log('\n── the transient state stays transient');
 {
   const area = makeStorageArea();
@@ -269,7 +355,7 @@ console.log('\n── the transient state stays transient');
   else ok('a reload starts on the overview, not in the last open detail pane');
 }
 
-/* ── 4. Stale data is discarded, never merged ──────────────────── */
+/* ── 5. Stale data is discarded, never merged ──────────────────── */
 console.log('\n── a stale snapshot ends as "discarded", not as a bug hunt');
 {
   const cases = [
@@ -318,7 +404,7 @@ console.log('\n── a stale snapshot ends as "discarded", not as a bug hunt');
   else ok('the reset is announced in the toast, not swallowed');
 }
 
-/* ── 5. Two tabs ───────────────────────────────────────────────── */
+/* ── 6. Two tabs ───────────────────────────────────────────────── */
 console.log('\n── two tabs, no reload');
 {
   const area = makeStorageArea();
@@ -375,7 +461,7 @@ console.log('\n── two tabs, no reload');
   else ok('the deferred change lands once the tab is free again');
 }
 
-/* ── 6. Reset ──────────────────────────────────────────────────── */
+/* ── 7. Reset ──────────────────────────────────────────────────── */
 console.log('\n── the way back');
 {
   const area = makeStorageArea();
@@ -407,7 +493,7 @@ console.log('\n── the way back');
   else ok('the reset button sits in the demo bar, with "View as:"');
 }
 
-/* ── 7. The register block is complete ─────────────────────────── */
+/* ── 8. The register block is complete ─────────────────────────── */
 console.log('\n── the one list stays the one list');
 {
   /* Deliberately NOT persisted. Every name here is a decision, and the
@@ -473,7 +559,7 @@ console.log('\n── the one list stays the one list');
   else ok('every registered name is a real binding');
 }
 
-/* ── 8. A snapshot that breaks rendering heals itself ───────────── */
+/* ── 9. A snapshot that breaks rendering heals itself ───────────── */
 console.log('\n── a snapshot that breaks the page does not strand it');
 {
   const area = makeStorageArea();
