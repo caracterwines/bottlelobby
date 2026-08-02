@@ -3489,7 +3489,7 @@ With an annual production capacity of over 1.2 million bottles, Cantina Rossi is
 <div class="modal-overlay" id="public-preview-modal">
   <div class="modal-panel" style="max-width:min(1400px, 96vw); width:96vw; padding:0">
     <div class="modal-header">
-      <div class="modal-title">Public Profile <span>Preview</span></div>
+      <div class="modal-title" id="public-preview-title">Public Profile</div>
       <button class="modal-close" onclick="closePublicPreview()">✕</button>
     </div>
     <div style="padding:0;height:min(88vh, 900px)">
@@ -4138,11 +4138,19 @@ function deleteWineRow(btn) {
   showToast('✓ Wine removed from your portfolio');
 }
 
-/* ── Public Profile preview (modal with live iframe) ── */
-function openPublicPreview() {
-  document.getElementById('public-preview-frame').src = 'bottle-lobby-winery-cantina-rossi.html?preview=embed';
+/* ── Public Profile preview (modal with live iframe) ──
+   The A13 embed pattern, taking its page as an argument: the four
+   "preview my own profile" buttons and the notification that opens
+   somebody else's are the same act — show that page, as it really is,
+   rather than draw a second version of it here. */
+function openEmbedPreview(page, title) {
+  document.getElementById('public-preview-title').textContent = title || 'Public Profile';
+  document.getElementById('public-preview-frame').src = page + '?preview=embed';
   document.getElementById('public-preview-modal').classList.add('active');
   document.body.style.overflow = 'hidden';
+}
+function openPublicPreview() {
+  openEmbedPreview('bottle-lobby-winery-cantina-rossi.html');
 }
 function closePublicPreview() {
   document.getElementById('public-preview-modal').classList.remove('active');
@@ -4535,35 +4543,44 @@ function saveDistributorSection(section) {
 }
 
 function openDistributorPublicPreview() {
-  document.getElementById('public-preview-frame').src = 'bottle-lobby-distributor-hawesko-gmbh.html?preview=embed';
-  document.getElementById('public-preview-modal').classList.add('active');
-  document.body.style.overflow = 'hidden';
+  openEmbedPreview('bottle-lobby-distributor-hawesko-gmbh.html');
 }
 
 /* ══════════════════════════════════════════════════════════════════
    WINE PORTFOLIO — pulled from winery partners, own-label/volume only
    (distributors never create wine data — see architecture notes)
 ══════════════════════════════════════════════════════════════════ */
+/* `url` is the wine's public article page — a FIELD, not a rule. It was
+   added with C9 pass 2b, where a notification names the wine somebody
+   is waiting on and links to it.
+
+   Deriving it from the name instead ("Primitivo Riserva" →
+   bottle-lobby-wine-primitivo-riserva.html) was the obvious shortcut
+   and is the one thing not to do here: invariant 4 exists because a
+   cross-feature match has to be the same RECORD, and this prototype has
+   already paid for string matching twice (the em dash in "Riesling
+   Spätlese — Mosel", A14.4). A wine with no article page gets no `url`
+   and is then named without a link — no link beats a guessed one. */
 const partnerWinesPool = [
-  { winery:'Cantina Rossi', name:'Catarratto Biologico', vintage:2023, type:'White', note:'Organic', origin:'Sicilia DOC, Sicily' },
-  { winery:'Cantina Rossi', name:'Grillo Sicilia DOC', vintage:2023, type:'White', note:'Own-Label Available', origin:'Sicilia DOC, Sicily' },
-  { winery:'Cantina Rossi', name:"Nero d'Avola Sicilia DOC", vintage:2022, type:'Red', note:'Own-Label Available', origin:'Sicilia DOC, Sicily' },
-  { winery:'Cantina Rossi', name:'Primitivo Riserva', vintage:2020, type:'Red', note:'Riserva · Premium Tier', origin:'Alcamo DOC, Sicily' },
-  { winery:'Cantina Rossi', name:'Rosato di Sicilia', vintage:2023, type:'Rosé', note:'Own-Label Available', origin:'Sicilia DOC, Sicily' },
-  { winery:'Cantina Rossi', name:'Rosso di Contrada', vintage:2023, type:'Red', note:'Standard', origin:'Sicilia DOC, Sicily' },
-  { winery:'Cantina Rossi', name:'Trinacria Bianco', vintage:2023, type:'White', note:'Standard', origin:'Terre Siciliane IGT, Sicily' },
-  { winery:'Cantina Rossi', name:'Baglio Rosso', vintage:2021, type:'Red', note:'Standard', origin:'Terre Siciliane IGT, Sicily' },
-  { winery:'Cantina Rossi', name:'Costa Bianca', vintage:2023, type:'White', note:'Standard', origin:'Terre Siciliane IGT, Sicily' },
-  { winery:'Domaine Lefèvre', name:'Bourgogne Passetoutgrain', vintage:2023, type:'Red', note:'Standard', origin:'Bourgogne Passetoutgrain AOC, France' },
-  { winery:'Domaine Lefèvre', name:'Crémant de Bourgogne', vintage:2022, type:'White', note:'Standard', origin:'Crémant de Bourgogne AOC, France' },
-  { winery:'Domaine Lefèvre', name:'Bourgogne Aligoté', vintage:2023, type:'White', note:'Standard', origin:'Bourgogne Aligoté AOC, France' },
-  { winery:'Domaine Lefèvre', name:'Mâcon-Villages', vintage:2023, type:'White', note:'Standard', origin:'Mâcon-Villages AOC, France' },
-  { winery:'Henri Dubois Domaine', name:'Sancerre Rouge', vintage:2022, type:'Red', note:'Standard', origin:'Sancerre AOC, Loire Valley' },
-  { winery:'Henri Dubois Domaine', name:'Pouilly-Fumé', vintage:2023, type:'White', note:'Standard', origin:'Pouilly-Fumé AOC, Loire Valley' },
-  { winery:'Bodegas Ruiz', name:'Rioja Reserva', vintage:2019, type:'Red', note:'Standard', origin:'Rioja DOCa, Spain' },
-  { winery:'Bodegas Ruiz', name:'Rioja Blanco', vintage:2023, type:'White', note:'Standard', origin:'Rioja DOCa, Spain' },
-  { winery:'Weingut Schmitt', name:'Müller-Thurgau — Mosel', vintage:2023, type:'White', note:'Standard', origin:'Mosel QbA, Germany' },
-  { winery:'Weingut Schmitt', name:'Spätburgunder — Mosel', vintage:2022, type:'Red', note:'Standard', origin:'Mosel QbA, Germany' }
+  { winery:'Cantina Rossi', name:'Catarratto Biologico', vintage:2023, type:'White', note:'Organic', origin:'Sicilia DOC, Sicily', url:'bottle-lobby-wine-catarratto-biologico.html' },
+  { winery:'Cantina Rossi', name:'Grillo Sicilia DOC', vintage:2023, type:'White', note:'Own-Label Available', origin:'Sicilia DOC, Sicily', url:'bottle-lobby-wine-grillo-sicilia-doc.html' },
+  { winery:'Cantina Rossi', name:"Nero d'Avola Sicilia DOC", vintage:2022, type:'Red', note:'Own-Label Available', origin:'Sicilia DOC, Sicily', url:'bottle-lobby-wine-nero-davola-sicilia-doc.html' },
+  { winery:'Cantina Rossi', name:'Primitivo Riserva', vintage:2020, type:'Red', note:'Riserva · Premium Tier', origin:'Alcamo DOC, Sicily', url:'bottle-lobby-wine-primitivo-riserva.html' },
+  { winery:'Cantina Rossi', name:'Rosato di Sicilia', vintage:2023, type:'Rosé', note:'Own-Label Available', origin:'Sicilia DOC, Sicily', url:'bottle-lobby-wine-rosato-di-sicilia.html' },
+  { winery:'Cantina Rossi', name:'Rosso di Contrada', vintage:2023, type:'Red', note:'Standard', origin:'Sicilia DOC, Sicily', url:'bottle-lobby-wine-rosso-di-contrada.html' },
+  { winery:'Cantina Rossi', name:'Trinacria Bianco', vintage:2023, type:'White', note:'Standard', origin:'Terre Siciliane IGT, Sicily', url:'bottle-lobby-wine-trinacria-bianco.html' },
+  { winery:'Cantina Rossi', name:'Baglio Rosso', vintage:2021, type:'Red', note:'Standard', origin:'Terre Siciliane IGT, Sicily', url:'bottle-lobby-wine-baglio-rosso.html' },
+  { winery:'Cantina Rossi', name:'Costa Bianca', vintage:2023, type:'White', note:'Standard', origin:'Terre Siciliane IGT, Sicily', url:'bottle-lobby-wine-costa-bianca.html' },
+  { winery:'Domaine Lefèvre', name:'Bourgogne Passetoutgrain', vintage:2023, type:'Red', note:'Standard', origin:'Bourgogne Passetoutgrain AOC, France', url:'bottle-lobby-wine-bourgogne-passetoutgrain.html' },
+  { winery:'Domaine Lefèvre', name:'Crémant de Bourgogne', vintage:2022, type:'White', note:'Standard', origin:'Crémant de Bourgogne AOC, France', url:'bottle-lobby-wine-cremant-de-bourgogne.html' },
+  { winery:'Domaine Lefèvre', name:'Bourgogne Aligoté', vintage:2023, type:'White', note:'Standard', origin:'Bourgogne Aligoté AOC, France', url:'bottle-lobby-wine-bourgogne-aligote.html' },
+  { winery:'Domaine Lefèvre', name:'Mâcon-Villages', vintage:2023, type:'White', note:'Standard', origin:'Mâcon-Villages AOC, France', url:'bottle-lobby-wine-macon-villages.html' },
+  { winery:'Henri Dubois Domaine', name:'Sancerre Rouge', vintage:2022, type:'Red', note:'Standard', origin:'Sancerre AOC, Loire Valley', url:'bottle-lobby-wine-sancerre-rouge.html' },
+  { winery:'Henri Dubois Domaine', name:'Pouilly-Fumé', vintage:2023, type:'White', note:'Standard', origin:'Pouilly-Fumé AOC, Loire Valley', url:'bottle-lobby-wine-pouilly-fume.html' },
+  { winery:'Bodegas Ruiz', name:'Rioja Reserva', vintage:2019, type:'Red', note:'Standard', origin:'Rioja DOCa, Spain', url:'bottle-lobby-wine-rioja-reserva.html' },
+  { winery:'Bodegas Ruiz', name:'Rioja Blanco', vintage:2023, type:'White', note:'Standard', origin:'Rioja DOCa, Spain', url:'bottle-lobby-wine-rioja-blanco.html' },
+  { winery:'Weingut Schmitt', name:'Müller-Thurgau — Mosel', vintage:2023, type:'White', note:'Standard', origin:'Mosel QbA, Germany', url:'bottle-lobby-wine-muller-thurgau-mosel.html' },
+  { winery:'Weingut Schmitt', name:'Spätburgunder — Mosel', vintage:2022, type:'Red', note:'Standard', origin:'Mosel QbA, Germany', url:'bottle-lobby-wine-spatburgunder-mosel.html' }
 ];
 
 let currentWinePortfolio = [
@@ -5149,9 +5166,7 @@ function saveRestaurantSection(section) {
 }
 
 function openRestaurantPublicPreview() {
-  document.getElementById('public-preview-frame').src = 'bottle-lobby-restaurant-profile.html?preview=embed';
-  document.getElementById('public-preview-modal').classList.add('active');
-  document.body.style.overflow = 'hidden';
+  openEmbedPreview('bottle-lobby-restaurant-profile.html');
 }
 
 /* ══════════════════════════════════════════════════════════════════
@@ -5530,9 +5545,7 @@ function saveRetailSection(section) {
 }
 
 function openRetailPublicPreview() {
-  document.getElementById('public-preview-frame').src = 'bottle-lobby-retail-profile.html?preview=embed';
-  document.getElementById('public-preview-modal').classList.add('active');
-  document.body.style.overflow = 'hidden';
+  openEmbedPreview('bottle-lobby-retail-profile.html');
 }
 
 /* ══════════════════════════════════════════════════════════════════
@@ -10196,7 +10209,7 @@ function notifRegional(role, list) {
       title: 'New Wine Show in your region',
       /* Public fields only. */
       text: s.title + ' · ' + s.date + ' · ' + s.city + (s.focus ? ' — ' + s.focus : ''),
-      goto: null
+      target: { type:'show', id:s.id }
     });
   });
 }
@@ -10215,7 +10228,7 @@ function notificationsFor(role) {
         id: notifId('order', o.id + '·' + e.text, e.at),
         kind: 'order', cls: 'info', at: e.at, actor: e.actor,
         title: o.id + ' — ' + (o.buyer === me ? o.seller : o.buyer),
-        text: e.text, goto: null
+        text: e.text, target: { type:'order', id:o.id }
       });
     });
   });
@@ -10225,11 +10238,13 @@ function notificationsFor(role) {
      two answers to "does this need me?" (C9, A16.10). */
   showsForRole(role).forEach(function (s) {
     if (showAwaits(role, s)) {
+      const why = notifAwaitReason(role, s);
       out.push({
         id: notifId('await', s.id, s.stage),
         kind: 'show', cls: 'await', at: s.date, actor: null,
         title: 'Waiting for you — ' + s.title,
-        text: notifAwaitReason(role, s), goto: s.id
+        text: why.text, wine: why.wine || null,
+        target: { type:'show', id:s.id }
       });
     }
     /* 3. Shows, "for information" — ONLY scope:'show', and only where
@@ -10241,7 +10256,7 @@ function notificationsFor(role) {
       notifPush(out, me, {
         id: notifId('show', s.id + '·' + e.text, e.at),
         kind: 'show', cls: 'info', at: e.at, actor: e.actor,
-        title: s.title, text: e.text, goto: s.id
+        title: s.title, text: e.text, target: { type:'show', id:s.id }
       });
     });
   });
@@ -10259,7 +10274,7 @@ function notificationsFor(role) {
       kind: 'follow', cls: 'info', at: f.at, actor: f.follower,
       title: f.follower + ' started following you',
       text: (followRoleLabel[f.followerType] || '') + (f.location ? ' · ' + f.location : ''),
-      goto: null
+      target: f.url ? { type:'profile', url:f.url } : null
     });
   });
 
@@ -10269,18 +10284,56 @@ function notificationsFor(role) {
   return out.sort(function (a, b) { return notifTime(b.at) - notifTime(a.at); });
 }
 
+/* The producer's own range, by reference. A show product is stored as
+   "<name> <vintage>" (A16.9 keeps it a reference into the producer's
+   range, never product content), so the join is the producer plus that
+   pair — never a fuzzy match on the string, and never a URL built out
+   of the name. Returns the POOL RECORD or null; a wine the pool does
+   not carry is simply not linkable, and that is the honest answer. */
+function notifWineRecord(producer, productName) {
+  return partnerWinesPool.find(function (w) {
+    return w.winery === producer && w.name + ' ' + w.vintage === productName;
+  }) || null;
+}
+
 /* Why a show is waiting, in the words of the side that is waiting.
-   Reads the same two functions the chips and badges read. */
+   Reads the same functions the chips and badges read, and returns the
+   wine alongside the sentence when there is exactly one — "Primitivo
+   Riserva 2020 is waiting for your answer" is a thing the reader can
+   act on; "a wine" is a thing they have to go and look up. */
 function notifAwaitReason(role, s) {
   const cfg = SHOW_ROLES[role];
   if (cfg.side === 'venue') {
     const me = myAttendance(role, s);
-    if (me && me.status === 'invited') return 'You have been invited to attend';
-    if (venueTurn(s) === 'venue') return 'A venue request is waiting for your answer';
+    if (me && me.status === 'invited') return { text:'You have been invited to attend' };
+    if (venueTurn(s) === 'venue') return { text:'A venue request is waiting for your answer' };
   }
   if (cfg.side === 'host' && attendeesOf(s).some(function (a) { return a.status === 'requested'; }))
-    return 'Someone has asked for a place';
-  return 'A wine is waiting for your answer';
+    return { text:'Someone has asked for a place' };
+
+  /* The wines on the table for MY side. A host can have several — one
+     per exhibitor — so the sentence only names a wine when there is no
+     ambiguity about which one. */
+  const open = [];
+  s.exhibitors.forEach(function (e) {
+    if (cfg.side === 'producer' && e.producer !== cfg.entity) return;
+    const p = openProposalFor(s, e, cfg.side);
+    if (p) open.push({ producer: e.producer, name: p.name });
+  });
+  if (open.length === 1) {
+    const rec = notifWineRecord(open[0].producer, open[0].name);
+    return {
+      text: open[0].name + ' is waiting for your answer',
+      /* No record, or a record with no article page → named, not
+         linked. `url` is a field on the wine, so its absence is a fact
+         about the wine and not a failure here. */
+      wine: { name: open[0].name, url: (rec && rec.url) || null }
+    };
+  }
+  if (open.length > 1) return { text: open.length + ' wines are waiting for your answer' };
+  /* Nothing on the table: an unanswered invitation, or the producer's
+     turn to propose (exhibitorTurn()). */
+  return { text:'A wine is waiting for your answer' };
 }
 
 /* The incoming request array of each role, reached through a getter
@@ -10304,7 +10357,7 @@ function notifRequests(role, me, out) {
       kind: 'request', cls: 'await', at: r.received, actor: null,
       title: 'Partnership request — ' + who,
       text: (r.roleLabel || r.type || '') + (r.region ? ' · ' + r.region : ''),
-      goto: null
+      target: { type:'request' }
     });
   });
 }
@@ -10329,6 +10382,12 @@ function notifMarkAllSeen(role) {
      must not become unread again if it ever comes back. */
   ids.forEach(function (id) { if (seen.indexOf(id) === -1) seen.push(id); });
   notifSeen[me] = seen;
+}
+/* One entry, same union semantics: opening something is reading it. */
+function notifMarkSeen(role, id) {
+  const me = SHOW_ROLES[role].entity;
+  const seen = notifSeen[me] || (notifSeen[me] = []);
+  if (seen.indexOf(id) === -1) seen.push(id);
 }
 
 /* ══════════════════════════════════════════════════════════════════
@@ -10388,7 +10447,15 @@ const NOTIF_ICON = { show:'✦', regional:'✦', order:'◐', follow:'♥', requ
 
 function notifRowHtml(n, unread) {
   const await_ = n.cls === 'await';
-  return '<div class="msg-item">' +
+  /* A wine article is a page, not a panel — a plain link, a new tab,
+     and no popup. It only appears when the wine record carries a `url`;
+     a wine without an article page is named and not linked, because a
+     link that has to be guessed is worse than none (invariant 4). */
+  const wineLink = (n.wine && n.wine.url)
+    ? '<a class="icon-btn" style="margin-left:0.5rem" href="' + notifEsc(n.wine.url) + '" ' +
+      'target="_blank" rel="noopener" onclick="event.stopPropagation()">View wine →</a>'
+    : '';
+  return '<div class="msg-item"' + (n.target ? ' style="cursor:pointer"' : '') + '>' +
     '<div class="msg-avatar"' + (await_ ? ' style="background:var(--wine)"' : '') + '>' +
       (await_ ? '!' : (NOTIF_ICON[n.kind] || '◍')) + '</div>' +
     '<div class="msg-content">' +
@@ -10396,10 +10463,108 @@ function notifRowHtml(n, unread) {
         '<span class="msg-from">' + notifEsc(n.title) + '</span>' +
         '<span class="msg-time">' + notifEsc(notifWhen(n)) + '</span>' +
       '</div>' +
-      '<div class="msg-preview">' + notifEsc(n.text) + '</div>' +
+      '<div class="msg-preview" style="white-space:normal">' + notifEsc(n.text) + wineLink + '</div>' +
     '</div>' +
     (unread ? '<div class="msg-unread"></div>' : '') +
   '</div>';
+}
+
+/* ── WHAT A ROW OPENS ─────────────────────────────────────────────
+   Three destinations, and the first one is the risk of this pass.
+
+   A wine show opens a POPUP that renders publicShowCard() at the level
+   publicLevelFor() grants — the same two functions the public Wine
+   Shows page, the fifteen public profiles and the browsing detail pane
+   already call. It is deliberately NOT the working detail view: this
+   list reaches a restaurant that merely browses and, through the
+   regional exception, a house with no relation to the show at all. A
+   popup that rendered the show itself would be the fourth surface
+   A16.6 warns about — the one place where anonymisation does not hold.
+   Participants are not stranded: the popup's own footer routes them to
+   the working view through the existing router.
+
+   A profile opens the A13 embed — the entity's real public page in an
+   iframe, not a second rendering of it.
+
+   A wine opens nothing: it is a plain link on the row (see above). */
+function notifDestination(role, n) {
+  const t = n.target;
+  if (!t) return;
+  if (t.type === 'show')    { openNotifShow(role, t.id); return; }
+  if (t.type === 'profile') { openEmbedPreview(t.url, 'Public Profile'); return; }
+  if (t.type === 'order')   { openNotifOrder(role, t.id); return; }
+  if (t.type === 'request') { openNotifRequests(role); return; }
+}
+
+/* Reading is opening. The marker is a union, so this can only ever
+   remove the row's dot — never bring one back. */
+function openNotification(role, n) {
+  notifMarkSeen(role, n.id);
+  renderNotifications(role);
+  notifDestination(role, n);
+}
+
+/* ── The wine show popup ── */
+let notifShowId = null;
+function openNotifShow(role, id) {
+  const s = wineShows.find(function (x) { return x.id === id; });
+  if (!s) return;
+  notifShowId = id;
+  const level = publicLevelFor(s);
+  document.getElementById('notif-show-body').innerHTML =
+    publicShowCard(s, level) +
+    '<div class="ws-demo-note" style="margin-top:0.9rem">' +
+      'This is the show as everybody outside it sees it — rendered by the same function the ' +
+      'public Wine Shows page uses. ' +
+      (level === 'anonymised'
+        ? 'It is still anonymised, so exhibitors, their wines and the venue are not named here either.'
+        : 'It has been released, so exhibitors, their wines and the venue are public.') +
+    '</div>';
+  /* The way on for anyone who can actually do something about it —
+     through the existing router, which decides for itself whether this
+     viewer gets the working pane or the visitor pane. */
+  const reachable = showsForRole(role).some(function (x) { return x.id === id; });
+  document.getElementById('notif-show-foot').innerHTML = reachable
+    ? '<button class="btn-sm btn-gold" onclick="notifGoToShow(\'' + role + '\')">Open in Wine Shows →</button>'
+    : '<span style="font-size:0.72rem;color:var(--dim)">You are not part of this show — this is everything it discloses.</span>';
+  document.getElementById('notif-show-modal').classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+function closeNotifShow() {
+  document.getElementById('notif-show-modal').classList.remove('active');
+  document.body.style.overflow = '';
+  notifShowId = null;
+}
+function notifGoToShow(role) {
+  const id = notifShowId;
+  closeNotifShow();
+  showWineShows(role, showState[role].tab || 'current');
+  openShowDetail(id);
+}
+
+/* ── The other two destinations, both existing surfaces ── */
+function openNotifOrder(role, id) {
+  const o = orders.find(function (x) { return x.id === id; });
+  if (!o) return;
+  const cfg = ORDER_ROLES[role];
+  const want = ORDER_CLOSED.indexOf(o.stage) !== -1 ? 'history'
+             : (o.seller === cfg.entity ? 'incoming' : 'outgoing');
+  /* A role only has the tabs its position in the chain gives it (A3) —
+     a winery never buys, a restaurant never sells. Asking the registry
+     rather than assuming means a fixture that breaks that assumption
+     lands on a real tab instead of a blank pane. */
+  const tab = cfg.tabs.some(function (t) { return t.key === want; }) ? want : cfg.tabs[0].key;
+  showOrders(role, tab);
+  openOrderDetail(id);
+}
+const NOTIF_PROFILE_ROUTER = {
+  winery: function (s) { showWineryView('profile', s); },
+  distributor: function (s) { showDistributorView('profile', s); },
+  restaurant: function (s) { showRestaurantView('profile', s); },
+  retail: function (s) { showRetailView('profile', s); }
+};
+function openNotifRequests(role) {
+  NOTIF_PROFILE_ROUTER[role]('requests');
 }
 
 function notifShellHtml(role) {
@@ -10449,6 +10614,15 @@ function renderNotifications(role) {
       : '<div style="padding:0.4rem 0;font-size:0.78rem;color:var(--dim)">' + (k === 'await'
           ? 'Nothing is waiting on you right now.'
           : 'Nothing to report yet.') + '</div>';
+
+    /* Bound to the object rather than to its id in an onclick string:
+       a notification id is built from free text (order notes, event
+       lines) and would have to be escaped into an attribute to survive
+       an apostrophe. The row already knows which entry it is. */
+    Array.prototype.forEach.call(host.querySelectorAll('.msg-item'), function (row, i) {
+      if (!list[i].target) return;
+      row.addEventListener('click', function () { openNotification(role, list[i]); });
+    });
   });
 
   const u = all.filter(unread).length;
@@ -10684,6 +10858,24 @@ BLStore.start({
         <button class="pr-btn pr-confirm" onclick="savePayment()">Record Payment</button>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- ══ NOTIFICATION → WINE SHOW (C9, A16.6) ══════════════════════
+     The body is filled by publicShowCard() and by nothing else. Any
+     markup added here would be a second, more generous rendering of a
+     show — the fourth surface A16.6 exists to prevent. If a viewer
+     needs more than this, the footer routes them to the Wine Shows
+     view, which already decides what they may see.
+-->
+<div class="modal-overlay" id="notif-show-modal" onclick="if(event.target===this) closeNotifShow()">
+  <div class="modal-panel" style="max-width:620px">
+    <div class="modal-header">
+      <div class="modal-title">Wine <span>Show</span></div>
+      <button class="modal-close" onclick="closeNotifShow()">✕</button>
+    </div>
+    <div class="modal-body" id="notif-show-body"></div>
+    <div class="modal-footer" id="notif-show-foot"></div>
   </div>
 </div>
 

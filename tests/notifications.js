@@ -18,8 +18,11 @@
    relation to this" apart, and section 6 puts the old mistake back to
    prove this file notices.
 ═══════════════════════════════════════════════════════════════════ */
+const fs = require('fs');
+const path = require('path');
 const { JSDOM, VirtualConsole } = require('jsdom');
 const { loadDashboard } = require('./load-dashboard');
+const REPO = path.join(__dirname, '..');
 
 let fail = 0;
 const bad = m => { console.log('  ✗ ' + m); fail++; };
@@ -312,6 +315,182 @@ console.log('\n── counter-check: the two ways the screen can lie');
     else if (!leaked.length && awaitTitles.length) bad('the split was removed and section 7 did NOT notice');
     else ok('with the split removed, ' + leaked.length + ' of ' + awaitTitles.length +
             ' worklist entries are drawn under "For information" — section 7 catches it');
+  }
+}
+
+/* ── 9. Where a row goes (C9, pass 2b) ──────────────────────────── */
+/* Three destinations, and only one of them is new markup. The wine
+   show POPUP is the risk: this list reaches a restaurant that merely
+   browses, and — through the regional exception — a house with no
+   relation to the show at all. A popup that rendered the show itself
+   would be a fourth surface, and A16.6 only holds if there is none. */
+console.log('\n── what a row opens');
+{
+  const s = build();
+  const KNOWN = ['show', 'profile', 'order', 'request'];
+
+  const strange = [];
+  ROLES.forEach(r => s.eval('notificationsFor("' + r + '")').forEach(n => {
+    if (!n.target) { strange.push(r + ': "' + n.title + '" has no target'); return; }
+    if (KNOWN.indexOf(n.target.type) === -1) strange.push(r + ': target type "' + n.target.type + '"');
+  }));
+  if (strange.length) bad('rows the surface cannot open: ' + strange.slice(0, 3).join(' · '));
+  else ok('every derived entry names a destination the surface knows');
+
+  /* THE ONE THAT MATTERS. WS-2605 is `planning`, the restaurant has no
+     edge to it at all (that is what makes it the regional entry), and
+     the popup may therefore carry title, date, city and focus — the
+     four fields A16.6 grants, and not one more. */
+  s.eval('showNotifications("restaurant")');
+  const regional = s.eval('notificationsFor("restaurant")').find(n => n.kind === 'regional');
+  if (!regional) bad('no regional entry — section 9 cannot test the popup on an anonymised show');
+  else {
+    s.eval('openNotifShow("restaurant", "' + regional.target.id + '")');
+    /* Read as text, not as markup: "Rhein & Main Selection" comes back
+       out of innerHTML as "Rhein &amp; Main Selection" and the name
+       check would fail on the entity rather than on the content. */
+    const popup = s.document.getElementById('notif-show-body').textContent;
+    if (!s.document.getElementById('notif-show-modal').classList.contains('active'))
+      bad('the popup did not open');
+    const leaks = ['Weingut Schmitt', 'Spätburgunder', 'Rhein-Main Loft']
+      .filter(secret => popup.indexOf(secret) !== -1);
+    if (leaks.length) bad('LEAK: the popup on an anonymised show names ' + leaks.join(', '));
+    else if (popup.indexOf('Rhein & Main Selection') === -1) bad('the popup does not even name the show');
+    else ok('the popup on an anonymised show names it and withholds exhibitor, wine and venue');
+
+    /* And a stranger is told so rather than offered a way in. */
+    const foot = s.document.getElementById('notif-show-foot').innerHTML;
+    if (foot.indexOf('Open in Wine Shows') !== -1 && !s.eval('showsForRole("restaurant").some(x => x.id === "' + regional.target.id + '")'))
+      bad('the popup offers a route into a show this role cannot reach');
+    else ok('the footer routes through the existing view, or says there is nothing more');
+  }
+
+  /* A participant gets no private version of it either: the popup is
+     the public card for everybody, and the working detail stays where
+     it always was. Cantina Rossi IS an exhibitor at Grande Rioja. */
+  s.eval('showNotifications("winery")');
+  s.eval('openNotifShow("winery", "WS-2601")');
+  const own = s.document.getElementById('notif-show-body').textContent;
+  if (/Bodegas Ruiz|Rioja Reserva/.test(own))
+    bad('LEAK: the popup shows an exhibitor list on a show that is still anonymised, to a participant');
+  else if (s.document.getElementById('notif-show-foot').innerHTML.indexOf('Open in Wine Shows') === -1)
+    bad('a participant is not offered the working view — the popup is a dead end for the side that has to act');
+  else ok('a participant sees the same public card, plus the way into the working view');
+
+  /* The profile destination is the A13 embed of a page that exists. */
+  const follows = [];
+  ROLES.forEach(r => s.eval('notificationsFor("' + r + '")')
+    .filter(n => n.kind === 'follow').forEach(n => follows.push(n)));
+  const missing = follows.filter(n => !n.target || n.target.type !== 'profile' ||
+    !fs.existsSync(path.join(REPO, n.target.url)));
+  if (!follows.length) bad('no follow entries — the profile destination is untested');
+  else if (missing.length) bad('a follow entry points at a page that does not exist: ' + missing[0].target?.url);
+  else ok('all ' + follows.length + ' follow entries open a real public profile page');
+
+  /* An order row lands on the order, in a tab the role actually has. */
+  const ordRow = s.eval('notificationsFor("distributor")').find(n => n.target && n.target.type === 'order');
+  s.eval('openNotifOrder("distributor", "' + ordRow.target.id + '")');
+  if (s.eval('ordState.distributor.openId') !== ordRow.target.id)
+    bad('an order row did not open its order (' + s.eval('ordState.distributor.openId') + ')');
+  else ok('an order row opens that order in the existing Orders view');
+}
+
+/* ── 10. The wine on an awaiting row ────────────────────────────── */
+console.log('\n── the wine a row is about');
+{
+  const s = build();
+  const withWine = [];
+  ROLES.forEach(r => s.eval('notificationsFor("' + r + '")')
+    .filter(n => n.wine).forEach(n => withWine.push({ role:r, n })));
+
+  if (!withWine.length) bad('no awaiting row names a wine — the link rule has nothing to apply to');
+  else ok(withWine.length + ' awaiting rows name the wine instead of saying "a wine"');
+
+  /* Every url that IS set has to resolve — a link into nothing is worse
+     than the sentence it replaced. Checked against the filesystem, not
+     against a naming rule, because the naming rule is exactly what this
+     field exists to avoid. */
+  const pool = s.eval('JSON.parse(JSON.stringify(partnerWinesPool))');
+  const dead = pool.filter(w => w.url && !fs.existsSync(path.join(REPO, w.url)));
+  if (dead.length) bad('partnerWinesPool points at pages that do not exist: ' + dead.map(w => w.url).join(', '));
+  else ok('all ' + pool.filter(w => w.url).length + ' wine urls in the pool resolve to a real page');
+
+  const dangling = withWine.filter(x => x.n.wine.url && !fs.existsSync(path.join(REPO, x.n.wine.url)));
+  if (dangling.length) bad('a row links to a page that does not exist: ' + dangling[0].n.wine.url);
+  else ok('every wine link on a row resolves');
+
+  /* The link is a link — not a popup. */
+  s.eval('showNotifications("winery")');
+  const row = Array.from(s.document.querySelectorAll('#wnotif-await .msg-item'))
+    .find(el => el.querySelector('a'));
+  if (!row) bad('the wine is named but never linked on screen');
+  else {
+    const a = row.querySelector('a');
+    if (a.getAttribute('target') !== '_blank') bad('the wine link does not open in a new tab');
+    else if (!/^bottle-lobby-wine-/.test(a.getAttribute('href'))) bad('the wine link does not point at an article page');
+    else ok('the wine is a plain link to ' + a.getAttribute('href') + ', new tab, no popup');
+  }
+}
+
+/* ── 11. The mutations sections 9 and 10 exist for ──────────────── */
+console.log('\n── counter-check: the popup must not become a fourth surface');
+{
+  /* (a) The level. Same renderer, one word changed — the subtlest way
+     to lose A16.6, because everything still goes through the shared
+     function and only the answer to "how much" is wrong. */
+  const full = build({
+    from: '  const level = publicLevelFor(s);\n  document.getElementById(\'notif-show-body\').innerHTML =',
+    to:   '  const level = \'full\';\n  document.getElementById(\'notif-show-body\').innerHTML ='
+  });
+  if (!full) bad('the level mutation did not apply — this counter-check proves nothing');
+  else {
+    full.eval('showNotifications("restaurant")');
+    const reg = full.eval('notificationsFor("restaurant")').find(n => n.kind === 'regional');
+    full.eval('openNotifShow("restaurant", "' + reg.target.id + '")');
+    const html = full.document.getElementById('notif-show-body').textContent;
+    if (!/Weingut Schmitt|Spätburgunder|Rhein-Main Loft/.test(html))
+      bad('the popup was forced to the full level and leaked nothing — section 9 is testing the wrong show');
+    else ok('forced to level "full", the popup names the hidden exhibitor and venue — section 9 catches it');
+  }
+
+  /* (b) The renderer. Somebody draws the show in the popup instead of
+     asking publicShowCard() — the failure the whole pass was warned
+     about, written out. */
+  const rolled = build({
+    from: "    publicShowCard(s, level) +",
+    to:   "    ('<div class=\"ws-public\"><div class=\"ws-public-title\">' + s.title + '</div>' +\n" +
+          "     '<div class=\"ws-public-line\"><b>Venue</b> · ' + s.venueName + '</div>' +\n" +
+          "     s.exhibitors.map(function (e) { return '<div class=\"ws-public-line\">' + e.producer + '</div>'; }).join('') +\n" +
+          "     '</div>') +"
+  });
+  if (!rolled) bad('the hand-rolled-popup mutation did not apply — this counter-check proves nothing');
+  else {
+    rolled.eval('showNotifications("restaurant")');
+    const reg = rolled.eval('notificationsFor("restaurant")').find(n => n.kind === 'regional');
+    rolled.eval('openNotifShow("restaurant", "' + reg.target.id + '")');
+    const html = rolled.document.getElementById('notif-show-body').textContent;
+    if (!/Weingut Schmitt|Rhein-Main Loft/.test(html))
+      bad('the popup was re-rendered by hand and leaked nothing — the mutation missed its point');
+    else ok('a popup that renders the show itself instead of calling publicShowCard() leaks at once — section 9 catches it');
+  }
+
+  /* (c) A wine whose record has no article page must be NAMED, not
+     linked. The pool carries a url for all nineteen wines today, so
+     the case is reached by taking one away — the rule is what is
+     being checked, not the current contents of the fixture. */
+  const unlinked = build({
+    from: ", url:'bottle-lobby-wine-primitivo-riserva.html' }",
+    to:   " }"
+  });
+  if (!unlinked) bad('the missing-url mutation did not apply — this counter-check proves nothing');
+  else {
+    unlinked.eval('showNotifications("winery")');
+    const rows = Array.from(unlinked.document.querySelectorAll('#wnotif-await .msg-item'));
+    const named = rows.filter(el => /Primitivo Riserva 2020/.test(el.textContent));
+    const linked = named.filter(el => el.querySelector('a'));
+    if (!named.length) bad('with the url removed the wine stopped being named at all — the name must not depend on the link');
+    else if (linked.length) bad('a wine with no article page was linked anyway');
+    else ok('a wine record without a url is named and not linked — no guessed links');
   }
 }
 
