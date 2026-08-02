@@ -209,6 +209,17 @@ Bottle Lobby sends **two contracts**, one to each side. Both must be completed, 
 
 **An active partnership is the gate for everything commercial:** promo materials, exclusive offers, exclusive deals and **the ability to place an order** (A14) are all visible only between actively partnered parties.
 
+> ⚠️ **A free-text inbox would be a side entrance around this gate, and must not be
+> built as a surface decision.** Person-to-person correspondence — a distributor
+> writing to a winery it has no partnership with — bypasses the whole of A6 and
+> the admin confirmation that enforces it: the parties would be in contact,
+> agreeing terms, with none of it passing the control point invariant 6 exists
+> to protect. Notifications are a different thing and are fine, because they are
+> *derived from records that already exist* and disclose nothing the recipient
+> could not already see (A16.11 step 5, A7). **If a real inbox is ever wanted,
+> the question to answer first is not how to build it but who may write to whom
+> — and the answer belongs in this section before any of it is built.**
+
 ### Where each role manages partnerships
 
 | Role | Sections in their dashboard |
@@ -229,7 +240,7 @@ Each of these carries the same four-stage progress indicator, so both sides alwa
 
 Following works between **any two stakeholder types** — not just Restaurant/Retail → Winery. Every public profile of all four types has a "🔖 Save & Follow" button.
 
-**Semantics:** A follow adds the target to the follower's own "My Stars" list AND adds the follower to the target's "My Fans" list, generically across all pairings. The followed party gets a "X started following you" dashboard notification.
+**Semantics:** A follow adds the target to the follower's own "My Stars" list AND adds the follower to the target's "My Fans" list, generically across all pairings. The followed party gets a "X started following you" dashboard notification. Following needs no partnership, and this notification is the reason that is safe: it is derived from the follow record itself and says nothing the followed party could not already read in My Fans. A message someone *writes* is the opposite case — see the warning in A6.
 
 This follow/fan graph is the **core data signal for Matchmaking**.
 
