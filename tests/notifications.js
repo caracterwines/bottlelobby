@@ -200,5 +200,120 @@ console.log('\n── counter-check: the condition-2 bug must fail this file');
   }
 }
 
+/* ── 7. The surface (C9, pass 2b) ───────────────────────────────── */
+/* The derivation above is proved; none of it was visible. What this
+   section adds is the three ways the SCREEN can disagree with it: a
+   badge that counts something else, a class that lands in the wrong
+   box, and a "mark all as read" that redraws without asking again. */
+console.log('\n── the surface: nav badge and the two boxes');
+{
+  const s = build();
+  const rows = (role, box) => Array.from(
+    s.document.querySelectorAll('#' + s.eval('NOTIF_ROLES["' + role + '"].prefix') + '-' + box + ' .msg-item'));
+  const badge = role => (s.document.getElementById(s.eval('NOTIF_ROLES["' + role + '"].badge')).textContent || '').trim();
+
+  /* Before anything is opened. A badge that only becomes honest once
+     you visit the view is a badge nobody can act on. */
+  let wrong = [];
+  ROLES.forEach(r => {
+    const want = String(s.eval('notifUnread("' + r + '").length'));
+    if (badge(r) !== want) wrong.push(r + ': badge "' + badge(r) + '" vs ' + want + ' unread');
+  });
+  if (wrong.length) bad('the badge disagrees with notifUnread() before the view is opened: ' + wrong.join(' · '));
+  else ok('all four badges equal notifUnread(role).length on load, unopened');
+
+  /* Every role renders, and the split is the classes — not a slice. */
+  ROLES.forEach(r => {
+    s.eval('showNotifications("' + r + '")');
+    const all  = s.eval('notificationsFor("' + r + '")');
+    const nAw  = all.filter(n => n.cls === 'await').length;
+    const nIn  = all.filter(n => n.cls === 'info').length;
+    if (rows(r, 'await').length !== nAw || rows(r, 'info').length !== nIn)
+      bad(r + ': drew ' + rows(r, 'await').length + '/' + rows(r, 'info').length +
+          ' rows for ' + nAw + '/' + nIn + ' entries — the view is not showing the whole derivation');
+  });
+  ok('every role draws every derived entry, awaiting and informational apart');
+
+  /* The box a row is in IS the claim "this needs you". An awaiting
+     entry that lands under "For information" is a worklist item the
+     reader will never work. Checked by text, because that is what the
+     reader has to go on. */
+  const bleed = [];
+  ROLES.forEach(r => {
+    const awaitTitles = s.eval('notificationsFor("' + r + '")')
+      .filter(n => n.cls === 'await').map(n => n.title);
+    rows(r, 'info').forEach(el => {
+      const t = el.querySelector('.msg-from').textContent;
+      if (awaitTitles.indexOf(t) !== -1) bleed.push(r + ': "' + t + '"');
+    });
+  });
+  if (bleed.length) bad('an "awaiting you" entry is drawn under "For information": ' + bleed.join(' · '));
+  else ok('nothing waiting on the reader is filed as information');
+
+  /* Marking read has to travel: the marker, the dots and the badge are
+     three readings of one fact. */
+  const r0 = 'distributor';
+  const before = rows(r0, 'info').filter(el => el.querySelector('.msg-unread')).length;
+  if (!before) bad('no unread dots to begin with — the read state is not drawn at all');
+  else ok('unread entries are marked as such (' + before + ' dots in the informational box)');
+
+  s.document.getElementById(s.eval('NOTIF_ROLES["' + r0 + '"].prefix') + '-markall').click();
+  const dots = rows(r0, 'await').concat(rows(r0, 'info')).filter(el => el.querySelector('.msg-unread')).length;
+  if (dots) bad('marking all read left ' + dots + ' unread dots on screen');
+  else if (badge(r0) !== '') bad('marking all read left the badge at "' + badge(r0) + '"');
+  else ok('the button clears the dots and the badge together');
+
+  /* And it is the LIST that is stale-proof, not the click: a new event
+     afterwards must reappear on a plain redraw, with nobody reopening
+     the view. */
+  const ord = s.eval('orders.find(o => o.seller === "Hawesko GmbH").id');
+  s.eval('logEvent(_o("' + ord + '"), "Bistro Laurent", "Arrived after the reader marked everything read")');
+  s.eval('refreshNotifications()');
+  if (badge(r0) !== '1')
+    bad('a new event after "mark all read" did not reach the badge (badge is "' + badge(r0) + '")');
+  else ok('a new event afterwards puts the badge back to 1 without reopening the view');
+}
+
+/* ── 8. The mutations section 7 exists for ──────────────────────── */
+console.log('\n── counter-check: the two ways the screen can lie');
+{
+  /* (a) A badge counting the derivation instead of the unread part.
+     It looks right on a fresh demo — everything IS unread — and only
+     goes wrong after somebody reads something. */
+  const mutant = build({
+    from: '    const n = notifUnread(r).length;\n    el.textContent = n || \'\';',
+    to:   '    const n = notificationsFor(r).length;\n    el.textContent = n || \'\';'
+  });
+  if (!mutant) bad('the badge mutation did not apply — this counter-check proves nothing');
+  else {
+    mutant.eval('showNotifications("distributor")');
+    mutant.document.getElementById('dnotif-markall').click();
+    const left = (mutant.document.getElementById('dnotif-badge').textContent || '').trim();
+    if (!left) bad('the badge was changed to count everything and section 7 did NOT notice — it is too weak');
+    else ok('a badge counting notificationsFor() instead of notifUnread() still reads "' + left + '" after mark-all — section 7 catches it');
+  }
+
+  /* (b) One box instead of two. The entries are all still there, which
+     is exactly why this is worth a check: nothing is missing, the
+     worklist has simply stopped being a worklist. */
+  const merged = build({
+    from: "    await: all.filter(function (n) { return n.cls === 'await'; }),\n" +
+          "    info:  all.filter(function (n) { return n.cls === 'info'; })",
+    to:   "    await: [], info: all"
+  });
+  if (!merged) bad('the class-split mutation did not apply — this counter-check proves nothing');
+  else {
+    merged.eval('showNotifications("restaurant")');
+    const info = Array.from(merged.document.querySelectorAll('#rnotif-info .msg-item'));
+    const awaitTitles = merged.eval('notificationsFor("restaurant")').filter(n => n.cls === 'await').map(n => n.title);
+    const leaked = info.filter(el => awaitTitles.indexOf(el.querySelector('.msg-from').textContent) !== -1);
+    const awaitBox = merged.document.querySelectorAll('#rnotif-await .msg-item').length;
+    if (awaitBox !== 0) bad('the class-split mutation missed its target — the awaiting box still has rows');
+    else if (!leaked.length && awaitTitles.length) bad('the split was removed and section 7 did NOT notice');
+    else ok('with the split removed, ' + leaked.length + ' of ' + awaitTitles.length +
+            ' worklist entries are drawn under "For information" — section 7 catches it');
+  }
+}
+
 console.log(fail ? '\n✗ ' + fail + ' failure(s)' : '\n✓ all checks passed');
 process.exit(fail ? 1 : 0);

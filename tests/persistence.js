@@ -502,6 +502,7 @@ console.log('\n── the one list stays the one list');
   const TRANSIENT = {
     activeOrderRole:       'which Orders sub-view is on screen — a reload starts on the default',
     activeShowRole:        'which Wine Shows sub-view is on screen — same',
+    activeNotifRole:       'which Notifications sub-view is on screen — same. What HAS to survive is notifSeen, and that is registered (C9)',
     acceptingId:           'the partnership request an open modal is about',
     acceptingIncomingId:   'ditto, distributor side',
     rAcceptingIncomingId:  'ditto, restaurant side',
