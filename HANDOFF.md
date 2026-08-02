@@ -432,23 +432,36 @@ Oberflaeche. **Nichts in A1–A16 verlangt (b) heute.**
 handgeschriebene Widget ersetzen. (b) nicht anfassen, bis es einen
 Geschaeftsgrund gibt — und den dann zuerst in die Spec, nicht in den Code.
 
-**▶ Gehoert MIT in Durchgang 2: `acceptOrder()` aendert die Stage ohne
-Log-Eintrag.** Gefunden am 02.08. beim Bau des Durchgang-1-Harness.
-`acceptOrder()` setzt `o.stage = 'accepted'` und ruft `logEvent()` **nicht** —
-die Bestellung wechselt ihren Zustand, und der Audit-Trail schweigt dazu. Das
-ist eine Luecke in Invariante 8 (`order_events` ist die Nachweiskette) und hat
-eine unmittelbare Folge fuer (a): aus einer angenommenen Bestellung laesst sich
-**keine** Benachrichtigung ableiten, weil es kein Ereignis gibt, aus dem man sie
-ableiten koennte.
-**Serges Vorgabe (02.08.): das gehoert in Durchgang 2, nicht spaeter.** Sonst
-liefert ausgerechnet „Bestellung angenommen" — eines der offensichtlichsten
-Ereignisse ueberhaupt — als einziges keine Benachrichtigung, und die Luecke
-faellt erst auf, wenn jemand sie vermisst.
-**Bewusst NICHT in Durchgang 1 miterledigt**, weil ein zusaetzlicher
-Log-Eintrag eine Verhaltensaenderung ist und der Durchgang rein mechanisch war.
-`confirmOrder()` macht es daneben richtig (loggt mit Actor). Beim Bauen mit zu
-klaeren: ob `acceptOrder()` und `confirmOrder()` ueberhaupt zwei Funktionen
-bleiben — sie tun heute weitgehend dasselbe, nur eine davon vollstaendig.
+**▶ ERLEDIGT in Durchgang 2 — und die urspruengliche Diagnose war falsch.
+`acceptOrder()` war toter Code, nicht eine Luecke im Audit-Trail.**
+
+**Was ich am 02.08. gemeldet hatte:** „`acceptOrder()` setzt `o.stage =
+'accepted'` und ruft `logEvent()` nicht — die Bestellung wechselt ihren Zustand,
+und der Audit-Trail schweigt dazu." Serge hat das daraufhin verbindlich in
+Durchgang 2 gezogen, mit der richtigen Begruendung, dass „Bestellung angenommen"
+sonst als einziges naheliegendes Ereignis keine Benachrichtigung liefert.
+
+**Was die Nachpruefung ergab:** `acceptOrder()` hatte **keine einzige
+Aufrufstelle** im ganzen Repo — kein `onclick`, kein Aufruf aus einem Widget.
+Der einzige Aufrufer war mein eigener Harness aus Durchgang 1. Die Funktion
+konnte den Audit-Trail also gar nicht luecken lassen, weil sie nie lief. Der
+Annahmepfad ist und war `confirmOrder()`, gebunden an den Knopf
+„✓ Confirm Order", und der loggt seit Durchgang 1 korrekt mit Actor. Die Zusage,
+um die es Serge ging, war bereits erfuellt — nur nicht dort, wo ich sie gesucht
+hatte.
+
+**Warum die Diagnose danebenging, und was daraus zu lernen ist:** ich hatte den
+Befund aus dem Verhalten der Funktion abgeleitet, ohne zu pruefen, ob sie
+ueberhaupt erreichbar ist. Bei totem Code ist „diese Funktion macht X falsch"
+immer eine Aussage ueber nichts. **Erst die Aufrufstellen, dann den Rumpf
+bewerten** — sonst wird toter Code als Fehler gemeldet und, schlimmer, als
+Fehler repariert. Genau das war hier der Ausgang: Serges Auftrag lautete
+reparieren, die Messung ergab loeschen.
+
+**Erledigt:** `acceptOrder()` geloescht. Repariert waere sie ein **zweiter
+Annahmepfad neben `confirmOrder()`** geworden — die Doppelung, die ich daneben
+selbst als offene Frage notiert hatte, dann aber fest verdrahtet. Serges
+Entscheidung dazu: „dein Befund schlaegt meinen Auftrag."
 
 ### ▶ Persistenz, moeglicher zweiter Durchgang — oeffentliche Seiten
 

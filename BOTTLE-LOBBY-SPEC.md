@@ -2644,6 +2644,86 @@ both sides, against a real `localStorage`.
 block, `redrawAll()`, the demo-bar controls and `tests/persistence.js`. Nothing
 else refers to any of it — that is what "never reads from storage" bought.
 
+---
+
+## C9. Notifications — derived, never a message table
+
+**Unlike C8, this section does not die with the prototype.** The three conditions
+below are product rules and hold on the real platform; only the storage note at
+the end is prototype-specific.
+
+**There is no `notifications` table and no inbox.** A notification is a *query*
+over records that already exist — `order_events`, a show's event log, the
+partnership request stages, the follow graph — in the same way A10 makes the Wine
+Guide a query layer over products rather than a second catalogue. A stored copy
+would violate invariant 1 and then go stale in the ordinary course of business:
+"Cantina Rossi proposes Grillo" would sit in the inbox after the wine had been
+confirmed or declined, which is invariant 7 word for word.
+
+A16.11 step 5 already decided this for its own case — *"one notification, two
+surfaces — not two records (A1)"*. C9 generalises it.
+
+### The three conditions
+
+An event becomes a notification for a reader when **all three** hold.
+
+| | Condition | Why it exists |
+|---|---|---|
+| **1** | **Somebody else caused it.** `actor !== my entity`. | What I did myself is not news to me. This is the first thing the query has to know, and it is why every event source has to carry an actor at all (see below). |
+| **2** | **It touches MY relation to the thing — not merely the thing.** Only the party the event is actually about. | Narrow on purpose. Not "what third parties do inside an object I am also in". |
+| **3** | **I am allowed to see it anyway.** The notification inherits the visibility rules of the surface it points at: A16.6 for shows, the buyer/seller perspective for orders. | A notification must never reveal more than the section it came from. Without this, Notifications becomes the next surface on which A16.6 leaks — and silently. |
+
+**Condition 2, by example.** A show at which Bodegas Ruiz exhibits records
+"Bistro Laurent invited to attend". Somebody else triggered it (condition 1
+passes), and it happened inside a record Bodegas Ruiz is part of — and it is
+still **not** a notification for them. The guest list is the host's book
+(A16.5 rule 4). Their relation to the show is *exhibiting*; who else is in the
+room is not their edge.
+
+This is why notifications are derived **per relation**, not by forwarding an
+object's event log to everyone attached to that object. Deriving from a shared
+log is exactly the mistake condition 2 rules out.
+
+### Two classes, both notifications
+
+| Class | Meaning | Derived from |
+|---|---|---|
+| **Awaiting you** | Something needs a decision from me | `showAwaits()` / `exhibitorTurn()` — **the same functions the Wine Shows badge uses** |
+| **For information** | No action needed, but my relation to the thing changed — e.g. "show moved to `planning`" | The state change itself |
+
+The first class must not grow its own answer to "does this need me?". Two
+functions answering that question is two answers, and they will disagree.
+
+### The regional notification — the one named exception
+
+**"New Wine Show in your region"** goes to restaurants and retailers **in the
+show's city who have nothing to do with it**. This is the single deliberate
+violation of condition 2, and it is named here so that it stays the only one.
+
+It needs no matchmaking: the show's city and the stakeholder's location both
+exist already. A distributor creating a show in Frankfurt is how the Frankfurt
+houses hear about it — the demand side (A16.0) finding out that something is
+happening near them.
+
+**Precisely because it breaks condition 2, condition 3 is not optional here.**
+On a `planning` show the notification may carry only what A16.6 shows publicly:
+title, date, city, focus. **No exhibitors, no wines, no venue.**
+
+### What this requires of the sources
+
+Every source has to answer two questions about every event: **who** and **when**.
+Three could not, and were fixed on 2 Aug 2026 ahead of this section:
+`order_events` carried no actor at all; the follow graph carried no date, so A7's
+promised "X started following you" could not be placed in time; and partnership
+requests carried a third date format. `tests/notification-sources.js` holds these
+open, because a missing field is invisible at the notification end — the event
+simply never appears, and an empty list looks like a quiet day.
+
+**The one thing that is genuinely stored: the read marker.** Whether I have seen
+something cannot be derived from the events. It is not an inbox — it is a
+per-stakeholder marker (a timestamp, or a set of seen event ids), and in the
+prototype it belongs in the `BLStore.register` block like any other state (C8).
+Without it the badge cannot be honest.
 
 ---
 

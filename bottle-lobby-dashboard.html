@@ -6731,13 +6731,11 @@ function placeOrder(buyer, buyerType, seller, sellerType, items, note) {
   return o;
 }
 
-function acceptOrder(id) {
-  const o = orders.find(x => x.id === id);
-  if (!o) return;
-  o.stage = 'accepted';
-  renderAllOrders();
-  showToast('✓ ' + o.id + ' accepted — ' + o.buyer + ' has been notified');
-}
+/* acceptOrder() was removed on 2 Aug 2026. It had no call site anywhere —
+   the accept path is confirmOrder(), bound to the "✓ Confirm Order" button,
+   which also sets shipStatus and logs the transition with its actor. Giving
+   the dead twin a log entry instead of deleting it would have wired a second
+   accept path into the codebase. See C9 and HANDOFF. */
 
 function declineOrder(id) {
   const o = orders.find(x => x.id === id);

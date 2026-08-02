@@ -59,9 +59,12 @@ console.log('── order events carry an actor');
   else ok('every actor is the buyer, the seller or Bottle Lobby');
 
   /* And a live action must keep doing it. This has to run a function
-     that actually calls logEvent() — acceptOrder() only moves the stage
-     and writes nothing, so asserting against it passed without testing
-     anything. confirmOrder() logs first and renders second; the render
+     that actually calls logEvent(). The first version of this check
+     called acceptOrder(), which only moved the stage and wrote nothing
+     — so it passed while testing nothing, and the "confirmed" entry it
+     then inspected came from buildInitialLog(). acceptOrder() turned
+     out to have no call site at all and was deleted; confirmOrder() is
+     the real accept path. It logs first and renders second; the render
      throws here because no detail pane is open, which is why the call
      is wrapped. The entry is already appended by then. */
   const pending = w.eval("orders.find(o => o.stage === 'pending').id");
