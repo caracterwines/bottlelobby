@@ -289,6 +289,12 @@ All same-type pairings follow the same 4-stage partnership workflow (A6).
 
 **Key cross-referencing use case:** If a Distributor sees that one of their own Restaurant/Retail partners follows a Winery they don't yet carry, but another Distributor already has that Winery under contract, the first Distributor can request a Distributor↔Distributor partnership with the second specifically to pull that Winery's wines into their own portfolio (referenced, never duplicated).
 
+**The same relation read from the follower's end — open, not yet built.** The case above is written from the Distributor's side only. The other direction is a match in its own right: **"a winery I follow now has a distributor."** For a Restaurant that means a wine it could not source until now has become orderable — the supply chain has no shortcuts (invariant 3), so a followed winery without a distributor partner is exactly a wine out of reach. The trigger is a new `active` partnership on a winery somebody follows, which is the follow graph (A7) and the partnership stage (A6) read together; both exist.
+
+Note that *"a winery I follow is exhibiting at a show"* is **not** part of this — it already exists as the "From Your Stars" feed (A16.7) and needs nothing here.
+
+**A8 needs a surface where matches arrive, not only a list to visit.** Matchmaking is specified as something a stakeholder goes and looks at. The notification list (C9) is the first place a match can arrive unbidden, and the regional notification is the first real application of A8 rather than an exception to C9 — see C9 for why that reframing matters and what it does *not* change.
+
 **Prototype state:** Matchmaking is not implemented. All four dashboards carry a non-functional "Matchmaking" nav item with a match-count badge, purely so the concept is visible in demos. The two widgets that *do* render ("New Distributor Matches" on the winery dashboard, "New Winery Matches" on the distributor dashboard) use hardcoded fit percentages. Nothing here is a blueprint — build it from this section, not from the mockup.
 
 **Where the real matching data comes from:** the follow/fan graph (A7), the wine portfolio relations (A3), the master-data fields (A4) and stated seek/offer preferences. All four already exist as tables; Matchmaking is a query layer over them, not a new data silo.
@@ -2708,6 +2714,28 @@ happening near them.
 **Precisely because it breaks condition 2, condition 3 is not optional here.**
 On a `planning` show the notification may carry only what A16.6 shows publicly:
 title, date, city, focus. **No exhibitors, no wines, no venue.**
+
+#### It should become a matchmaking hit, not stay a hard-wired rule
+
+As built, the rule is *same city → notify*. That is **an assumption about the
+user that nobody stated**: a restaurant that never attends trade shows gets it
+anyway, because it happens to be in the right place.
+
+The right shape is an **A8 match**. The restaurant states what it is seeking —
+"wine shows in Frankfurt", "Spanish reds" — and the notification stops being an
+exception and becomes the fulfilment of something that was actually asked for. A
+rule *about* the user turns into an answer *to* them. This also gives A8 its
+first surface where matches arrive rather than having to be visited, and makes
+the regional class A8's first real application.
+
+> **For whoever implements this: condition 2 stays broken, and condition 3 stays
+> mandatory.** A search query is not a relation. The restaurant still has nothing
+> to do with the show — it has a matching interest, which is a different thing.
+> So even a stakeholder who explicitly asked for shows in Frankfurt sees only
+> title, date, city and focus on a `planning` show. **The anonymisation protects
+> the exhibitor, not the viewer** (A16.6); who is looking, and why, does not enter
+> into it. Resolving "they asked for it, so they may see more" would be the
+> silent A16.6 leak this whole section exists to prevent.
 
 ### What this requires of the sources
 

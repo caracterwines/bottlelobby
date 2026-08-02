@@ -10127,7 +10127,17 @@ function notifPush(list, me, n) {
    load-bearing here rather than incidental — the entry may carry only
    what A16.6 shows the public on an anonymised show. It therefore
    reads title, date, city and focus and NOTHING else: no exhibitors,
-   no wines, no venue. Adding a field here is adding a leak. */
+   no wines, no venue. Adding a field here is adding a leak.
+
+   NOT THE FINAL SHAPE: "same city → notify" is an assumption about the
+   user that nobody stated — a restaurant that never attends shows gets
+   it anyway. This belongs to A8 as a stated seek ("wine shows in
+   Frankfurt"), which turns a rule ABOUT the reader into an answer TO
+   them. When that is built: condition 2 stays broken and condition 3
+   stays mandatory. A search query is not a relation, and the
+   anonymisation protects the exhibitor, not the viewer — so even
+   someone who asked for Frankfurt shows still sees only these four
+   fields on a `planning` show. C9 has the full reasoning. */
 /* Do I have a real relation to this show? Condition 2 turns on this
    answer, and it is NOT the same question as "may I see this show".
    showsForRole() is deliberately wide for restaurants and retail —
