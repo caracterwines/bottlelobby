@@ -49,6 +49,23 @@ Kein Build-Command, Publish-Directory = Repo-Root.
   aus einem Grund um, der nichts mit ihr zu tun hat.
   Vier Harnesses zaehlten Shows hart und wurden nachgezogen (nicht bloss
   hochgezaehlt: `venue-request.js` benennt die neue Show jetzt).
+  **`tests/notifications.js` — 14 statt 13 Harnesses.** Die wichtigste Zusicherung
+  ist die **eingebaute Gegenprobe**: die Datei patcht am Ende `notifHasEdge()`
+  zurueck auf das weite `showsForRole()`, baut die Seite neu und verlangt, dass
+  Retail wieder Grande Rioja leckt. Der Fehler kann also nicht zurueckkommen, ohne
+  dass die Suite rot wird. `build()` gibt `null` zurueck, wenn der Patch nicht
+  greift — eine Mutation, die ihr Ziel verfehlt, darf nicht als „hat gehalten"
+  durchgehen. Dazu: die Awaiting-Klasse muss fuer alle vier Rollen exakt
+  `showsAwaiting()` entsprechen (sonst driften Notifications und Wine-Shows-Badge
+  in zwei Antworten auf „braucht das mich?"), und `notifSeen` muss bei `BLStore`
+  registriert sein.
+  **Ein Fehlalarm dabei, gefunden bevor er zaehlte:** die Gaestelisten-Pruefung
+  traf `/invited to attend/` ueberall und schlug auf „You have been invited to
+  attend" an — der Awaiting-Zeile des Restaurants ueber seine **eigene** Einladung,
+  die legitim ist. Stehen gelassen haette sie beigebracht, die echte Regel zu
+  lockern; derselbe Fehlertyp wie der Fehlalarm am Winzer-Kasten. Jetzt auf die
+  informative Klasse eingegrenzt, wo ein Dritt-Ereignis tatsaechlich auftauchen
+  wuerde.
   **Noch offen aus Durchgang 1:** die Show-Kanten sind nicht datiert — Aussteller,
   Weinvorschlaege und `venueStatus` haben kein `at`, nur `attendees[].at`. Fuer
   Klasse 1 faellt das nicht auf, weil `showAwaits()` einen Zustand beantwortet und
@@ -463,7 +480,8 @@ handgeschriebene Widget ersetzen. (b) nicht anfassen, bis es einen
 Geschaeftsgrund gibt — und den dann zuerst in die Spec, nicht in den Code.
 
 **▶ NAECHSTES: Durchgang 2b — die Oberflaeche.** Die Ableitung steht und ist
-geprueft (13 Harnesses gruen), sichtbar ist davon noch **nichts**. Offen:
+zugesichert (`tests/notifications.js`, 14 Harnesses gruen), sichtbar ist davon
+noch **nichts**. Offen:
 1. **Nav-Eintrag „Notifications" UEBER „Messages"** in allen vier Rollen, mit
    Badge aus `notifUnread(role).length`. Die vier `Messages`-Eintraege bleiben
    vorerst tot daneben stehen — sie sind Feature (b), Korrespondenz.
@@ -476,10 +494,12 @@ geprueft (13 Harnesses gruen), sichtbar ist davon noch **nichts**. Offen:
    es enthaelt drei erfundene Nachrichten, darunter „Vinoteca Roma started
    following you", zu der es laengst einen echten Datensatz gibt. A1-Verstoss
    im Markup, und der Renderer dafuer existiert jetzt.
-4. **`tests/notifications.js`** — noch nicht geschrieben. Muss die drei
-   Bedingungen, die zwei Klassen, die Regional-Ausnahme (samt Leck-Probe) und
-   den Lesezeiger halten, und gegen absichtlich kaputte Fassungen laufen.
-   Bis dahin ist die Ableitung nur von Hand gemessen, nicht zugesichert.
+**Beim Abnehmen (Serges Vorgabe):** Badge auf n → alles gelesen markieren → F5 →
+Badge bleibt 0. Die Lesezeiger-**Logik** ist zugesichert (Markieren, Id-Stabilitaet
+ueber eine Neuableitung, ein neues Ereignis wird wieder ungelesen, Registrierung
+bei `BLStore`) — **der Weg ueber die Oberflaeche und ein echtes F5 ist es nicht.**
+Genau dort war der Unterschied zwischen jsdom und Browser bisher am groessten
+(C8: der Ausloeser, den das Harness gruen sah und der im Browser nicht schrieb).
 
 **▶ ERLEDIGT in Durchgang 2 — und die urspruengliche Diagnose war falsch.
 `acceptOrder()` war toter Code, nicht eine Luecke im Audit-Trail.**
