@@ -4711,7 +4711,7 @@ renderWinePortfolioD();
 ══════════════════════════════════════════════════════════════════ */
 let wineryRequests = [
   { id:1, name:'Vinorama Nordic AB', role:'distributor', roleLabel:'Distributor',
-    region:'Stockholm, Sweden', received:'18 July 2026',
+    region:'Stockholm, Sweden', received:'2026-07-18',
     msg:'We would like to bring your Sicilian range into the Nordic restaurant market — our network covers 190+ venues across Sweden and Norway.',
     stage:'pending' }
 ];
@@ -4725,7 +4725,7 @@ let wineryPartners = [
 
 let wineryOutgoingRequests = [
   { name:'Iberian Wine Partners S.L.', role:'distributor', roleLabel:'Distributor',
-    region:'Barcelona, Spain', sent:'16 July 2026', stage:'sent' }
+    region:'Barcelona, Spain', sent:'2026-07-16', stage:'sent' }
 ];
 
 const owStageLabels = {
@@ -4762,7 +4762,7 @@ function renderWineryNetwork() {
           <div class="wn-avatar ${roleAv[r.role]}">${wnInitials(r.name)}</div>
           <div style="flex:1">
             <div class="wn-name">${r.name}</div>
-            <div class="wn-meta">${r.region} · Requested ${r.received}</div>
+            <div class="wn-meta">${r.region} · Requested ${orderDate(r.received)}</div>
           </div>
           <span class="wn-roletag ${roleTag[r.role]}">${r.roleLabel}</span>
         </div>
@@ -4792,7 +4792,7 @@ function renderWineryNetwork() {
             <div class="wn-avatar ${roleAv[r.role]}">${wnInitials(r.name)}</div>
             <div style="flex:1">
               <div class="wn-name">${r.name}</div>
-              <div class="wn-meta">${r.region} · Requested ${r.sent}</div>
+              <div class="wn-meta">${r.region} · Requested ${orderDate(r.sent)}</div>
             </div>
             <span class="wn-status ${s.cls}">${s.text}</span>
           </div>
@@ -4940,7 +4940,7 @@ function renderPartnerNetwork() {
             <div class="pn-avatar">${r.avatar}</div>
             <div class="pn-info">
               <div class="pn-name">${r.winery}</div>
-              <div class="pn-meta">${r.region} · Requested ${r.sent}</div>
+              <div class="pn-meta">${r.region} · Requested ${orderDate(r.sent)}</div>
             </div>
             <div class="pn-right" style="align-items:flex-end;gap:0.4rem">
               <div style="display:flex;gap:0.5rem;align-items:center">${typeTag(r.type)}<span class="pn-status ${s.cls}">${s.text}</span></div>
@@ -4959,7 +4959,7 @@ renderPartnerNetwork();
 ══════════════════════════════════════════════════════════════════ */
 let incomingRequests = [
   { id:1, winery:'Château Belrieu', type:'winery', avatar:'CB', region:'Bordeaux, France',
-    received:'20 July 2026',
+    received:'2026-07-20',
     msg:'We are looking for a partner to bring our Bordeaux Supérieur into your market — happy to discuss volumes and own-label options.',
     stage:'pending' }
 ];
@@ -4976,7 +4976,7 @@ function renderIncomingRequests() {
         <div class="ir-avatar">${r.avatar}</div>
         <div style="flex:1">
           <div class="ir-name">${r.winery}</div>
-          <div class="ir-meta">${r.region} · Requested ${r.received}</div>
+          <div class="ir-meta">${r.region} · Requested ${orderDate(r.received)}</div>
         </div>
         ${typeTag(r.type)}
       </div>
@@ -5264,7 +5264,7 @@ renderWineListR();
 const rPartnerRequests = [
   { winery:'Aktiv Getränke', avatar:'AG', region:'Köln, Germany',
     url:'bottle-lobby-distributor-aktiv-getraenke.html',
-    stage:'winery', sent:'15 July 2026' }
+    stage:'winery', sent:'2026-07-15' }
 ];
 
 const rStageLabels = {
@@ -5325,7 +5325,7 @@ function renderRestaurantNetwork() {
             <div class="pn-avatar">${r.avatar}</div>
             <div class="pn-info">
               <div class="pn-name">${r.winery}</div>
-              <div class="pn-meta">${r.region} · Requested ${r.sent}</div>
+              <div class="pn-meta">${r.region} · Requested ${orderDate(r.sent)}</div>
             </div>
             <div class="pn-right">
               <span class="pn-status ${s.cls}">${s.text}</span>
@@ -5341,7 +5341,7 @@ renderRestaurantNetwork();
 
 let rIncomingRequests = [
   { id:1, winery:'Enoteca Milano Import Srl', avatar:'EM', region:'Milan, Italy',
-    received:'19 July 2026',
+    received:'2026-07-19',
     msg:'We carry a strong Northern Italian and French portfolio and would love to supply Bistro Laurent — happy to discuss volumes and exclusivity.',
     stage:'pending' }
 ];
@@ -5357,7 +5357,7 @@ function renderIncomingRequestsR() {
         <div class="ir-avatar">${r.avatar}</div>
         <div style="flex:1">
           <div class="ir-name">${r.winery}</div>
-          <div class="ir-meta">${r.region} · Requested ${r.received}</div>
+          <div class="ir-meta">${r.region} · Requested ${orderDate(r.received)}</div>
         </div>
         <span class="ir-tag">Distributor</span>
       </div>
@@ -5643,7 +5643,7 @@ renderWineSelectionT();
 const tPartnerRequests = [
   { winery:'Iberian Wine Partners S.L.', avatar:'IW', region:'Barcelona, Spain',
     url:'bottle-lobby-distributor-iberian-wine-partners-sl.html',
-    stage:'winery', sent:'14 July 2026' }
+    stage:'winery', sent:'2026-07-14' }
 ];
 
 const tStageLabels = {
@@ -5704,7 +5704,7 @@ function renderRetailNetwork() {
             <div class="pn-avatar">${r.avatar}</div>
             <div class="pn-info">
               <div class="pn-name">${r.winery}</div>
-              <div class="pn-meta">${r.region} · Requested ${r.sent}</div>
+              <div class="pn-meta">${r.region} · Requested ${orderDate(r.sent)}</div>
             </div>
             <div class="pn-right">
               <span class="pn-status ${s.cls}">${s.text}</span>
@@ -5720,7 +5720,7 @@ renderRetailNetwork();
 
 let tIncomingRequests = [
   { id:1, winery:'Vinorama Nordic AB', avatar:'VN', region:'Stockholm, Sweden',
-    received:'16 July 2026',
+    received:'2026-07-16',
     msg:'We carry a strong Nordic-imported and Southern European portfolio and would love to supply Weinhaus Müller — happy to discuss volumes and exclusivity.',
     stage:'pending' }
 ];
@@ -5736,7 +5736,7 @@ function renderIncomingRequestsT() {
         <div class="ir-avatar">${r.avatar}</div>
         <div style="flex:1">
           <div class="ir-name">${r.winery}</div>
-          <div class="ir-meta">${r.region} · Requested ${r.received}</div>
+          <div class="ir-meta">${r.region} · Requested ${orderDate(r.received)}</div>
         </div>
         <span class="ir-tag">Distributor</span>
       </div>
@@ -5802,32 +5802,32 @@ renderIncomingRequestsT();
    this file.
 ══════════════════════════════════════════════════════════════════ */
 let wineFollowGraph = [
-  { follower:'Bistro Laurent', followerType:'restaurant', avatar:'BL', location:'Frankfurt, Germany', winery:'Cantina Rossi', url:'bottle-lobby-restaurant-bistro-laurent.html' },
-  { follower:'Bistro Laurent', followerType:'restaurant', avatar:'BL', location:'Frankfurt, Germany', winery:'Château Belrieu', url:'bottle-lobby-restaurant-bistro-laurent.html' },
-  { follower:'Weinhaus Müller', followerType:'retail', avatar:'WM', location:'Munich, Germany', winery:'Cantina Rossi', url:'bottle-lobby-retail-weinhaus-mueller.html' },
+  { follower:'Bistro Laurent', followerType:'restaurant', avatar:'BL', location:'Frankfurt, Germany', winery:'Cantina Rossi', url:'bottle-lobby-restaurant-bistro-laurent.html', at:'2026-04-12' },
+  { follower:'Bistro Laurent', followerType:'restaurant', avatar:'BL', location:'Frankfurt, Germany', winery:'Château Belrieu', url:'bottle-lobby-restaurant-bistro-laurent.html', at:'2026-04-27' },
+  { follower:'Weinhaus Müller', followerType:'retail', avatar:'WM', location:'Munich, Germany', winery:'Cantina Rossi', url:'bottle-lobby-retail-weinhaus-mueller.html', at:'2026-05-03' },
   /* Deliberate fixture for A16.7: Bodegas Ruiz is CONFIRMED at Grande
      Rioja, which is still anonymised, and Weinhaus Müller follows them.
      A feed built from "shows my stars take part in" would announce it
      and break A16.6 on a third surface. Without this pair the rule is
      only covered by construction — tests/follow-feed.js asserts the
      pair exists, so it cannot be removed without the run saying so. */
-  { follower:'Weinhaus Müller', followerType:'retail', avatar:'WM', location:'Munich, Germany', winery:'Bodegas Ruiz', url:'bottle-lobby-retail-weinhaus-mueller.html' },
-  { follower:'Vinstuen København', followerType:'retail', avatar:'VK', location:'Copenhagen, Denmark', winery:'Henri Dubois Domaine', url:'bottle-lobby-retail-vinstuen-kobenhavn.html' },
-  { follower:'Osteria Marconi', followerType:'restaurant', avatar:'OM', location:'Milan, Italy', winery:'Cantina Rossi', url:'bottle-lobby-restaurant-osteria-marconi.html' },
-  { follower:'Vinoteca Roma', followerType:'retail', avatar:'VR', location:'Rome, Italy', winery:'Cantina Rossi', url:'bottle-lobby-retail-vinoteca-roma.html' },
-  { follower:'Casa Elena', followerType:'restaurant', avatar:'CE', location:'Barcelona, Spain', winery:'Weingut Schmitt', url:'bottle-lobby-restaurant-casa-elena.html' },
-  { follower:'Cave à Vins Lyon', followerType:'retail', avatar:'CL', location:'Lyon, France', winery:'Domaine Lefèvre', url:'bottle-lobby-retail-cave-a-vins-lyon.html' },
+  { follower:'Weinhaus Müller', followerType:'retail', avatar:'WM', location:'Munich, Germany', winery:'Bodegas Ruiz', url:'bottle-lobby-retail-weinhaus-mueller.html', at:'2026-05-11' },
+  { follower:'Vinstuen København', followerType:'retail', avatar:'VK', location:'Copenhagen, Denmark', winery:'Henri Dubois Domaine', url:'bottle-lobby-retail-vinstuen-kobenhavn.html', at:'2026-05-19' },
+  { follower:'Osteria Marconi', followerType:'restaurant', avatar:'OM', location:'Milan, Italy', winery:'Cantina Rossi', url:'bottle-lobby-restaurant-osteria-marconi.html', at:'2026-05-24' },
+  { follower:'Vinoteca Roma', followerType:'retail', avatar:'VR', location:'Rome, Italy', winery:'Cantina Rossi', url:'bottle-lobby-retail-vinoteca-roma.html', at:'2026-06-02' },
+  { follower:'Casa Elena', followerType:'restaurant', avatar:'CE', location:'Barcelona, Spain', winery:'Weingut Schmitt', url:'bottle-lobby-restaurant-casa-elena.html', at:'2026-06-08' },
+  { follower:'Cave à Vins Lyon', followerType:'retail', avatar:'CL', location:'Lyon, France', winery:'Domaine Lefèvre', url:'bottle-lobby-retail-cave-a-vins-lyon.html', at:'2026-06-15' },
   /* Wine Fans of the Distributor (Hawesko GmbH): wineries and a restaurant follow the distributor */
-  { follower:'Cantina Rossi', followerType:'winery', avatar:'CR', location:'Sicily, Italy', winery:'Hawesko GmbH', followedType:'distributor', url:'bottle-lobby-winery-cantina-rossi.html' },
-  { follower:'Château Belrieu', followerType:'winery', avatar:'CB', location:'Bordeaux, France', winery:'Hawesko GmbH', followedType:'distributor', url:'bottle-lobby-winery-chateau-belrieu.html' },
-  { follower:'Bistro Laurent', followerType:'restaurant', avatar:'BL', location:'Frankfurt, Germany', winery:'Hawesko GmbH', followedType:'distributor', url:'bottle-lobby-restaurant-bistro-laurent.html' },
+  { follower:'Cantina Rossi', followerType:'winery', avatar:'CR', location:'Sicily, Italy', winery:'Hawesko GmbH', followedType:'distributor', url:'bottle-lobby-winery-cantina-rossi.html', at:'2026-06-21' },
+  { follower:'Château Belrieu', followerType:'winery', avatar:'CB', location:'Bordeaux, France', winery:'Hawesko GmbH', followedType:'distributor', url:'bottle-lobby-winery-chateau-belrieu.html', at:'2026-06-28' },
+  { follower:'Bistro Laurent', followerType:'restaurant', avatar:'BL', location:'Frankfurt, Germany', winery:'Hawesko GmbH', followedType:'distributor', url:'bottle-lobby-restaurant-bistro-laurent.html', at:'2026-07-04' },
   /* Wine Stars of the Distributor (Hawesko GmbH): the distributor follows a winery, a retailer and a restaurant */
-  { follower:'Hawesko GmbH', followerType:'distributor', avatar:'HW', location:'Hamburg, Germany', winery:'Henri Dubois Domaine', followedType:'winery', url:'bottle-lobby-winery-henri-dubois-domaine.html' },
-  { follower:'Hawesko GmbH', followerType:'distributor', avatar:'HW', location:'Hamburg, Germany', winery:'Weinhaus Müller', followedType:'retail', url:'bottle-lobby-retail-weinhaus-mueller.html' },
-  { follower:'Hawesko GmbH', followerType:'distributor', avatar:'HW', location:'Hamburg, Germany', winery:'Osteria Marconi', followedType:'restaurant', url:'bottle-lobby-restaurant-osteria-marconi.html' },
+  { follower:'Hawesko GmbH', followerType:'distributor', avatar:'HW', location:'Hamburg, Germany', winery:'Henri Dubois Domaine', followedType:'winery', url:'bottle-lobby-winery-henri-dubois-domaine.html', at:'2026-07-09' },
+  { follower:'Hawesko GmbH', followerType:'distributor', avatar:'HW', location:'Hamburg, Germany', winery:'Weinhaus Müller', followedType:'retail', url:'bottle-lobby-retail-weinhaus-mueller.html', at:'2026-07-16' },
+  { follower:'Hawesko GmbH', followerType:'distributor', avatar:'HW', location:'Hamburg, Germany', winery:'Osteria Marconi', followedType:'restaurant', url:'bottle-lobby-restaurant-osteria-marconi.html', at:'2026-07-23' },
   /* A winery following a restaurant — the pairing that gives Bistro Laurent
      a non-empty "My Fans" list and Cantina Rossi a second "My Stars" entry. */
-  { follower:'Cantina Rossi', followerType:'winery', avatar:'CR', location:'Sicily, Italy', winery:'Bistro Laurent', followedType:'restaurant', url:'bottle-lobby-winery-cantina-rossi.html' }
+  { follower:'Cantina Rossi', followerType:'winery', avatar:'CR', location:'Sicily, Italy', winery:'Bistro Laurent', followedType:'restaurant', url:'bottle-lobby-winery-cantina-rossi.html', at:'2026-07-29' }
 ];
 const followRoleLabel = { distributor:'Distributor', restaurant:'Restaurant', retail:'Retail', winery:'Winery' };
 
@@ -6895,16 +6895,28 @@ function normalizeOrder(o) {
   o.__norm = true;
   return o;
 }
+/* The log a fixture order is born with. Buyer places and the seller
+   moves it on from there — A14's lifecycle, and the same division the
+   editor enforces. Every entry carries its actor for the same reason
+   logEvent() does. */
 function buildInitialLog(o) {
-  const l = [{ at:o.placed, text:'Order placed by ' + o.buyer }];
-  if (['accepted','shipped','delivered'].indexOf(o.stage) !== -1) l.push({ at:o.placed, text:'Order confirmed by ' + o.seller });
-  if (['shipped','delivered'].indexOf(o.stage) !== -1 && o.tracking) l.push({ at:o.placed, text:'Shipped via ' + o.carrier + ' — ' + o.tracking });
-  if (o.stage === 'delivered') l.push({ at:o.eta || o.placed, text:'Delivery confirmed' });
+  const l = [{ at:o.placed, actor:o.buyer, text:'Order placed by ' + o.buyer }];
+  if (['accepted','shipped','delivered'].indexOf(o.stage) !== -1) l.push({ at:o.placed, actor:o.seller, text:'Order confirmed by ' + o.seller });
+  if (['shipped','delivered'].indexOf(o.stage) !== -1 && o.tracking) l.push({ at:o.placed, actor:o.seller, text:'Shipped via ' + o.carrier + ' — ' + o.tracking });
+  if (o.stage === 'delivered') l.push({ at:o.eta || o.placed, actor:o.seller, text:'Delivery confirmed' });
   return l;
 }
-function logEvent(o, text) {
+/* `actor` is who did it, exactly as logShow() records it for a show.
+   It was missing here, which meant an order's audit trail could say
+   WHAT happened but never WHO — and a notification cannot be derived
+   without that: the first thing it has to know is whether the reader
+   caused the event themselves (C9). Every transition in the editor is
+   seller-side (`editable` is gated on `isSeller`), so the seller is
+   passed explicitly rather than assumed here — the day a buyer-side
+   action is added, the call site has to answer the question. */
+function logEvent(o, actor, text) {
   o.log = o.log || [];
-  o.log.push({ at: todayISO(), text: text });
+  o.log.push({ at: todayISO(), actor: actor, text: text });
 }
 
 /* ── Money ──────────────────────────────────────────────────────── */
@@ -6982,7 +6994,7 @@ function applyFreeGoods(id, dealId) {
   if (!info) return;
   const target = info.names[0];
   o.items.push({ wine:target, winery:info.deal.winery, qty:info.free, unit:0, cost:wineUnitPrice[target] ? +(wineUnitPrice[target]*0.62).toFixed(2) : 0, discount:0, free:true });
-  logEvent(o, 'Free goods applied: ' + info.free + ' × ' + target + ' (deal ' + info.deal.ratio + ')');
+  logEvent(o, o.seller, 'Free goods applied: ' + info.free + ' × ' + target + ' (deal ' + info.deal.ratio + ')');
   renderOrderDetail(id);
   showToast('✓ ' + info.free + ' free bottles added to ' + o.id);
 }
@@ -6991,7 +7003,7 @@ function applyDealDiscount(id, dealId) {
   const info = dealFreeGoodsFor(o).find(f => f.deal.id === dealId && f.discount);
   if (!info) return;
   o.discountPct = info.discount;
-  logEvent(o, 'Deal discount applied: ' + info.discount + '% (' + info.basis + ' bottles)');
+  logEvent(o, o.seller, 'Deal discount applied: ' + info.discount + '% (' + info.basis + ' bottles)');
   renderOrderDetail(id);
   showToast('✓ ' + info.discount + '% deal discount applied to ' + o.id);
 }
@@ -7462,10 +7474,10 @@ function renderOrderDetail(id) {
 
 /* ══ EDIT ACTIONS ════════════════════════════════════════════════ */
 function _o(id) { return normalizeOrder(orders.find(x => x.id === id)); }
-function setLineQty(id, idx, v) { const o = _o(id); o.items[idx].qty = Math.max(1, parseInt(v) || 1); logEvent(o, 'Quantity changed on ' + o.items[idx].wine); renderOrderDetail(id); }
-function setLineUnit(id, idx, v) { const o = _o(id); o.items[idx].unit = Math.max(0, parseFloat(v) || 0); logEvent(o, 'Unit price changed on ' + o.items[idx].wine); renderOrderDetail(id); }
+function setLineQty(id, idx, v) { const o = _o(id); o.items[idx].qty = Math.max(1, parseInt(v) || 1); logEvent(o, o.seller, 'Quantity changed on ' + o.items[idx].wine); renderOrderDetail(id); }
+function setLineUnit(id, idx, v) { const o = _o(id); o.items[idx].unit = Math.max(0, parseFloat(v) || 0); logEvent(o, o.seller, 'Unit price changed on ' + o.items[idx].wine); renderOrderDetail(id); }
 function setLineDiscount(id, idx, v) { const o = _o(id); o.items[idx].discount = Math.min(100, Math.max(0, parseFloat(v) || 0)); renderOrderDetail(id); }
-function removeLine(id, idx) { const o = _o(id); const n = o.items[idx].wine; if (o.items.length === 1) return showToast('An order needs at least one line.'); o.items.splice(idx, 1); logEvent(o, 'Line removed: ' + n); renderOrderDetail(id); }
+function removeLine(id, idx) { const o = _o(id); const n = o.items[idx].wine; if (o.items.length === 1) return showToast('An order needs at least one line.'); o.items.splice(idx, 1); logEvent(o, o.seller, 'Line removed: ' + n); renderOrderDetail(id); }
 function addLine(id) {
   const o = _o(id);
   const pool = (typeof currentWinePortfolio !== 'undefined' ? currentWinePortfolio : []).map(w => w.name)
@@ -7473,21 +7485,21 @@ function addLine(id) {
   const name = prompt('Add wine to ' + o.id + ':\n\n' + pool.slice(0, 12).join('\n'), pool[0] || '');
   if (!name) return;
   o.items.push(orderItem(name.trim(), 12));
-  logEvent(o, 'Line added: ' + name.trim());
+  logEvent(o, o.seller, 'Line added: ' + name.trim());
   renderOrderDetail(id);
 }
-function setOrderDiscount(id, v) { const o = _o(id); o.discountPct = Math.min(100, Math.max(0, parseFloat(v) || 0)); logEvent(o, 'Order discount set to ' + o.discountPct + '%'); renderOrderDetail(id); }
+function setOrderDiscount(id, v) { const o = _o(id); o.discountPct = Math.min(100, Math.max(0, parseFloat(v) || 0)); logEvent(o, o.seller, 'Order discount set to ' + o.discountPct + '%'); renderOrderDetail(id); }
 function setShippingCost(id, v) { const o = _o(id); o.shippingCost = Math.max(0, parseFloat(v) || 0); renderOrderDetail(id); }
-function toggleTaxMode(id) { const o = _o(id); o.taxMode = o.taxMode === 'vat' ? 'net' : 'vat'; logEvent(o, 'Tax mode: ' + (o.taxMode === 'vat' ? 'VAT ' + o.vatRate + '%' : 'net / reverse charge')); renderOrderDetail(id); }
+function toggleTaxMode(id) { const o = _o(id); o.taxMode = o.taxMode === 'vat' ? 'net' : 'vat'; logEvent(o, o.seller, 'Tax mode: ' + (o.taxMode === 'vat' ? 'VAT ' + o.vatRate + '%' : 'net / reverse charge')); renderOrderDetail(id); }
 function setInternalNote(id, v) { const o = _o(id); o.internalNote = v; showToast('✓ Internal note saved'); }
-function togglePrepayment(id) { const o = _o(id); o.payment.prepayment = !o.payment.prepayment; logEvent(o, o.payment.prepayment ? 'Prepayment required' : 'Prepayment requirement removed'); renderOrderDetail(id); }
-function setShipStatus(id, st) { const o = _o(id); o.shipStatus = st; logEvent(o, 'Shipping status: ' + SHIP_LABEL[st]); renderOrderDetail(id); showToast('✓ ' + o.id + ' — ' + SHIP_LABEL[st]); }
+function togglePrepayment(id) { const o = _o(id); o.payment.prepayment = !o.payment.prepayment; logEvent(o, o.seller, o.payment.prepayment ? 'Prepayment required' : 'Prepayment requirement removed'); renderOrderDetail(id); }
+function setShipStatus(id, st) { const o = _o(id); o.shipStatus = st; logEvent(o, o.seller, 'Shipping status: ' + SHIP_LABEL[st]); renderOrderDetail(id); showToast('✓ ' + o.id + ' — ' + SHIP_LABEL[st]); }
 
 function confirmOrder(id) {
   const o = _o(id);
   o.stage = 'accepted';
   o.shipStatus = 'packing';
-  logEvent(o, 'Order confirmed by ' + o.seller);
+  logEvent(o, o.seller, 'Order confirmed by ' + o.seller);
   renderAllOrders();
   renderOrderDetail(id);
   showToast('✓ ' + o.id + ' confirmed — ' + o.buyer + ' has been notified');
@@ -7510,7 +7522,7 @@ function generateDoc(id, key) {
   const t = DOC_TYPES.find(x => x.key === key);
   const no = t.prefix + '-' + (++docSeq);
   o.documents.push({ key:key, no:no, date:todayISO() });
-  logEvent(o, t.label + ' ' + no + ' issued');
+  logEvent(o, o.seller, t.label + ' ' + no + ' issued');
   if (key === 'invoice' || key === 'prepay') {
     o.payment.status = 'invoiced';
     const d = new Date(); d.setDate(d.getDate() + 30);
@@ -7599,7 +7611,7 @@ function savePayment() {
   o.payment.method = document.getElementById('pay-method').value;
   o.payment.paid = (o.payment.paid || 0) + amt;
   o.payment.status = o.payment.paid >= orderGrand(o) - 0.01 ? 'paid' : 'partial';
-  logEvent(o, 'Payment received: ' + eur(amt) + ' via ' + o.payment.method);
+  logEvent(o, o.seller, 'Payment received: ' + eur(amt) + ' via ' + o.payment.method);
   const id = o.id;
   closePayModal();
   renderOrderDetail(id);
@@ -9468,7 +9480,7 @@ function closeShowOrderList(id) {
       items: lines.map(l => orderItemRaw(l.name, producer, l.qty, purchasePriceFor(l.name)))
     };
     orders.unshift(normalizeOrder(o));
-    logEvent(o, 'Consolidated from ' + s.title + ': ' +
+    logEvent(o, o.seller, 'Consolidated from ' + s.title + ': ' +
       lines.map(l => l.qty + ' × ' + l.name).join(', '));
     logShow(s, s.leadHost, 'Ordered from ' + producer + ': ' +
       lines.map(l => l.qty + ' × ' + l.name).join(', ') + ' (' + o.id + ')');
@@ -9519,7 +9531,7 @@ function releaseHeldWine(id, productName) {
     items: [ orderItemRaw(productName, producer, qty, purchasePriceFor(productName)) ]
   };
   orders.unshift(normalizeOrder(o));
-  logEvent(o, 'Ordered after the terms were agreed — held back at ' + s.title);
+  logEvent(o, o.seller, 'Ordered after the terms were agreed — held back at ' + s.title);
   rows.forEach(function (i) { i.status = 'open'; delete i.holdReason; });
   logShow(s, s.leadHost, 'Ordered ' + productName + ' after all: ' + qty + ' btl from ' + producer +
     ' (' + o.id + ') — the guests who asked for it can place their orders');
@@ -9578,7 +9590,7 @@ function placePreparedOrder(id) {
   /* A14.7: preset, then left alone — it is a decision from here on. */
   o.payment.prepayment = prep.prepayment;
   orders.unshift(o);
-  logEvent(o, 'Placed from the order list of ' + s.title +
+  logEvent(o, o.seller, 'Placed from the order list of ' + s.title +
     (prep.prepayment ? ' — prepayment required, no settled history between the two parties yet' : ''));
   interestsOf(s).forEach(function (i) {
     if (i.attendee === cfg.entity && i.status === 'open') { i.status = 'ordered'; i.orderId = o.id; }

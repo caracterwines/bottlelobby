@@ -23,6 +23,29 @@ Kein Build-Command, Publish-Directory = Repo-Root.
 
 ## Zuletzt abgeschlossen
 
+- **02.08.: Messages-Kette, Durchgang 1 — die Felder, aus denen Benachrichtigungen
+  abgeleitet werden koennen (Groundwork zu C9).** Rein mechanisch; sichtbar aendert
+  sich nur das Datumsformat. Drei Quellen konnten die zwei Fragen, die eine
+  Benachrichtigung stellt — **wer** und **wann** —, nicht beantworten:
+  `logEvent(o, actor, text)` fuehrt jetzt einen Actor (17 Aufrufstellen; der
+  Verkaeufer wird **explizit uebergeben statt angenommen**, damit die erste
+  kaeuferseitige Aktion die Frage beantworten muss), `buildInitialLog()` gibt auch
+  seinen drei synthetisierten Eintraegen einen, der Follow-Graph traegt `at`
+  (16 Kanten), und die sieben Anfragedaten liegen in ISO statt im dritten
+  Anzeigeformat („18 July 2026"). Auf dem Schirm gilt damit **ein** Datumsformat
+  statt drei, gerendert ueber `orderDate()`.
+  **Ein Eigenfehler im neuen Harness, gefunden bevor er zaehlte:** die Pruefung
+  „eine Live-Aktion schreibt ihren Actor" rief `acceptOrder()` auf — eine Funktion,
+  die gar nichts loggt — und pruefte danach den „confirmed"-Eintrag aus
+  `buildInitialLog()`, also eine Fixture. Sie war gruen, ohne irgendetwas Lebendes
+  zu belegen. Laeuft jetzt ueber `confirmOrder()`, zaehlt die Eintraege
+  vorher/nachher und nennt den gelesenen Actor im Output, damit „gruen" nicht
+  wieder heissen kann „nichts geprueft". Der Befund zu `acceptOrder()` selbst
+  steht unter „Offene Punkte" und gehoert in Durchgang 2.
+  Neues Harness `tests/notification-sources.js` — 13 statt 12.
+  Im echten Chrome gegengeprueft (alle sieben Anfragezeilen formatiert, kein rohes
+  ISO, kein `—`-Fallback). Veraltete `localStorage`-Staende brauchten nichts:
+  `actor` und `at` aendern den Shape-Fingerprint, der Snapshot wird verworfen.
 - **02.08. (nach Serges Browser-Test): Der Ausloeser war falsch gebaut — behoben.**
   Serge meldete, dass beim Anlegen einer Show nichts gespeichert wird, waehrend
   `BLStore.save()` von Hand sofort schreibt. **Im echten Chrome (lokal und live,
@@ -408,6 +431,24 @@ Oberflaeche. **Nichts in A1–A16 verlangt (b) heute.**
 **Empfehlung:** (a) als eigenen, mittelgrossen Durchgang bauen und dabei das
 handgeschriebene Widget ersetzen. (b) nicht anfassen, bis es einen
 Geschaeftsgrund gibt — und den dann zuerst in die Spec, nicht in den Code.
+
+**▶ Gehoert MIT in Durchgang 2: `acceptOrder()` aendert die Stage ohne
+Log-Eintrag.** Gefunden am 02.08. beim Bau des Durchgang-1-Harness.
+`acceptOrder()` setzt `o.stage = 'accepted'` und ruft `logEvent()` **nicht** —
+die Bestellung wechselt ihren Zustand, und der Audit-Trail schweigt dazu. Das
+ist eine Luecke in Invariante 8 (`order_events` ist die Nachweiskette) und hat
+eine unmittelbare Folge fuer (a): aus einer angenommenen Bestellung laesst sich
+**keine** Benachrichtigung ableiten, weil es kein Ereignis gibt, aus dem man sie
+ableiten koennte.
+**Serges Vorgabe (02.08.): das gehoert in Durchgang 2, nicht spaeter.** Sonst
+liefert ausgerechnet „Bestellung angenommen" — eines der offensichtlichsten
+Ereignisse ueberhaupt — als einziges keine Benachrichtigung, und die Luecke
+faellt erst auf, wenn jemand sie vermisst.
+**Bewusst NICHT in Durchgang 1 miterledigt**, weil ein zusaetzlicher
+Log-Eintrag eine Verhaltensaenderung ist und der Durchgang rein mechanisch war.
+`confirmOrder()` macht es daneben richtig (loggt mit Actor). Beim Bauen mit zu
+klaeren: ob `acceptOrder()` und `confirmOrder()` ueberhaupt zwei Funktionen
+bleiben — sie tun heute weitgehend dasselbe, nur eine davon vollstaendig.
 
 ### ▶ Persistenz, moeglicher zweiter Durchgang — oeffentliche Seiten
 
