@@ -4915,10 +4915,9 @@ let currentWinePortfolio = [
    a house actually owns: the distributor adds to it, edits it and
    removes from it, and it is registered with BLStore. The two picker
    pools are `const`, never written, byte-identical to each other, and
-   their `winery` field holds the SUPPLIER rather than the producer —
-   which is why wineryOfWine() has to skip 'Hawesko GmbH' and fall
-   back to a lookup table. A list that cannot answer invariant 2 is a
-   menu, not a portfolio.
+   their `winery` field holds the SUPPLIER rather than the producer.
+   A list that cannot answer invariant 2 is a menu, not a portfolio —
+   the function that used to guess around it, wineryOfWine(), is gone.
 
    A distributor with no book gets `null`, not an empty array, and the
    renderers leave the clause out entirely. '0 wines' would be the
@@ -6619,12 +6618,12 @@ function handlePromoRequestR(id) {
     rPromoProgress.bottleCounts[m.wineName] = m.bottlesRequired;
     addWineToBuyerList(rCurrentWineList, m.wineName, 'restaurant');
     placeOrder('Bistro Laurent', 'restaurant', 'Hawesko GmbH', 'distributor',
-      [orderItem(m.wineName, m.bottlesRequired)], 'Promo Material — ' + m.name);
+      [orderItem(m.wineName, m.bottlesRequired, 'Hawesko GmbH')], 'Promo Material — ' + m.name);
     showToast('✓ Order placed — ' + m.bottlesRequired + ' bottles of ' + m.wineName + ' requested from Hawesko GmbH');
   } else if (m.condType === 'volume' && m.orderMode === 'single') {
     rPromoProgress.singleOrdered[m.id] = true;
     placeOrder('Bistro Laurent', 'restaurant', 'Hawesko GmbH', 'distributor',
-      [orderItem(m.wineName, m.bottlesRequired)], 'Promo Material — ' + m.name);
+      [orderItem(m.wineName, m.bottlesRequired, 'Hawesko GmbH')], 'Promo Material — ' + m.name);
     showToast('✓ Single order of ' + m.bottlesRequired + ' bottles of ' + m.wineName + ' sent to Hawesko GmbH');
   } else if (m.condType === 'newlisting') {
     addWineToBuyerList(rCurrentWineList, m.wineName, 'restaurant');
@@ -6644,12 +6643,12 @@ function handlePromoRequestT(id) {
     tPromoProgress.bottleCounts[m.wineName] = m.bottlesRequired;
     addWineToBuyerList(tCurrentWineSelection, m.wineName, 'retail');
     placeOrder('Weinhaus Müller', 'retail', 'Hawesko GmbH', 'distributor',
-      [orderItem(m.wineName, m.bottlesRequired)], 'Promo Material — ' + m.name);
+      [orderItem(m.wineName, m.bottlesRequired, 'Hawesko GmbH')], 'Promo Material — ' + m.name);
     showToast('✓ Order placed — ' + m.bottlesRequired + ' bottles of ' + m.wineName + ' requested from Hawesko GmbH');
   } else if (m.condType === 'volume' && m.orderMode === 'single') {
     tPromoProgress.singleOrdered[m.id] = true;
     placeOrder('Weinhaus Müller', 'retail', 'Hawesko GmbH', 'distributor',
-      [orderItem(m.wineName, m.bottlesRequired)], 'Promo Material — ' + m.name);
+      [orderItem(m.wineName, m.bottlesRequired, 'Hawesko GmbH')], 'Promo Material — ' + m.name);
     showToast('✓ Single order of ' + m.bottlesRequired + ' bottles of ' + m.wineName + ' sent to Hawesko GmbH');
   } else if (m.condType === 'newlisting') {
     addWineToBuyerList(tCurrentWineSelection, m.wineName, 'retail');
@@ -6906,7 +6905,7 @@ function handleOfferRequestR(id) {
   if (!o) return;
   if (addWineToBuyerList(rCurrentWineList, o.wineName, 'restaurant')) renderWineListR();
   const ordR = placeOrder('Bistro Laurent', 'restaurant', 'Hawesko GmbH', 'distributor',
-    [orderItem(o.wineName, o.qty || 12)], 'Exclusive Offer — ' + offerLabel(o));
+    [orderItem(o.wineName, o.qty || 12, 'Hawesko GmbH')], 'Exclusive Offer — ' + offerLabel(o));
   showToast('✓ Order ' + ordR.id + ' sent to Hawesko GmbH — ' + offerLabel(o));
   bumpMsgBadge('rmsg-badge');
 }
@@ -6915,7 +6914,7 @@ function handleOfferRequestT(id) {
   if (!o) return;
   if (addWineToBuyerList(tCurrentWineSelection, o.wineName, 'retail')) renderWineSelectionT();
   const ordT = placeOrder('Weinhaus Müller', 'retail', 'Hawesko GmbH', 'distributor',
-    [orderItem(o.wineName, o.qty || 12)], 'Exclusive Offer — ' + offerLabel(o));
+    [orderItem(o.wineName, o.qty || 12, 'Hawesko GmbH')], 'Exclusive Offer — ' + offerLabel(o));
   showToast('✓ Order ' + ordT.id + ' sent to Hawesko GmbH — ' + offerLabel(o));
   bumpMsgBadge('tmsg-badge');
 }
@@ -6925,7 +6924,7 @@ function handleDealRequestR(id) {
   (d.wineNames || [d.wineName]).forEach(n => addWineToBuyerList(rCurrentWineList, n, 'restaurant'));
   renderWineListR();
   const dOrdR = placeOrder('Bistro Laurent', 'restaurant', 'Hawesko GmbH', 'distributor',
-    (d.wineNames || [d.wineName]).map(n => orderItem(n, d.minQty || 60)), 'Exclusive Deal — ' + dealLabel(d));
+    (d.wineNames || [d.wineName]).map(n => orderItem(n, d.minQty || 60, 'Hawesko GmbH')), 'Exclusive Deal — ' + dealLabel(d));
   showToast('✓ Order ' + dOrdR.id + ' sent to Hawesko GmbH — ' + dealLabel(d));
   bumpMsgBadge('rmsg-badge');
 }
@@ -6935,7 +6934,7 @@ function handleDealRequestT(id) {
   (d.wineNames || [d.wineName]).forEach(n => addWineToBuyerList(tCurrentWineSelection, n, 'retail'));
   renderWineSelectionT();
   const dOrdT = placeOrder('Weinhaus Müller', 'retail', 'Hawesko GmbH', 'distributor',
-    (d.wineNames || [d.wineName]).map(n => orderItem(n, d.minQty || 60)), 'Exclusive Deal — ' + dealLabel(d));
+    (d.wineNames || [d.wineName]).map(n => orderItem(n, d.minQty || 60, 'Hawesko GmbH')), 'Exclusive Deal — ' + dealLabel(d));
   showToast('✓ Order ' + dOrdT.id + ' sent to Hawesko GmbH — ' + dealLabel(d));
   bumpMsgBadge('tmsg-badge');
 }
@@ -7035,29 +7034,31 @@ const wineUnitPrice = {
   'Costa Bianca': 10.60,
   'Terra Rossa': 12.10
 };
-function orderItem(wineName, qty, winery) {
-  return { wine: wineName, winery: winery || wineryOfWine(wineName), qty: qty, unit: wineUnitPrice[wineName] || 12.00 };
-}
-/* Which winery owns this wine — resolved from the pools that already
-   exist in this prototype, so no wine data is duplicated here. */
-function wineryOfWine(name) {
-  const pools = [
-    typeof partnerWinesPool !== 'undefined' ? partnerWinesPool : [],
-    typeof rPartnerWinesPool !== 'undefined' ? rPartnerWinesPool : [],
-    typeof tPartnerWinesPool !== 'undefined' ? tPartnerWinesPool : []
-  ];
-  for (const p of pools) {
-    const hit = p.find(w => w.name === name);
-    if (hit && hit.winery && hit.winery !== 'Hawesko GmbH') return hit.winery;
+/* An order line names its producer by READING the seller's book, and
+   there is no computation left that could answer instead.
+   `wineryOfWine()` used to: it searched three pools, had to skip the
+   supplier name to get past the buyer pools at all, fell back to a
+   hand-written list of five, and defaulted everything else to
+   'Cantina Rossi'. It was wrong twice on measurement — Tempranillo is
+   Bodegas Ruiz and Château Belrieu Grand Vin is Château Belrieu, and
+   it called both Cantina Rossi.
+
+   A function that computes an ownership answer is the evidence that
+   the reference is missing (Serge). The reference exists now, so the
+   function is gone rather than improved — while it existed, somebody
+   could use it again.
+
+   Returns null when the wine is not in the seller's book. That is not
+   a case to paper over: goods cannot leave a distributor who does not
+   carry the wine (invariant 3), and placeOrder() refuses the order
+   rather than inventing a producer for it. */
+function orderItem(wineName, qty, seller) {
+  const found = (portfolioOf(seller) || []).find(w => w.name === wineName);
+  if (!found) {
+    console.warn('[orders] "' + wineName + '" is not in ' + seller + "'s portfolio — no order line made");
+    return null;
   }
-  const known = {
-    'Sauvignon Blanc — Sancerre': 'Henri Dubois Domaine',
-    'Pouilly-Fumé': 'Henri Dubois Domaine',
-    'Chardonnay — Chablis Premier Cru': 'Domaine Lefèvre',
-    'Riesling Spätlese — Mosel': 'Weingut Schmitt',
-    'Merlot — Bordeaux Supérieur': 'Château Belrieu'
-  };
-  return known[name] || 'Cantina Rossi';
+  return { wine: wineName, winery: found.winery, qty: qty, unit: wineUnitPrice[wineName] || 12.00 };
 }
 
 let orderSeq = 2042;
@@ -7208,9 +7209,17 @@ function renderOrderWidgets() {
 }
 
 /* ── Actions ──────────────────────────────────────────────────── */
+/* The one place a refusal has to happen, rather than at nine call
+   sites: orderItem() answers null for a wine the seller does not
+   carry, and an order with no line left is not an order. */
 function placeOrder(buyer, buyerType, seller, sellerType, items, note) {
+  const lines = (items || []).filter(Boolean);
+  if (!lines.length) {
+    showToast('✗ Nothing could be ordered — ' + seller + ' does not carry that wine');
+    return null;
+  }
   const o = { id: nextOrderId(), placed: todayISO(), buyer, buyerType, seller, sellerType,
-              stage: 'pending', note: note || '', items: items };
+              stage: 'pending', note: note || '', items: lines };
   orders.unshift(o);
   renderAllOrders();
   return o;
@@ -7968,7 +7977,9 @@ function addLine(id) {
     .concat(Object.keys(wineUnitPrice)).filter((v, i, a) => v && a.indexOf(v) === i);
   const name = prompt('Add wine to ' + o.id + ':\n\n' + pool.slice(0, 12).join('\n'), pool[0] || '');
   if (!name) return;
-  o.items.push(orderItem(name.trim(), 12));
+  const line = orderItem(name.trim(), 12, o.seller);
+  if (!line) return;
+  o.items.push(line);
   logEvent(o, o.seller, 'Line added: ' + name.trim());
   renderOrderDetail(id);
 }
