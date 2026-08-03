@@ -21,6 +21,30 @@ Kein Build-Command, Publish-Directory = Repo-Root.
 
 ---
 
+## ▶ EINSTIEG — Stand 3. August 2026, Abend
+
+**Der Baum ist sauber, `main` ist gepusht, 17 Harnesses gruen.** Acht Durchgaenge
+an einem Tag; alles unten unter „Zuletzt abgeschlossen" ist abgenommen.
+
+**Vor der ersten Messung im Browser, jedes Mal:**
+
+```
+node tests/serve.js          →  http://localhost:8765   (no-store, nie python http.server)
+node tests/run-all.js        →  17 Harnesses
+node tests/stamp-assets.js   →  nach jeder Aenderung an assets/
+```
+
+Und **`transferSize` lesen, bevor ein Browser-Befund gemeldet wird** — `0` heisst
+Cache, ein paar hundert Byte heissen 304. Vier Fehlmessungen an einem Tag kamen
+daher (Spec C7, „Browser acceptance").
+
+**Der naechste Durchgang ist entschieden und geschnitten:**
+„**Ein Weinbuch je Distributor**" — siehe „Offene Punkte". Erste Handlung dort
+ist keine Code-Aenderung, sondern die Erzeugerzuordnung je Wein; die Vorarbeit
+dazu ist gemessen und steht im Eintrag.
+
+---
+
 ## Zuletzt abgeschlossen
 
 - **03.08.: `BLStore.VERSION` 1 → 2 — die Datums-Migration war fuer den
@@ -51,6 +75,11 @@ Kein Build-Command, Publish-Directory = Repo-Root.
   Migration nicht, wenn der Bump wieder vergessen wird. Dafuer gibt es keinen
   mechanischen Riegel, nur die Notiz an `VERSION` und diesen Abschnitt als
   ausgearbeitetes Beispiel.
+  **Abnahme durch Serge, Datei gegen Laufzeit gegen Schirm:** Datei
+  `date:'2027-03-14'` → Laufzeit `'2027-03-14'` → Schirm „14 Mar 2027".
+  **158 tagesgenaue Datumsfelder** ueber 13 Sammlungen, alle ISO (dazu zwei
+  monatsgenaue in `pressData`, die keine ISO-Form haben). Kein rohes ISO am
+  Schirm, keine Anzeigeform mehr im Datenfeld.
   **Zwei Namen, die Messzeit gekostet haben, geradegerueckt:** `assertISO` und
   `showDate` sind **keine Laufzeitfunktionen** und waren es nie. `assertISO` ist
   die Ueberschrift eines Abschnitts in `tests/notification-sources.js` — ich
@@ -884,6 +913,36 @@ Kein Build-Command, Publish-Directory = Repo-Root.
 ## Offene Punkte
 
 ### Arbeit
+
+### ▶ Aus den Funden vom 03.08. — drei Punkte, keiner davon dringend
+
+**1. Der Snapshot ist eine zweite Kopie jeder registrierten Sammlung, und er hat
+gewonnen.** Das ist die Form, die sich heute dreimal wiederholt hat: zwei
+Buecher fuer eine Sache, eines gepflegt, eines vergessen — `currentWinePortfolio`
+gegen die Picker-Pools, die vier Partnerbuecher, und jetzt Fixture gegen
+`localStorage`. Nur war es hier kein zweites Array im Quelltext: `wineShows` ist
+genau **einmal** deklariert (`assets/bottle-lobby-data.js:71`); die zweite
+Fassung lag im Speicher des Browsers und kam ueber den Store-Setter
+(`bottle-lobby-dashboard.html:11267`) zurueck. **Das Muster ist dasselbe, der
+Ort ein anderer** — und deshalb hat keine Suche im Repo ihn gefunden.
+*Offen daraus:* es gibt keinen Riegel, der den **wiederhergestellten** Zustand
+gegen dieselben Regeln prueft wie die Fixtures. `assertISO` laeuft mit
+abgeschalteter Persistenz. Der neue Abschnitt in `tests/persistence.js` deckt
+den Datumsfall ab, aber nur diesen einen.
+
+**2. Die naechste Format-Migration kann den `VERSION`-Bump wieder vergessen.**
+Ausgesprochene Grenze, kein Versehen: der Shape-Fingerprint sieht Struktur, nie
+Werte, und das soll so bleiben. Ein mechanischer Riegel dafuer existiert nicht —
+nur die Notiz an `VERSION` in `assets/bottle-lobby-store.js` und der
+Persistenz-Abschnitt als ausgearbeitetes Beispiel. Wer das dichter haben will,
+muesste eine „Format-Generation" neben `VERSION` fuehren; **das ist bewusst
+nicht gebaut**, weil es die Disziplin nur verschiebt.
+
+**3. `SHOW_TODAY` ist eine feste Konstante (`'2026-07-31'`).** Faellt heute nicht
+auf, weil die Demo-Daten darum herum gebaut sind. Sobald jemand die Fixtures in
+die Zukunft schiebt oder echte Zeit ins Spiel kommt, ist es ein Thema — bis
+dahin ist es die richtige Wahl, weil ein wanderndes „heute" jede Abnahme
+unreproduzierbar machen wuerde.
 
 ### ▶ NÄCHSTES: Ein Weinbuch je Distributor (Invariante 2 / A1)
 
