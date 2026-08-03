@@ -7029,12 +7029,10 @@ const orderStageCls   = { pending:'os-pending', accepted:'os-accepted', shipped:
 const ORDER_CLOSED    = ['delivered', 'declined', 'cancelled'];
 
 function eur(n) { return '€' + n.toLocaleString('en-GB', { minimumFractionDigits:2, maximumFractionDigits:2 }); }
-function orderDate(iso) {
-  if (!iso) return '—';
-  const d = new Date(iso + 'T00:00:00');
-  if (isNaN(d)) return iso;
-  return d.toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' });
-}
+/* Delegates to blDate() in assets/bottle-lobby-public-shows.js — the
+   one file every surface loads. Kept as a name because ~40 call sites
+   use it, but there is only one implementation now. */
+function orderDate(iso) { return blDate(iso); }
 function orderBottles(o) { return o.items.reduce((sum, i) => sum + i.qty, 0); }
 
 /* ── Selectors ────────────────────────────────────────────────── */
@@ -8521,7 +8519,7 @@ function actionShow(id) {
 }
 function actionSay(msg) { showToast('✗ ' + msg); }
 
-const SHOW_TODAY = '31 Jul 2026';
+const SHOW_TODAY = '2026-07-31';
 /* `scope` answers condition 2 of C9 in the record instead of in a text
    heuristic: 'show' marks an event about the show ITSELF — a stage
    change — which every participant may read, because it changes their
@@ -8583,7 +8581,7 @@ function appearanceRow(a) {
     '<div class="list-dot list-dot-gold"></div>' +
     '<div class="list-item-main">' +
       '<div class="list-item-title">' + a.who + ' ' + verb + ' ' + a.show.title + '</div>' +
-      '<div class="list-item-sub">' + a.show.date + ' · ' + a.show.city + '</div>' +
+      '<div class="list-item-sub">' + orderDate(a.show.date) + ' · ' + a.show.city + '</div>' +
     '</div>' +
     '<div class="list-item-right"><span class="tag tag-gold">' +
       SHOW_STAGE_LABEL[a.show.stage] + '</span></div>' +
@@ -8777,7 +8775,7 @@ function renderWineShows(role) {
     return '<div class="otbl-row" style="grid-template-columns:104px 104px 1.5fr 1.1fr 74px 136px 26px" ' +
       'onclick="openShowDetail(\'' + s.id + '\')">' +
       '<span class="otbl-id">' + s.id + '</span>' +
-      '<span class="otbl-dim">' + s.date + '</span>' +
+      '<span class="otbl-dim">' + orderDate(s.date) + '</span>' +
       '<span class="otbl-cust">' + s.title +
         '<em>' + (showAwaits(role, s) ? '<span class="ord-chip chip-offer">Awaiting you</span>' : '') +
         quoteChip + roleChip + attendChip + s.focus + '</em></span>' +
@@ -8851,13 +8849,13 @@ function hostVenueBox(s) {
   } else if (s.venueStatus === 'quoted') {
     head = 'The Venue Has Quoted';
     body = '<strong style="color:var(--paper)">' + who + '</strong> quoted <strong style="color:var(--gold)">' +
-           eur(s.cateringTotal || 0) + '</strong> for room and catering on ' + (s.venueQuotedAt || SHOW_TODAY) +
+           eur(s.cateringTotal || 0) + '</strong> for room and catering on ' + orderDate(s.venueQuotedAt || SHOW_TODAY) +
            '. The figure came straight from them — you never retype it.<br><br>' +
            'Next comes choosing how that cost reaches your exhibitors and accepting the offer bindingly. ' +
            'Both are the catering settlement (A16.11) and are built in the next pass.';
   } else if (s.venueStatus === 'accepted') {
     body = '<strong style="color:var(--paper)">' + who + '</strong> · ' + eur(s.cateringTotal || 0) +
-           ' for room and catering, accepted on ' + (s.venueAcceptedAt || '—') + '.';
+           ' for room and catering, accepted on ' + orderDate(s.venueAcceptedAt) + '.';
     acts = '';
   } else if (s.venueStatus === 'declined') {
     head = 'Venue Declined';
@@ -8882,13 +8880,13 @@ function venueRequestBox(s) {
   } else if (s.venueStatus === 'quoted') {
     head = 'Waiting for ' + s.leadHost;
     body = 'You quoted <strong style="color:var(--paper)">' + eur(s.cateringTotal || 0) + '</strong> on ' +
-           (s.venueQuotedAt || SHOW_TODAY) + '. ' + s.leadHost + ' has been notified and still has to accept ' +
+           orderDate(s.venueQuotedAt || SHOW_TODAY) + '. ' + s.leadHost + ' has been notified and still has to accept ' +
            'the offer — until then nothing is binding on either side.';
     acts = '<button class="btn-sm btn-outline" onclick="openVenueQuoteModal(\'' + s.id + '\')">Change the price</button>';
   } else if (s.venueStatus === 'accepted') {
     head = 'You Are the Venue';
     body = s.leadHost + ' accepted your offer of <strong style="color:var(--paper)">' + eur(s.cateringTotal || 0) +
-           '</strong> on ' + (s.venueAcceptedAt || '—') + '.';
+           '</strong> on ' + orderDate(s.venueAcceptedAt) + '.';
   } else if (s.venueStatus === 'declined') {
     head = 'Request Declined';
     body = 'You turned this request down. ' + s.leadHost + ' can ask again with a new request.';
@@ -8927,7 +8925,7 @@ function attendeeBook(s) {
       '<div style="display:flex;align-items:center;gap:0.7rem">' +
         '<span style="font-size:0.84rem;color:var(--paper);flex:1">' + a.stakeholder +
           '<em class="otbl-dim" style="display:block;font-size:0.68rem;font-style:normal">' +
-          (a.source === 'request' ? 'asked to attend' : 'invited') + ' · ' + a.at + '</em></span>' +
+          (a.source === 'request' ? 'asked to attend' : 'invited') + ' · ' + orderDate(a.at) + '</em></span>' +
         chip +
         '<span class="ord-stage wse-' + a.status + '">' + a.status + '</span>' +
       '</div>' + acts +
@@ -8965,17 +8963,17 @@ function myAttendanceBox(role, s) {
     acts = '<button class="btn-sm btn-gold" onclick="requestPlace(\'' + s.id + '\')">Request a place</button>';
   } else if (me.status === 'invited') {
     head = 'Your Invitation';
-    body = s.leadHost + ' has invited you to attend on ' + s.date + '.';
+    body = s.leadHost + ' has invited you to attend on ' + orderDate(s.date) + '.';
     acts = '<button class="btn-sm btn-gold" onclick="respondToAttendeeInvite(\'' + s.id + '\',\'accept\')">Accept</button>' +
            '<button class="btn-sm btn-outline" onclick="respondToAttendeeInvite(\'' + s.id + '\',\'decline\')">Decline</button>';
   } else if (me.status === 'requested') {
     head = 'Place Requested';
-    body = 'You asked ' + s.leadHost + ' for a place on ' + me.at + '. They still have to confirm it.';
+    body = 'You asked ' + s.leadHost + ' for a place on ' + orderDate(me.at) + '. They still have to confirm it.';
   } else if (me.status === 'confirmed') {
     const stand = attendeeStanding(s, me);
     if (stand === 'seat') {
       head = past ? 'You Attended' : 'You Have a Place';
-      body = past ? 'You were at this show.' : 'Confirmed for ' + s.date + ' in ' + s.city + '.';
+      body = past ? 'You were at this show.' : 'Confirmed for ' + orderDate(s.date) + ' in ' + s.city + '.';
       if (!past) acts = '<button class="btn-sm btn-outline" onclick="withdrawPlace(\'' + s.id + '\')">Withdraw</button>';
     } else {
       head = 'On the Waitlist';
@@ -9073,7 +9071,7 @@ function closingBox(s) {
     const bought = made.filter(o => o.buyer === s.leadHost);
     const sold   = made.filter(o => o.seller === s.leadHost);
     return '<div class="odt-box"><div class="odt-box-head">Closed' +
-        '<span class="right">' + s.closedAt + '</span></div><div class="odt-box-body">' +
+        '<span class="right">' + orderDate(s.closedAt) + '</span></div><div class="odt-box-body">' +
       '<div class="edit-section-sub" style="margin:0 0 0.9rem">The order list is closed. Purchase orders went out ' +
       'on the pre-order column alone; the guests place their own (A14.2), so some of these will still be coming.</div>' +
       heldRows(s) +
@@ -9371,7 +9369,7 @@ function renderShowVisitorDetail(s, cfg) {
     '<button class="odt-back" onclick="closeShowDetail()">‹ Back to Wine Shows</button>' +
     '<div class="odt-head">' +
       '<div><div class="odt-title">' + s.title + '</div>' +
-        '<div class="odt-sub">' + s.date + ' · ' + s.city + ' · hosted by ' + s.leadHost + '</div></div>' +
+        '<div class="odt-sub">' + orderDate(s.date) + ' · ' + s.city + ' · hosted by ' + s.leadHost + '</div></div>' +
       '<div class="odt-head-right">' +
         '<span class="ord-stage ws-' + s.stage + '" style="align-self:center">' + SHOW_STAGE_LABEL[s.stage] + '</span>' +
       '</div>' +
@@ -9562,14 +9560,14 @@ function renderShowDetail(id) {
   }
 
   const trail = visibleTrail(s, cfg.side).slice().reverse().map(e =>
-    '<div class="odt-kv"><span class="otbl-dim">' + e.at + ' · ' + e.actor + '</span>' +
+    '<div class="odt-kv"><span class="otbl-dim">' + orderDate(e.at) + ' · ' + e.actor + '</span>' +
     '<span style="text-align:right;flex:1">' + e.text + '</span></div>').join('');
 
   document.getElementById(cfg.prefix + '-detail-pane').innerHTML =
     '<button class="odt-back" onclick="closeShowDetail()">‹ Back to Wine Shows</button>' +
     '<div class="odt-head">' +
       '<div><div class="odt-title">' + s.title + '</div>' +
-        '<div class="odt-sub">' + s.id + ' · ' + s.date + ' · ' + s.city + ' · hosted by ' + s.leadHost + '</div></div>' +
+        '<div class="odt-sub">' + s.id + ' · ' + orderDate(s.date) + ' · ' + s.city + ' · hosted by ' + s.leadHost + '</div></div>' +
       '<div class="odt-head-right">' +
         '<span class="ord-stage ws-' + s.stage + '" style="align-self:center">' + SHOW_STAGE_LABEL[s.stage] + '</span>' +
       '</div>' +
@@ -9595,7 +9593,7 @@ function renderShowDetail(id) {
       '</div>' +
       '<div>' +
         '<div class="odt-box"><div class="odt-box-head">Show</div><div class="odt-box-body">' +
-          '<div class="odt-kv"><span>Date</span><span>' + s.date + '</span></div>' +
+          '<div class="odt-kv"><span>Date</span><span>' + orderDate(s.date) + '</span></div>' +
           '<div class="odt-kv"><span>City</span><span>' + s.city + '</span></div>' +
           '<div class="odt-kv"><span>Venue</span><span style="text-align:right">' + showVenueLabel(s) + '</span></div>' +
           /* The venue's quote is shown to the two parties to it and to
@@ -9793,7 +9791,7 @@ function openInterestModal(id) {
   interestShowId = id;
   const s = actionShow(id); if (!s) return;
   const seated = attendeeQueue(s).seated;
-  document.getElementById('oif-show').textContent = s.title + ' · ' + s.date + ' · ' + s.city;
+  document.getElementById('oif-show').textContent = s.title + ' · ' + orderDate(s.date) + ' · ' + s.city;
   document.getElementById('oif-guest').innerHTML = seated.length
     ? seated.map(a => '<option value="' + a.stakeholder + '">' + a.stakeholder + '</option>').join('')
     : '<option value="">Nobody holds a place at this show yet</option>';
@@ -9873,7 +9871,7 @@ function closeShowOrderList(id) {
       buyer: s.leadHost, buyerType:'distributor',
       seller: producer,  sellerType:'winery',
       stage:'pending', source:'wine_show_order', wineShowId: s.id,
-      note:'Consolidated from ' + s.title + ' — ' + s.date,
+      note:'Consolidated from ' + s.title + ' — ' + orderDate(s.date),
       /* Quantities come from the PRE-ORDER column alone. The purchase
          PRICE is not something a show knows: it follows from the
          partnership terms, so it is taken from the agreed list where
@@ -9985,7 +9983,7 @@ function placePreparedOrder(id) {
     buyer: cfg.entity, buyerType: role,
     seller: s.leadHost, sellerType:'distributor',
     stage:'pending', source:'wine_show_order', wineShowId: s.id,
-    note:'Ordered at ' + s.title + ' — ' + s.date,
+    note:'Ordered at ' + s.title + ' — ' + orderDate(s.date),
     items: prep.lines.map(l => orderItemRaw(l.name, l.producer, l.qty, l.unit))
   };
   normalizeOrder(o);
@@ -10024,7 +10022,7 @@ function openAttendeeModal(id) {
       return (t === 'restaurant' || t === 'retail') && already.indexOf(n) === -1;
     });
   const q = attendeeQueue(s);
-  document.getElementById('af-show').textContent = s.title + ' · ' + s.date + ' · ' + s.city;
+  document.getElementById('af-show').textContent = s.title + ' · ' + orderDate(s.date) + ' · ' + s.city;
   document.getElementById('af-seats').textContent = q.seated.length + ' of ' + s.capacity +
     ' seats taken' + (q.waiting.length ? ', ' + q.waiting.length + ' on the waitlist' : '') + '.' +
     (q.seated.length >= s.capacity ? ' A new acceptance joins the waitlist.' : '');
@@ -10134,7 +10132,7 @@ let venueShowId = null;
 function openVenueModal(id) {
   venueShowId = id;
   const s = actionShow(id); if (!s) return;
-  document.getElementById('vf-show').textContent = s.title + ' · ' + s.date + ' · ' + s.city;
+  document.getElementById('vf-show').textContent = s.title + ' · ' + orderDate(s.date) + ' · ' + s.city;
   /* Hosting requires an ACTIVE partnership; attending does not (A16.5).
      Partnered restaurants and retailers only — the same list the
      create-show modal draws on. */
@@ -10173,7 +10171,7 @@ function sendVenueRequest() {
 function openVenueQuoteModal(id) {
   venueShowId = id;
   const s = actionShow(id); if (!s) return;
-  document.getElementById('vq-show').textContent = s.title + ' · ' + s.date + ' · ' + s.city;
+  document.getElementById('vq-show').textContent = s.title + ' · ' + orderDate(s.date) + ' · ' + s.city;
   document.getElementById('vq-intro').innerHTML = 'One price for the room and the catering together, for ' +
     'the whole show. ' + s.leadHost + ' decides separately how that cost reaches the exhibitors — that ' +
     'part is theirs, and you are never in the middle of it.';
@@ -10302,7 +10300,7 @@ function openInviteModal(id) {
   sel.innerHTML = candidates.length
     ? candidates.map(n => '<option value="' + n + '">' + n + ' · ' + stakeholder(n).region + '</option>').join('')
     : '<option value="">All partnered producers are already on this show</option>';
-  document.getElementById('if-show').textContent = s.title + ' · ' + s.date + ' · ' + s.city;
+  document.getElementById('if-show').textContent = s.title + ' · ' + orderDate(s.date) + ' · ' + s.city;
   onInviteProducerChange();
   document.getElementById('show-invite-modal').classList.add('active');
 }
@@ -10355,7 +10353,7 @@ function openCounterModal(id) {
   document.getElementById('cf-title').innerHTML = hostWine
     ? 'Present a <span>Different Wine</span>'
     : (rejected ? 'Propose <span>Another Wine</span>' : 'Choose Your <span>Wine</span>');
-  document.getElementById('cf-show').textContent = s.title + ' · ' + s.date + ' · ' + s.city;
+  document.getElementById('cf-show').textContent = s.title + ' · ' + orderDate(s.date) + ' · ' + s.city;
   document.getElementById('cf-intro').innerHTML = hostWine
     ? 'Proposed by the host: <strong style="color:var(--paper)">' + hostWine.name + '</strong>. Pick the wine you would rather present — ' +
       s.leadHost + ' confirms it, and only then does it count towards the show.'
@@ -10708,7 +10706,7 @@ function notifRegional(role, list) {
       kind: 'regional', cls: 'info', at: s.date, actor: s.leadHost,
       title: 'New Wine Show in your region',
       /* Public fields only. */
-      text: s.title + ' · ' + s.date + ' · ' + s.city + (s.focus ? ' — ' + s.focus : ''),
+      text: s.title + ' · ' + orderDate(s.date) + ' · ' + s.city + (s.focus ? ' — ' + s.focus : ''),
       target: { type:'show', id:s.id }
     });
   });

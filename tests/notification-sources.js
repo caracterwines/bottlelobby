@@ -118,124 +118,124 @@ console.log('\n── partnership requests are dated in one format');
   else ok('the rendered date is formatted, not the raw ISO string');
 }
 
-/* ── 3b. Every date field, including the ones nothing renders ─────
-   Sections 2 and 3 each name the arrays they know about, which is the
-   failure mode B10 describes in its own domain: a count over the
-   cases you loaded says nothing about the ones you did not. Between
-   them they covered the follow graph and the seven request lists —
-   `orders.placed`, the per-order event log and `partnerships.at` were
-   asserted nowhere, and "every date is ISO" was a claim resting on
-   the subset somebody had thought to enumerate.
-
-   A record is a record whether or not a screen shows it. A draft
-   order, a cancelled one, a row in a collection no renderer touches
-   today — none of them is exempt, and a check that cannot see them is
-   a gap in the check rather than permission for the data. So this
-   sweep walks the collections and reports what it covered, so that a
-   future collection with dates in it is visibly NOT covered instead
-   of silently passing. */
-console.log('\n── every date field in every collection, rendered or not');
-{
-  /* [collection, field, nested] — `nested` walks a per-row array. */
-  const SWEEP = [
-    ['orders',           'placed', null],
-    ['orders',           'at',     'log'],
-    ['partnerships',     'at',     null],
-    ['wineFollowGraph',  'at',     null],
-    ['partnerWinesPool', 'at',     null]
-  ];
-  let checked = 0, missing = 0;
-  const wrong = [];
-  SWEEP.forEach(([name, field, nested]) => {
-    const rows = w.eval('typeof ' + name + ' === "undefined" ? null : JSON.parse(JSON.stringify(' + name + '))');
-    if (!Array.isArray(rows)) { wrong.push(name + ' is not an array'); return; }
-    rows.forEach((r, i) => {
-      const targets = nested ? (r[nested] || []) : [r];
-      targets.forEach((t, j) => {
-        const v = t[field];
-        const where = name + '[' + i + ']' + (nested ? '.' + nested + '[' + j + ']' : '') + '.' + field;
-        /* An absent date is counted, not failed: not every row is
-           required to carry one. It is reported so that a collection
-           quietly losing its dates cannot read as "all ISO". */
-        if (v === undefined || v === null) { missing++; return; }
-        checked++;
-        if (!ISO.test(v)) wrong.push(where + ' = "' + v + '"');
-      });
-    });
-  });
-  if (wrong.length) bad('not ISO: ' + wrong.join(' · '));
-  else ok(checked + ' date fields across ' + SWEEP.length + ' sweeps are ISO (' + missing + ' rows carry none)');
-
-  /* Not one date anywhere in the source may be in a display format.
-     Section 3 checks the records it enumerates; this reads the file,
-     so a NEW array written in "12 Feb 2026" style fails here on the
-     day it is added rather than on the day somebody lists it above. */
-  const src = require('fs').readFileSync(require('path').join(__dirname, '..', 'bottle-lobby-dashboard.html'), 'utf8');
-  const display = [...src.matchAll(/\b(?:at|placed|since|received|sent)\s*:\s*'(\d{1,2} \w+ \d{4}|\w+ \d{4})'/g)];
-  if (display.length) bad(display.length + ' date field(s) still written in a display format: ' + display.slice(0, 3).map(m => m[1]).join(', '));
-  else ok('no date field in the source is written as display text');
-}
-
-/* ── 3c. MARKER — the wine-show subsystem is on display format ────
+/* ── 3b. assertISO — DISCOVERS what to check, and says what it saw ─
    ═══════════════════════════════════════════════════════════════════
-   The sweep above covers orders, partnerships and the follow graph.
-   It does NOT cover wineShows, and that is not an oversight being
-   hidden — it is a scope being recorded, because the whole subsystem
-   is on the other format:
+   The bug this replaces was not "wineShows was missing". It was that
+   NOBODY COULD NOTICE it was missing. Sections 2 and 3 each name the
+   arrays they know about, so the sweep silently covered whatever
+   somebody had thought to list, and "every date is ISO" was a claim
+   about that subset. 59 display-format dates sat in wineShows for as
+   long as the enumeration failed to mention it, and every run was
+   green.
 
-     events[].at 35 · attendees[].at 8 · interests[].at 7 ·
-     date 6 · venueQuotedAt 2 · venueAcceptedAt 1   =  59 fields,
-     ZERO of them ISO
+   Three properties follow, and they are the whole design:
 
-   It is not a mix of migrated and unmigrated rows. `SHOW_TODAY` is
-   itself `'31 Jul 2026'`, so logShow() and writeInterest() write
-   display format today as well: the subsystem was simply never part
-   of the ISO migration, source included.
+   1. IT DISCOVERS. Nothing is enumerated. The collection names are
+      harvested from the SOURCE — every top-level array declaration in
+      the dashboard and the data file — and each one is then walked
+      recursively in the live page. A collection written tomorrow is
+      covered tomorrow, not on the day somebody remembers to add it.
 
-   Converting only some of it is worse than either end state. The two
-   parsers do not agree: notifTime() accepts both formats, while
-   showDateValue() in assets/bottle-lobby-public-shows.js matches the
-   display format alone and returns MAX_SAFE_INTEGER for anything
-   else — an ISO show date would not throw there, it would sort last
-   and quietly reorder the public "What's Coming" list. A half
-   migration therefore breaks nothing visibly and leaves nobody able
-   to say which format is canonical.
+   2. IT JUDGES BY VALUE SHAPE, not by field name. Any string that is
+      ENTIRELY a date must be ISO, whatever the key is called. Anchored
+      on purpose: "Consolidated from Loire & Mosel — 14 Mar 2027" is
+      prose that contains a date, not a date field, and is left alone.
 
-   ┌─────────────────────────────────────────────────────────────────┐
-   │ IF THIS FAILS, READ WHICH WAY IT FAILED.                        │
-   │  · "partially converted" — the subsystem is now MIXED. Finish   │
-   │    the pass or revert it; do not adjust the number here.        │
-   │  · "fully converted" — the pass has landed. DELETE this marker  │
-   │    and add the wineShows fields to the sweep in 3b instead.     │
-   └─────────────────────────────────────────────────────────────────┘
-   ═══════════════════════════════════════════════════════════════════ */
-console.log('\n── marker: the wine-show subsystem never joined the ISO migration');
+   3. IT REPORTS ITS OWN SCOPE. The green line names how many
+      collections and how many date fields it examined. A check that
+      states its reach cannot shrink quietly — if wineShows stopped
+      being walked the number would fall and the line would say so.
+      Green means "I looked at N things and they were right", never
+      "I found nothing".
+
+   Month-precision values are a third class, not a violation. A press
+   citation is published in "March 2024" and no day exists; writing
+   2024-03-01 would invent one, which is exactly what C7 forbids when
+   backfilling. They are counted and named so they stay visible rather
+   than becoming a hole a display date could hide in.
+
+   An empty scan fails. No collections, or no date fields, is a broken
+   check reporting success — the same reasoning as the marker in
+   tests/partner-counts.js. */
+console.log('\n── assertISO: every date-shaped value, in everything that has one');
 {
-  const shows = w.eval('typeof wineShows === "undefined" ? null : JSON.parse(JSON.stringify(wineShows))');
-  if (!Array.isArray(shows)) bad('`wineShows` is not an array — this marker cannot report on it');
-  else {
-    let iso = 0, disp = 0;
-    const count = v => { if (v == null) return; ISO.test(v) ? iso++ : disp++; };
-    shows.forEach(s => {
-      count(s.date); count(s.venueQuotedAt); count(s.venueAcceptedAt);
-      (s.events    || []).forEach(e => count(e.at));
-      (s.attendees || []).forEach(a => count(a.at));
-      (s.interests || []).forEach(i => count(i.at));
-      (s.exhibitors || []).forEach(x => { count(x.at); (x.products || []).forEach(p => count(p.at)); });
+  const fs2 = require('fs'), path2 = require('path');
+  const FILES = ['bottle-lobby-dashboard.html', 'assets/bottle-lobby-data.js'];
+  const sources = FILES.map(f => [f, fs2.readFileSync(path2.join(__dirname, '..', f), 'utf8')]);
+
+  /* Discovery: every top-level array declaration, from the source. */
+  const names = [];
+  sources.forEach(([, src]) => {
+    [...src.matchAll(/^\s{0,2}(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*\[/gm)]
+      .forEach(m => { if (names.indexOf(m[1]) === -1) names.push(m[1]); });
+  });
+
+  const scan = w.eval(`(function (names) {
+    var ISO     = /^\\d{4}-\\d{2}-\\d{2}$/;
+    var DAY     = /^\\d{1,2} [A-Za-z]{3,9} \\d{4}$/;   /* "05 Dec 2026", "18 July 2026" */
+    var MONTH   = /^[A-Za-z]{3,9} \\d{4}$/;            /* "March 2024" — no day exists */
+    var out = { collections: [], fields: 0, month: [], wrong: [], strings: 0, missing: [] };
+    var seen = [];
+    function walk(node, path, hits) {
+      if (!node || typeof node !== 'object') return;
+      if (seen.indexOf(node) !== -1) return;
+      seen.push(node);
+      if (Array.isArray(node)) {
+        for (var i = 0; i < node.length; i++) walk(node[i], path + '[' + i + ']', hits);
+        return;
+      }
+      for (var k in node) {
+        if (!Object.prototype.hasOwnProperty.call(node, k)) continue;
+        var v = node[k];
+        if (typeof v === 'string') {
+          out.strings++;
+          if (ISO.test(v))        { hits.n++; out.fields++; }
+          else if (DAY.test(v))   { hits.n++; out.fields++; out.wrong.push(path + '.' + k + ' = "' + v + '"'); }
+          else if (MONTH.test(v)) { hits.n++; out.month.push(path + '.' + k + ' = "' + v + '"'); }
+        } else if (v && typeof v === 'object') walk(v, path + '.' + k, hits);
+      }
+    }
+    names.forEach(function (name) {
+      var v;
+      try { v = eval(name); } catch (e) { out.missing.push(name); return; }
+      if (!Array.isArray(v)) return;
+      var hits = { n: 0 };
+      walk(v, name, hits);
+      if (hits.n) out.collections.push(name + ':' + hits.n);
     });
-    const todayIsIso = ISO.test(w.eval('typeof SHOW_TODAY === "undefined" ? "" : SHOW_TODAY'));
-    if (iso === 0 && !todayIsIso)
-      ok('all ' + disp + ' wine-show date fields are still display format, and SHOW_TODAY with them — one format, wrong one, own pass (HANDOFF)');
-    else if (disp === 0 && todayIsIso)
-      bad('MARKER FELL — the wine-show subsystem is fully converted (' + iso + ' ISO fields). ' +
-          'The pass has landed: DELETE this marker and fold the wineShows fields into the sweep in section 3b.');
-    else
-      bad('PARTIALLY CONVERTED — ' + iso + ' ISO and ' + disp + ' display-format fields' +
-          (todayIsIso ? ', SHOW_TODAY already ISO' : ', SHOW_TODAY still display format') +
-          '. This is the one state worse than either end: showDateValue() in ' +
-          'assets/bottle-lobby-public-shows.js reads display format only and sorts anything else last, ' +
-          'silently. Finish the pass or revert it — do not adjust this number.');
-  }
+    return out;
+  })(${JSON.stringify(names)})`);
+
+  if (!names.length)
+    bad('assertISO harvested NO collection names from the source — discovery is broken, not the data');
+  else if (!scan.collections.length)
+    bad('assertISO walked ' + names.length + ' declared arrays and found no dates at all — the scan is broken, not the data');
+  else if (!scan.fields)
+    bad('assertISO found ' + scan.collections.length + ' collections and not one date field — ' +
+        'a check that examined nothing cannot be green');
+  else if (scan.wrong.length)
+    bad('assertISO: ' + scan.wrong.length + ' day-precision date(s) are not ISO — ' +
+        scan.wrong.slice(0, 6).join(' · ') + (scan.wrong.length > 6 ? ' …' : ''));
+  else
+    ok('assertISO: ' + names.length + ' declared arrays harvested, ' + scan.collections.length +
+       ' carry dates, ' + scan.fields + ' day-precision fields checked — all ISO' +
+       ' (' + scan.strings + ' strings examined)\n      ' + scan.collections.sort().join(' · '));
+
+  /* Month-precision values are named, every time. Unreported they
+     would be a shape a display date could hide behind. */
+  if (scan.month.length)
+    ok('plus ' + scan.month.length + ' month-precision value(s), which have no ISO form: ' +
+       scan.month.slice(0, 3).map(s => s.replace(/^.*\./, '')).join(' · '));
+
+  /* The source half: a NEW array written in display format fails here
+     before anything renders it, and before it holds any rows. */
+  const written = [];
+  sources.forEach(([f, src]) => {
+    [...src.matchAll(/\b(at|placed|sent|received|closedAt|venueQuotedAt|venueAcceptedAt|since)\s*:\s*'([^']*)'/g)]
+      .forEach(m => { if (/\d/.test(m[2]) && !/^\d{4}-\d{2}-\d{2}$/.test(m[2])) written.push(f + ': ' + m[1] + ":'" + m[2] + "'"); });
+  });
+  if (written.length) bad(written.length + ' date field(s) written in a non-ISO format: ' + written.slice(0, 4).join(' · '));
+  else ok('no dated field in either source file is written as display text');
 }
 
 /* ── 4. One formatter, not four ─────────────────────────────────── */

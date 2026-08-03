@@ -40,6 +40,27 @@ function showHeroImage(show) {
 const PUBLIC_UPCOMING_STAGES = ['planning', 'published'];
 const PUBLIC_PAST_STAGES     = ['completed'];
 
+/* ONE date formatter, and it lives here because this is the file every
+   surface loads — the dashboard and all 16 public pages. The dashboard
+   had `orderDate()` and the public pages had nothing, printing the raw
+   field instead; that worked only while the raw field happened to be
+   readable prose. It no longer is, and adding a second formatter to
+   the asset would be the same mistake one layer down (C9's "one
+   formatter, not four"). `orderDate()` in the dashboard now delegates
+   here, so its call sites did not have to move.
+
+   Accepts either format and returns the display form. An unreadable
+   value comes back unchanged rather than as "Invalid Date" — B12: what
+   we know is the string we were given. */
+function blDate(v) {
+  if (!v) return '—';
+  var iso = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v);
+  if (!iso) return v;
+  var d = new Date(v + 'T00:00:00');
+  if (isNaN(d)) return v;
+  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
 /* Sorting needs the date parsed. Returns a comparable yyyymmdd number;
    an unreadable date sorts last rather than throwing.
 
@@ -129,7 +150,7 @@ function publicShowTeaser(show, level, role) {
   return '<button type="button" class="ws-teaser' + (past ? ' past' : '') + '">' +
     '<img class="ws-teaser-hero" src="' + showHeroImage(show) + '" alt="' + show.title + '">' +
     '<div class="ws-teaser-body">' +
-      '<div class="ws-public-date">' + show.date + ' · ' + show.city + chip + '</div>' +
+      '<div class="ws-public-date">' + blDate(show.date) + ' · ' + show.city + chip + '</div>' +
       '<div class="ws-public-title">' + show.title + '</div>' +
       '<div class="ws-public-focus">' + show.focus + '</div>' +
       '<div class="ws-teaser-foot">' +
@@ -145,7 +166,7 @@ function publicShowTeaser(show, level, role) {
    never two stored versions (A16.10). */
 function publicShowCard(show, level) {
   const head =
-    '<div class="ws-public-date">' + show.date + ' · ' + show.city + '</div>' +
+    '<div class="ws-public-date">' + blDate(show.date) + ' · ' + show.city + '</div>' +
     '<div class="ws-public-title">' + show.title + '</div>' +
     '<div class="ws-public-focus">' + show.focus + '</div>';
 

@@ -23,6 +23,60 @@ Kein Build-Command, Publish-Directory = Repo-Root.
 
 ## Zuletzt abgeschlossen
 
+- **03.08.: Das Show-Subsystem auf ISO gebracht, und `assertISO` entdeckt jetzt
+  statt aufzuzählen. Spec C7 um zwei Regeln ergänzt.** Fünf Schritte, in dieser
+  Reihenfolge, weil die Reihenfolge der Punkt war.
+  **Der Befund vorab:** es waren nicht 35 Felder, sondern **59** — `events` 35,
+  `attendees` 8, `interests` 7, `date` 6, `venueQuotedAt` 2, `venueAcceptedAt` 1
+  —, und **kein einziges** war ISO. Auch nicht gemischt: `SHOW_TODAY` war selbst
+  `'31 Jul 2026'`, also schrieben `logShow()` und `writeInterest()` ebenfalls
+  Anzeigeformat. Das Subsystem war nie Teil der ISO-Umstellung.
+  **Schritt 1 zuerst, und das ist die eigentliche Entscheidung:**
+  `showDateValue()` las **nur** das Anzeigeformat und lieferte für alles andere
+  `MAX_SAFE_INTEGER`. Ein ISO-Datum hätte dort nichts geworfen — es hätte jede
+  Show ans Ende sortiert und „What's Coming" still umgedreht. Erst den Leser
+  verbreitern, dann die Daten bewegen; andersherum ist die Sortierung
+  dazwischen kaputt, ohne Symptom. Der neue Riegel in `public-shows-page.js`
+  nennt **kein** Format: er schreibt alle Showdaten ins jeweils andere um und
+  verlangt dieselbe Reihenfolge — hält also auch nach der Umstellung.
+  **Schritt 2–4:** `SHOW_TODAY` auf ISO, die 59 Fixture-Felder mechanisch
+  umgestellt, **24 Lesestellen** auf `orderDate()` gezogen. Dabei kam ein
+  **zweiter Formatter** ans Licht: die 16 öffentlichen Seiten hatten gar keinen
+  und druckten das Rohfeld — das ging nur, solange das Rohfeld zufällig lesbare
+  Prosa war. Jetzt gibt es **einen** `blDate()` im geteilten Asset, das jede
+  Fläche lädt; `orderDate()` delegiert dorthin, deshalb mussten die ~40
+  Aufrufstellen nicht wandern.
+  **Ein Beinahe-Fehler, den nur eine Zusicherung verhindert hat:** mein
+  Umstellskript verlangte genau 5 Modal-Kopfzeilen — es waren **6**. Die
+  Behauptung ist abgebrochen, statt fünf umzustellen und eine liegenzulassen.
+  **Schritt 5 — `assertISO` neu, nach Serges Vorgabe.** Der Fehler war nie, dass
+  `wineShows` fehlte, sondern dass **niemand merken konnte**, dass es fehlt.
+  Jetzt: die Sammlungsnamen werden **aus dem Quelltext geerntet** (jede
+  Top-Level-Array-Deklaration), jeder Wert wird **nach seiner Form** beurteilt
+  statt nach seinem Feldnamen, und die grüne Zeile **nennt den Umfang** —
+  „51 deklarierte Arrays geerntet, 13 tragen Daten, 158 tagesgenaue Felder
+  geprüft (1249 Strings gesehen)", mit `wineShows:59` in der Aufzählung. Eine
+  Prüfung, die ihre Reichweite ausspricht, kann nicht stillschweigend
+  schrumpfen. Ein leerer Scan **fällt durch**: keine Sammlung oder kein
+  Datumsfeld ist eine kaputte Prüfung, die Erfolg meldet.
+  **Dritte Präzisionsklasse, absichtlich:** `pressData[].date` ist „March 2024"
+  — eine Monatsangabe ohne Tag. Sie nach ISO zu zwingen hieße, einen Tag zu
+  erfinden, also genau das, was C7 beim Nachtragen verbietet. Monatsgenaue Werte
+  werden **gezählt und benannt**, damit sie kein Loch werden, in dem sich ein
+  Anzeigedatum verstecken kann.
+  **Zwei Gegenproben:** ein einzelnes Showdatum zurückgedreht → rot mit
+  `wineShows[0].date`. Und eine **völlig neue Sammlung** (`tastingLog`), die
+  nirgends eingetragen ist → ebenfalls rot, aus der Entdeckung heraus.
+  **Abnahme im echten Chrome:** Dashboard alle vier Rollen, Show-Liste, Detail
+  samt Verlauf, öffentliche Wine-Shows-Seite und ein Distributor-Profil —
+  **null rohes ISO auf dem Schirm**, Sortierung chronologisch korrekt
+  (18 Sept 2026 → 5 Dec 2026 → 20 Feb 2027, vergangen 12 Apr 2026), keine
+  Konsolenfehler.
+  **Merkposten für die nächste Browser-Abnahme:** Chrome hatte die Assets
+  gecacht und lieferte `bottle-lobby-data.js` in der alten Fassung, während das
+  Dashboard schon neu war — die Shows-Ansicht blieb dadurch leer und sah wie ein
+  Regressionsfehler aus. Ein `fetch(..., {cache:'reload'})` auf die vier Assets
+  vor dem Reload räumt das aus.
 - **03.08.: Partnerschaft Hawesko ↔ Château Belrieu nachgetragen — die
   Invariante-3-Blutung ist zu.** Ein Commit, im echten Chrome abgenommen.
   **Serges Entscheidung, mit seiner Begründung:** beide Weine sind verkauft

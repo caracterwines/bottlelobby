@@ -2665,6 +2665,42 @@ of the "usual checks" is one command and nothing is re-derived by hand.
 >    bug it cannot see — worse than no check, because it reads as safety.
 >    Put the defect back in its **shipped shape**, line for line.
 
+### A narrative that survives two corrections without being checked is not a diagnosis
+
+A description of a defect has to be re-checked **against its object** every time
+it is corrected. One that keeps being refined — a different id, a different
+field, a different explanation — while nobody re-reads the record it claims to
+describe has stopped being a diagnosis and become a story that everyone is
+maintaining together.
+
+It happened here in full. A wine-show date question produced, in sequence: a
+claim about `ORD-2035` being a draft, a correction naming `ORD-2039` instead, and
+a correction of that correction — three passes, each plausible, over a dataset
+that contains **no draft order at all**. The narrative was internally consistent
+the whole way and never once true. What ended it was not a better argument but
+`orders.filter(o => o.stage === 'draft')` returning `[]`.
+
+So:
+
+- **Re-read the record on every correction, not only on the first claim.** A
+  correction is a new assertion about the same object and needs the same
+  evidence. "You're right, it's actually X" is a claim, not a fix.
+- **Quote the record, do not describe it.** `ORD-2039  placed 2026-07-23
+  stage 'accepted'` ends a disagreement that three paragraphs of reasoning
+  cannot.
+- **Count the class before arguing about the instance.** If the claim is "a
+  draft is being counted", the first question is how many drafts exist. Zero
+  settles it without anybody having to be wrong about an id.
+- **Agreement is not evidence.** Two people converging on the same wrong id
+  makes it likelier to survive, not likelier to be true. Concretely: everyone
+  had searched for the same thing and found nothing, and treated the shared
+  absence as confirmation.
+
+The rule generalises past defects to any factual claim about the data. The
+harness discipline above (mutation testing, missed-target guards) exists for the
+same reason at a smaller scale: a check that cannot fail proves nothing, and a
+diagnosis that cannot be falsified is the same object in prose.
+
 ### Backfilling master data: the earliest dependent event is the ceiling
 
 When a record is added **retroactively** — a relation that should always have
