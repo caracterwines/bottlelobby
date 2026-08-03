@@ -4143,55 +4143,46 @@ function stakeholder(name) {
    invariant 3 is why. So the two ends have names rather than an
    anonymous pair, and either end can ask for its own list.
 
-   `distributorMeta` and `partnerWines` are the two sides' display
-   figures, kept for now and knowingly wrong — see HANDOFF, they are
-   the next pass (invariant 7). They sit on the one row rather than in
-   two lists precisely so that being two views of one relation is
-   visible instead of hidden.
+   A row holds the RELATION only: who, when, who activated it. It once
+   also carried the two sides' display figures — `distributorMeta` and
+   `partnerWines` — and they were wrong on the screen. They are counted
+   now; see portfolioCount() at the portfolio itself.
 ══════════════════════════════════════════════════════════════════ */
 let partnerships = [
   /* Producers carried by Hawesko. `at` and `activatedBy` answer C9's
      two questions: a partnership goes active on a manual Bottle Lobby
      confirmation once both signed contracts are in (invariant 6), so
      staff are the actor and it is a field, not a constant. */
-  { distributor:'Hawesko GmbH', partner:'Cantina Rossi', at:'2026-03-09', activatedBy:'Bottle Lobby',
-    distributorMeta:'6 wines in your portfolio', partnerWines:1 },
-  { distributor:'Hawesko GmbH', partner:'Domaine Lefèvre', at:'2026-04-07', activatedBy:'Bottle Lobby',
-    distributorMeta:'1 wine in your portfolio' },
-  { distributor:'Hawesko GmbH', partner:'Henri Dubois Domaine', at:'2026-02-17', activatedBy:'Bottle Lobby',
-    distributorMeta:'1 wine in your portfolio' },
+  { distributor:'Hawesko GmbH', partner:'Cantina Rossi', at:'2026-03-09', activatedBy:'Bottle Lobby' },
+  { distributor:'Hawesko GmbH', partner:'Domaine Lefèvre', at:'2026-04-07', activatedBy:'Bottle Lobby' },
+  { distributor:'Hawesko GmbH', partner:'Henri Dubois Domaine', at:'2026-02-17', activatedBy:'Bottle Lobby' },
   /* Deliberate fixture for A8: Weinhaus Müller followed Bodegas Ruiz on
      11 May 2026, and Bodegas Ruiz gained this partnership afterwards.
      It is the one pair in the data where the sentence "now has a
      distributor" is actually true, and it is what makes that range
      orderable for a retailer at all (invariant 3). */
-  { distributor:'Hawesko GmbH', partner:'Bodegas Ruiz', at:'2026-06-02', activatedBy:'Bottle Lobby',
-    distributorMeta:'1 wine in your portfolio' },
-  { distributor:'Hawesko GmbH', partner:'Weingut Schmitt', at:'2026-07-06', activatedBy:'Bottle Lobby',
-    distributorMeta:'1 wine in your portfolio' },
+  { distributor:'Hawesko GmbH', partner:'Bodegas Ruiz', at:'2026-06-02', activatedBy:'Bottle Lobby' },
+  { distributor:'Hawesko GmbH', partner:'Weingut Schmitt', at:'2026-07-06', activatedBy:'Bottle Lobby' },
 
   /* Buyers sourcing through Hawesko. The first two are the rows that
-     used to exist twice; `partnerWines` is what their own dashboards
-     showed about the same book, and the two numbers disagree — 5 and
-     6 — which is the next pass, not this one. */
-  { distributor:'Hawesko GmbH', partner:'Bistro Laurent', at:'2026-03-23', activatedBy:'Bottle Lobby',
-    distributorMeta:'Sources through your portfolio', partnerWines:5 },
-  { distributor:'Hawesko GmbH', partner:'Weinhaus Müller', at:'2026-04-14', activatedBy:'Bottle Lobby',
-    distributorMeta:'Sources through your portfolio', partnerWines:6 },
-  { distributor:'Hawesko GmbH', partner:'Vinstuen København', at:'2026-07-20', activatedBy:'Bottle Lobby',
-    distributorMeta:'Sources through your portfolio' },
+     used to exist twice — and each end also named its own figure for
+     the same book, 5 on one dashboard and 6 on the other. Both are
+     counted from the book now, so they cannot disagree. */
+  { distributor:'Hawesko GmbH', partner:'Bistro Laurent', at:'2026-03-23', activatedBy:'Bottle Lobby' },
+  { distributor:'Hawesko GmbH', partner:'Weinhaus Müller', at:'2026-04-14', activatedBy:'Bottle Lobby' },
+  { distributor:'Hawesko GmbH', partner:'Vinstuen København', at:'2026-07-20', activatedBy:'Bottle Lobby' },
 
   /* The one partnership no playable distributor holds: Cantina Rossi
-     is carried by a second house. It has no `distributorMeta` because
-     Enoteca Milano has no dashboard here to show one.
+     is carried by a second house. Enoteca Milano has no portfolio in
+     this prototype, which is why the winery's card against it names no
+     figure at all — see portfolioOf().
 
      The day is fixture authorship, not a measurement: the old record
      said "May 2026" and no day was ever written down. Everything else
      in this table came out of a book that already held an ISO date,
      so nothing was invented there — this row is the exception and
      says so. */
-  { distributor:'Enoteca Milano Import Srl', partner:'Cantina Rossi', at:'2026-05-11', activatedBy:'Bottle Lobby',
-    partnerWines:5 }
+  { distributor:'Enoteca Milano Import Srl', partner:'Cantina Rossi', at:'2026-05-11', activatedBy:'Bottle Lobby' }
 ];
 
 /* Both ends ask the same list. Whoever I am, my partnerships are the
@@ -4805,6 +4796,84 @@ let currentWinePortfolio = [
   { winery:'Weingut Schmitt', name:'Müller-Thurgau — Mosel', vintage:2023, ownLabel:false, url:'bottle-lobby-wine-muller-thurgau-mosel.html' }
 ];
 
+/* ══════════════════════════════════════════════════════════════════
+   PORTFOLIO COUNTS — counted, never stored (invariant 7)
+   ------------------------------------------------------------------
+   Every partner card used to carry its figure as a field on the
+   partnership row: `distributorMeta` ('6 wines in your portfolio') on
+   the distributor's end, `partnerWines` on the other three. A stored
+   count goes stale the moment somebody adds a wine, and two of these
+   had gone stale on screen already: Cantina Rossi read 6 where the
+   portfolio holds 1, Weingut Schmitt read 1 where it holds 2. Worse,
+   the two buyers named DIFFERENT figures — 5 and 6 — for the same
+   book, and neither matched it.
+
+   `currentWinePortfolio` above is that book, and it is the portfolio
+   because it is the only one of the prototype's three wine lists that
+   a house actually owns: the distributor adds to it, edits it and
+   removes from it, and it is registered with BLStore. The two picker
+   pools are `const`, never written, byte-identical to each other, and
+   their `winery` field holds the SUPPLIER rather than the producer —
+   which is why wineryOfWine() has to skip 'Hawesko GmbH' and fall
+   back to a lookup table. A list that cannot answer invariant 2 is a
+   menu, not a portfolio.
+
+   A distributor with no book gets `null`, not an empty array, and the
+   renderers leave the clause out entirely. '0 wines' would be the
+   claim that Enoteca Milano carries nothing; what we actually know is
+   that no book exists here to count. Same discipline as stakeholder()
+   — absent is not empty.
+
+   Still wrong after this pass and its own pass (see HANDOFF): the
+   picker pools offer 10 wines where this book holds 6, and two of the
+   five extra belong to Château Belrieu, which has no partnership with
+   Hawesko at all (invariant 3).
+══════════════════════════════════════════════════════════════════ */
+const DISTRIBUTOR_PORTFOLIOS = {
+  /* A getter, not the array: `currentWinePortfolio` is a `let` that
+     BLStore reassigns on load, and a captured reference would go on
+     counting the fixture the store just replaced. */
+  'Hawesko GmbH': function () { return currentWinePortfolio; }
+};
+function portfolioOf(distributor) {
+  const get = DISTRIBUTOR_PORTFOLIOS[distributor];
+  return get ? get() : null;
+}
+/* How many wines this distributor carries — with a producer named,
+   how many of THAT producer's. Undefined when there is no book. */
+function portfolioCount(distributor, producer) {
+  const book = portfolioOf(distributor);
+  if (!book) return undefined;
+  return producer ? book.filter(function (w) { return w.winery === producer; }).length : book.length;
+}
+
+/* A derived figure is only honest if the screen showing it is redrawn
+   when its input moves. Pulling a wine in used to change one list, so
+   one list was repainted; now it changes a number on four partner
+   cards across all four roles, and every one of them was left standing
+   at the old figure — found in the browser, not by a harness, because
+   a harness calls the renderer it is about to read.
+
+   The four renderers return silently when their view has never been
+   opened (B12), so this is safe to call from anywhere. Same shape and
+   same reason as refreshNotifications(). */
+function refreshPortfolioCounts() {
+  [renderPartnerNetwork, renderWineryNetwork, renderRestaurantNetwork, renderRetailNetwork]
+    .forEach(function (fn) { try { fn(); } catch (e) { /* view not built in this role */ } });
+}
+
+/* The distributor's own end of a partner card. A producer partner is
+   described by how much of that producer the distributor carries; a
+   buyer partner does not fill the book, it sources from it, so the
+   clause states the direction of the relation and is not a count.
+   Both were one stored string per row until this pass. */
+function partnerMetaFor(p, me) {
+  const who = partnerSide(p, me);
+  if (stakeholder(who).type !== 'winery') return 'Sources through your portfolio';
+  const n = portfolioCount(me, who);
+  return n === undefined ? null : n + (n === 1 ? ' wine' : ' wines') + ' in your portfolio';
+}
+
 let awSelectedWine = null;
 let editingPortfolioIndex = null;
 
@@ -4828,6 +4897,7 @@ function deletePortfolioWine(idx) {
   if (!confirm('Remove this wine from your portfolio? It will disappear from your public profile and the Wine Guide.')) return;
   currentWinePortfolio.splice(idx, 1);
   renderWinePortfolioD();
+  refreshPortfolioCounts();
   showToast('✓ Wine removed from your portfolio');
 }
 
@@ -4925,6 +4995,7 @@ function confirmAddWine() {
     url: fileGuess
   });
   renderWinePortfolioD();
+  refreshPortfolioCounts();
   closePullWineModal();
   showToast('✓ Wine pulled into your portfolio');
 }
@@ -5045,14 +5116,21 @@ function renderWineryNetwork() {
         ${groups[region].map(p => {
           const who = partnerSide(p, 'Cantina Rossi');
           const st = stakeholder(who);
-          const n = p.partnerWines;
+          /* How many of MY wines this distributor has listed — counted
+             in their book, the same book their own card counts from
+             the other side (invariant 7). Enoteca Milano has no book,
+             so its card names no figure at all. */
+          const n = portfolioCount(who, 'Cantina Rossi');
           return `
           <div class="wn-card">
             <div class="wn-top" style="margin-bottom:0">
               <div class="wn-avatar ${roleAv[st.type] || ''}">${st.avatar}</div>
               <div style="flex:1">
                 <div class="wn-name">${who}</div>
-                <div class="wn-meta">Partner since ${orderDate(p.at)}${n === undefined ? '' : ` · ${n} of your ${n === 1 ? 'wine' : 'wines'} listed`}</div>
+                <div class="wn-meta">Partner since ${orderDate(p.at)}${/* "1 of your wines listed" — the plural belongs to my range, not
+       to the count, so there is no singular form of this sentence.
+       The distributor's own card does inflect ("1 wine in your
+       portfolio"), because there the noun IS the count. */''}${n === undefined ? '' : ` · ${n} of your wines listed`}</div>
               </div>
               <span class="wn-status ws-active">Active</span>
               <span class="wn-roletag ${roleTag[st.type] || ''}">${roleLabel[st.type] || ''}</span>
@@ -5158,12 +5236,13 @@ function renderPartnerNetwork() {
         ${groups[region].map(p => {
           const who = partnerSide(p, 'Hawesko GmbH');
           const st = stakeholder(who);
+          const meta = partnerMetaFor(p, 'Hawesko GmbH');
           return `
           <div class="pn-card">
             <div class="pn-avatar">${st.avatar}</div>
             <div class="pn-info">
               <div class="pn-name">${who}</div>
-              <div class="pn-meta">Partner since ${orderDate(p.at)} · ${p.distributorMeta}</div>
+              <div class="pn-meta">Partner since ${orderDate(p.at)}${meta ? ` · ${meta}` : ''}</div>
             </div>
             <div class="pn-right" style="align-items:flex-end;gap:0.4rem">
               <div style="display:flex;gap:0.5rem;align-items:center">${typeTag(st.type)}<span class="pn-status st-active">Active</span></div>
@@ -5549,7 +5628,11 @@ function renderRestaurantNetwork() {
         ${groups[region].map(p => {
           const who = partnerSide(p, 'Bistro Laurent');
           const st = stakeholder(who);
-          const n = p.partnerWines;
+          /* The whole book, not my slice of it: what is on offer to me
+             through this partnership (invariant 3). The retailer's card
+             asks the identical question and used to answer it with a
+             different stored number. */
+          const n = portfolioCount(who);
           return `
           <div class="pn-card">
             <div class="pn-avatar">${st.avatar}</div>
@@ -5934,7 +6017,9 @@ function renderRetailNetwork() {
         ${groups[region].map(p => {
           const who = partnerSide(p, 'Weinhaus Müller');
           const st = stakeholder(who);
-          const n = p.partnerWines;
+          /* Same question as the restaurant's card, same book, and now
+             necessarily the same answer. */
+          const n = portfolioCount(who);
           return `
           <div class="pn-card">
             <div class="pn-avatar">${st.avatar}</div>

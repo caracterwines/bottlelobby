@@ -339,8 +339,8 @@ console.log('\n── counter-check: the old mistakes must not be able to return
       says: 'the computed badge reads HG where the record says HW — the original drift, exactly' },
 
     { name: 'the same partnership is stored a second time',
-      from: "  { distributor:'Hawesko GmbH', partner:'Bistro Laurent', at:'2026-03-23', activatedBy:'Bottle Lobby',",
-      to:   "  { distributor:'Hawesko GmbH', partner:'Bistro Laurent', at:'2026-09-09', activatedBy:'Bottle Lobby' },\n  { distributor:'Hawesko GmbH', partner:'Bistro Laurent', at:'2026-03-23', activatedBy:'Bottle Lobby',",
+      from: "  { distributor:'Hawesko GmbH', partner:'Bistro Laurent', at:'2026-03-23', activatedBy:'Bottle Lobby' },",
+      to:   "  { distributor:'Hawesko GmbH', partner:'Bistro Laurent', at:'2026-09-09', activatedBy:'Bottle Lobby' },\n  { distributor:'Hawesko GmbH', partner:'Bistro Laurent', at:'2026-03-23', activatedBy:'Bottle Lobby' },",
       check: g => {
         const p = g.eval('JSON.parse(JSON.stringify(partnerships))').map(x => x.distributor + '↔' + x.partner);
         return p.filter((k, i) => p.indexOf(k) !== i).length > 0;
