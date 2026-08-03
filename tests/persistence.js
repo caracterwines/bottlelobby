@@ -544,16 +544,57 @@ console.log('\n── the one list stays the one list');
   if (stale.length) bad('TRANSIENT names things that no longer exist: ' + stale.join(', '));
   else ok('the transient list has no leftovers');
 
-  /* A `const` array is not read-only — push() still works. If one is
-     ever mutated, it is state, and it has to be classified too. */
+  /* A `const` collection is not read-only. Two ways to change one, and
+     until 3 Aug 2026 this check knew only the first:
+
+       arr.push(x)        — an array method
+       obj[k] = v         — a property write
+
+     The second is how every `const` OBJECT in the page is mutated, so
+     the whole class was invisible: `filters` had been unclassified
+     since it was written, and the stakeholders pass added three more
+     without anything saying so. Found while reviewing that pass; the
+     gap was in the check, not in the page.
+
+     Each name below is a decision with a reason, like TRANSIENT
+     above — a bare list would rot into "whatever was there when
+     someone last ran the test". */
+  const TRANSIENT_CONSTS = {
+    STAKEHOLDER_INDEX: 'a lookup built from `stakeholders` at load. Storing it would be storing a second copy of the master table — the very thing that table exists to prevent (A1)',
+    stakeholderMisses: 'which unknown names have already been warned about in THIS page load',
+    filters:           'which filter pill is active in the distributor network view — a reload starts on "All"',
+    ordState:          'per-role Orders view state: open tab, status filter, open order, whether the shell was built',
+    showState:         'the same for Wine Shows, plus which visibility preview is open',
+    notifState:        'the same for Notifications. What has to survive is notifSeen, and that is registered (C9)'
+  };
+
   const consts = [...new Set([...src.matchAll(/^const\s+([A-Za-z_$][\w$]*)\s*=\s*[[{]/gm)].map(m => m[1]))];
-  const mutatedConsts = consts.filter(n =>
-    new RegExp('\\b' + n + '\\.(push|splice|unshift|pop|shift|sort|reverse)\\s*\\(').test(src));
-  const unclassified = mutatedConsts.filter(n => !registered.includes(n));
+  const byMethod = n => new RegExp('\\b' + n + '\\.(push|splice|unshift|pop|shift|sort|reverse)\\s*\\(').test(src);
+  /* `X[k] =`, `X.k =`, `X.k++`, `delete X[k]` — but not `X.k ==`. */
+  const byWrite = n =>
+    new RegExp('(?:^|[^\\w$.])' + n + '(?:\\[[^\\]\\n]*\\]|\\.[A-Za-z_$][\\w$]*)\\s*(?:=[^=]|\\+\\+|--)', 'm').test(src) ||
+    new RegExp('delete\\s+' + n + '[\\[.]').test(src);
+
+  const mutatedConsts = consts.filter(n => byMethod(n) || byWrite(n));
+  const unclassified = mutatedConsts.filter(n =>
+    !registered.includes(n) && !TRANSIENT_CONSTS.hasOwnProperty(n));
   if (unclassified.length)
-    bad('mutated `const` collections that nobody persists: ' + unclassified.join(', ') +
-        '\n      → they are state; register them (and make them `let`)');
-  else ok('no `const` collection is being mutated behind the registry\'s back');
+    bad('mutated `const` collections that nobody classified: ' + unclassified.join(', ') +
+        '\n      → register them (and make them `let`), or add them to TRANSIENT_CONSTS with a reason');
+  else ok('all ' + mutatedConsts.length + ' mutated `const` collections are classified (' +
+          mutatedConsts.filter(n => registered.includes(n)).length + ' persisted, ' +
+          mutatedConsts.filter(n => TRANSIENT_CONSTS.hasOwnProperty(n)).length + ' transient)');
+
+  /* The property-write half has to actually find something, or the
+     day it stops working it reads as "nothing to classify". */
+  const writes = consts.filter(n => !byMethod(n) && byWrite(n));
+  if (!writes.length)
+    bad('the property-write scan matched nothing at all — it is no longer detecting the class it was added for');
+  else ok('property-written consts detected: ' + writes.join(', '));
+
+  const staleConsts = Object.keys(TRANSIENT_CONSTS).filter(n => !mutatedConsts.includes(n));
+  if (staleConsts.length) bad('TRANSIENT_CONSTS names things that are no longer mutated consts: ' + staleConsts.join(', '));
+  else ok('the transient-const list has no leftovers');
 
   /* And the register block must actually match the running page. */
   const missing = registered.filter(n => !new RegExp('^(let|const)\\s+' + n + '\\b', 'm').test(src));
