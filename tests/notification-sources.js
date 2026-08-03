@@ -118,6 +118,64 @@ console.log('\n── partnership requests are dated in one format');
   else ok('the rendered date is formatted, not the raw ISO string');
 }
 
+/* ── 3b. Every date field, including the ones nothing renders ─────
+   Sections 2 and 3 each name the arrays they know about, which is the
+   failure mode B10 describes in its own domain: a count over the
+   cases you loaded says nothing about the ones you did not. Between
+   them they covered the follow graph and the seven request lists —
+   `orders.placed`, the per-order event log and `partnerships.at` were
+   asserted nowhere, and "every date is ISO" was a claim resting on
+   the subset somebody had thought to enumerate.
+
+   A record is a record whether or not a screen shows it. A draft
+   order, a cancelled one, a row in a collection no renderer touches
+   today — none of them is exempt, and a check that cannot see them is
+   a gap in the check rather than permission for the data. So this
+   sweep walks the collections and reports what it covered, so that a
+   future collection with dates in it is visibly NOT covered instead
+   of silently passing. */
+console.log('\n── every date field in every collection, rendered or not');
+{
+  /* [collection, field, nested] — `nested` walks a per-row array. */
+  const SWEEP = [
+    ['orders',           'placed', null],
+    ['orders',           'at',     'log'],
+    ['partnerships',     'at',     null],
+    ['wineFollowGraph',  'at',     null],
+    ['partnerWinesPool', 'at',     null]
+  ];
+  let checked = 0, missing = 0;
+  const wrong = [];
+  SWEEP.forEach(([name, field, nested]) => {
+    const rows = w.eval('typeof ' + name + ' === "undefined" ? null : JSON.parse(JSON.stringify(' + name + '))');
+    if (!Array.isArray(rows)) { wrong.push(name + ' is not an array'); return; }
+    rows.forEach((r, i) => {
+      const targets = nested ? (r[nested] || []) : [r];
+      targets.forEach((t, j) => {
+        const v = t[field];
+        const where = name + '[' + i + ']' + (nested ? '.' + nested + '[' + j + ']' : '') + '.' + field;
+        /* An absent date is counted, not failed: not every row is
+           required to carry one. It is reported so that a collection
+           quietly losing its dates cannot read as "all ISO". */
+        if (v === undefined || v === null) { missing++; return; }
+        checked++;
+        if (!ISO.test(v)) wrong.push(where + ' = "' + v + '"');
+      });
+    });
+  });
+  if (wrong.length) bad('not ISO: ' + wrong.join(' · '));
+  else ok(checked + ' date fields across ' + SWEEP.length + ' sweeps are ISO (' + missing + ' rows carry none)');
+
+  /* Not one date anywhere in the source may be in a display format.
+     Section 3 checks the records it enumerates; this reads the file,
+     so a NEW array written in "12 Feb 2026" style fails here on the
+     day it is added rather than on the day somebody lists it above. */
+  const src = require('fs').readFileSync(require('path').join(__dirname, '..', 'bottle-lobby-dashboard.html'), 'utf8');
+  const display = [...src.matchAll(/\b(?:at|placed|since|received|sent)\s*:\s*'(\d{1,2} \w+ \d{4}|\w+ \d{4})'/g)];
+  if (display.length) bad(display.length + ' date field(s) still written in a display format: ' + display.slice(0, 3).map(m => m[1]).join(', '));
+  else ok('no date field in the source is written as display text');
+}
+
 /* ── 4. One formatter, not four ─────────────────────────────────── */
 console.log('\n── ISO dates go through one formatter');
 {
