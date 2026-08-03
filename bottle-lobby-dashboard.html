@@ -4543,27 +4543,43 @@ function openDistributorPublicPreview() {
    cross-feature match has to be the same RECORD, and this prototype has
    already paid for string matching twice (the em dash in "Riesling
    Spätlese — Mosel", A14.4). A wine with no article page gets no `url`
-   and is then named without a link — no link beats a guessed one. */
+   and is then named without a link — no link beats a guessed one.
+
+   `at` is the day the producer added the wine to their range, and it
+   was added for the same reason `url` was: C9 requires every source to
+   answer **who** and **when** about every event it emits, and "a new
+   wine" is an event. `who` needs no field — the producer owns the
+   record (invariant 2), so the actor IS `winery`. Without `at` the row
+   could not be sorted and, worse, the read marker could not stay
+   stable, because the notification id carries the date.
+
+   The dates are not decoration. They decide who hears about which
+   wine: a wine only reaches a reader whose relation to the producer
+   already existed when it was added (see notifWineryEdge). Baglio
+   Rosso sits between Bistro Laurent's follow and Weinhaus Müller's on
+   purpose — one of them hears about it, the other does not, and both
+   are right. */
 const partnerWinesPool = [
-  { winery:'Cantina Rossi', name:'Catarratto Biologico', vintage:2023, type:'White', note:'Organic', origin:'Sicilia DOC, Sicily', url:'bottle-lobby-wine-catarratto-biologico.html' },
-  { winery:'Cantina Rossi', name:'Grillo Sicilia DOC', vintage:2023, type:'White', note:'Own-Label Available', origin:'Sicilia DOC, Sicily', url:'bottle-lobby-wine-grillo-sicilia-doc.html' },
-  { winery:'Cantina Rossi', name:"Nero d'Avola Sicilia DOC", vintage:2022, type:'Red', note:'Own-Label Available', origin:'Sicilia DOC, Sicily', url:'bottle-lobby-wine-nero-davola-sicilia-doc.html' },
-  { winery:'Cantina Rossi', name:'Primitivo Riserva', vintage:2020, type:'Red', note:'Riserva · Premium Tier', origin:'Alcamo DOC, Sicily', url:'bottle-lobby-wine-primitivo-riserva.html' },
-  { winery:'Cantina Rossi', name:'Rosato di Sicilia', vintage:2023, type:'Rosé', note:'Own-Label Available', origin:'Sicilia DOC, Sicily', url:'bottle-lobby-wine-rosato-di-sicilia.html' },
-  { winery:'Cantina Rossi', name:'Rosso di Contrada', vintage:2023, type:'Red', note:'Standard', origin:'Sicilia DOC, Sicily', url:'bottle-lobby-wine-rosso-di-contrada.html' },
-  { winery:'Cantina Rossi', name:'Trinacria Bianco', vintage:2023, type:'White', note:'Standard', origin:'Terre Siciliane IGT, Sicily', url:'bottle-lobby-wine-trinacria-bianco.html' },
-  { winery:'Cantina Rossi', name:'Baglio Rosso', vintage:2021, type:'Red', note:'Standard', origin:'Terre Siciliane IGT, Sicily', url:'bottle-lobby-wine-baglio-rosso.html' },
-  { winery:'Cantina Rossi', name:'Costa Bianca', vintage:2023, type:'White', note:'Standard', origin:'Terre Siciliane IGT, Sicily', url:'bottle-lobby-wine-costa-bianca.html' },
-  { winery:'Domaine Lefèvre', name:'Bourgogne Passetoutgrain', vintage:2023, type:'Red', note:'Standard', origin:'Bourgogne Passetoutgrain AOC, France', url:'bottle-lobby-wine-bourgogne-passetoutgrain.html' },
-  { winery:'Domaine Lefèvre', name:'Crémant de Bourgogne', vintage:2022, type:'White', note:'Standard', origin:'Crémant de Bourgogne AOC, France', url:'bottle-lobby-wine-cremant-de-bourgogne.html' },
-  { winery:'Domaine Lefèvre', name:'Bourgogne Aligoté', vintage:2023, type:'White', note:'Standard', origin:'Bourgogne Aligoté AOC, France', url:'bottle-lobby-wine-bourgogne-aligote.html' },
-  { winery:'Domaine Lefèvre', name:'Mâcon-Villages', vintage:2023, type:'White', note:'Standard', origin:'Mâcon-Villages AOC, France', url:'bottle-lobby-wine-macon-villages.html' },
-  { winery:'Henri Dubois Domaine', name:'Sancerre Rouge', vintage:2022, type:'Red', note:'Standard', origin:'Sancerre AOC, Loire Valley', url:'bottle-lobby-wine-sancerre-rouge.html' },
-  { winery:'Henri Dubois Domaine', name:'Pouilly-Fumé', vintage:2023, type:'White', note:'Standard', origin:'Pouilly-Fumé AOC, Loire Valley', url:'bottle-lobby-wine-pouilly-fume.html' },
-  { winery:'Bodegas Ruiz', name:'Rioja Reserva', vintage:2019, type:'Red', note:'Standard', origin:'Rioja DOCa, Spain', url:'bottle-lobby-wine-rioja-reserva.html' },
-  { winery:'Bodegas Ruiz', name:'Rioja Blanco', vintage:2023, type:'White', note:'Standard', origin:'Rioja DOCa, Spain', url:'bottle-lobby-wine-rioja-blanco.html' },
-  { winery:'Weingut Schmitt', name:'Müller-Thurgau — Mosel', vintage:2023, type:'White', note:'Standard', origin:'Mosel QbA, Germany', url:'bottle-lobby-wine-muller-thurgau-mosel.html' },
-  { winery:'Weingut Schmitt', name:'Spätburgunder — Mosel', vintage:2022, type:'Red', note:'Standard', origin:'Mosel QbA, Germany', url:'bottle-lobby-wine-spatburgunder-mosel.html' }
+  { winery:'Cantina Rossi', name:'Catarratto Biologico', vintage:2023, type:'White', note:'Organic', origin:'Sicilia DOC, Sicily', url:'bottle-lobby-wine-catarratto-biologico.html', at:'2025-03-14' },
+  { winery:'Cantina Rossi', name:'Grillo Sicilia DOC', vintage:2023, type:'White', note:'Own-Label Available', origin:'Sicilia DOC, Sicily', url:'bottle-lobby-wine-grillo-sicilia-doc.html', at:'2025-04-02' },
+  { winery:'Cantina Rossi', name:"Nero d'Avola Sicilia DOC", vintage:2022, type:'Red', note:'Own-Label Available', origin:'Sicilia DOC, Sicily', url:'bottle-lobby-wine-nero-davola-sicilia-doc.html', at:'2025-05-20' },
+  { winery:'Cantina Rossi', name:'Primitivo Riserva', vintage:2020, type:'Red', note:'Riserva · Premium Tier', origin:'Alcamo DOC, Sicily', url:'bottle-lobby-wine-primitivo-riserva.html', at:'2025-02-11' },
+  { winery:'Cantina Rossi', name:'Rosato di Sicilia', vintage:2023, type:'Rosé', note:'Own-Label Available', origin:'Sicilia DOC, Sicily', url:'bottle-lobby-wine-rosato-di-sicilia.html', at:'2025-06-09' },
+  { winery:'Cantina Rossi', name:'Rosso di Contrada', vintage:2023, type:'Red', note:'Standard', origin:'Sicilia DOC, Sicily', url:'bottle-lobby-wine-rosso-di-contrada.html', at:'2025-09-16' },
+  { winery:'Cantina Rossi', name:'Trinacria Bianco', vintage:2023, type:'White', note:'Standard', origin:'Terre Siciliane IGT, Sicily', url:'bottle-lobby-wine-trinacria-bianco.html', at:'2025-11-04' },
+  /* The two deliberate ones: added AFTER somebody started following. */
+  { winery:'Cantina Rossi', name:'Baglio Rosso', vintage:2021, type:'Red', note:'Standard', origin:'Terre Siciliane IGT, Sicily', url:'bottle-lobby-wine-baglio-rosso.html', at:'2026-04-20' },
+  { winery:'Cantina Rossi', name:'Costa Bianca', vintage:2023, type:'White', note:'Standard', origin:'Terre Siciliane IGT, Sicily', url:'bottle-lobby-wine-costa-bianca.html', at:'2026-05-28' },
+  { winery:'Domaine Lefèvre', name:'Bourgogne Passetoutgrain', vintage:2023, type:'Red', note:'Standard', origin:'Bourgogne Passetoutgrain AOC, France', url:'bottle-lobby-wine-bourgogne-passetoutgrain.html', at:'2025-10-07' },
+  { winery:'Domaine Lefèvre', name:'Crémant de Bourgogne', vintage:2022, type:'White', note:'Standard', origin:'Crémant de Bourgogne AOC, France', url:'bottle-lobby-wine-cremant-de-bourgogne.html', at:'2025-08-19' },
+  { winery:'Domaine Lefèvre', name:'Bourgogne Aligoté', vintage:2023, type:'White', note:'Standard', origin:'Bourgogne Aligoté AOC, France', url:'bottle-lobby-wine-bourgogne-aligote.html', at:'2026-01-15' },
+  { winery:'Domaine Lefèvre', name:'Mâcon-Villages', vintage:2023, type:'White', note:'Standard', origin:'Mâcon-Villages AOC, France', url:'bottle-lobby-wine-macon-villages.html', at:'2026-02-26' },
+  { winery:'Henri Dubois Domaine', name:'Sancerre Rouge', vintage:2022, type:'Red', note:'Standard', origin:'Sancerre AOC, Loire Valley', url:'bottle-lobby-wine-sancerre-rouge.html', at:'2025-07-03' },
+  { winery:'Henri Dubois Domaine', name:'Pouilly-Fumé', vintage:2023, type:'White', note:'Standard', origin:'Pouilly-Fumé AOC, Loire Valley', url:'bottle-lobby-wine-pouilly-fume.html', at:'2025-12-08' },
+  { winery:'Bodegas Ruiz', name:'Rioja Reserva', vintage:2019, type:'Red', note:'Standard', origin:'Rioja DOCa, Spain', url:'bottle-lobby-wine-rioja-reserva.html', at:'2025-09-10' },
+  { winery:'Bodegas Ruiz', name:'Rioja Blanco', vintage:2023, type:'White', note:'Standard', origin:'Rioja DOCa, Spain', url:'bottle-lobby-wine-rioja-blanco.html', at:'2026-06-20' },
+  { winery:'Weingut Schmitt', name:'Müller-Thurgau — Mosel', vintage:2023, type:'White', note:'Standard', origin:'Mosel QbA, Germany', url:'bottle-lobby-wine-muller-thurgau-mosel.html', at:'2026-07-25' },
+  { winery:'Weingut Schmitt', name:'Spätburgunder — Mosel', vintage:2022, type:'Red', note:'Standard', origin:'Mosel QbA, Germany', url:'bottle-lobby-wine-spatburgunder-mosel.html', at:'2026-01-22' }
 ];
 
 let currentWinePortfolio = [
@@ -4581,23 +4597,47 @@ let currentWinePortfolio = [
   { winery:'Weingut Schmitt', name:'Müller-Thurgau — Mosel', vintage:2023, ownLabel:false, url:'bottle-lobby-wine-muller-thurgau-mosel.html' }
 ];
 
+/* The distributor's book of ACTIVE partnerships (A6). `winery` holds
+   the other side whatever its type is — the field name is the same
+   backward-compatibility debt A7 records for the follow graph.
+
+   `at` and `activatedBy` arrived with the C9 pass that made "a winery
+   I follow now has a distributor" derivable (A8). Both answer C9's two
+   questions about the event:
+
+   WHEN — `at` replaces the old `since:'March 2026'`, which was a
+   display string and could not be compared to anything. One date
+   format on screen, rendered through orderDate(), as with the
+   partnership requests before it.
+
+   WHO — a partnership does not become active because either party says
+   so. The last step is a manual confirmation by Bottle Lobby staff
+   after both signed contracts are in (invariant 6), so that is the
+   actor, and it is a field rather than a constant in the derivation:
+   inventing an actor at the notification end is exactly what C9 says
+   a source must not force. */
 const activePartners = [
   { winery:'Cantina Rossi', type:'winery', avatar:'CR', region:'Sicily, Italy',
-    url:'bottle-lobby-winery-cantina-rossi.html', since:'March 2026', meta:'6 wines in your portfolio' },
+    url:'bottle-lobby-winery-cantina-rossi.html', at:'2026-03-09', activatedBy:'Bottle Lobby', meta:'6 wines in your portfolio' },
   { winery:'Domaine Lefèvre', type:'winery', avatar:'DL', region:'Burgundy, France',
-    url:'bottle-lobby-winery-domaine-lefevre.html', since:'April 2026', meta:'1 wine in your portfolio' },
+    url:'bottle-lobby-winery-domaine-lefevre.html', at:'2026-04-07', activatedBy:'Bottle Lobby', meta:'1 wine in your portfolio' },
   { winery:'Henri Dubois Domaine', type:'winery', avatar:'HD', region:'Loire Valley, France',
-    url:'bottle-lobby-winery-henri-dubois-domaine.html', since:'February 2026', meta:'1 wine in your portfolio' },
+    url:'bottle-lobby-winery-henri-dubois-domaine.html', at:'2026-02-17', activatedBy:'Bottle Lobby', meta:'1 wine in your portfolio' },
+  /* Deliberate fixture for A8: Weinhaus Müller followed Bodegas Ruiz on
+     11 May 2026, and Bodegas Ruiz gained this partnership afterwards.
+     It is the one pair in the data where the sentence "now has a
+     distributor" is actually true, and it is what makes that range
+     orderable for a retailer at all (invariant 3). */
   { winery:'Bodegas Ruiz', type:'winery', avatar:'BR', region:'Rioja Alta, Spain',
-    url:'bottle-lobby-winery-bodegas-ruiz.html', since:'June 2026', meta:'1 wine in your portfolio' },
+    url:'bottle-lobby-winery-bodegas-ruiz.html', at:'2026-06-02', activatedBy:'Bottle Lobby', meta:'1 wine in your portfolio' },
   { winery:'Weingut Schmitt', type:'winery', avatar:'WS', region:'Mosel, Germany',
-    url:'bottle-lobby-winery-weingut-schmitt.html', since:'July 2026', meta:'1 wine in your portfolio' },
+    url:'bottle-lobby-winery-weingut-schmitt.html', at:'2026-07-06', activatedBy:'Bottle Lobby', meta:'1 wine in your portfolio' },
   { winery:'Bistro Laurent', type:'restaurant', avatar:'BL', region:'Frankfurt, Germany',
-    url:'bottle-lobby-restaurant-bistro-laurent.html', since:'March 2026', meta:'Sources through your portfolio' },
+    url:'bottle-lobby-restaurant-bistro-laurent.html', at:'2026-03-23', activatedBy:'Bottle Lobby', meta:'Sources through your portfolio' },
   { winery:'Weinhaus Müller', type:'retail', avatar:'WM', region:'Munich, Germany',
-    url:'bottle-lobby-retail-weinhaus-mueller.html', since:'April 2026', meta:'Sources through your portfolio' },
+    url:'bottle-lobby-retail-weinhaus-mueller.html', at:'2026-04-14', activatedBy:'Bottle Lobby', meta:'Sources through your portfolio' },
   { winery:'Vinstuen København', type:'retail', avatar:'VK', region:'Copenhagen, Denmark',
-    url:'bottle-lobby-retail-vinstuen-kobenhavn.html', since:'July 2026', meta:'Sources through your portfolio' }
+    url:'bottle-lobby-retail-vinstuen-kobenhavn.html', at:'2026-07-20', activatedBy:'Bottle Lobby', meta:'Sources through your portfolio' }
 ];
 
 let awSelectedWine = null;
@@ -4933,7 +4973,7 @@ function renderPartnerNetwork() {
             <div class="pn-avatar">${p.avatar}</div>
             <div class="pn-info">
               <div class="pn-name">${p.winery}</div>
-              <div class="pn-meta">Partner since ${p.since} · ${p.meta}</div>
+              <div class="pn-meta">Partner since ${orderDate(p.at)} · ${p.meta}</div>
             </div>
             <div class="pn-right" style="align-items:flex-end;gap:0.4rem">
               <div style="display:flex;gap:0.5rem;align-items:center">${typeTag(p.type)}<span class="pn-status st-active">Active</span></div>

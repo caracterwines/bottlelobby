@@ -479,8 +479,8 @@ console.log('\n── counter-check: the popup must not become a fourth surface'
      the case is reached by taking one away — the rule is what is
      being checked, not the current contents of the fixture. */
   const unlinked = build({
-    from: ", url:'bottle-lobby-wine-primitivo-riserva.html' }",
-    to:   " }"
+    from: ", url:'bottle-lobby-wine-primitivo-riserva.html', at:",
+    to:   ", at:"
   });
   if (!unlinked) bad('the missing-url mutation did not apply — this counter-check proves nothing');
   else {
