@@ -183,11 +183,26 @@ console.log('\n── the two sentences inflect differently, and on purpose');
   if (c && /\bof your wine\b/.test(c.meta)) bad('"of your wine" — the plural belongs to the range, not the count');
   else ok('the winery card says "of your wines" whatever the number is');
 
-  const one = cardFor(w, 'pn-active-list', 'Domaine Lefèvre');
-  const two = cardFor(w, 'pn-active-list', 'Weingut Schmitt');
-  if (!one || !/\b1 wine in your portfolio$/.test(one.meta)) bad('a count of 1 does not read "1 wine in your portfolio"');
-  else if (!two || !/\b2 wines in your portfolio$/.test(two.meta)) bad('a count of 2 does not read "2 wines in your portfolio"');
-  else ok('the distributor card inflects: "1 wine" vs "2 wines"');
+  /* Bodegas Ruiz, not Domaine Lefèvre: the portfolio merge took Lefèvre
+     to two wines and this check quietly lost its singular case. Which
+     producer carries exactly one is a fixture fact and can move again —
+     so the pair is chosen by COUNT here, and the section fails loudly
+     if the data no longer offers both. */
+  const byCount = n => w.eval('JSON.parse(JSON.stringify(partnerships))')
+    .filter(p => p.distributor === 'Hawesko GmbH')
+    .map(p => p.partner)
+    .filter(name => byProducer(name) === n)[0];
+  const oneName = byCount(1), twoName = byCount(2);
+  if (!oneName || !twoName) {
+    bad('no producer with exactly one wine and one with two — the inflection cannot be observed, ' +
+        'so this check proves nothing (have: ' + JSON.stringify(BOOK.map(b => b.winery)) + ')');
+    return;
+  }
+  const one = cardFor(w, 'pn-active-list', oneName);
+  const two = cardFor(w, 'pn-active-list', twoName);
+  if (!one || !/\b1 wine in your portfolio$/.test(one.meta)) bad(oneName + ' carries one wine but does not read "1 wine in your portfolio": ' + (one && one.meta));
+  else if (!two || !/\b2 wines in your portfolio$/.test(two.meta)) bad(twoName + ' carries two wines but does not read "2 wines in your portfolio": ' + two.meta);
+  else ok('the distributor card inflects: ' + oneName + ' "1 wine" vs ' + twoName + ' "2 wines"');
 }
 
 /* ── 5. The surface moves when the book moves ────────────────────── */
@@ -270,8 +285,18 @@ console.log('\n── counter-check: the old mistakes must not be able to return
       from: '${n === undefined ? \'\' : ` · ${n} of your wines listed`}',
       to:   '${n === undefined ? \'\' : ` · ${n} of your ${n === 1 ? \'wine\' : \'wines\'} listed`}',
       check: g => {
+        /* The state is BUILT: the singular form only appears when the
+           winery has exactly one wine listed, and Cantina Rossi has
+           five since the portfolio merge. Left to the fixture this
+           mutation was real and invisible — a check certified against
+           a defect it could no longer see. Third time in a day. */
+        g.eval("currentWinePortfolio = currentWinePortfolio.filter(function (x) { return x.winery !== 'Cantina Rossi'; })" +
+               ".concat([{ winery:'Cantina Rossi', name:'Primitivo Sicilia IGT', vintage:2022, ownLabel:true," +
+               " type:'Red', origin:'Alcamo DOC, Sicily', url:'bottle-lobby-wine-primitivo-sicilia-igt.html' }])");
+        g.eval('renderWineryNetwork()');
         const c = cardFor(g, 'wn-partners-list', 'Hawesko GmbH');
-        return !!c && /of your wine\b/.test(c.meta);
+        if (!c || !/\b1 of your wine/.test(c.meta)) return false;   // state not built
+        return /of your wine\b/.test(c.meta);
       },
       says: 'section 4 catches "1 of your wine listed"' }
   ];

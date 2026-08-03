@@ -4811,19 +4811,91 @@ const partnerWinesPool = [
   { winery:'Weingut Schmitt', name:'Spätburgunder — Mosel', vintage:2022, type:'Red', note:'Standard', origin:'Mosel QbA, Germany', url:'bottle-lobby-wine-spatburgunder-mosel.html', at:'2026-01-22' }
 ];
 
+/* ══════════════════════════════════════════════════════════════════
+   THE DISTRIBUTOR'S PORTFOLIO — one book, and it names the producer
+   ------------------------------------------------------------------
+   This used to hold six wines while two byte-identical picker pools
+   offered ten, and the pools could not say who made anything: every
+   row's `winery` was 'Hawesko GmbH', the SUPPLIER. That is why
+   wineryOfWine() had to exist and why it guessed.
+
+   Every row now carries the real producer, and every attribution is
+   sourced rather than invented — measured before anything was merged:
+
+     6  already here, producer correct
+     3  from partnerWinesPool, which the producers own (invariant 2)
+     1  from an order line that recorded its producer explicitly
+     1  by hand: Château Belrieu Grand Vin. Its producer is in its own
+        name and on bottle-lobby-winery-chateau-belrieu.html, and it
+        was in no book at all. The single hand-made entry of the pass.
+
+   Zero contradictions where two books named the same wine.
+
+   THE BOOK GREW FROM 6 TO 14, and the three additions beyond the five
+   pool wines are the point of the pass rather than an afterthought.
+   Hawesko was promoting or discounting wines it did not carry:
+
+     Nero d'Avola Sicilia DOC — sold 60 bottles to Weinhaus Müller
+       (ORD-2040) and bought 300 in (ORD-2042)
+     Baglio Rosso — 180 bottles delivered in (ORD-2029), and an
+       Exclusive Deal running on it
+     Pouilly-Fumé — an Exclusive Offer, no goods movement yet
+
+   An offer over a wine outside your own book is the same invariant 3
+   gap as a sale, only delayed: it fires when somebody accepts. Serge's
+   rule, now in the spec — whoever advertises, discounts or names a
+   wine as a promo condition, carries it.
+
+   `note` deliberately did NOT come across from the pools. "Own-Label
+   Available" duplicated `ownLabel`, and "Exclusive" is the BUYER's
+   marking on their own list, which is where it is decided and where it
+   belongs (A1). The picker tag is derived instead.
+
+   `type` and `origin` did come across: the buyer's picker shows them,
+   and they describe the wine rather than the relation. The origin
+   strings are still inconsistent in style ("Loire Valley, France" next
+   to "Pouilly-Fumé AOC, Loire Valley") — that is the appellation
+   master-data question (A4) and is not this pass.
+══════════════════════════════════════════════════════════════════ */
 let currentWinePortfolio = [
-  { winery:'Henri Dubois Domaine', name:'Sauvignon Blanc — Sancerre', vintage:2023, ownLabel:true, url:'bottle-lobby-wine-sauvignon-blanc-sancerre.html' },
-  { winery:'Domaine Lefèvre', name:'Chardonnay — Chablis Premier Cru', vintage:2022, ownLabel:true, url:'bottle-lobby-wine-chardonnay-chablis-premier-cru.html' },
-  { winery:'Cantina Rossi', name:'Primitivo Sicilia IGT', vintage:2022, ownLabel:true, url:'bottle-lobby-wine-primitivo-sicilia-igt.html' },
-  { winery:'Bodegas Ruiz', name:'Tempranillo — Rioja Crianza', vintage:2021, ownLabel:false, url:'bottle-lobby-wine-tempranillo-rioja-crianza.html' },
-  { winery:'Weingut Schmitt', name:'Riesling Spätlese — Mosel', vintage:2023, ownLabel:false, url:'bottle-lobby-wine-riesling-spatlese-mosel.html' },
+  { winery:'Henri Dubois Domaine', name:'Sauvignon Blanc — Sancerre', vintage:2023, ownLabel:true,
+    type:'White', origin:'Loire Valley, France', url:'bottle-lobby-wine-sauvignon-blanc-sancerre.html' },
+  { winery:'Domaine Lefèvre', name:'Chardonnay — Chablis Premier Cru', vintage:2022, ownLabel:true,
+    type:'White', origin:'Chablis, Burgundy', url:'bottle-lobby-wine-chardonnay-chablis-premier-cru.html' },
+  { winery:'Cantina Rossi', name:'Primitivo Sicilia IGT', vintage:2022, ownLabel:true,
+    type:'Red', origin:'Alcamo DOC, Sicily', url:'bottle-lobby-wine-primitivo-sicilia-igt.html' },
+  { winery:'Bodegas Ruiz', name:'Tempranillo — Rioja Crianza', vintage:2021, ownLabel:false,
+    type:'Red', origin:'Rioja Alta, Spain', url:'bottle-lobby-wine-tempranillo-rioja-crianza.html' },
+  { winery:'Weingut Schmitt', name:'Riesling Spätlese — Mosel', vintage:2023, ownLabel:false,
+    type:'White', origin:'Mosel, Germany', url:'bottle-lobby-wine-riesling-spatlese-mosel.html' },
   /* Listed on purpose: it is one of the two wines on the released show
      WS-2603, so that show carries BOTH columns of A16.12 side by side —
      this one sells from stock, the Sancerre next to it is a pre-order.
      A distinction split across two shows would be present but never
      demonstrated. The name must match the show product exactly, em dash
      included; A14.4 records what string drift costs here. */
-  { winery:'Weingut Schmitt', name:'Müller-Thurgau — Mosel', vintage:2023, ownLabel:false, url:'bottle-lobby-wine-muller-thurgau-mosel.html' }
+  { winery:'Weingut Schmitt', name:'Müller-Thurgau — Mosel', vintage:2023, ownLabel:false,
+    type:'White', origin:'Mosel QbA, Germany', url:'bottle-lobby-wine-muller-thurgau-mosel.html' },
+
+  /* ── Came in with the merge: offered to buyers all along ───────── */
+  { winery:'Cantina Rossi', name:'Catarratto Biologico', vintage:2023, ownLabel:false,
+    type:'White', origin:'Sicilia DOC, Sicily', url:'bottle-lobby-wine-catarratto-biologico.html' },
+  { winery:'Cantina Rossi', name:'Rosso di Contrada', vintage:2023, ownLabel:false,
+    type:'Red', origin:'Sicilia DOC, Sicily', url:'bottle-lobby-wine-rosso-di-contrada.html' },
+  { winery:'Château Belrieu', name:'Merlot — Bordeaux Supérieur', vintage:2021, ownLabel:false,
+    type:'Red', origin:'Bordeaux, France', url:'bottle-lobby-wine-merlot-bordeaux-superieur.html' },
+  { winery:'Château Belrieu', name:'Château Belrieu Grand Vin', vintage:2019, ownLabel:false,
+    type:'Red', origin:'Bordeaux Supérieur AOC, France', url:'bottle-lobby-wine-chateau-belrieu-grand-vin.html' },
+  { winery:'Domaine Lefèvre', name:'Crémant de Bourgogne', vintage:2022, ownLabel:false,
+    type:'White', origin:'Crémant de Bourgogne AOC, France', url:'bottle-lobby-wine-cremant-de-bourgogne.html' },
+
+  /* ── Came in with the merge: advertised or sold without being here ─ */
+  { winery:'Cantina Rossi', name:"Nero d'Avola Sicilia DOC", vintage:2022, ownLabel:false,
+    type:'Red', origin:'Sicilia DOC, Sicily', url:'bottle-lobby-wine-nero-davola-sicilia-doc.html' },
+  { winery:'Henri Dubois Domaine', name:'Pouilly-Fumé', vintage:2023, ownLabel:false,
+    type:'White', origin:'Pouilly-Fumé AOC, Loire Valley', url:'bottle-lobby-wine-pouilly-fume.html' },
+  { winery:'Cantina Rossi', name:'Baglio Rosso', vintage:2021, ownLabel:false,
+    type:'Red', origin:'Terre Siciliane IGT, Sicily', url:'bottle-lobby-wine-baglio-rosso.html' }
 ];
 
 /* ══════════════════════════════════════════════════════════════════
@@ -4854,10 +4926,6 @@ let currentWinePortfolio = [
    that no book exists here to count. Same discipline as stakeholder()
    — absent is not empty.
 
-   Still wrong after this pass and its own pass (see HANDOFF): the
-   picker pools offer 10 wines where this book holds 6, and two of the
-   five extra belong to Château Belrieu, which has no partnership with
-   Hawesko at all (invariant 3).
 ══════════════════════════════════════════════════════════════════ */
 const DISTRIBUTOR_PORTFOLIOS = {
   /* A getter, not the array: `currentWinePortfolio` is a `let` that
@@ -5513,9 +5581,9 @@ const rPartnerWinesPool = [
 ];
 
 let rCurrentWineList = [
-  { winery:'Hawesko GmbH', name:'Sauvignon Blanc — Sancerre', vintage:2023, exclusive:true, url:'bottle-lobby-wine-sauvignon-blanc-sancerre.html' },
-  { winery:'Hawesko GmbH', name:'Chardonnay — Chablis Premier Cru', vintage:2022, exclusive:true, url:'bottle-lobby-wine-chardonnay-chablis-premier-cru.html' },
-  { winery:'Hawesko GmbH', name:'Primitivo Sicilia IGT', vintage:2022, exclusive:true, url:'bottle-lobby-wine-primitivo-sicilia-igt.html' }
+  { winery:'Henri Dubois Domaine', name:'Sauvignon Blanc — Sancerre', vintage:2023, exclusive:true, url:'bottle-lobby-wine-sauvignon-blanc-sancerre.html' },
+  { winery:'Domaine Lefèvre', name:'Chardonnay — Chablis Premier Cru', vintage:2022, exclusive:true, url:'bottle-lobby-wine-chardonnay-chablis-premier-cru.html' },
+  { winery:'Cantina Rossi', name:'Primitivo Sicilia IGT', vintage:2022, exclusive:true, url:'bottle-lobby-wine-primitivo-sicilia-igt.html' }
 ];
 
 let rAwSelectedWine = null;
@@ -5903,9 +5971,9 @@ const tPartnerWinesPool = [
 ];
 
 let tCurrentWineSelection = [
-  { winery:'Hawesko GmbH', name:'Sauvignon Blanc — Sancerre', vintage:2023, exclusive:true, url:'bottle-lobby-wine-sauvignon-blanc-sancerre.html' },
-  { winery:'Hawesko GmbH', name:'Chardonnay — Chablis Premier Cru', vintage:2022, exclusive:true, url:'bottle-lobby-wine-chardonnay-chablis-premier-cru.html' },
-  { winery:'Hawesko GmbH', name:'Primitivo Sicilia IGT', vintage:2022, exclusive:true, url:'bottle-lobby-wine-primitivo-sicilia-igt.html' }
+  { winery:'Henri Dubois Domaine', name:'Sauvignon Blanc — Sancerre', vintage:2023, exclusive:true, url:'bottle-lobby-wine-sauvignon-blanc-sancerre.html' },
+  { winery:'Domaine Lefèvre', name:'Chardonnay — Chablis Premier Cru', vintage:2022, exclusive:true, url:'bottle-lobby-wine-chardonnay-chablis-premier-cru.html' },
+  { winery:'Cantina Rossi', name:'Primitivo Sicilia IGT', vintage:2022, exclusive:true, url:'bottle-lobby-wine-primitivo-sicilia-igt.html' }
 ];
 
 let tAwSelectedWine = null;
@@ -6505,14 +6573,43 @@ function renderRetailPromo() {
     + promoMaterials.map(m => promoCardHtml(m, tCurrentWineSelection, tPromoProgress, 'handlePromoRequestT', 'handlePromoClaimT')).join('');
 }
 
+/* A promo claim puts the wine on the buyer's own list. Everything
+   about the wine is READ from the distributor's book \u2014 producer,
+   vintage, article page \u2014 instead of being invented, which is what
+   this did three times over: `winery:'Hawesko GmbH'` (the supplier,
+   not the producer), a vintage defaulting to 2023, and a URL guessed
+   from the name. That last one is the slug derivation A14.4 records:
+   "M\u00fcller-Thurgau \u2014 Mosel" comes out `m-ller-thurgau`.
+
+   `exclusive` stays false and stays here: it is the buyer's own
+   marking on their own list, not a property of the wine (A1). */
 function promoWineToListEntry(wineName, ownerLabel) {
-  const pool = ownerLabel === 'restaurant' ? rPartnerWinesPool : tPartnerWinesPool;
-  const found = pool.find(w => w.name === wineName);
-  const vintage = found ? found.vintage : 2023;
-  const fileGuess = 'bottle-lobby-wine-' + wineName.toLowerCase()
-    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') + '.html';
-  return { winery:'Hawesko GmbH', name: wineName, vintage: vintage, exclusive:false, url: fileGuess };
+  const me = ownerLabel === 'restaurant' ? 'Bistro Laurent' : 'Weinhaus M\u00fcller';
+  const dist = partnershipsOf(me).map(p => partnerSide(p, me))
+    .find(n => stakeholder(n).type === 'distributor');
+  const found = (portfolioOf(dist) || []).find(w => w.name === wineName);
+  if (!found) {
+    /* B12: a promo naming a wine the distributor does not carry is a
+       broken record, not a row to fabricate. It is also exactly what
+       the supply-chain harness asserts cannot happen. */
+    console.warn('[promo] "' + wineName + '" is not in ' + dist + "'s portfolio \u2014 nothing added");
+    return null;
+  }
+  return { winery: found.winery, name: found.name, vintage: found.vintage,
+           exclusive: false, url: found.url };
+}
+
+/* The one guarded way onto a buyer's list. Eight call sites used to
+   push the return value straight in, each with its own "is it already
+   there" test — so a lookup that now legitimately answers "no such
+   wine" would have appended `null` to the list, which is worse than
+   the invented row it replaced. Returns whether it added. */
+function addWineToBuyerList(list, wineName, ownerLabel) {
+  if (list.some(w => w.name === wineName)) return false;
+  const entry = promoWineToListEntry(wineName, ownerLabel);
+  if (!entry) return false;
+  list.push(entry);
+  return true;
 }
 
 function handlePromoRequestR(id) {
@@ -6520,7 +6617,7 @@ function handlePromoRequestR(id) {
   if (!m) return;
   if (m.condType === 'volume' && m.orderMode === 'cumulative') {
     rPromoProgress.bottleCounts[m.wineName] = m.bottlesRequired;
-    if (!rCurrentWineList.some(w => w.name === m.wineName)) rCurrentWineList.push(promoWineToListEntry(m.wineName, 'restaurant'));
+    addWineToBuyerList(rCurrentWineList, m.wineName, 'restaurant');
     placeOrder('Bistro Laurent', 'restaurant', 'Hawesko GmbH', 'distributor',
       [orderItem(m.wineName, m.bottlesRequired)], 'Promo Material — ' + m.name);
     showToast('✓ Order placed — ' + m.bottlesRequired + ' bottles of ' + m.wineName + ' requested from Hawesko GmbH');
@@ -6530,7 +6627,7 @@ function handlePromoRequestR(id) {
       [orderItem(m.wineName, m.bottlesRequired)], 'Promo Material — ' + m.name);
     showToast('✓ Single order of ' + m.bottlesRequired + ' bottles of ' + m.wineName + ' sent to Hawesko GmbH');
   } else if (m.condType === 'newlisting') {
-    if (!rCurrentWineList.some(w => w.name === m.wineName)) rCurrentWineList.push(promoWineToListEntry(m.wineName, 'restaurant'));
+    addWineToBuyerList(rCurrentWineList, m.wineName, 'restaurant');
     showToast('✓ ' + m.wineName + ' added to your Wine List');
     renderWineListR();
   } else {
@@ -6545,7 +6642,7 @@ function handlePromoRequestT(id) {
   if (!m) return;
   if (m.condType === 'volume' && m.orderMode === 'cumulative') {
     tPromoProgress.bottleCounts[m.wineName] = m.bottlesRequired;
-    if (!tCurrentWineSelection.some(w => w.name === m.wineName)) tCurrentWineSelection.push(promoWineToListEntry(m.wineName, 'retail'));
+    addWineToBuyerList(tCurrentWineSelection, m.wineName, 'retail');
     placeOrder('Weinhaus Müller', 'retail', 'Hawesko GmbH', 'distributor',
       [orderItem(m.wineName, m.bottlesRequired)], 'Promo Material — ' + m.name);
     showToast('✓ Order placed — ' + m.bottlesRequired + ' bottles of ' + m.wineName + ' requested from Hawesko GmbH');
@@ -6555,7 +6652,7 @@ function handlePromoRequestT(id) {
       [orderItem(m.wineName, m.bottlesRequired)], 'Promo Material — ' + m.name);
     showToast('✓ Single order of ' + m.bottlesRequired + ' bottles of ' + m.wineName + ' sent to Hawesko GmbH');
   } else if (m.condType === 'newlisting') {
-    if (!tCurrentWineSelection.some(w => w.name === m.wineName)) tCurrentWineSelection.push(promoWineToListEntry(m.wineName, 'retail'));
+    addWineToBuyerList(tCurrentWineSelection, m.wineName, 'retail');
     showToast('✓ ' + m.wineName + ' added to your Wine Selection');
     renderWineSelectionT();
   } else {
@@ -6807,7 +6904,7 @@ function renderExclusiveDealsRetail() {
 function handleOfferRequestR(id) {
   const o = exclusiveOffers.find(x => x.id === id);
   if (!o) return;
-  if (!rCurrentWineList.some(w => w.name === o.wineName)) { rCurrentWineList.push(promoWineToListEntry(o.wineName, 'restaurant')); renderWineListR(); }
+  if (addWineToBuyerList(rCurrentWineList, o.wineName, 'restaurant')) renderWineListR();
   const ordR = placeOrder('Bistro Laurent', 'restaurant', 'Hawesko GmbH', 'distributor',
     [orderItem(o.wineName, o.qty || 12)], 'Exclusive Offer — ' + offerLabel(o));
   showToast('✓ Order ' + ordR.id + ' sent to Hawesko GmbH — ' + offerLabel(o));
@@ -6816,7 +6913,7 @@ function handleOfferRequestR(id) {
 function handleOfferRequestT(id) {
   const o = exclusiveOffers.find(x => x.id === id);
   if (!o) return;
-  if (!tCurrentWineSelection.some(w => w.name === o.wineName)) { tCurrentWineSelection.push(promoWineToListEntry(o.wineName, 'retail')); renderWineSelectionT(); }
+  if (addWineToBuyerList(tCurrentWineSelection, o.wineName, 'retail')) renderWineSelectionT();
   const ordT = placeOrder('Weinhaus Müller', 'retail', 'Hawesko GmbH', 'distributor',
     [orderItem(o.wineName, o.qty || 12)], 'Exclusive Offer — ' + offerLabel(o));
   showToast('✓ Order ' + ordT.id + ' sent to Hawesko GmbH — ' + offerLabel(o));
@@ -6825,7 +6922,7 @@ function handleOfferRequestT(id) {
 function handleDealRequestR(id) {
   const d = exclusiveDeals.find(x => x.id === id);
   if (!d) return;
-  (d.wineNames || [d.wineName]).forEach(n => { if (!rCurrentWineList.some(w => w.name === n)) rCurrentWineList.push(promoWineToListEntry(n, 'restaurant')); });
+  (d.wineNames || [d.wineName]).forEach(n => addWineToBuyerList(rCurrentWineList, n, 'restaurant'));
   renderWineListR();
   const dOrdR = placeOrder('Bistro Laurent', 'restaurant', 'Hawesko GmbH', 'distributor',
     (d.wineNames || [d.wineName]).map(n => orderItem(n, d.minQty || 60)), 'Exclusive Deal — ' + dealLabel(d));
@@ -6835,7 +6932,7 @@ function handleDealRequestR(id) {
 function handleDealRequestT(id) {
   const d = exclusiveDeals.find(x => x.id === id);
   if (!d) return;
-  (d.wineNames || [d.wineName]).forEach(n => { if (!tCurrentWineSelection.some(w => w.name === n)) tCurrentWineSelection.push(promoWineToListEntry(n, 'retail')); });
+  (d.wineNames || [d.wineName]).forEach(n => addWineToBuyerList(tCurrentWineSelection, n, 'retail'));
   renderWineSelectionT();
   const dOrdT = placeOrder('Weinhaus Müller', 'retail', 'Hawesko GmbH', 'distributor',
     (d.wineNames || [d.wineName]).map(n => orderItem(n, d.minQty || 60)), 'Exclusive Deal — ' + dealLabel(d));

@@ -282,6 +282,45 @@ w.openShowDetail('WS-2603');
 }
 
 /* ── 9. CLOSING — one act, two directions (A16.12, pass 3b) ────── */
+
+/* First, the fixture exactly as it stands. WS-2599 is a completed show
+   from April whose three wines Hawesko has since taken into its
+   portfolio — so today every line on it is stock and nothing is up for
+   a decision. That is not the demonstration wearing out, it is A16.0
+   finishing its own story: the show produced the first orders, and the
+   producer is now listed. `lineKind()` reads the portfolio live, so
+   the column moved by itself.
+   The inverse assertion is the more useful one anyway — it shows that
+   a show without pre-orders asks the host for nothing at all. */
+console.log('\n── a show whose wines have all been listed since asks for no decision');
+{
+  const pre = w.eval('preorderTally')(S('WS-2599'));
+  if (pre.bottles !== 0)
+    bad('WS-2599 still has ' + pre.bottles + ' pre-order bottles — this section describes the opposite');
+  else ok('every wine on WS-2599 is in the portfolio today: no pre-order line left');
+  w.showWineShows('distributor','history');
+  w.openShowDetail('WS-2599');
+  const box = boxWithHead('dshow','Close the Order List');
+  const holds = box ? [...box.querySelectorAll('.cl-hold')] : [];
+  if (holds.length) bad('a decision is offered for a wine that is already in stock: ' + holds.length);
+  else ok('nothing is up for a hold-back — closing has nothing to decide');
+}
+
+/* Everything below needs a pre-order line, so it BUILDS ONE instead of
+   hoping the fixtures still happen to provide it. They did until the
+   portfolio merge, and then two of these wines became stock and this
+   whole chain went dark in one move — the third time in a day that a
+   check turned out to rest on a fixture coincidence.
+   Taking the two wines back out of the portfolio reproduces exactly
+   the state of April, which is what a closing test is about. */
+const PORTFOLIO_KEPT = w.eval('JSON.parse(JSON.stringify(currentWinePortfolio))');
+w.eval("currentWinePortfolio = currentWinePortfolio.filter(function (x) { return !/^Catarratto|^Nero d/.test(x.name); })");
+{
+  const gone = PORTFOLIO_KEPT.length - w.eval('currentWinePortfolio.length');
+  if (gone !== 2) bad('the pre-order state was not built (' + gone + ' wines removed, expected 2) — everything below proves nothing');
+  else ok('state built: Catarratto and Nero d\'Avola taken out of the portfolio, as they were in April');
+}
+
 console.log('\n── THE ARITHMETIC TRAP: only the pre-order column is bought');
 {
   const all = w.eval('showTally')(S('WS-2599'));
@@ -584,6 +623,12 @@ console.log('\n── an action that does nothing says why (B12)');
   else ok('the modal refuses with a reason too');
   w.showToast = real;
 }
+
+/* Give the portfolio back. The state above was built for the
+   closing chain; leaving it stripped would hand the next section —
+   or the next reader — a portfolio two wines short for no reason
+   they could see. */
+w.eval('currentWinePortfolio = ' + JSON.stringify(PORTFOLIO_KEPT));
 
 console.log(fail ? `\n✗ ${fail} failure(s)` : '\n✓ all checks passed');
 process.exit(fail ? 1 : 0);
