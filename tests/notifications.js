@@ -621,13 +621,20 @@ console.log('\n── the two A8 sources');
      just one answer. */
   const follows = s.eval('JSON.parse(JSON.stringify(wineFollowGraph))');
   const partners = s.eval('JSON.parse(JSON.stringify(activePartners))');
+  /* "Is this house a producer" comes from the stakeholders table since
+     the pass that gave profile data one owner. Reading it here is not
+     the circularity the note above warns about: the mutation this
+     check exists for lives in notifWineryEdge(), and the table is a
+     different fact from a different place. */
+  const types = {};
+  s.eval('JSON.parse(JSON.stringify(stakeholders))').forEach(st => { types[st.name] = st.type; });
   const allowed = me => {
     const set = follows
-      .filter(f => f.follower === me && (f.followedType || 'winery') === 'winery')
+      .filter(f => f.follower === me && types[f.winery] === 'winery')
       .map(f => f.winery);
     /* Only the distributor holds producer partnerships (invariant 3). */
     if (me === s.eval('SHOW_ROLES.distributor.entity'))
-      partners.filter(p => p.type === 'winery').forEach(p => set.push(p.winery));
+      partners.filter(p => types[p.winery] === 'winery').forEach(p => set.push(p.winery));
     return set;
   };
   const strangers = [];
@@ -659,9 +666,7 @@ console.log('\n── the two A8 sources');
     /* Cantina Rossi follows Bodegas Ruiz BEFORE Bodegas Ruiz gains its
        distributor (2 Jun 2026) — every condition of the supply source
        is now met except the role. */
-    g.eval('wineFollowGraph.push({ follower:"Cantina Rossi", followerType:"winery", avatar:"CR", ' +
-           'location:"Sicily, Italy", winery:"Bodegas Ruiz", followedType:"winery", ' +
-           'url:"bottle-lobby-winery-cantina-rossi.html", at:"2026-01-05" })');
+    g.eval('wineFollowGraph.push({ follower:"Cantina Rossi", winery:"Bodegas Ruiz", at:"2026-01-05" })');
     const edge = g.eval('JSON.stringify(notifWineryEdge("Cantina Rossi", "Bodegas Ruiz"))');
     const got  = g.eval('notificationsFor("winery")').filter(n => n.kind === 'supply');
     if (edge === 'null') bad('the built state did not take — the winery has no follow edge and the gate is untested');

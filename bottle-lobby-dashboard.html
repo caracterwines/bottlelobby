@@ -4004,6 +4004,122 @@ With an annual production capacity of over 1.2 million bottles, Cantina Rossi is
 <script>
 
 /* ══════════════════════════════════════════════════════════════════
+   STAKEHOLDERS — the master record of every house on the platform
+   ------------------------------------------------------------------
+   A1 applied to the one thing that had no owner: a house's own
+   profile data. Type, avatar, region and public page sat in twelve
+   arrays at once — the partner lists of all four roles, the eight
+   request lists and the follow graph — and they had already drifted.
+   Hawesko GmbH rendered as HW wherever an array carried `avatar` and
+   as HG wherever wnInitials() computed it: the same house, two
+   badges, on screen at the same time. `wineryPartners` carried no
+   `url` at all, which is why the winery was the one role that could
+   not click through to its own partner (A11).
+
+   This table is the single place. Every list below keeps only the
+   RELATION — who, when, which stage — and asks stakeholder(name) for
+   everything about the house itself.
+
+   `avatar` is a field, not a computation. Initials look derivable
+   until "Cave à Vins Lyon" comes out as CÀ. The two letters a house
+   is known by are a choice somebody made, and a choice is data.
+
+   `region` is the display line ("Hamburg, Germany"). `city` is the
+   market city the regional Wine Show rule matches on (C9) and is
+   recorded ONLY where it is actually known: for a winery the region
+   is a wine region, not a seat, and inventing a town to fill the
+   column would be exactly the violation this table exists to end.
+
+   Real build: `stakeholders` (id, name, type, city, region, slug),
+   and every list holds a foreign key instead of a name. The
+   prototype joins on the name because everything else does — A14.4
+   records what string matching has already cost here — so this table
+   adds a new join point, and stakeholder() below refuses to invent a
+   row for a name it does not know.
+══════════════════════════════════════════════════════════════════ */
+const stakeholders = [
+  /* Producers. No `city` except Cantina Rossi, whose seat is on the
+     invoice letterhead further down (Alcamo). The others are known by
+     their appellation, and a town guessed from it would be fiction. */
+  { name:'Cantina Rossi',             type:'winery',      avatar:'CR', region:'Sicily, Italy',        city:'Alcamo',
+    url:'bottle-lobby-winery-cantina-rossi.html' },
+  { name:'Domaine Lefèvre',           type:'winery',      avatar:'DL', region:'Burgundy, France',
+    url:'bottle-lobby-winery-domaine-lefevre.html' },
+  { name:'Henri Dubois Domaine',      type:'winery',      avatar:'HD', region:'Loire Valley, France',
+    url:'bottle-lobby-winery-henri-dubois-domaine.html' },
+  { name:'Bodegas Ruiz',              type:'winery',      avatar:'BR', region:'Rioja Alta, Spain',
+    url:'bottle-lobby-winery-bodegas-ruiz.html' },
+  { name:'Weingut Schmitt',           type:'winery',      avatar:'WS', region:'Mosel, Germany',
+    url:'bottle-lobby-winery-weingut-schmitt.html' },
+  { name:'Château Belrieu',           type:'winery',      avatar:'CB', region:'Bordeaux, France',
+    url:'bottle-lobby-winery-chateau-belrieu.html' },
+
+  /* Distributors. Hawesko's `city` is Hamburg, the market it trades
+     in and the one the shows are matched against; its registered seat
+     on the invoice is Tornesch. Two different facts, and the regional
+     rule wants the first. */
+  { name:'Hawesko GmbH',              type:'distributor', avatar:'HW', region:'Hamburg, Germany',     city:'Hamburg',
+    url:'bottle-lobby-distributor-hawesko-gmbh.html' },
+  { name:'Enoteca Milano Import Srl', type:'distributor', avatar:'EM', region:'Milan, Italy',         city:'Milan',
+    url:'bottle-lobby-distributor-enoteca-milano-import-srl.html' },
+  { name:'Iberian Wine Partners S.L.',type:'distributor', avatar:'IW', region:'Barcelona, Spain',     city:'Barcelona',
+    url:'bottle-lobby-distributor-iberian-wine-partners-sl.html' },
+  { name:'Vinorama Nordic AB',        type:'distributor', avatar:'VN', region:'Stockholm, Sweden',    city:'Stockholm',
+    url:'bottle-lobby-distributor-vinorama-nordic-ab.html' },
+  { name:'Aktiv Getränke',            type:'distributor', avatar:'AG', region:'Köln, Germany',        city:'Köln',
+    url:'bottle-lobby-distributor-aktiv-getraenke.html' },
+
+  /* Restaurants */
+  { name:'Bistro Laurent',            type:'restaurant',  avatar:'BL', region:'Frankfurt, Germany',   city:'Frankfurt',
+    url:'bottle-lobby-restaurant-bistro-laurent.html' },
+  { name:'Osteria Marconi',           type:'restaurant',  avatar:'OM', region:'Milan, Italy',         city:'Milan',
+    url:'bottle-lobby-restaurant-osteria-marconi.html' },
+  { name:'Casa Elena',                type:'restaurant',  avatar:'CE', region:'Barcelona, Spain',     city:'Barcelona',
+    url:'bottle-lobby-restaurant-casa-elena.html' },
+
+  /* Retail */
+  { name:'Weinhaus Müller',           type:'retail',      avatar:'WM', region:'Munich, Germany',      city:'Munich',
+    url:'bottle-lobby-retail-weinhaus-mueller.html' },
+  { name:'Vinstuen København',        type:'retail',      avatar:'VK', region:'Copenhagen, Denmark',  city:'Copenhagen',
+    url:'bottle-lobby-retail-vinstuen-kobenhavn.html' },
+  { name:'Vinoteca Roma',             type:'retail',      avatar:'VR', region:'Rome, Italy',          city:'Rome',
+    url:'bottle-lobby-retail-vinoteca-roma.html' },
+  { name:'Cave à Vins Lyon',          type:'retail',      avatar:'CL', region:'Lyon, France',         city:'Lyon',
+    url:'bottle-lobby-retail-cave-a-vins-lyon.html' }
+];
+
+/* Houses that appear in a record WITHOUT being in this table are not
+   an oversight. Two Wine Show attendees — Restaurant Hafenkante and
+   Vinoteca Alster — exist only as names on a guest list; they have no
+   partnership, no follow edge and no public page, and giving them
+   invented profile data so that a lookup succeeds would be the same
+   violation from the other direction. Nothing renders their avatar,
+   so nothing asks. */
+const STAKEHOLDER_INDEX = {};
+stakeholders.forEach(function (s) { STAKEHOLDER_INDEX[s.name] = s; });
+
+/* Deliberately NOT demo state and never registered with BLStore: it
+   remembers which name has already been complained about in this
+   page load, nothing a reload should inherit. */
+const stakeholderMisses = {};
+/* B12, applied to a lookup: an unknown name must not come back as an
+   empty card that looks like a house with nothing to say. What we
+   actually know is the name, so the name is what the caller gets;
+   avatar and link stay absent rather than guessed, and the miss is
+   reported once — to the console here, and as a failure in
+   tests/stakeholders.js, which asserts that every name reaching this
+   function is in the table. */
+function stakeholder(name) {
+  const s = STAKEHOLDER_INDEX[name];
+  if (s) return s;
+  if (name && !stakeholderMisses[name]) {
+    stakeholderMisses[name] = true;
+    console.warn('[stakeholders] no master record for "' + name + '" — rendering the name without avatar or profile link');
+  }
+  return { name:name, type:null, avatar:'', region:'', city:undefined, url:null, unknown:true };
+}
+
+/* ══════════════════════════════════════════════════════════════════
    WINERY VIEW ROUTING
    ------------------------------------------------------------------
    Same mechanics as showDistributorView (B8, D21): every nav item is
@@ -4615,29 +4731,30 @@ let currentWinePortfolio = [
    after both signed contracts are in (invariant 6), so that is the
    actor, and it is a field rather than a constant in the derivation:
    inventing an actor at the notification end is exactly what C9 says
-   a source must not force. */
+   a source must not force.
+
+   Type, avatar, region and the public page left this list for the
+   stakeholders table: they describe the house, not the partnership.
+
+   `meta` stays for this pass and is knowingly wrong — the Cantina
+   Rossi line claims 6 wines where currentWinePortfolio holds 1.
+   That is a stored figure that should be counted (invariant 7), not
+   a copy of somebody else's record (A1), so it is a different pass
+   and it is the next one. See HANDOFF. */
 const activePartners = [
-  { winery:'Cantina Rossi', type:'winery', avatar:'CR', region:'Sicily, Italy',
-    url:'bottle-lobby-winery-cantina-rossi.html', at:'2026-03-09', activatedBy:'Bottle Lobby', meta:'6 wines in your portfolio' },
-  { winery:'Domaine Lefèvre', type:'winery', avatar:'DL', region:'Burgundy, France',
-    url:'bottle-lobby-winery-domaine-lefevre.html', at:'2026-04-07', activatedBy:'Bottle Lobby', meta:'1 wine in your portfolio' },
-  { winery:'Henri Dubois Domaine', type:'winery', avatar:'HD', region:'Loire Valley, France',
-    url:'bottle-lobby-winery-henri-dubois-domaine.html', at:'2026-02-17', activatedBy:'Bottle Lobby', meta:'1 wine in your portfolio' },
+  { winery:'Cantina Rossi', at:'2026-03-09', activatedBy:'Bottle Lobby', meta:'6 wines in your portfolio' },
+  { winery:'Domaine Lefèvre', at:'2026-04-07', activatedBy:'Bottle Lobby', meta:'1 wine in your portfolio' },
+  { winery:'Henri Dubois Domaine', at:'2026-02-17', activatedBy:'Bottle Lobby', meta:'1 wine in your portfolio' },
   /* Deliberate fixture for A8: Weinhaus Müller followed Bodegas Ruiz on
      11 May 2026, and Bodegas Ruiz gained this partnership afterwards.
      It is the one pair in the data where the sentence "now has a
      distributor" is actually true, and it is what makes that range
      orderable for a retailer at all (invariant 3). */
-  { winery:'Bodegas Ruiz', type:'winery', avatar:'BR', region:'Rioja Alta, Spain',
-    url:'bottle-lobby-winery-bodegas-ruiz.html', at:'2026-06-02', activatedBy:'Bottle Lobby', meta:'1 wine in your portfolio' },
-  { winery:'Weingut Schmitt', type:'winery', avatar:'WS', region:'Mosel, Germany',
-    url:'bottle-lobby-winery-weingut-schmitt.html', at:'2026-07-06', activatedBy:'Bottle Lobby', meta:'1 wine in your portfolio' },
-  { winery:'Bistro Laurent', type:'restaurant', avatar:'BL', region:'Frankfurt, Germany',
-    url:'bottle-lobby-restaurant-bistro-laurent.html', at:'2026-03-23', activatedBy:'Bottle Lobby', meta:'Sources through your portfolio' },
-  { winery:'Weinhaus Müller', type:'retail', avatar:'WM', region:'Munich, Germany',
-    url:'bottle-lobby-retail-weinhaus-mueller.html', at:'2026-04-14', activatedBy:'Bottle Lobby', meta:'Sources through your portfolio' },
-  { winery:'Vinstuen København', type:'retail', avatar:'VK', region:'Copenhagen, Denmark',
-    url:'bottle-lobby-retail-vinstuen-kobenhavn.html', at:'2026-07-20', activatedBy:'Bottle Lobby', meta:'Sources through your portfolio' }
+  { winery:'Bodegas Ruiz', at:'2026-06-02', activatedBy:'Bottle Lobby', meta:'1 wine in your portfolio' },
+  { winery:'Weingut Schmitt', at:'2026-07-06', activatedBy:'Bottle Lobby', meta:'1 wine in your portfolio' },
+  { winery:'Bistro Laurent', at:'2026-03-23', activatedBy:'Bottle Lobby', meta:'Sources through your portfolio' },
+  { winery:'Weinhaus Müller', at:'2026-04-14', activatedBy:'Bottle Lobby', meta:'Sources through your portfolio' },
+  { winery:'Vinstuen København', at:'2026-07-20', activatedBy:'Bottle Lobby', meta:'Sources through your portfolio' }
 ];
 
 let awSelectedWine = null;
@@ -4767,23 +4884,21 @@ renderWinePortfolioD();
 /* ══════════════════════════════════════════════════════════════════
    WINERY NETWORK — partnership requests & active distributors
 ══════════════════════════════════════════════════════════════════ */
+/* Only the relation from here on: who, when, which stage. Type,
+   region, avatar and public page come from stakeholder(). */
 let wineryRequests = [
-  { id:1, name:'Vinorama Nordic AB', role:'distributor', roleLabel:'Distributor',
-    region:'Stockholm, Sweden', received:'2026-07-18',
+  { id:1, name:'Vinorama Nordic AB', received:'2026-07-18',
     msg:'We would like to bring your Sicilian range into the Nordic restaurant market — our network covers 190+ venues across Sweden and Norway.',
     stage:'pending' }
 ];
 
 let wineryPartners = [
-  { name:'Hawesko GmbH', role:'distributor', roleLabel:'Distributor',
-    region:'Hamburg, Germany', since:'March 2026', wines:1 },
-  { name:'Enoteca Milano Import Srl', role:'distributor', roleLabel:'Distributor',
-    region:'Milan, Italy', since:'May 2026', wines:5 }
+  { name:'Hawesko GmbH', since:'March 2026', wines:1 },
+  { name:'Enoteca Milano Import Srl', since:'May 2026', wines:5 }
 ];
 
 let wineryOutgoingRequests = [
-  { name:'Iberian Wine Partners S.L.', role:'distributor', roleLabel:'Distributor',
-    region:'Barcelona, Spain', sent:'2026-07-16', stage:'sent' }
+  { name:'Iberian Wine Partners S.L.', sent:'2026-07-16', stage:'sent' }
 ];
 
 const owStageLabels = {
@@ -4804,9 +4919,14 @@ function wnStepMarkup(stage) {
   }).join('') + '</div>';
 }
 
+/* Presentation per stakeholder type. The type itself comes from the
+   master table; these three only say how it is drawn and spelled, so
+   a house cannot be a Distributor in one list and a distributor in
+   the next. `roleLabel` replaced the old per-row `roleLabel` fields
+   and the separate followRoleLabel map — one type, one spelling. */
 const roleAv = { distributor:'wn-av-dist', restaurant:'wn-av-rest', retail:'wn-av-ret', winery:'wn-av-winery' };
 const roleTag = { distributor:'rt-dist', restaurant:'rt-rest', retail:'rt-ret', winery:'rt-winery' };
-const wnInitials = n => n.split(' ').filter(w => /[A-Za-zÀ-ÿ]/.test(w[0])).slice(0,2).map(w => w[0]).join('').toUpperCase();
+const roleLabel = { distributor:'Distributor', restaurant:'Restaurant', retail:'Retail', winery:'Winery' };
 
 let acceptingId = null;
 
@@ -4814,15 +4934,17 @@ function renderWineryNetwork() {
   const rq = document.getElementById('wn-requests-list');
   if (rq) {
     const open = wineryRequests.filter(r => r.stage !== 'declined');
-    rq.innerHTML = open.length ? open.map(r => `
+    rq.innerHTML = open.length ? open.map(r => {
+      const st = stakeholder(r.name);
+      return `
       <div class="wn-card">
         <div class="wn-top">
-          <div class="wn-avatar ${roleAv[r.role]}">${wnInitials(r.name)}</div>
+          <div class="wn-avatar ${roleAv[st.type] || ''}">${st.avatar}</div>
           <div style="flex:1">
             <div class="wn-name">${r.name}</div>
-            <div class="wn-meta">${r.region} · Requested ${orderDate(r.received)}</div>
+            <div class="wn-meta">${st.region} · Requested ${orderDate(r.received)}</div>
           </div>
-          <span class="wn-roletag ${roleTag[r.role]}">${r.roleLabel}</span>
+          <span class="wn-roletag ${roleTag[st.type] || ''}">${roleLabel[st.type] || ''}</span>
         </div>
         <div class="wn-msg">"${r.msg}"</div>
         ${r.stage === 'contract'
@@ -4834,7 +4956,8 @@ function renderWineryNetwork() {
                <button class="btn-approve" onclick="openAcceptModal(${r.id})">✓ Accept partnership</button>
                <button class="btn-reject" onclick="declineRequest(${r.id})">Decline</button>
              </div>`}
-      </div>`).join('')
+      </div>`;
+    }).join('')
       : '<div class="wn-empty">No open partnership requests.</div>';
   }
 
@@ -4843,14 +4966,15 @@ function renderWineryNetwork() {
     const open = wineryOutgoingRequests.filter(r => r.stage !== 'declined');
     ow.innerHTML = open.length ? open.map(r => {
       const s = owStageLabels[r.stage] || owStageLabels.sent;
+      const st = stakeholder(r.name);
       return `
       <div style="margin-bottom:1.4rem">
         <div class="wn-card" style="margin-bottom:0">
           <div class="wn-top" style="margin-bottom:0">
-            <div class="wn-avatar ${roleAv[r.role]}">${wnInitials(r.name)}</div>
+            <div class="wn-avatar ${roleAv[st.type] || ''}">${st.avatar}</div>
             <div style="flex:1">
               <div class="wn-name">${r.name}</div>
-              <div class="wn-meta">${r.region} · Requested ${orderDate(r.sent)}</div>
+              <div class="wn-meta">${st.region} · Requested ${orderDate(r.sent)}</div>
             </div>
             <span class="wn-status ${s.cls}">${s.text}</span>
           </div>
@@ -4866,21 +4990,33 @@ function renderWineryNetwork() {
       pt.innerHTML = '<div class="wn-empty">No confirmed partners yet.</div>';
     } else {
       const groups = {};
-      wineryPartners.forEach(p => { (groups[p.region] = groups[p.region] || []).push(p); });
+      wineryPartners.forEach(p => {
+        const region = stakeholder(p.name).region;
+        (groups[region] = groups[region] || []).push(p);
+      });
       pt.innerHTML = Object.keys(groups).sort().map(region => `
         <div class="wn-group-title">${region}</div>
-        ${groups[region].map(p => `
+        ${groups[region].map(p => {
+          const st = stakeholder(p.name);
+          return `
           <div class="wn-card">
             <div class="wn-top" style="margin-bottom:0">
-              <div class="wn-avatar ${roleAv[p.role]}">${wnInitials(p.name)}</div>
+              <div class="wn-avatar ${roleAv[st.type] || ''}">${st.avatar}</div>
               <div style="flex:1">
                 <div class="wn-name">${p.name}</div>
                 <div class="wn-meta">Partner since ${p.since} · ${p.wines} of your ${p.wines === 1 ? 'wine' : 'wines'} listed</div>
               </div>
               <span class="wn-status ws-active">Active</span>
-              <span class="wn-roletag ${roleTag[p.role]}">${p.roleLabel}</span>
+              <span class="wn-roletag ${roleTag[st.type] || ''}">${roleLabel[st.type] || ''}</span>
             </div>
-          </div>`).join('')}
+            ${/* A11: the individual public profile is the canonical
+                  destination for a cross-link, and this was the one
+                  partner list that could not reach it — wineryPartners
+                  carried no url. It does not carry one now either; the
+                  master table does. */''}
+            ${st.url ? `<div style="margin-top:0.8rem"><a class="icon-btn" href="${st.url}" target="_blank">View profile →</a></div>` : ''}
+          </div>`;
+        }).join('')}
       `).join('');
     }
   }
@@ -4960,48 +5096,55 @@ const stageLabels = {
 function renderPartnerNetwork() {
   const act = document.getElementById('pn-active-list');
   if (act) {
-    const shown = activePartners.filter(p => filters.partners === 'all' || p.type === filters.partners);
+    const shown = activePartners.filter(p => filters.partners === 'all' || stakeholder(p.winery).type === filters.partners);
     if (!shown.length) {
       act.innerHTML = '<div class="pn-empty">No active partnerships in this category yet. Send a request from a winery\'s, restaurant\'s or retailer\'s public profile to get started.</div>';
     } else {
       const groups = {};
-      shown.forEach(p => { (groups[p.region] = groups[p.region] || []).push(p); });
+      shown.forEach(p => {
+        const region = stakeholder(p.winery).region;
+        (groups[region] = groups[region] || []).push(p);
+      });
       act.innerHTML = Object.keys(groups).sort().map(region => `
         <div class="pn-group-title">${region}</div>
-        ${groups[region].map(p => `
+        ${groups[region].map(p => {
+          const st = stakeholder(p.winery);
+          return `
           <div class="pn-card">
-            <div class="pn-avatar">${p.avatar}</div>
+            <div class="pn-avatar">${st.avatar}</div>
             <div class="pn-info">
               <div class="pn-name">${p.winery}</div>
               <div class="pn-meta">Partner since ${orderDate(p.at)} · ${p.meta}</div>
             </div>
             <div class="pn-right" style="align-items:flex-end;gap:0.4rem">
-              <div style="display:flex;gap:0.5rem;align-items:center">${typeTag(p.type)}<span class="pn-status st-active">Active</span></div>
-              ${p.url ? `<a class="pn-link" href="${p.url}" target="_blank">View profile →</a>` : `<span class="pn-link" style="opacity:0.4;cursor:default">Profile pending</span>`}
+              <div style="display:flex;gap:0.5rem;align-items:center">${typeTag(st.type)}<span class="pn-status st-active">Active</span></div>
+              ${st.url ? `<a class="pn-link" href="${st.url}" target="_blank">View profile →</a>` : `<span class="pn-link" style="opacity:0.4;cursor:default">Profile pending</span>`}
             </div>
-          </div>`).join('')}
+          </div>`;
+        }).join('')}
       `).join('');
     }
   }
 
   const req = document.getElementById('pn-request-list');
   if (req) {
-    const shown = partnerRequests.filter(r => filters.requests === 'all' || r.type === filters.requests);
+    const shown = partnerRequests.filter(r => filters.requests === 'all' || stakeholder(r.winery).type === filters.requests);
     if (!shown.length) {
       req.innerHTML = '<div class="pn-empty">No open requests in this category.</div>';
     } else {
       req.innerHTML = shown.map(r => {
         const s = stageLabels[r.stage] || stageLabels.sent;
+        const st = stakeholder(r.winery);
         return `
         <div style="margin-bottom:1.4rem">
           <div class="pn-card">
-            <div class="pn-avatar">${r.avatar}</div>
+            <div class="pn-avatar">${st.avatar}</div>
             <div class="pn-info">
               <div class="pn-name">${r.winery}</div>
-              <div class="pn-meta">${r.region} · Requested ${orderDate(r.sent)}</div>
+              <div class="pn-meta">${st.region} · Requested ${orderDate(r.sent)}</div>
             </div>
             <div class="pn-right" style="align-items:flex-end;gap:0.4rem">
-              <div style="display:flex;gap:0.5rem;align-items:center">${typeTag(r.type)}<span class="pn-status ${s.cls}">${s.text}</span></div>
+              <div style="display:flex;gap:0.5rem;align-items:center">${typeTag(st.type)}<span class="pn-status ${s.cls}">${s.text}</span></div>
             </div>
           </div>
           ${stepMarkup(r.stage)}
@@ -5016,8 +5159,7 @@ renderPartnerNetwork();
    INCOMING PARTNERSHIP REQUESTS (winery/restaurant/retail → distributor)
 ══════════════════════════════════════════════════════════════════ */
 let incomingRequests = [
-  { id:1, winery:'Château Belrieu', type:'winery', avatar:'CB', region:'Bordeaux, France',
-    received:'2026-07-20',
+  { id:1, winery:'Château Belrieu', received:'2026-07-20',
     msg:'We are looking for a partner to bring our Bordeaux Supérieur into your market — happy to discuss volumes and own-label options.',
     stage:'pending' }
 ];
@@ -5027,16 +5169,18 @@ let acceptingIncomingId = null;
 function renderIncomingRequests() {
   const el = document.getElementById('ir-list');
   if (!el) return;
-  const open = incomingRequests.filter(r => r.stage !== 'declined' && (filters.incoming === 'all' || r.type === filters.incoming));
-  el.innerHTML = open.length ? open.map(r => `
+  const open = incomingRequests.filter(r => r.stage !== 'declined' && (filters.incoming === 'all' || stakeholder(r.winery).type === filters.incoming));
+  el.innerHTML = open.length ? open.map(r => {
+    const st = stakeholder(r.winery);
+    return `
     <div class="ir-card">
       <div class="ir-top">
-        <div class="ir-avatar">${r.avatar}</div>
+        <div class="ir-avatar">${st.avatar}</div>
         <div style="flex:1">
           <div class="ir-name">${r.winery}</div>
-          <div class="ir-meta">${r.region} · Requested ${orderDate(r.received)}</div>
+          <div class="ir-meta">${st.region} · Requested ${orderDate(r.received)}</div>
         </div>
-        ${typeTag(r.type)}
+        ${typeTag(st.type)}
       </div>
       <div class="ir-msg">"${r.msg}"</div>
       ${r.stage === 'contract'
@@ -5048,7 +5192,8 @@ function renderIncomingRequests() {
              <button class="btn-accept" onclick="openIncomingAccept(${r.id})">✓ Accept partnership</button>
              <button class="btn-decl" onclick="declineIncoming(${r.id})">Decline</button>
            </div>`}
-    </div>`).join('')
+    </div>`;
+  }).join('')
     : '<div class="ir-empty">No incoming partnership requests in this category.</div>';
 }
 
@@ -5216,8 +5361,7 @@ let rCurrentWineList = [
 ];
 
 const rActivePartners = [
-  { winery:'Hawesko GmbH', avatar:'HW', region:'Hamburg, Germany',
-    url:'bottle-lobby-distributor-hawesko-gmbh.html', since:'March 2026', wines:5 }
+  { winery:'Hawesko GmbH', since:'March 2026', wines:5 }
 ];
 
 let rAwSelectedWine = null;
@@ -5319,9 +5463,7 @@ renderWineListR();
    NETWORK — active distributor, outgoing/incoming requests
 ══════════════════════════════════════════════════════════════════ */
 const rPartnerRequests = [
-  { winery:'Aktiv Getränke', avatar:'AG', region:'Köln, Germany',
-    url:'bottle-lobby-distributor-aktiv-getraenke.html',
-    stage:'winery', sent:'2026-07-15' }
+  { winery:'Aktiv Getränke', stage:'winery', sent:'2026-07-15' }
 ];
 
 const rStageLabels = {
@@ -5350,21 +5492,27 @@ function renderRestaurantNetwork() {
       act.innerHTML = '<div class="pn-empty">No active distributor partnership yet. Send a request from a distributor\'s public profile to get started.</div>';
     } else {
       const groups = {};
-      rActivePartners.forEach(p => { (groups[p.region] = groups[p.region] || []).push(p); });
+      rActivePartners.forEach(p => {
+        const region = stakeholder(p.winery).region;
+        (groups[region] = groups[region] || []).push(p);
+      });
       act.innerHTML = Object.keys(groups).sort().map(region => `
         <div class="pn-group-title">${region}</div>
-        ${groups[region].map(p => `
+        ${groups[region].map(p => {
+          const st = stakeholder(p.winery);
+          return `
           <div class="pn-card">
-            <div class="pn-avatar">${p.avatar}</div>
+            <div class="pn-avatar">${st.avatar}</div>
             <div class="pn-info">
               <div class="pn-name">${p.winery}</div>
               <div class="pn-meta">Partner since ${p.since} · ${p.wines} ${p.wines === 1 ? 'wine' : 'wines'} available in their portfolio</div>
             </div>
             <div class="pn-right">
               <span class="pn-status st-active">Active</span>
-              <a class="pn-link" href="${p.url}" target="_blank">View profile →</a>
+              ${st.url ? `<a class="pn-link" href="${st.url}" target="_blank">View profile →</a>` : ''}
             </div>
-          </div>`).join('')}
+          </div>`;
+        }).join('')}
       `).join('');
     }
   }
@@ -5376,13 +5524,14 @@ function renderRestaurantNetwork() {
     } else {
       req.innerHTML = rPartnerRequests.map(r => {
         const s = rStageLabels[r.stage] || rStageLabels.sent;
+        const st = stakeholder(r.winery);
         return `
         <div style="margin-bottom:1.4rem">
           <div class="pn-card">
-            <div class="pn-avatar">${r.avatar}</div>
+            <div class="pn-avatar">${st.avatar}</div>
             <div class="pn-info">
               <div class="pn-name">${r.winery}</div>
-              <div class="pn-meta">${r.region} · Requested ${orderDate(r.sent)}</div>
+              <div class="pn-meta">${st.region} · Requested ${orderDate(r.sent)}</div>
             </div>
             <div class="pn-right">
               <span class="pn-status ${s.cls}">${s.text}</span>
@@ -5397,8 +5546,7 @@ function renderRestaurantNetwork() {
 renderRestaurantNetwork();
 
 let rIncomingRequests = [
-  { id:1, winery:'Enoteca Milano Import Srl', avatar:'EM', region:'Milan, Italy',
-    received:'2026-07-19',
+  { id:1, winery:'Enoteca Milano Import Srl', received:'2026-07-19',
     msg:'We carry a strong Northern Italian and French portfolio and would love to supply Bistro Laurent — happy to discuss volumes and exclusivity.',
     stage:'pending' }
 ];
@@ -5408,15 +5556,17 @@ function renderIncomingRequestsR() {
   const el = document.getElementById('r-ir-list');
   if (!el) return;
   const open = rIncomingRequests.filter(r => r.stage !== 'declined');
-  el.innerHTML = open.length ? open.map(r => `
+  el.innerHTML = open.length ? open.map(r => {
+    const st = stakeholder(r.winery);
+    return `
     <div class="ir-card">
       <div class="ir-top">
-        <div class="ir-avatar">${r.avatar}</div>
+        <div class="ir-avatar">${st.avatar}</div>
         <div style="flex:1">
           <div class="ir-name">${r.winery}</div>
-          <div class="ir-meta">${r.region} · Requested ${orderDate(r.received)}</div>
+          <div class="ir-meta">${st.region} · Requested ${orderDate(r.received)}</div>
         </div>
-        <span class="ir-tag">Distributor</span>
+        <span class="ir-tag">${roleLabel[st.type] || ''}</span>
       </div>
       <div class="ir-msg">"${r.msg}"</div>
       ${r.stage === 'contract'
@@ -5428,7 +5578,8 @@ function renderIncomingRequestsR() {
              <button class="btn-accept" onclick="openIncomingAcceptR(${r.id})">✓ Accept partnership</button>
              <button class="btn-decl" onclick="declineIncomingR(${r.id})">Decline</button>
            </div>`}
-    </div>`).join('')
+    </div>`;
+  }).join('')
     : '<div class="ir-empty">No incoming partnership requests.</div>';
 }
 function openIncomingAcceptR(id) {
@@ -5595,8 +5746,7 @@ let tCurrentWineSelection = [
 ];
 
 const tActivePartners = [
-  { winery:'Hawesko GmbH', avatar:'HW', region:'Hamburg, Germany',
-    url:'bottle-lobby-distributor-hawesko-gmbh.html', since:'March 2026', wines:6 }
+  { winery:'Hawesko GmbH', since:'March 2026', wines:6 }
 ];
 
 let tAwSelectedWine = null;
@@ -5697,9 +5847,7 @@ renderWineSelectionT();
    NETWORK — active distributor, outgoing/incoming requests
 ══════════════════════════════════════════════════════════════════ */
 const tPartnerRequests = [
-  { winery:'Iberian Wine Partners S.L.', avatar:'IW', region:'Barcelona, Spain',
-    url:'bottle-lobby-distributor-iberian-wine-partners-sl.html',
-    stage:'winery', sent:'2026-07-14' }
+  { winery:'Iberian Wine Partners S.L.', stage:'winery', sent:'2026-07-14' }
 ];
 
 const tStageLabels = {
@@ -5728,21 +5876,27 @@ function renderRetailNetwork() {
       act.innerHTML = '<div class="pn-empty">No active distributor partnership yet. Send a request from a distributor\'s public profile to get started.</div>';
     } else {
       const groups = {};
-      tActivePartners.forEach(p => { (groups[p.region] = groups[p.region] || []).push(p); });
+      tActivePartners.forEach(p => {
+        const region = stakeholder(p.winery).region;
+        (groups[region] = groups[region] || []).push(p);
+      });
       act.innerHTML = Object.keys(groups).sort().map(region => `
         <div class="pn-group-title">${region}</div>
-        ${groups[region].map(p => `
+        ${groups[region].map(p => {
+          const st = stakeholder(p.winery);
+          return `
           <div class="pn-card">
-            <div class="pn-avatar">${p.avatar}</div>
+            <div class="pn-avatar">${st.avatar}</div>
             <div class="pn-info">
               <div class="pn-name">${p.winery}</div>
               <div class="pn-meta">Partner since ${p.since} · ${p.wines} ${p.wines === 1 ? 'wine' : 'wines'} available in their portfolio</div>
             </div>
             <div class="pn-right">
               <span class="pn-status st-active">Active</span>
-              <a class="pn-link" href="${p.url}" target="_blank">View profile →</a>
+              ${st.url ? `<a class="pn-link" href="${st.url}" target="_blank">View profile →</a>` : ''}
             </div>
-          </div>`).join('')}
+          </div>`;
+        }).join('')}
       `).join('');
     }
   }
@@ -5754,13 +5908,14 @@ function renderRetailNetwork() {
     } else {
       req.innerHTML = tPartnerRequests.map(r => {
         const s = tStageLabels[r.stage] || tStageLabels.sent;
+        const st = stakeholder(r.winery);
         return `
         <div style="margin-bottom:1.4rem">
           <div class="pn-card">
-            <div class="pn-avatar">${r.avatar}</div>
+            <div class="pn-avatar">${st.avatar}</div>
             <div class="pn-info">
               <div class="pn-name">${r.winery}</div>
-              <div class="pn-meta">${r.region} · Requested ${orderDate(r.sent)}</div>
+              <div class="pn-meta">${st.region} · Requested ${orderDate(r.sent)}</div>
             </div>
             <div class="pn-right">
               <span class="pn-status ${s.cls}">${s.text}</span>
@@ -5775,8 +5930,7 @@ function renderRetailNetwork() {
 renderRetailNetwork();
 
 let tIncomingRequests = [
-  { id:1, winery:'Vinorama Nordic AB', avatar:'VN', region:'Stockholm, Sweden',
-    received:'2026-07-16',
+  { id:1, winery:'Vinorama Nordic AB', received:'2026-07-16',
     msg:'We carry a strong Nordic-imported and Southern European portfolio and would love to supply Weinhaus Müller — happy to discuss volumes and exclusivity.',
     stage:'pending' }
 ];
@@ -5786,15 +5940,17 @@ function renderIncomingRequestsT() {
   const el = document.getElementById('t-ir-list');
   if (!el) return;
   const open = tIncomingRequests.filter(r => r.stage !== 'declined');
-  el.innerHTML = open.length ? open.map(r => `
+  el.innerHTML = open.length ? open.map(r => {
+    const st = stakeholder(r.winery);
+    return `
     <div class="ir-card">
       <div class="ir-top">
-        <div class="ir-avatar">${r.avatar}</div>
+        <div class="ir-avatar">${st.avatar}</div>
         <div style="flex:1">
           <div class="ir-name">${r.winery}</div>
-          <div class="ir-meta">${r.region} · Requested ${orderDate(r.received)}</div>
+          <div class="ir-meta">${st.region} · Requested ${orderDate(r.received)}</div>
         </div>
-        <span class="ir-tag">Distributor</span>
+        <span class="ir-tag">${roleLabel[st.type] || ''}</span>
       </div>
       <div class="ir-msg">"${r.msg}"</div>
       ${r.stage === 'contract'
@@ -5806,7 +5962,8 @@ function renderIncomingRequestsT() {
              <button class="btn-accept" onclick="openIncomingAcceptT(${r.id})">✓ Accept partnership</button>
              <button class="btn-decl" onclick="declineIncomingT(${r.id})">Decline</button>
            </div>`}
-    </div>`).join('')
+    </div>`;
+  }).join('')
     : '<div class="ir-empty">No incoming partnership requests.</div>';
 }
 function openIncomingAcceptT(id) {
@@ -5847,8 +6004,14 @@ renderIncomingRequestsT();
    Restaurants can follow a Distributor, and a Distributor can follow
    Wineries, Restaurants or Retailers in turn. Each entry's "winery"
    field holds the name of the FOLLOWED account (kept as "winery" for
-   backward compatibility since most entries follow a winery); the
-   optional "followedType" field defaults to 'winery' when omitted.
+   backward compatibility since most entries follow a winery).
+
+   An edge is now only the edge: who follows whom, and since when.
+   Type, avatar, location and public page used to ride along on every
+   row and described the FOLLOWER, which meant the same house carried
+   its own profile once per follow — Hawesko GmbH four times over.
+   `followedType` went with them: it said what the followed account
+   is, which is the master table's answer, not the edge's.
 
    `let`, not `const`, only so demo persistence can put a stored graph
    back into this binding (C8). Nothing in the prototype writes to it
@@ -5858,35 +6021,33 @@ renderIncomingRequestsT();
    this file.
 ══════════════════════════════════════════════════════════════════ */
 let wineFollowGraph = [
-  { follower:'Bistro Laurent', followerType:'restaurant', avatar:'BL', location:'Frankfurt, Germany', winery:'Cantina Rossi', url:'bottle-lobby-restaurant-bistro-laurent.html', at:'2026-04-12' },
-  { follower:'Bistro Laurent', followerType:'restaurant', avatar:'BL', location:'Frankfurt, Germany', winery:'Château Belrieu', url:'bottle-lobby-restaurant-bistro-laurent.html', at:'2026-04-27' },
-  { follower:'Weinhaus Müller', followerType:'retail', avatar:'WM', location:'Munich, Germany', winery:'Cantina Rossi', url:'bottle-lobby-retail-weinhaus-mueller.html', at:'2026-05-03' },
+  { follower:'Bistro Laurent', winery:'Cantina Rossi', at:'2026-04-12' },
+  { follower:'Bistro Laurent', winery:'Château Belrieu', at:'2026-04-27' },
+  { follower:'Weinhaus Müller', winery:'Cantina Rossi', at:'2026-05-03' },
   /* Deliberate fixture for A16.7: Bodegas Ruiz is CONFIRMED at Grande
      Rioja, which is still anonymised, and Weinhaus Müller follows them.
      A feed built from "shows my stars take part in" would announce it
      and break A16.6 on a third surface. Without this pair the rule is
      only covered by construction — tests/follow-feed.js asserts the
      pair exists, so it cannot be removed without the run saying so. */
-  { follower:'Weinhaus Müller', followerType:'retail', avatar:'WM', location:'Munich, Germany', winery:'Bodegas Ruiz', url:'bottle-lobby-retail-weinhaus-mueller.html', at:'2026-05-11' },
-  { follower:'Vinstuen København', followerType:'retail', avatar:'VK', location:'Copenhagen, Denmark', winery:'Henri Dubois Domaine', url:'bottle-lobby-retail-vinstuen-kobenhavn.html', at:'2026-05-19' },
-  { follower:'Osteria Marconi', followerType:'restaurant', avatar:'OM', location:'Milan, Italy', winery:'Cantina Rossi', url:'bottle-lobby-restaurant-osteria-marconi.html', at:'2026-05-24' },
-  { follower:'Vinoteca Roma', followerType:'retail', avatar:'VR', location:'Rome, Italy', winery:'Cantina Rossi', url:'bottle-lobby-retail-vinoteca-roma.html', at:'2026-06-02' },
-  { follower:'Casa Elena', followerType:'restaurant', avatar:'CE', location:'Barcelona, Spain', winery:'Weingut Schmitt', url:'bottle-lobby-restaurant-casa-elena.html', at:'2026-06-08' },
-  { follower:'Cave à Vins Lyon', followerType:'retail', avatar:'CL', location:'Lyon, France', winery:'Domaine Lefèvre', url:'bottle-lobby-retail-cave-a-vins-lyon.html', at:'2026-06-15' },
+  { follower:'Weinhaus Müller', winery:'Bodegas Ruiz', at:'2026-05-11' },
+  { follower:'Vinstuen København', winery:'Henri Dubois Domaine', at:'2026-05-19' },
+  { follower:'Osteria Marconi', winery:'Cantina Rossi', at:'2026-05-24' },
+  { follower:'Vinoteca Roma', winery:'Cantina Rossi', at:'2026-06-02' },
+  { follower:'Casa Elena', winery:'Weingut Schmitt', at:'2026-06-08' },
+  { follower:'Cave à Vins Lyon', winery:'Domaine Lefèvre', at:'2026-06-15' },
   /* Wine Fans of the Distributor (Hawesko GmbH): wineries and a restaurant follow the distributor */
-  { follower:'Cantina Rossi', followerType:'winery', avatar:'CR', location:'Sicily, Italy', winery:'Hawesko GmbH', followedType:'distributor', url:'bottle-lobby-winery-cantina-rossi.html', at:'2026-06-21' },
-  { follower:'Château Belrieu', followerType:'winery', avatar:'CB', location:'Bordeaux, France', winery:'Hawesko GmbH', followedType:'distributor', url:'bottle-lobby-winery-chateau-belrieu.html', at:'2026-06-28' },
-  { follower:'Bistro Laurent', followerType:'restaurant', avatar:'BL', location:'Frankfurt, Germany', winery:'Hawesko GmbH', followedType:'distributor', url:'bottle-lobby-restaurant-bistro-laurent.html', at:'2026-07-04' },
+  { follower:'Cantina Rossi', winery:'Hawesko GmbH', at:'2026-06-21' },
+  { follower:'Château Belrieu', winery:'Hawesko GmbH', at:'2026-06-28' },
+  { follower:'Bistro Laurent', winery:'Hawesko GmbH', at:'2026-07-04' },
   /* Wine Stars of the Distributor (Hawesko GmbH): the distributor follows a winery, a retailer and a restaurant */
-  { follower:'Hawesko GmbH', followerType:'distributor', avatar:'HW', location:'Hamburg, Germany', winery:'Henri Dubois Domaine', followedType:'winery', url:'bottle-lobby-winery-henri-dubois-domaine.html', at:'2026-07-09' },
-  { follower:'Hawesko GmbH', followerType:'distributor', avatar:'HW', location:'Hamburg, Germany', winery:'Weinhaus Müller', followedType:'retail', url:'bottle-lobby-retail-weinhaus-mueller.html', at:'2026-07-16' },
-  { follower:'Hawesko GmbH', followerType:'distributor', avatar:'HW', location:'Hamburg, Germany', winery:'Osteria Marconi', followedType:'restaurant', url:'bottle-lobby-restaurant-osteria-marconi.html', at:'2026-07-23' },
+  { follower:'Hawesko GmbH', winery:'Henri Dubois Domaine', at:'2026-07-09' },
+  { follower:'Hawesko GmbH', winery:'Weinhaus Müller', at:'2026-07-16' },
+  { follower:'Hawesko GmbH', winery:'Osteria Marconi', at:'2026-07-23' },
   /* A winery following a restaurant — the pairing that gives Bistro Laurent
      a non-empty "My Fans" list and Cantina Rossi a second "My Stars" entry. */
-  { follower:'Cantina Rossi', followerType:'winery', avatar:'CR', location:'Sicily, Italy', winery:'Bistro Laurent', followedType:'restaurant', url:'bottle-lobby-winery-cantina-rossi.html', at:'2026-07-29' }
+  { follower:'Cantina Rossi', winery:'Bistro Laurent', at:'2026-07-29' }
 ];
-const followRoleLabel = { distributor:'Distributor', restaurant:'Restaurant', retail:'Retail', winery:'Winery' };
-
 /* ── Generic Fans renderer: who follows entityName ── */
 function renderFansFor(entityName, listId, countId, emptyMsg) {
   const el = document.getElementById(listId);
@@ -5894,18 +6055,21 @@ function renderFansFor(entityName, listId, countId, emptyMsg) {
   if (!el) return;
   const fans = wineFollowGraph.filter(f => f.winery === entityName);
   if (countEl) countEl.textContent = '(' + fans.length + ')';
-  el.innerHTML = fans.length ? fans.map(f => `
+  el.innerHTML = fans.length ? fans.map(f => {
+    const st = stakeholder(f.follower);
+    return `
     <div class="wn-card">
       <div class="wn-top" style="margin-bottom:0">
-        <div class="wn-avatar ${roleAv[f.followerType] || 'wn-av-winery'}">${f.avatar}</div>
+        <div class="wn-avatar ${roleAv[st.type] || 'wn-av-winery'}">${st.avatar}</div>
         <div style="flex:1">
           <div class="wn-name">${f.follower}</div>
-          <div class="wn-meta">${f.location}</div>
+          <div class="wn-meta">${st.region}</div>
         </div>
-        <span class="wn-roletag ${roleTag[f.followerType] || 'rt-winery'}">${followRoleLabel[f.followerType] || f.followerType}</span>
+        <span class="wn-roletag ${roleTag[st.type] || 'rt-winery'}">${roleLabel[st.type] || ''}</span>
       </div>
-      <div style="margin-top:0.8rem"><a class="icon-btn" href="${f.url}" target="_blank">View profile →</a></div>
-    </div>`).join('') : `<div class="wn-empty">${emptyMsg}</div>`;
+      ${st.url ? `<div style="margin-top:0.8rem"><a class="icon-btn" href="${st.url}" target="_blank">View profile →</a></div>` : ''}
+    </div>`;
+  }).join('') : `<div class="wn-empty">${emptyMsg}</div>`;
 }
 function renderWineryFans() { renderFansFor('Cantina Rossi', 'wfans-list', 'wfans-count', 'No fans yet — once a restaurant or retailer follows you, they\'ll show up here.'); }
 function renderDistributorFans() { renderFansFor('Hawesko GmbH', 'dfans-list', 'dfans-count', 'No fans yet — once a winery, restaurant or retailer follows you, they\'ll show up here.'); }
@@ -5919,8 +6083,11 @@ function renderDistributorOpportunities() {
   const countEl = document.getElementById('dopp-count');
   if (!el) return;
 
-  const myStakeholders = activePartners.filter(p => p.type === 'restaurant' || p.type === 'retail').map(p => p.winery);
-  const myWineries = new Set(activePartners.filter(p => p.type === 'winery').map(p => p.winery));
+  const myStakeholders = activePartners.filter(p => {
+    const t = stakeholder(p.winery).type;
+    return t === 'restaurant' || t === 'retail';
+  }).map(p => p.winery);
+  const myWineries = new Set(activePartners.filter(p => stakeholder(p.winery).type === 'winery').map(p => p.winery));
 
   const relevant = wineFollowGraph.filter(f => myStakeholders.includes(f.follower));
   const groups = {};
@@ -5938,7 +6105,7 @@ function renderDistributorOpportunities() {
     const followers = groups[winery];
     const already = myWineries.has(winery);
     const multi = followers.length >= 2;
-    const followerChips = followers.map(f => `<span class="stf-type-tag ${f.followerType === 'restaurant' ? 'tt-restaurant' : 'tt-retail'}" style="margin-left:0">${f.follower}</span>`).join(' ');
+    const followerChips = followers.map(f => `<span class="stf-type-tag ${stakeholder(f.follower).type === 'restaurant' ? 'tt-restaurant' : 'tt-retail'}" style="margin-left:0">${f.follower}</span>`).join(' ');
     return `
       <div class="pn-card" style="align-items:flex-start;flex-wrap:wrap;gap:1rem 1.2rem">
         <div style="flex:1;min-width:220px">
@@ -5973,13 +6140,13 @@ function renderWineStarsFor(followerName, listId, countId) {
   const stars = wineFollowGraph.filter(f => f.follower === followerName);
   if (countEl) countEl.textContent = '(' + stars.length + ')';
   el.innerHTML = stars.length ? stars.map(f => {
-    const type = f.followedType || 'winery';
+    const st = stakeholder(f.winery);
     return `
     <div class="pn-card">
-      <div class="pn-avatar ${roleAv[type] || 'wn-av-winery'}" style="${roleAv[type] ? '' : 'background:var(--wine)'}">${wnInitials(f.winery)}</div>
+      <div class="pn-avatar ${roleAv[st.type] || 'wn-av-winery'}" style="${roleAv[st.type] ? '' : 'background:var(--wine)'}">${st.avatar}</div>
       <div class="pn-info">
         <div class="pn-name">${f.winery}</div>
-        <div class="pn-meta">${followRoleLabel[type] || type} · Following since July 2026</div>
+        <div class="pn-meta">${roleLabel[st.type] || ''} · Following since July 2026</div>
       </div>
       <button class="pn-link" onclick="this.closest('.pn-card').remove()">Unfollow</button>
     </div>`;
@@ -9681,15 +9848,17 @@ function openAttendeeModal(id) {
   attendeeShowId = id;
   const s = actionShow(id); if (!s) return;
   const already = attendeesOf(s).map(a => a.stakeholder);
-  const candidates = activePartners.filter(p =>
-    (p.type === 'restaurant' || p.type === 'retail') && already.indexOf(p.winery) === -1);
+  const candidates = activePartners.filter(p => {
+    const t = stakeholder(p.winery).type;
+    return (t === 'restaurant' || t === 'retail') && already.indexOf(p.winery) === -1;
+  });
   const q = attendeeQueue(s);
   document.getElementById('af-show').textContent = s.title + ' · ' + s.date + ' · ' + s.city;
   document.getElementById('af-seats').textContent = q.seated.length + ' of ' + s.capacity +
     ' seats taken' + (q.waiting.length ? ', ' + q.waiting.length + ' on the waitlist' : '') + '.' +
     (q.seated.length >= s.capacity ? ' A new acceptance joins the waitlist.' : '');
   document.getElementById('af-guest').innerHTML = candidates.length
-    ? candidates.map(p => '<option value="' + p.winery + '">' + p.winery + ' · ' + p.region + '</option>').join('')
+    ? candidates.map(p => '<option value="' + p.winery + '">' + p.winery + ' · ' + stakeholder(p.winery).region + '</option>').join('')
     : '<option value="">Everyone you partner with is already on the list</option>';
   document.getElementById('wine-show-attendee-modal').classList.add('active');
 }
@@ -9799,9 +9968,12 @@ function openVenueModal(id) {
      Partnered restaurants and retailers only — the same list the
      create-show modal draws on. */
   const sel = document.getElementById('vf-partner');
-  const partners = activePartners.filter(p => p.type === 'restaurant' || p.type === 'retail');
+  const partners = activePartners.filter(p => {
+    const t = stakeholder(p.winery).type;
+    return t === 'restaurant' || t === 'retail';
+  });
   sel.innerHTML = partners.map(p =>
-    '<option value="' + p.winery + '">' + p.winery + ' · ' + p.region + '</option>').join('');
+    '<option value="' + p.winery + '">' + p.winery + ' · ' + stakeholder(p.winery).region + '</option>').join('');
   if (s.venueEntity) sel.value = s.venueEntity;
   document.getElementById('wine-show-venue-modal').classList.add('active');
 }
@@ -9812,9 +9984,10 @@ function sendVenueRequest() {
   const who = document.getElementById('vf-partner').value;
   if (!who) { showToast('✗ Pick a partner venue first'); return; }
   const partner = activePartners.find(p => p.winery === who);
+  const venueRegion = stakeholder(who).region;
   s.venueType   = 'partner_venue';
   s.venueEntity = who;
-  s.venueName   = who + (partner ? ', ' + partner.region.split(',')[0] : '');
+  s.venueName   = who + (partner && venueRegion ? ', ' + venueRegion.split(',')[0] : '');
   s.venueStatus = 'requested';
   /* A new request drops any earlier price: it was that venue's offer,
      not this one's, and carrying it over would fake a quote. */
@@ -9892,8 +10065,11 @@ function onShowVenueTypeChange() {
   const sel = document.getElementById('sf-venue-partner');
   if (partner && !sel.options.length) {
     sel.innerHTML = activePartners
-      .filter(p => p.type === 'restaurant' || p.type === 'retail')
-      .map(p => '<option value="' + p.winery + '">' + p.winery + ' · ' + p.region + '</option>').join('');
+      .filter(p => {
+        const t = stakeholder(p.winery).type;
+        return t === 'restaurant' || t === 'retail';
+      })
+      .map(p => '<option value="' + p.winery + '">' + p.winery + ' · ' + stakeholder(p.winery).region + '</option>').join('');
   }
 }
 function saveShow() {
@@ -9943,10 +10119,10 @@ function openInviteModal(id) {
   inviteShowId = id;
   const s = actionShow(id); if (!s) return;
   const already = s.exhibitors.map(e => e.producer);
-  const candidates = activePartners.filter(p => p.type === 'winery' && already.indexOf(p.winery) === -1);
+  const candidates = activePartners.filter(p => stakeholder(p.winery).type === 'winery' && already.indexOf(p.winery) === -1);
   const sel = document.getElementById('if-producer');
   sel.innerHTML = candidates.length
-    ? candidates.map(p => '<option value="' + p.winery + '">' + p.winery + ' · ' + p.region + '</option>').join('')
+    ? candidates.map(p => '<option value="' + p.winery + '">' + p.winery + ' · ' + stakeholder(p.winery).region + '</option>').join('')
     : '<option value="">All partnered producers are already on this show</option>';
   document.getElementById('if-show').textContent = s.title + ' · ' + s.date + ' · ' + s.city;
   onInviteProducerChange();
@@ -10142,18 +10318,17 @@ function redrawAll() {
         capped to the public fields — see notifRegional().
 ══════════════════════════════════════════════════════════════════ */
 
-/* Where each demo role sits. Only the four playable roles need this —
-   the regional rule asks "is this show in MY city", never anybody
-   else's. On the real platform this is `stakeholders.city`; here the
-   entity's location is otherwise scattered across the follow graph and
-   SELLER_PROFILES, and adding a fifth copy for a general lookup would
-   be the A1 violation this file warns about everywhere else. */
-const ROLE_CITY = {
-  winery:      'Alcamo',
-  distributor: 'Hamburg',
-  restaurant:  'Frankfurt',
-  retail:      'Munich'
-};
+/* Where each demo role sits — now read from the master record of the
+   house the role plays, which is what the table it used to duplicate
+   said it should be. The regional rule asks "is this show in MY
+   city", never anybody else's, so it goes through SHOW_ROLES like
+   every other question about the current role. A house without a
+   recorded city simply never matches, which is the honest outcome:
+   the rule has nothing to compare. */
+function roleCity(role) {
+  const cfg = SHOW_ROLES[role];
+  return cfg ? stakeholder(cfg.entity).city : undefined;
+}
 
 /* Two date formats still reach this function: ISO from orders, follows
    and partnership requests (moved there 2 Aug 2026), and the shows'
@@ -10226,7 +10401,7 @@ function notifHasEdge(show, me) {
 function distributorPartnership(winery) {
   if (typeof activePartners === 'undefined') return null;
   return activePartners.find(function (p) {
-    return p.type === 'winery' && p.winery === winery;
+    return stakeholder(p.winery).type === 'winery' && p.winery === winery;
   }) || null;
 }
 
@@ -10246,7 +10421,7 @@ function distributorPartnership(winery) {
 function notifWineryEdge(me, winery) {
   const edges = [];
   wineFollowGraph.forEach(function (f) {
-    if (f.follower === me && f.winery === winery && (f.followedType || 'winery') === 'winery')
+    if (f.follower === me && f.winery === winery && stakeholder(winery).type === 'winery')
       edges.push({ via:'follow', at:f.at });
   });
   /* Only a distributor can hold a partnership with a producer:
@@ -10280,7 +10455,7 @@ function notifSupply(role, me, out) {
      book, so the other party to every row in it is that distributor. */
   const dist = SHOW_ROLES.distributor.entity;
   (typeof activePartners === 'undefined' ? [] : activePartners).forEach(function (p) {
-    if (p.type !== 'winery') return;
+    if (stakeholder(p.winery).type !== 'winery') return;
     const edge = notifWineryEdge(me, p.winery);
     /* Follow only. For these two roles the two kinds of edge cannot
        both exist (invariant 3 again), so the earliest-wins rule in
@@ -10293,8 +10468,10 @@ function notifSupply(role, me, out) {
       title: p.winery + ' now has a distributor',
       text: 'Now distributed by ' + dist + ' — until now their range had no route to the trade.',
       /* The producer's real public page in the A13 embed, through the
-         same branch the follow rows already use. */
-      target: p.url ? { type:'profile', url:p.url } : null
+         same branch the follow rows already use. The page belongs to
+         the producer, not to the partnership, so it comes from the
+         master record. */
+      target: stakeholder(p.winery).url ? { type:'profile', url:stakeholder(p.winery).url } : null
     });
   });
 }
@@ -10330,7 +10507,7 @@ function notifNewWines(me, out) {
 
 function notifRegional(role, list) {
   if (role !== 'restaurant' && role !== 'retail') return;
-  const cfg = SHOW_ROLES[role], city = ROLE_CITY[role];
+  const cfg = SHOW_ROLES[role], city = roleCity(role);
   if (!city) return;
   wineShows.forEach(function (s) {
     if (s.city !== city) return;
@@ -10405,12 +10582,13 @@ function notificationsFor(role) {
      2 Aug 2026 pass that made this derivable at all. */
   wineFollowGraph.forEach(function (f) {
     if (f.winery !== me) return;
+    const st = stakeholder(f.follower);
     notifPush(out, me, {
       id: notifId('follow', f.follower + '→' + f.winery, f.at),
       kind: 'follow', cls: 'info', at: f.at, actor: f.follower,
       title: f.follower + ' started following you',
-      text: (followRoleLabel[f.followerType] || '') + (f.location ? ' · ' + f.location : ''),
-      target: f.url ? { type:'profile', url:f.url } : null
+      text: (roleLabel[st.type] || '') + (st.region ? ' · ' + st.region : ''),
+      target: st.url ? { type:'profile', url:st.url } : null
     });
   });
 
@@ -10495,11 +10673,12 @@ function notifRequests(role, me, out) {
   (rows || []).forEach(function (r) {
     if (r.stage !== 'pending') return;
     const who = r.name || r.winery;
+    const st = stakeholder(who);
     out.push({
       id: notifId('request', who, r.received),
       kind: 'request', cls: 'await', at: r.received, actor: null,
       title: 'Partnership request — ' + who,
-      text: (r.roleLabel || r.type || '') + (r.region ? ' · ' + r.region : ''),
+      text: (roleLabel[st.type] || '') + (st.region ? ' · ' + st.region : ''),
       target: { type:'request' }
     });
   });
