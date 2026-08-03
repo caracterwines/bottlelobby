@@ -5081,15 +5081,21 @@ function confirmAddWine() {
     return;
   }
   if (!awSelectedWine) return;
-  const fileGuess = 'bottle-lobby-wine-' + awSelectedWine.name.toLowerCase()
-    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') + '.html';
+  /* The record carries its article page. Deriving a slug from the
+     name is the guess A14.4 records: "Müller-Thurgau — Mosel" comes
+     out `m-ller-thurgau`. A reference answers it. */
   currentWinePortfolio.push({
     winery: awSelectedWine.winery,
     name: awSelectedWine.name,
     vintage: awSelectedWine.vintage,
     ownLabel: document.getElementById('aw-ownlabel').checked,
-    url: fileGuess
+    /* The buyers' pickers read this book now, and they show type and
+       origin. A wine pulled in without them would render "undefined ·
+       undefined" on two other dashboards — the producer owns these
+       fields (invariant 2), so they travel with the reference. */
+    type: awSelectedWine.type,
+    origin: awSelectedWine.origin,
+    url: awSelectedWine.url
   });
   renderWinePortfolioD();
   refreshPortfolioCounts();
@@ -5562,22 +5568,7 @@ function openRestaurantPublicPreview() {
   openEmbedPreview('bottle-lobby-restaurant-profile.html');
 }
 
-/* ══════════════════════════════════════════════════════════════════
-   WINE LIST — pulled from distributor partner, restaurant never
-   creates wine data or sources directly from a winery
-══════════════════════════════════════════════════════════════════ */
-const rPartnerWinesPool = [
-  { winery:'Hawesko GmbH', name:'Catarratto Biologico', vintage:2023, type:'White', note:'Organic', origin:'Sicilia DOC, Sicily' },
-  { winery:'Hawesko GmbH', name:'Primitivo Sicilia IGT', vintage:2022, type:'Red', note:'Exclusive', origin:'Alcamo DOC, Sicily' },
-  { winery:'Hawesko GmbH', name:'Chardonnay — Chablis Premier Cru', vintage:2022, type:'White', note:'Exclusive', origin:'Chablis, Burgundy' },
-  { winery:'Hawesko GmbH', name:'Sauvignon Blanc — Sancerre', vintage:2023, type:'White', note:'Exclusive', origin:'Loire Valley, France' },
-  { winery:'Hawesko GmbH', name:'Tempranillo — Rioja Crianza', vintage:2021, type:'Red', note:'Standard', origin:'Rioja Alta, Spain' },
-  { winery:'Hawesko GmbH', name:'Riesling Spätlese — Mosel', vintage:2023, type:'White', note:'Standard', origin:'Mosel, Germany' },
-  { winery:'Hawesko GmbH', name:'Rosso di Contrada', vintage:2023, type:'Red', note:'Standard', origin:'Sicilia DOC, Sicily' },
-  { winery:'Hawesko GmbH', name:'Merlot — Bordeaux Supérieur', vintage:2021, type:'Red', note:'Exclusive', origin:'Bordeaux, France' },
-  { winery:'Hawesko GmbH', name:'Château Belrieu Grand Vin', vintage:2019, type:'Red', note:'Standard', origin:'Bordeaux Supérieur AOC, France' },
-  { winery:'Hawesko GmbH', name:'Crémant de Bourgogne', vintage:2022, type:'White', note:'Standard', origin:'Crémant de Bourgogne AOC, France' }
-];
+
 
 let rCurrentWineList = [
   { winery:'Henri Dubois Domaine', name:'Sauvignon Blanc — Sancerre', vintage:2023, exclusive:true, url:'bottle-lobby-wine-sauvignon-blanc-sancerre.html' },
@@ -5618,37 +5609,58 @@ function closeAddWineModalR() {
   document.getElementById('r-aw-modal').classList.remove('active');
   document.body.style.overflow = '';
 }
+/* THE PICKER IS THE GUARD, not the decoration. A restaurant and a
+   retailer can only choose from ONE list — the portfolio of the
+   distributor they actually partner with — so the chain producer →
+   distributor → buyer cannot be broken by choosing. Before this it
+   read a copied pool that nothing checked against a partnership, and
+   that is how Château Belrieu's wines were on offer through a
+   distributor with no partnership at all (invariant 3).
+
+   The distributor is READ from the partnership rather than assumed:
+   there is one playable distributor today, and a hard-coded name
+   would be the assumption this repo has now removed three times.
+
+   The group headings are the real producers now, because the book
+   knows them. They used to all read "Hawesko GmbH". */
 function renderWinePickerR(search) {
   const list = document.getElementById('r-aw-pick-list');
-  const mine = partnershipsOf('Bistro Laurent');
-  if (!mine.length) {
+  const dist = partnershipsOf('Bistro Laurent').map(p => partnerSide(p, 'Bistro Laurent'))
+    .find(n => stakeholder(n).type === 'distributor');
+  const book = dist ? portfolioOf(dist) : null;
+  if (!book) {
     list.innerHTML = '<div class="aw-empty">No active distributor partnership yet.<br>Send a request from a distributor\'s public profile — once accepted and confirmed, their wine portfolio appears here.</div>';
     return;
   }
   const term = (search || '').toLowerCase();
-  const pool = rPartnerWinesPool.filter(w => mine.some(p => partnerSide(p, 'Bistro Laurent') === w.winery));
-  const filtered = pool.filter(w => !term || w.name.toLowerCase().includes(term) || w.winery.toLowerCase().includes(term));
+  const filtered = book.filter(w => !term || w.name.toLowerCase().includes(term) || w.winery.toLowerCase().includes(term));
   if (!filtered.length) {
     list.innerHTML = '<div class="aw-empty">No wines match your search.</div>';
     return;
   }
   const groups = {};
   filtered.forEach(w => { (groups[w.winery] = groups[w.winery] || []).push(w); });
-  list.innerHTML = Object.keys(groups).map(winery => `
+  list.innerHTML = Object.keys(groups).sort().map(winery => `
     <div class="aw-pick-group">${winery}</div>
     ${groups[winery].map(w => {
       const taken = rCurrentWineList.some(cw => cw.winery === w.winery && cw.name === w.name);
+      /* Derived, not stored: `note` used to carry "Own-Label
+         Available", which duplicated ownLabel, and "Exclusive", which
+         is the BUYER's own marking on their own list. */
+      const tag = taken ? 'Already on your list' : (w.ownLabel ? 'Own-Label Available' : 'Standard');
       return `<div class="aw-pick-item${taken ? ' taken' : ''}" ${taken ? '' : `onclick="selectWineForAddR('${w.winery.replace(/'/g, "\\'")}','${w.name.replace(/'/g, "\\'")}')"`}>
         <div>
           <div class="aw-pick-name">${w.name} <span style="color:rgba(247,243,238,0.4)">${w.vintage}</span></div>
           <div class="aw-pick-meta">${w.type} · ${w.origin}</div>
         </div>
-        <div class="aw-pick-tag">${taken ? 'Already on your list' : w.note}</div>
+        <div class="aw-pick-tag">${tag}</div>
       </div>`;
     }).join('')}`).join('');
 }
 function selectWineForAddR(winery, name) {
-  rAwSelectedWine = rPartnerWinesPool.find(w => w.winery === winery && w.name === name);
+  const dist = partnershipsOf('Bistro Laurent').map(p => partnerSide(p, 'Bistro Laurent'))
+    .find(n => stakeholder(n).type === 'distributor');
+  rAwSelectedWine = (portfolioOf(dist) || []).find(w => w.winery === winery && w.name === name);
   if (!rAwSelectedWine) return;
   document.getElementById('r-aw-selected-summary').innerHTML =
     `${rAwSelectedWine.name} <span>${rAwSelectedWine.vintage} · ${rAwSelectedWine.winery}</span>`;
@@ -5665,15 +5677,15 @@ function backToPickerR() {
 }
 function confirmAddWineR() {
   if (!rAwSelectedWine) return;
-  const fileGuess = 'bottle-lobby-wine-' + rAwSelectedWine.name.toLowerCase()
-    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') + '.html';
+  /* The record carries its article page. Deriving a slug from the
+     name is the guess A14.4 records: "Müller-Thurgau — Mosel" comes
+     out `m-ller-thurgau`. A reference answers it. */
   rCurrentWineList.push({
     winery: rAwSelectedWine.winery,
     name: rAwSelectedWine.name,
     vintage: rAwSelectedWine.vintage,
     exclusive: document.getElementById('r-aw-exclusive').checked,
-    url: fileGuess
+    url: rAwSelectedWine.url
   });
   renderWineListR();
   closeAddWineModalR();
@@ -5952,22 +5964,7 @@ function openRetailPublicPreview() {
   openEmbedPreview('bottle-lobby-retail-profile.html');
 }
 
-/* ══════════════════════════════════════════════════════════════════
-   WINE SELECTION — pulled from distributor partner, retail never
-   creates wine data or sources directly from a winery
-══════════════════════════════════════════════════════════════════ */
-const tPartnerWinesPool = [
-  { winery:'Hawesko GmbH', name:'Catarratto Biologico', vintage:2023, type:'White', note:'Organic', origin:'Sicilia DOC, Sicily' },
-  { winery:'Hawesko GmbH', name:'Primitivo Sicilia IGT', vintage:2022, type:'Red', note:'Exclusive', origin:'Alcamo DOC, Sicily' },
-  { winery:'Hawesko GmbH', name:'Chardonnay — Chablis Premier Cru', vintage:2022, type:'White', note:'Exclusive', origin:'Chablis, Burgundy' },
-  { winery:'Hawesko GmbH', name:'Sauvignon Blanc — Sancerre', vintage:2023, type:'White', note:'Exclusive', origin:'Loire Valley, France' },
-  { winery:'Hawesko GmbH', name:'Tempranillo — Rioja Crianza', vintage:2021, type:'Red', note:'Standard', origin:'Rioja Alta, Spain' },
-  { winery:'Hawesko GmbH', name:'Riesling Spätlese — Mosel', vintage:2023, type:'White', note:'Standard', origin:'Mosel, Germany' },
-  { winery:'Hawesko GmbH', name:'Rosso di Contrada', vintage:2023, type:'Red', note:'Standard', origin:'Sicilia DOC, Sicily' },
-  { winery:'Hawesko GmbH', name:'Merlot — Bordeaux Supérieur', vintage:2021, type:'Red', note:'Exclusive', origin:'Bordeaux, France' },
-  { winery:'Hawesko GmbH', name:'Château Belrieu Grand Vin', vintage:2019, type:'Red', note:'Standard', origin:'Bordeaux Supérieur AOC, France' },
-  { winery:'Hawesko GmbH', name:'Crémant de Bourgogne', vintage:2022, type:'White', note:'Standard', origin:'Crémant de Bourgogne AOC, France' }
-];
+
 
 let tCurrentWineSelection = [
   { winery:'Henri Dubois Domaine', name:'Sauvignon Blanc — Sancerre', vintage:2023, exclusive:true, url:'bottle-lobby-wine-sauvignon-blanc-sancerre.html' },
@@ -6010,35 +6007,42 @@ function closeAddWineModalT() {
 }
 function renderWinePickerT(search) {
   const list = document.getElementById('t-aw-pick-list');
-  const mine = partnershipsOf('Weinhaus Müller');
-  if (!mine.length) {
+  const dist = partnershipsOf('Weinhaus Müller').map(p => partnerSide(p, 'Weinhaus Müller'))
+    .find(n => stakeholder(n).type === 'distributor');
+  const book = dist ? portfolioOf(dist) : null;
+  if (!book) {
     list.innerHTML = '<div class="aw-empty">No active distributor partnership yet.<br>Send a request from a distributor\'s public profile — once accepted and confirmed, their wine portfolio appears here.</div>';
     return;
   }
   const term = (search || '').toLowerCase();
-  const pool = tPartnerWinesPool.filter(w => mine.some(p => partnerSide(p, 'Weinhaus Müller') === w.winery));
-  const filtered = pool.filter(w => !term || w.name.toLowerCase().includes(term) || w.winery.toLowerCase().includes(term));
+  const filtered = book.filter(w => !term || w.name.toLowerCase().includes(term) || w.winery.toLowerCase().includes(term));
   if (!filtered.length) {
     list.innerHTML = '<div class="aw-empty">No wines match your search.</div>';
     return;
   }
   const groups = {};
   filtered.forEach(w => { (groups[w.winery] = groups[w.winery] || []).push(w); });
-  list.innerHTML = Object.keys(groups).map(winery => `
+  list.innerHTML = Object.keys(groups).sort().map(winery => `
     <div class="aw-pick-group">${winery}</div>
     ${groups[winery].map(w => {
       const taken = tCurrentWineSelection.some(cw => cw.winery === w.winery && cw.name === w.name);
+      /* Derived, not stored: `note` used to carry "Own-Label
+         Available", which duplicated ownLabel, and "Exclusive", which
+         is the BUYER's own marking on their own list. */
+      const tag = taken ? 'Already in your selection' : (w.ownLabel ? 'Own-Label Available' : 'Standard');
       return `<div class="aw-pick-item${taken ? ' taken' : ''}" ${taken ? '' : `onclick="selectWineForAddT('${w.winery.replace(/'/g, "\\'")}','${w.name.replace(/'/g, "\\'")}')"`}>
         <div>
           <div class="aw-pick-name">${w.name} <span style="color:rgba(247,243,238,0.4)">${w.vintage}</span></div>
           <div class="aw-pick-meta">${w.type} · ${w.origin}</div>
         </div>
-        <div class="aw-pick-tag">${taken ? 'Already in your selection' : w.note}</div>
+        <div class="aw-pick-tag">${tag}</div>
       </div>`;
     }).join('')}`).join('');
 }
 function selectWineForAddT(winery, name) {
-  tAwSelectedWine = tPartnerWinesPool.find(w => w.winery === winery && w.name === name);
+  const dist = partnershipsOf('Weinhaus Müller').map(p => partnerSide(p, 'Weinhaus Müller'))
+    .find(n => stakeholder(n).type === 'distributor');
+  tAwSelectedWine = (portfolioOf(dist) || []).find(w => w.winery === winery && w.name === name);
   if (!tAwSelectedWine) return;
   document.getElementById('t-aw-selected-summary').innerHTML =
     `${tAwSelectedWine.name} <span>${tAwSelectedWine.vintage} · ${tAwSelectedWine.winery}</span>`;
@@ -6054,15 +6058,15 @@ function backToPickerT() {
 }
 function confirmAddWineT() {
   if (!tAwSelectedWine) return;
-  const fileGuess = 'bottle-lobby-wine-' + tAwSelectedWine.name.toLowerCase()
-    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') + '.html';
+  /* The record carries its article page. Deriving a slug from the
+     name is the guess A14.4 records: "Müller-Thurgau — Mosel" comes
+     out `m-ller-thurgau`. A reference answers it. */
   tCurrentWineSelection.push({
     winery: tAwSelectedWine.winery,
     name: tAwSelectedWine.name,
     vintage: tAwSelectedWine.vintage,
     exclusive: document.getElementById('t-aw-exclusive').checked,
-    url: fileGuess
+    url: tAwSelectedWine.url
   });
   renderWineSelectionT();
   closeAddWineModalT();
