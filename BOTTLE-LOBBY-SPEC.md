@@ -2606,6 +2606,7 @@ Diagnosed 30 July 2026 after repeated `403 Resource not accessible by integratio
 | Multi-file changes | Python scripting in the container, then push |
 | JS verification | `cd tests && npm test` — structural checks and DOM harnesses in one run (jsdom) |
 | Test harnesses | `tests/` in the repo root |
+| Browser acceptance | `node tests/serve.js` → `http://localhost:8765`. Never `python3 -m http.server` — see "Browser acceptance" below |
 | Prototype persistence | `localStorage` via `assets/bottle-lobby-store.js` — demo only, see C8 |
 
 **Harnesses live in `tests/`, never in a scratchpad.** They load the real
@@ -2664,6 +2665,54 @@ of the "usual checks" is one command and nothing is re-derived by hand.
 >    crash into a shorter string. The file would then be certified against a
 >    bug it cannot see — worse than no check, because it reads as safety.
 >    Put the defect back in its **shipped shape**, line for line.
+
+### Browser acceptance: serve it with `tests/serve.js`, and read `transferSize`
+
+    node tests/serve.js     → http://localhost:8765
+
+**Not `python3 -m http.server`.** Python sends `Last-Modified` and no
+`Cache-Control` at all, and a response carrying no freshness information may be
+cached *heuristically* (RFC 9111 §4.2.2) — commonly 10% of the age since
+Last-Modified — and served **without any request reaching the server**. Edit an
+asset, reload inside that window, and the browser hands back the old file.
+
+The failure has a shape worth recognising, because it cost three wrong findings
+in one day and each one looked like a code regression:
+
+- `bottle-lobby-dashboard.html` is 660 KB and leaves the heuristic window
+  quickly; `assets/bottle-lobby-data.js` is 17 KB and does not. So **the page
+  comes back new and its data comes back old** — a state no amount of reading
+  the source can account for.
+- **A query string on the page does not reach the assets.** `?v=abc` changes the
+  address of the HTML; the `<script src="assets/bottle-lobby-data.js">` inside
+  it is unchanged, and that is the URL the cache is keyed on.
+- The symptom is a renderer that silently produces nothing, because the new
+  page calls a function the old asset does not define.
+
+`tests/serve.js` sends `no-store` on every response — deliberately stricter than
+production. Local acceptance must never be the reason a finding is wrong.
+
+**The live site does not have this problem, measured rather than assumed.**
+Netlify serves every file, assets included, with:
+
+    cache-control: public,max-age=0,must-revalidate
+
+`max-age=0` makes a response stale immediately and `must-revalidate` forbids
+serving it without asking, so a deploy is picked up on the next load and the
+ETag turns the check into a 304. **Do not add version stamps to the asset URLs.**
+They would buy nothing here and cost a hash maintained by hand in 17 HTML files
+— the same value copied in many places, which is invariant 1.
+
+**Before reporting any browser finding, check what was actually transferred:**
+
+    performance.getEntriesByType('resource')
+      .filter(r => /assets\//.test(r.name))
+      .map(r => [r.name.split('/').pop(), r.transferSize, r.decodedBodySize])
+
+`transferSize: 0` means it never left the cache. A few hundred bytes against a
+much larger `decodedBodySize` means a 304 — the server was asked and said
+nothing changed. Only a transfer near the decoded size is a fresh copy. A
+measurement taken without this check is a measurement of the cache.
 
 ### A narrative that survives two corrections without being checked is not a diagnosis
 

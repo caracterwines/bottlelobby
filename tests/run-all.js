@@ -8,8 +8,10 @@ const fs = require('fs');
 /* Static checks first: if the file is structurally broken, that is the
    more useful message than a cascade of harness failures. */
 /* `load-dashboard.js` is a shared module, not a harness: running it does
-   nothing and would exit 0, which would read as a passing check. */
-const NOT_HARNESSES = ['run-all.js', 'load-dashboard.js'];
+   nothing and would exit 0, which would read as a passing check.
+   `serve.js` is worse than that — it listens, so running it here would
+   hang the suite forever rather than pass falsely. */
+const NOT_HARNESSES = ['run-all.js', 'load-dashboard.js', 'serve.js'];
 const files = fs.readdirSync(__dirname)
   .filter(f => f.endsWith('.js') && !NOT_HARNESSES.includes(f))
   .sort((a, b) => (a === 'check-static.js' ? -1 : b === 'check-static.js' ? 1 : a.localeCompare(b)));

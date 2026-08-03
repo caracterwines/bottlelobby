@@ -23,6 +23,52 @@ Kein Build-Command, Publish-Directory = Repo-Root.
 
 ## Zuletzt abgeschlossen
 
+- **03.08.: Der Cache-Punkt ist gefunden — und er saß nicht dort, wo wir ihn
+  vermutet haben. Neu: `tests/serve.js`. Spec C7 um „Browser acceptance"
+  ergänzt.** Ein Commit.
+  **Serges Messung war der Schlüssel:** `bottle-lobby-data.js`, 17 KB groß,
+  **300 B übertragen** — der Browser hat seine eigene alte Fassung benutzt. Und
+  seine Diagnose des Mechanismus stimmt genau: **ein `?v=`-Stempel an der
+  HTML-URL erreicht die Assets nicht**, weil die `script src`-Zeile darin
+  unverändert `assets/bottle-lobby-data.js` lautet — und genau diese URL ist
+  der Cache-Schlüssel.
+  **Die Ursache liegt aber im lokalen Server, nicht im Deploy. Gemessen:**
+
+  | | Cache-Control |
+  |---|---|
+  | Netlify (live), **alle** Dateien inkl. Assets | `public,max-age=0,must-revalidate` |
+  | `python3 -m http.server` | **keiner** — nur `Last-Modified` |
+
+  Ohne Freshness-Angabe darf ein Browser **heuristisch** cachen (RFC 9111
+  §4.2.2, üblich 10 % der Zeit seit `Last-Modified`) und liefert dann aus, **ohne
+  den Server überhaupt zu fragen**. Live gilt das Gegenteil: `max-age=0` macht
+  jede Antwort sofort veraltet, `must-revalidate` verbietet das Ausliefern ohne
+  Rückfrage. **Ein Push wird beim nächsten Laden zwingend mitgenommen.**
+  **Deshalb keine Versionsstempel an den Asset-URLs** — sie brächten live
+  nichts und kosteten einen von Hand gepflegten Hash in 17 HTML-Dateien, also
+  denselben Wert an vielen Orten (Invariante 1). Serges Auftrag lautete
+  stempeln, die Messung ergibt: am Live-Deploy ist nichts zu reparieren.
+  **Warum die Fehlmessung so überzeugend aussah:** das Dashboard ist 660 KB und
+  fällt schnell aus dem Heuristik-Fenster, `data.js` mit 17 KB nicht. **Die
+  Seite kam neu zurück und ihre Daten alt** — ein Zustand, den kein Blick in den
+  Quelltext erklärt, und der aussieht wie ein Regressionsfehler in genau dem
+  Code, den man gerade geschrieben hat. Das Symptom war ein Renderer, der still
+  nichts produziert, weil die neue Seite eine Funktion ruft, die das alte Asset
+  nicht kennt.
+  **`tests/serve.js`** schickt `no-store` auf jede Antwort — bewusst strenger
+  als die Produktion. Blockt `tests/` wie `netlify.toml` es live tut, und weist
+  Pfadausbrüche auch in kodierter Form ab (beides gegengeprüft: 404 / 403).
+  In `NOT_HARNESSES` eingetragen, sonst würde `run-all.js` ihn starten und die
+  Suite hinge für immer.
+  **Gegenprobe im Browser:** Asset geändert **ohne** Cache-Buster, normaler
+  Reload → `transferSize 17.856 B`, Marker vorhanden. Vorher lieferte derselbe
+  Ablauf die alte Fassung.
+  **Und die Regel, die Serge sich selbst notiert hat, steht jetzt in C7:** vor
+  jedem Browser-Befund `performance.getEntriesByType('resource')` lesen.
+  `transferSize: 0` heißt, es kam nie aus dem Netz; ein paar hundert Byte gegen
+  eine große `decodedBodySize` heißt 304. Nur eine Übertragung nahe der
+  dekodierten Größe ist eine frische Fassung. **Eine Messung ohne diese Prüfung
+  ist eine Messung des Caches.**
 - **03.08.: Das Show-Subsystem auf ISO gebracht, und `assertISO` entdeckt jetzt
   statt aufzuzählen. Spec C7 um zwei Regeln ergänzt.** Fünf Schritte, in dieser
   Reihenfolge, weil die Reihenfolge der Punkt war.
