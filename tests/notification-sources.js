@@ -176,6 +176,68 @@ console.log('\n── every date field in every collection, rendered or not');
   else ok('no date field in the source is written as display text');
 }
 
+/* ── 3c. MARKER — the wine-show subsystem is on display format ────
+   ═══════════════════════════════════════════════════════════════════
+   The sweep above covers orders, partnerships and the follow graph.
+   It does NOT cover wineShows, and that is not an oversight being
+   hidden — it is a scope being recorded, because the whole subsystem
+   is on the other format:
+
+     events[].at 35 · attendees[].at 8 · interests[].at 7 ·
+     date 6 · venueQuotedAt 2 · venueAcceptedAt 1   =  59 fields,
+     ZERO of them ISO
+
+   It is not a mix of migrated and unmigrated rows. `SHOW_TODAY` is
+   itself `'31 Jul 2026'`, so logShow() and writeInterest() write
+   display format today as well: the subsystem was simply never part
+   of the ISO migration, source included.
+
+   Converting only some of it is worse than either end state. The two
+   parsers do not agree: notifTime() accepts both formats, while
+   showDateValue() in assets/bottle-lobby-public-shows.js matches the
+   display format alone and returns MAX_SAFE_INTEGER for anything
+   else — an ISO show date would not throw there, it would sort last
+   and quietly reorder the public "What's Coming" list. A half
+   migration therefore breaks nothing visibly and leaves nobody able
+   to say which format is canonical.
+
+   ┌─────────────────────────────────────────────────────────────────┐
+   │ IF THIS FAILS, READ WHICH WAY IT FAILED.                        │
+   │  · "partially converted" — the subsystem is now MIXED. Finish   │
+   │    the pass or revert it; do not adjust the number here.        │
+   │  · "fully converted" — the pass has landed. DELETE this marker  │
+   │    and add the wineShows fields to the sweep in 3b instead.     │
+   └─────────────────────────────────────────────────────────────────┘
+   ═══════════════════════════════════════════════════════════════════ */
+console.log('\n── marker: the wine-show subsystem never joined the ISO migration');
+{
+  const shows = w.eval('typeof wineShows === "undefined" ? null : JSON.parse(JSON.stringify(wineShows))');
+  if (!Array.isArray(shows)) bad('`wineShows` is not an array — this marker cannot report on it');
+  else {
+    let iso = 0, disp = 0;
+    const count = v => { if (v == null) return; ISO.test(v) ? iso++ : disp++; };
+    shows.forEach(s => {
+      count(s.date); count(s.venueQuotedAt); count(s.venueAcceptedAt);
+      (s.events    || []).forEach(e => count(e.at));
+      (s.attendees || []).forEach(a => count(a.at));
+      (s.interests || []).forEach(i => count(i.at));
+      (s.exhibitors || []).forEach(x => { count(x.at); (x.products || []).forEach(p => count(p.at)); });
+    });
+    const todayIsIso = ISO.test(w.eval('typeof SHOW_TODAY === "undefined" ? "" : SHOW_TODAY'));
+    if (iso === 0 && !todayIsIso)
+      ok('all ' + disp + ' wine-show date fields are still display format, and SHOW_TODAY with them — one format, wrong one, own pass (HANDOFF)');
+    else if (disp === 0 && todayIsIso)
+      bad('MARKER FELL — the wine-show subsystem is fully converted (' + iso + ' ISO fields). ' +
+          'The pass has landed: DELETE this marker and fold the wineShows fields into the sweep in section 3b.');
+    else
+      bad('PARTIALLY CONVERTED — ' + iso + ' ISO and ' + disp + ' display-format fields' +
+          (todayIsIso ? ', SHOW_TODAY already ISO' : ', SHOW_TODAY still display format') +
+          '. This is the one state worse than either end: showDateValue() in ' +
+          'assets/bottle-lobby-public-shows.js reads display format only and sorts anything else last, ' +
+          'silently. Finish the pass or revert it — do not adjust this number.');
+  }
+}
+
 /* ── 4. One formatter, not four ─────────────────────────────────── */
 console.log('\n── ISO dates go through one formatter');
 {
