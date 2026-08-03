@@ -4,7 +4,7 @@
 > Dateiliste, Dateianzahl und Aenderungshistorie stehen in der Git-Historie — nicht hier.
 > Dauerhafte Regeln stehen in `BOTTLE-LOBBY-SPEC.md`, kurze Invarianten in `CLAUDE.md` — nicht hier.
 
-**Letzte Aktualisierung:** 2. August 2026
+**Letzte Aktualisierung:** 3. August 2026
 
 ---
 
@@ -23,6 +23,66 @@ Kein Build-Command, Publish-Directory = Repo-Root.
 
 ## Zuletzt abgeschlossen
 
+- **03.08.: Messages-Kette, Durchgang 2c — zwei A8-Kaufanlaesse. Spec C9 und A8
+  nachgezogen.** Drei Commits. „Ein Winzer, dem ich folge, hat jetzt einen
+  Distributor" (in A8 seit dem 02.08. als offener Fall notiert) und „ein neuer
+  Wein". Beide sind fuer Restaurant und Retail der Moment, in dem etwas
+  bestellbar wird.
+  **Eine Beziehungsfrage, eine Antwort:** `notifWineryEdge(me, winery)` — Follow
+  oder aktive Partnerschaft —, gefragt von beiden Quellen. Dieselbe Disziplin wie
+  `notifHasEdge()`, aus demselben Grund.
+  **Die Entscheidung des Durchgangs, und sie steht jetzt in C9: Bedingung 2 hat
+  ein Anfangsdatum.** `notifWineryEdge()` liefert deshalb das Datum, nicht ein
+  Ja/Nein. Ein Ereignis vor dem Beginn meiner Beziehung hat meine Beziehung nicht
+  beruehrt, weil es sie nicht gab — ein Wein von 2025 ist fuer jemanden, der 2026
+  zu folgen begann, kein Ereignis, sondern Katalog. **Kein Recency-Filter:** ein
+  Filter waere eine Annahme darueber, wie lange etwas interessant bleibt, und die
+  hat niemand ausgesprochen. Fuer die Supply-Zeile ist es zusaetzlich schlicht
+  der Wahrheitsgehalt des Satzes — wer schon einen Distributor hatte, hat
+  nicht *jetzt* einen. Ohne die Schranke bekaeme der Distributor alle 19
+  Poolweine auf einmal; gemessen, nicht geschaetzt.
+  **Die Felder, die vorher fehlten:** `partnerWinesPool` hatte kein Datum (Actor
+  braucht es keines — der Winzer besitzt den Datensatz, Invariante 2),
+  `activePartners` hatte nur `since:'March 2026'` als Anzeigetext. Jetzt `at` in
+  ISO, gerendert ueber `orderDate()`, plus `activatedBy` — die Aktivierung ist
+  eine Staff-Bestaetigung (Invariante 6), und den Actor in der Ableitung zu
+  erfinden waere genau das, was C9 einer Quelle verbietet.
+  **Ziele:** Supply → das A13-Embed des echten Winzerprofils, durch denselben
+  `{type:'profile'}`-Zweig wie die Follow-Zeilen (die Entscheidungsstelle heisst
+  `notifDestination()`, nicht `notifTarget()`). Wein → Link aus dem `url`-Feld,
+  neuer Tab, kein Popup. Weil eine Weinzeile damit **kein** Ziel hat, konnte sie
+  nur ueber „Mark all as read" verschwinden — der Link-Klick zaehlt jetzt als
+  gelesen.
+  **Demo-Ergebnis, gemessen:** Distributor 23 → 27, Restaurant 15 → 17, Retail
+  10 → 13, Winzer unveraendert 13 (keine Winzer-Kante, und die eigenen Weine
+  nimmt Bedingung 1 raus). Baglio Rosso erreicht Bistro Laurent und **nicht**
+  Weinhaus Mueller, weil er zwischen den beiden Follow-Daten aufgenommen wurde.
+  Bistro Laurent bekommt **keine** Supply-Zeile: Cantina Rossi hatte schon einen
+  Distributor, Château Belrieu hat bis heute keinen — der Invariante-3-Leerfall,
+  absichtlich stehengelassen statt wegfixturiert.
+  **`tests/notifications.js` — 16 statt 13 Abschnitte, zehn Mutationen einzeln
+  rot gesehen.** Die Leck-Pruefung rechnet die erlaubte Menge **im Harness** aus
+  `wineFollowGraph` und `activePartners` aus, statt `notifWineryEdge()` zu
+  fragen: unter genau der Mutation, gegen die sie steht, waere die Frage
+  zirkulaer — gruen und falsch zugleich. Ein Test darf zweitableiten, nur das
+  Produkt braucht eine Antwort.
+  **Zwei Befunde beim Verifizieren:** (1) die **Rollen-Schranke am Supply-Zweig
+  war unbeobachtbar** — sie zu entfernen aenderte nichts, weil kein Winzer und
+  kein Distributor einem Winzer folgt, dessen Partnerschaft spaeter kam. Der Test
+  baut den Zustand jetzt selbst; sonst liest sich der Riegel als toter Code und
+  faellt beim naechsten Aufraeumen raus (derselbe Befundtyp wie „platzierbar =
+  bestellt" in A16.12). (2) die Zusicherung „jede Zeile nennt ein Ziel" waere an
+  jeder Weinzeile rot geworden — **ersetzt, nicht gelockert**: kein Ziel ist nur
+  noch dann zulaessig, wenn die Zeile einen Wein traegt, und genau daran faellt
+  eine Supply-Zeile ohne Ziel auf.
+  Erwaehnenswert: die Mutation „url aus dem Namen raten" erzeugt
+  `bottle-lobby-wine-m-ller-thurgau-mosel.html` — Invariante 4, reproduziert.
+  **Abnahme im echten Chrome** (lokaler Server, ueber die Knoepfe): die drei neuen
+  Zeilen stehen bei Retail unter „For information"; Klick auf die Supply-Zeile
+  laedt `bottle-lobby-winery-bodegas-ruiz.html?preview=embed`, Badge 13 → 12;
+  Klick auf „View wine →" oeffnet den Artikel in einem echten neuen Tab **und**
+  zaehlt als gelesen, Badge 12 → 11; nach F5 Badge 11, die zwei geoeffneten
+  Zeilen gelesen, die dritte weiter ungelesen. Keine Konsolenfehler.
 - **02.08.: Messages-Kette, Durchgang 2b — die Oberflaeche. Spec C9 bekommt den
   Abschnitt „The surface".** Drei Commits, jeder einzeln im Browser gegengeprueft.
   **Nav + Unteransicht + Badge:** „Notifications" ueber „Messages" in allen vier
@@ -526,6 +586,27 @@ Geschaeftsgrund gibt — und den dann zuerst in die Spec, nicht in den Code.
 Popup und Widget-Ersatz sind gebaut, `tests/notifications.js` haelt sie mit
 sechs Gegenproben. Der Abnahmeweg ist im echten Chrome ueber die Knoepfe
 gefahren, nicht ueber die Konsole. Details unter „Zuletzt abgeschlossen".
+
+**▶ ERLEDIGT: Durchgang 2c — die zwei A8-Kaufanlaesse.** Details unter „Zuletzt
+abgeschlossen". Zwei Dinge sind dabei offen geblieben und gehoeren nicht in
+diesen Durchgang:
+
+- **`wineryPartners` ist dieselbe Beziehung ein zweites Mal.** Cantina
+  Rossi–Hawesko steht sowohl in `activePartners` (Distributor-Sicht) als auch in
+  `wineryPartners` (Winzer-Sicht) — ein **A1-Verstoss, der schon vorher da war**
+  und den ich nicht angefasst habe. Die Supply-Quelle liest bewusst **nur**
+  `activePartners`, weil beide zu lesen hiesse, die Kopie als legitim zu
+  behandeln. Praktische Folge heute: nur die erste Partnerschaft eines Winzers
+  wird gesehen — was fuer diese Meldung ohnehin die richtige Koernung ist („hat
+  *jetzt* einen Distributor" ist ein Ereignis, kein Zaehler). Beide Listen aus
+  einer Tabelle abzuleiten geht nicht nebenbei: sie mischen Beziehungsdaten mit
+  Profildaten (Avatar, Region, URL), also braucht es zuerst eine
+  Stakeholder-Stammtabelle. **Eigener Durchgang.**
+- **`wineryPartners`, `rActivePartners` und `tActivePartners` tragen weiter
+  `since:'March 2026'`** als Anzeigetext. Nur `activePartners` ist auf `at`
+  umgestellt, weil nur diese Liste abgeleitet wird. Auf dem Schirm stehen damit
+  in den Partnerlisten zwei Datumsformate nebeneinander — kein Defekt, aber es
+  gehoert beim naechsten Anfassen dieser Arrays mitgezogen.
 
 **▶ NAECHSTES aus dieser Kette: Feature (b), Korrespondenz — und zwar erst,
 wenn die Geschaeftsfrage beantwortet ist.** Die vier `Messages`-Nav-Eintraege

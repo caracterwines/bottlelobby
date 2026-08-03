@@ -289,7 +289,9 @@ All same-type pairings follow the same 4-stage partnership workflow (A6).
 
 **Key cross-referencing use case:** If a Distributor sees that one of their own Restaurant/Retail partners follows a Winery they don't yet carry, but another Distributor already has that Winery under contract, the first Distributor can request a Distributor↔Distributor partnership with the second specifically to pull that Winery's wines into their own portfolio (referenced, never duplicated).
 
-**The same relation read from the follower's end — open, not yet built.** The case above is written from the Distributor's side only. The other direction is a match in its own right: **"a winery I follow now has a distributor."** For a Restaurant that means a wine it could not source until now has become orderable — the supply chain has no shortcuts (invariant 3), so a followed winery without a distributor partner is exactly a wine out of reach. The trigger is a new `active` partnership on a winery somebody follows, which is the follow graph (A7) and the partnership stage (A6) read together; both exist.
+**The same relation read from the follower's end — built as a notification (C9).** The case above is written from the Distributor's side only. The other direction is a match in its own right: **"a winery I follow now has a distributor."** For a Restaurant that means a wine it could not source until now has become orderable — the supply chain has no shortcuts (invariant 3), so a followed winery without a distributor partner is exactly a wine out of reach. The trigger is a new `active` partnership on a winery somebody follows, which is the follow graph (A7) and the partnership stage (A6) read together; both exist.
+
+It is a **notification, not a list to visit** — see C9, which also carries the second signal of the same shape ("a new wine" at a producer I partner with or follow) and the rule that both must ask one function whether a relation exists. Matchmaking proper is still unbuilt; these two are its first arrivals.
 
 Note that *"a winery I follow is exhibiting at a show"* is **not** part of this — it already exists as the "From Your Stars" feed (A16.7) and needs nothing here.
 
@@ -2690,6 +2692,28 @@ This is why notifications are derived **per relation**, not by forwarding an
 object's event log to everyone attached to that object. Deriving from a shared
 log is exactly the mistake condition 2 rules out.
 
+#### Condition 2 has a start date
+
+An event that happened **before my relation existed** did not touch my relation,
+because there was none. A wine added to a producer's range in 2025 is not news to
+somebody who started following in 2026 — it is catalogue, and the producer's page
+has carried it all along.
+
+This is **not a recency filter**, and the difference is the point. A filter is a
+guess about how long something stays interesting, and nobody has stated one; the
+bound falls out of condition 2 itself and therefore needs no rule of its own. For
+"a winery I follow now has a distributor" it is also simply what the sentence
+says: a producer who already had a distributor when I started following does not
+*now* have one.
+
+In practice this is what stops a new relation from opening with a wall of back
+catalogue — without anyone having to decide how many rows is too many.
+
+> **It follows that every relation must carry the date it began.** The follow
+> graph gained `at` for this (A7); an active partnership carries the day it was
+> confirmed. A relation with no start date cannot bound anything, and the failure
+> is silent in the usual direction: everything gets through.
+
 ### Two classes, both notifications
 
 | Class | Meaning | Derived from |
@@ -2736,6 +2760,31 @@ the regional class A8's first real application.
 > the exhibitor, not the viewer** (A16.6); who is looking, and why, does not enter
 > into it. Resolving "they asked for it, so they may see more" would be the
 > silent A16.6 leak this whole section exists to prevent.
+
+### The two A8 signals — something became buyable
+
+Two sources exist for the demand side alone, and both are A8 matches arriving
+rather than events being forwarded (A8, "a surface where matches arrive").
+
+| Source | Who it reaches | Why it is a notification and not noise |
+|---|---|---|
+| **"A winery I follow now has a distributor"** | Whoever follows that producer **and is a Restaurant or Retailer** | Invariant 3 is what makes it news: they source exclusively through a distributor, so a followed producer without one is a range they cannot reach at all. The moment a partnership goes `active`, that range becomes orderable for the first time. |
+| **"A new wine"** | Whoever has a relation to that producer — an **active partnership or a follow** | Condition 2, unchanged: a new wine at *any* producer is nobody's notification. |
+
+**Both must ask one and the same question** — "do I have a relation to this
+producer, and since when?" A second function answering it is a second answer, and
+the wider one wins silently; this is the mistake condition 2 already cost us once.
+The same function supplies the start date the bound above needs.
+
+**The supply signal is the demand side's only.** A distributor hearing that a
+producer they follow has signed with somebody else is a different sentence and
+does not belong here. Note that this gate is easy to leave untested — it is
+covered by construction as long as no producer or distributor happens to follow a
+producer who signs later, and a bolt nobody can trip reads as dead code.
+
+The wine row follows the destination table below: **a plain link from the
+product's `url`, new tab, no popup**, and a product with no article page is named
+and not linked.
 
 ### The surface — and the one rule that is load-bearing
 
@@ -2784,6 +2833,16 @@ promised "X started following you" could not be placed in time; and partnership
 requests carried a third date format. `tests/notification-sources.js` holds these
 open, because a missing field is invisible at the notification end — the event
 simply never appears, and an empty list looks like a quiet day.
+
+The two A8 sources cost two more, for the same reason:
+
+- **A product carries the day it was added to the range.** The actor needs no
+  field — the producer owns the record (invariant 2), so the actor *is* the
+  producer.
+- **An active partnership carries the day it was confirmed and by whom.** The
+  "whom" is not either party: activation is a manual confirmation by Bottle Lobby
+  staff (invariant 6), and putting that in the record rather than assuming it in
+  the derivation is exactly what this section asks of a source.
 
 **The one thing that is genuinely stored: the read marker.** Whether I have seen
 something cannot be derived from the events. It is not an inbox — it is a
