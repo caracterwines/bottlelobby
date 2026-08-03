@@ -295,6 +295,12 @@ than a display string, and `activated_by` — because a partnership goes active
 on a manual Bottle Lobby confirmation (invariant 6), and a notification derived
 from it must not invent who did that (C9).
 
+> **A partnership added after the fact cannot start after the first sale made
+> through it** — that is the same contradiction one step quieter. When a
+> relation is backfilled, the earliest record depending on it is the ceiling
+> for its date. The general rule and the procedure are in **C7**; it applies to
+> any master row added retroactively, not only to partnerships.
+
 **A figure on a partner card is counted, never stored** (invariant 7). The row
 holds the relation and nothing else: who, when, who activated it. Every number
 beside it — how many of a producer's wines a distributor carries, how many
@@ -2658,6 +2664,44 @@ of the "usual checks" is one command and nothing is re-derived by hand.
 >    crash into a shorter string. The file would then be certified against a
 >    bug it cannot see — worse than no check, because it reads as safety.
 >    Put the defect back in its **shipped shape**, line for line.
+
+### Backfilling master data: the earliest dependent event is the ceiling
+
+When a record is added **retroactively** — a relation that should always have
+existed, a master row something already points at — its date is not free. It
+must be **on or before the earliest event that depends on it.**
+
+A partnership that begins *after* the first sale made through it is not a
+repair. It is the same contradiction one step quieter: the goods still moved
+before the relation existed, and now the dataset asserts both. The version that
+is easy to miss is the one where the numbers look plausible and only the
+ordering is wrong, because nothing renders the comparison.
+
+So the procedure when filling a gap in master data is:
+
+1. **Find every record that already depends on the missing one** — orders,
+   events, follow edges, log entries — before choosing a date. That set is
+   usually larger than the one that exposed the gap: the Château Belrieu
+   partnership surfaced through one order and there were two.
+2. **Take the earliest of them as the ceiling.**
+3. **Look for a floor as well.** Related records often pin the date from below,
+   which turns an invention into a deduction. Château Belrieu began following
+   Hawesko on 28 Jun 2026 and the earlier of the two orders was placed on 2 Jul
+   2026, so the activation date was chosen from a two-day window rather than
+   from nothing.
+4. **Say in the record itself that the date is fixture authorship,** and say
+   what pins it. Both such dates in this prototype carry that note — Enoteca
+   Milano ↔ Cantina Rossi, and Château Belrieu — so that a later reader can
+   tell an invented date from a measured one.
+
+This is not a partnership rule; it applies to any master row added after the
+fact. It is recorded here rather than in A6 for that reason.
+
+**Check it against the whole set, not the row you just wrote.** A single
+backfilled row is easy to reason about; the assurance worth having is that
+*every* relation still precedes its first dependent event. In this prototype
+all ten partnerships do, and the tightest is Weingut Schmitt — active 6 Jul
+2026, first order 21 Jul 2026.
 
 `tests/` is excluded from the deployed site in `netlify.toml` — the publish
 directory is the repo root, so everything committed is served unless blocked.

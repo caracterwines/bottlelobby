@@ -763,30 +763,75 @@ Ableitungsfrage — deshalb lag sie nicht im Zahlen-Durchgang.
 ist nachgetragen, siehe „Zuletzt abgeschlossen". Damit hat der Merge keine
 Invariante-3-Blutung mehr unter sich; er bleibt ein reiner A1/Invariante-2-Fall.
 
+**⚠ Beim Zusammenführen ausdrücklich mitnehmen — die Zeile „Château Belrieu ·
+0 wines in your portfolio".** Serges Abnahmebefund, und er ist richtig: es ist
+genau die Aussage, die bei Enoteca Milano bewusst vermieden wird. Der
+Unterschied ist echt und trägt — Enoteca **führt kein Buch** (`null`, kein
+Zähler), Hawesko **führt eins und es enthält keinen Belrieu-Wein** (`0`, eine
+wahre Zählung) — aber neben **zwei Bestellungen über zusammen 156 Flaschen
+Belrieu-Wein** liest sich die Null schief. Der Grund ist der Bruch selbst: die
+Weine stehen im **Käufer-Pool**, nicht im Portfolio, und verkauft wird aus dem
+Pool. **Sobald es ein Buch gibt, verschwindet die Zeile von allein** — Merlot
+— Bordeaux Supérieur und Château Belrieu Grand Vin wandern hinein und die Karte
+zählt 2 statt 0. Die Null ist damit **kein Sonderfall, der eine eigene Regel
+braucht, sondern der sichtbarste Beleg für diesen Durchgang** — bitte nach dem
+Merge nachsehen, dass sie weg ist, statt sie vorher wegzuformulieren.
+
 `tests/partner-counts.js` Abschnitt 7 fällt an dem Tag um, an dem die Bücher
 eins sind — die Markierung ist absichtlich so gebaut, dass der Durchgang seine
 eigene Landung meldet.
 
-### ▶ Die KPI-Kacheln (Invariante 7, aber zuerst eine Geschäftsfrage)
+### ▶ Die KPI-Kacheln — vollständig vermessen 03.08., Entscheidung offen
 
-**Ungefragt mitgemessen im Zahlen-Durchgang**, weil es derselbe Fehlertyp und
-die größte verbliebene falsche Zahl ist:
+Alle **16** Kacheln (vier je Rolle) einzeln geprüft: ist der Wert aus einer
+vorhandenen Tabelle ableitbar, und was käme dann heraus?
 
-| Rolle | Kachel | Steht | Zählbar |
-|---|---|---|---|
-| Distributor | Active Wineries | **12** | 5 Winzerpartnerschaften |
-| Distributor | Own-Label SKUs | 5 | 3 |
-| Restaurant | Wines on List | 14 | 3 |
-| Restaurant | Exclusive Wines | 6 | 3 |
-| Retail | Exclusive Wines | 18 | 3 |
-| Winzer | Wines Listed | 6 | 9 im Pool / 1 gelistet, je nach Lesart |
+**Ergebnis: 12 von 16 wären ableitbar, 4 sind reine Erfindung.**
+**Kein einziges der 16 Deltas ist ableitbar** — es gibt nirgends eine Zeitreihe.
 
-**Warum es kein reiner Ableitungs-Durchgang ist:** dieselben vier Kacheln tragen
-„Profile Views 1.240", „Bottles Moved 180k" und „Avg. Margin 68%", die aus
-keiner Tabelle kommen können, und **jede Kachel trägt zusätzlich ein erfundenes
-Delta** („↑ +1 since last month") — eine zweite erfundene Zahl, die auch eine
-korrekte Zählung nicht liefert. Ob auf der Demo Schaufensterzahlen stehen
-dürfen, ist eine Geschäftsentscheidung. Die gehört zuerst in die Spec.
+| Rolle | Kachel | Steht | Ableitbar | Wäre | Anmerkung |
+|---|---|---|---|---|---|
+| Distributor | Active Wineries | **12** | ja | **6** | exakt aus `partnerships` |
+| Distributor | Own-Label SKUs | 5 | ja | **3** | exakt aus `currentWinePortfolio` |
+| Distributor | Bottles Moved | 180k | ja | **348 Fl.** | zählbar, Größenordnung weit weg |
+| Distributor | Restaurant Clients | 850+ | ja | **3** | erkennbar eine Marktzahl, keine Plattformzahl |
+| Winzer | Wines Listed | 6 | ja | **9** oder **1** | „listed" ist zweideutig: eigenes Sortiment vs. bei einem Distributor gelistet |
+| Winzer | Bottles in Distribution | 24k | ja | **1.428 Fl.** | zählbar, Größenordnung weit weg |
+| Winzer | Profile Views | 1.240 | **nein** | — | Besucherzählung, ohne Analytics nicht einmal denkbar |
+| Winzer | Distributor Matches | 4 | **nein** | — | „Match" ist ein A8-Vorschlag, den es als Datensatz nicht gibt (Partnerschaften wären 2 — andere Frage) |
+| Restaurant | Wines on List | 14 | ja | **3** | exakt aus `rCurrentWineList` |
+| Restaurant | Exclusive Wines | 6 | ja | **3** | exakt |
+| Restaurant | Bottles This Month | 320 | ja* | **108 Fl.** | *„this month" braucht ein Bezugsdatum, das der Prototyp nicht hat |
+| Restaurant | Avg. Margin | 68% | **nein** | — | braucht den Verkaufspreis des Restaurants; existiert nirgends |
+| Retail | Exclusive Wines | 18 | ja | **3** | exakt aus `tCurrentWineSelection` |
+| Retail | Events Planned | 3 | ja | **2** | zählbar aus `wineShows` |
+| Retail | Bottles This Month | 240 | ja* | **240 Fl.** | trifft zufällig genau zu, aber ohne Monatsbezug |
+| Retail | Avg. Margin | 62% | **nein** | — | wie oben |
+
+**Drei Muster, die die Entscheidung tragen:**
+
+1. **Acht Kacheln sind exakt zählbar und schlicht falsch** (Active Wineries,
+   Own-Label SKUs, beide Exclusive Wines, Wines on List, Events Planned,
+   Wines Listed, Restaurant Clients). Hier ist Ableiten reine Mechanik.
+   „Active Wineries **12**" gegen tatsächlich **6** ist die größte falsche Zahl,
+   die noch steht — und in der Demo die am leichtesten nachzuzählende.
+2. **Vier Kacheln sind Schaufensterzahlen** (Profile Views, Avg. Margin ×2,
+   Distributor Matches). Die kann keine Ableitung retten. Entweder sie bleiben
+   erfunden — dann sollten sie als Marktzahlen erkennbar sein und nicht neben
+   Plattformzählungen stehen — oder sie verschwinden.
+3. **Zwei Größenordnungen brechen die Demo-Erzählung, wenn man sie zählt:**
+   „Bottles Moved 180k" wird zu **348**, „Bottles in Distribution 24k" zu
+   **1.428**. Das ist der eigentliche Konflikt: eine ehrliche Zahl aus
+   Demo-Fixtures sieht aus wie ein Unternehmen ohne Geschäft.
+
+**Die Frage, die zuerst beantwortet gehört, und sie ist geschäftlich:** soll die
+Übersicht *Plattformzustand* zeigen (dann alle 12 ableiten, die 4 streichen,
+alle 16 Deltas streichen) oder *Unternehmensgröße* (dann sind es bewusst
+Marktzahlen und gehören als solche gekennzeichnet, nicht in dieselbe
+Kachelreihe wie zählbare Werte). Ein Mischzustand ist der heutige, und der ist
+der einzige, der nicht verteidigt werden kann.
+
+Die Antwort gehört zuerst in die Spec, dann in den Code.
 
 ### ▶ ERLEDIGT: Partnerzahlen ableiten (Invariante 7) — 03.08.
 
