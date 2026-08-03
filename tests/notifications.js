@@ -585,5 +585,226 @@ console.log('\n── counter-check: a hand-written message must fail this file'
   }
 }
 
+/* ── 14. The two A8 sources (C9, pass 2c) ───────────────────────── */
+/* "A winery I follow now has a distributor" and "a new wine". Both are
+   condition-2 sources and both hang on ONE question — do I have a
+   relation to this producer — so both are only as narrow as
+   notifWineryEdge() is. Section 16 removes that function's answer and
+   requires this file to go red. */
+console.log('\n── the two A8 sources');
+{
+  const s = build();
+  const of = r => s.eval('notificationsFor("' + r + '")');
+
+  /* (a) They exist at all. A source that derives nothing cannot be
+     shown to derive the RIGHT nothing, and every check below would
+     pass by vacuum. */
+  const supply = {}, wines = {};
+  ROLES.forEach(r => {
+    supply[r] = of(r).filter(n => n.kind === 'supply');
+    wines[r]  = of(r).filter(n => n.kind === 'wine');
+  });
+  if (!supply.retail.length) bad('no supply notification anywhere — the A8 fixture pair is gone');
+  else ok('retail is told "' + supply.retail[0].title + '"');
+  if (!wines.restaurant.length || !wines.distributor.length)
+    bad('the new-wine source reaches neither the follower nor the partner');
+  else ok('new wines reach the follower (' + wines.restaurant.length +
+          ') and the partner (' + wines.distributor.length + ')');
+
+  /* (b) THE ONE THAT MATTERS: no relation, no notification.
+     The allowed set is computed HERE, out of the follow graph and the
+     partner book, and deliberately NOT by asking notifWineryEdge().
+     Asking it would be circular under exactly the mutation this check
+     exists for — a notifWineryEdge() that answers "yes" to everything
+     would make the page wrong and this check green at the same time.
+     A test re-deriving is a second opinion; only the product may have
+     just one answer. */
+  const follows = s.eval('JSON.parse(JSON.stringify(wineFollowGraph))');
+  const partners = s.eval('JSON.parse(JSON.stringify(activePartners))');
+  const allowed = me => {
+    const set = follows
+      .filter(f => f.follower === me && (f.followedType || 'winery') === 'winery')
+      .map(f => f.winery);
+    /* Only the distributor holds producer partnerships (invariant 3). */
+    if (me === s.eval('SHOW_ROLES.distributor.entity'))
+      partners.filter(p => p.type === 'winery').forEach(p => set.push(p.winery));
+    return set;
+  };
+  const strangers = [];
+  ROLES.forEach(r => {
+    const me = entityOf(r), mine = allowed(me);
+    of(r).filter(n => n.kind === 'wine' || n.kind === 'supply').forEach(n => {
+      const producer = n.kind === 'wine'
+        ? n.title.replace('New wine — ', '')
+        : n.title.replace(' now has a distributor', '');
+      if (mine.indexOf(producer) === -1) strangers.push(r + ' ← ' + producer + ' ("' + n.title + '")');
+    });
+  });
+  if (strangers.length) bad('LEAK: a role was told about a producer it has no relation to: ' + strangers.slice(0, 4).join(' · '));
+  else ok('every A8 row names a producer the reader follows or partners with');
+
+  /* (c) The supply row is for the demand side only. For a distributor,
+     a producer they follow signing elsewhere is a different sentence.
+
+     The fixtures cannot show this on their own: no winery and no
+     distributor follows a producer whose partnership came later, so
+     the role gate is covered by construction and removing it changes
+     nothing (measured — the mutation survived). So the state is BUILT
+     here. Otherwise the gate reads as dead code and gets deleted by
+     whoever tidies up next. */
+  const wrongSide = ROLES.filter(r => (r === 'winery' || r === 'distributor') && supply[r].length);
+  if (wrongSide.length) bad('a supply notification reached ' + wrongSide.join(', ') + ' — it is a Restaurant/Retail signal (invariant 3)');
+  else {
+    const g = build();
+    /* Cantina Rossi follows Bodegas Ruiz BEFORE Bodegas Ruiz gains its
+       distributor (2 Jun 2026) — every condition of the supply source
+       is now met except the role. */
+    g.eval('wineFollowGraph.push({ follower:"Cantina Rossi", followerType:"winery", avatar:"CR", ' +
+           'location:"Sicily, Italy", winery:"Bodegas Ruiz", followedType:"winery", ' +
+           'url:"bottle-lobby-winery-cantina-rossi.html", at:"2026-01-05" })');
+    const edge = g.eval('JSON.stringify(notifWineryEdge("Cantina Rossi", "Bodegas Ruiz"))');
+    const got  = g.eval('notificationsFor("winery")').filter(n => n.kind === 'supply');
+    if (edge === 'null') bad('the built state did not take — the winery has no follow edge and the gate is untested');
+    else if (got.length) bad('a winery following a producer was told it "now has a distributor" — the role gate is gone');
+    else ok('a winery with the identical follow edge (' + edge + ') gets nothing — only the demand side does');
+  }
+
+  /* (d) The producer is named in the reader's own vocabulary and the
+     row opens the real public profile, through the same branch the
+     follow rows use — not a second profile renderer. */
+  const sup = supply.retail[0];
+  if (!sup) bad('no supply row to check the destination of');
+  else if (!sup.target || sup.target.type !== 'profile')
+    bad('the supply row does not open the producer profile: ' + JSON.stringify(sup.target));
+  else if (!fs.existsSync(path.join(REPO, sup.target.url)))
+    bad('the supply row points at a page that does not exist: ' + sup.target.url);
+  else ok('the supply row opens ' + sup.target.url + ' in the A13 embed');
+
+  /* (e) Who and when, for both. C9 requires every source to answer
+     them, and an empty actor is the failure mode that hides: it makes
+     condition 1 pass for everybody. */
+  const mute = [];
+  ROLES.forEach(r => of(r).filter(n => n.kind === 'wine' || n.kind === 'supply').forEach(n => {
+    if (!n.actor) mute.push(r + ': "' + n.title + '" has no actor');
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(n.at || '')) mute.push(r + ': "' + n.title + '" has no date');
+  }));
+  if (mute.length) bad('sources that cannot say who or when: ' + mute.slice(0, 3).join(' · '));
+  else ok('every A8 row names its actor and carries an ISO date');
+
+  /* (f) A wine row is a link, never a popup (C9), and the link is the
+     record's url — not something built out of the name. Checked over
+     ALL of them: one row behaving is not the rule holding. */
+  const allWine = ROLES.reduce((a, r) => a.concat(wines[r]), []);
+  const popped = allWine.filter(n => n.target);
+  const linked = allWine.filter(n => n.wine && n.wine.url);
+  if (popped.length) bad('a wine row has a target — C9 says a wine is a link, not a destination: ' + popped[0].title);
+  else if (!linked.length) bad('not one wine row carries a link — the link rule has nothing to apply to');
+  else if (linked.some(n => !fs.existsSync(path.join(REPO, n.wine.url))))
+    bad('a wine link does not resolve: ' + linked.find(n => !fs.existsSync(path.join(REPO, n.wine.url))).wine.url);
+  else ok('all ' + allWine.length + ' wine rows open no popup; the ' + linked.length + ' with an article page link to it');
+}
+
+/* ── 15. The date bound is condition 2, not decoration ──────────── */
+/* An event that happened before my relation began did not touch my
+   relation, because there was none. Without this the sources would be
+   "everything the producer ever did, forwarded on the day I followed"
+   — which is a catalogue, and the reader already has one. */
+console.log('\n── an event before my relation began is not news');
+{
+  const s = build();
+
+  /* Baglio Rosso was added 20 Apr 2026. Bistro Laurent followed
+     Cantina Rossi on 12 Apr, Weinhaus Müller on 3 May. One of them
+     hears about it and the other does not, and the fixture puts the
+     dates either side of it on purpose. */
+  const seen = r => s.eval('notificationsFor("' + r + '")').some(n => /Baglio Rosso/.test(n.text || ''));
+  if (!seen('restaurant')) bad('the restaurant followed BEFORE the wine was added and was not told');
+  else if (seen('retail')) bad('the retailer followed AFTER the wine was added and was told anyway — the bound does nothing');
+  else ok('Baglio Rosso reaches the earlier follower and not the later one');
+
+  /* And the older half of the range stays out of the list entirely —
+     otherwise every relation would start with a wall of catalogue. */
+  const old = s.eval('notificationsFor("distributor")')
+    .filter(n => n.kind === 'wine' && n.at < '2026-01-01');
+  if (old.length) bad(old.length + ' wines from before the partnership are being announced');
+  else ok('nothing older than the relation is announced');
+
+  /* Same rule on the supply side, and there it is the sentence itself:
+     Cantina Rossi already had a distributor when Bistro Laurent
+     started following, so it does not NOW have one. */
+  const stale = s.eval('notificationsFor("restaurant")')
+    .filter(n => n.kind === 'supply');
+  if (stale.length) bad('"now has a distributor" was said about a producer that already had one: ' + stale[0].title);
+  else ok('a producer that already had a distributor does not "now" have one');
+}
+
+/* ── 16. The mutations sections 14 and 15 exist for ─────────────── */
+console.log('\n── counter-check: no relation must mean no notification');
+{
+  /* (a) THE ONE THE PASS WAS WARNED ABOUT. Remove the relation test
+     and both sources reach everybody — a Frankfurt restaurant is told
+     about a Rioja it has never heard of. This is notifHasEdge()'s
+     mistake in a second place, and it fails the same way: silently,
+     by letting MORE through. */
+  const open = build({
+    from: 'function notifWineryEdge(me, winery) {\n  const edges = [];',
+    to:   'function notifWineryEdge(me, winery) {\n  return { via:\'follow\', at:\'2000-01-01\' };\n  const edges = [];'
+  });
+  if (!open) bad('the relation mutation did not apply — this counter-check proves nothing');
+  else {
+    const before = w.eval('notificationsFor("restaurant")').filter(n => n.kind === 'wine').length;
+    const after  = open.eval('notificationsFor("restaurant")').filter(n => n.kind === 'wine').length;
+    const producers = open.eval('notificationsFor("restaurant")')
+      .filter(n => n.kind === 'wine').map(n => n.title).filter((v, i, a) => a.indexOf(v) === i);
+    if (after <= before)
+      bad('the relation test was removed and nothing widened — section 14 is testing a vacuum');
+    else ok('without the relation test the restaurant hears from ' + producers.length +
+            ' producers instead of 1 (' + before + ' → ' + after + ' wines) — section 14 catches it');
+  }
+
+  /* (b) The same mutation on the supply source, read from the side the
+     rule protects: a role that is neither partner nor follower. */
+  if (open) {
+    const sup = open.eval('notificationsFor("retail")').filter(n => n.kind === 'supply').map(n => n.title);
+    const real = w.eval('notificationsFor("retail")').filter(n => n.kind === 'supply').map(n => n.title);
+    if (sup.length <= real.length)
+      bad('the supply source did not widen — it is not asking notifWineryEdge() at all');
+    else ok('without the relation test retail is told about ' + sup.length +
+            ' producers instead of ' + real.length + ' — the supply source really does ask');
+  }
+
+  /* (c) The date bound. Drop it and the whole back catalogue arrives
+     as news on day one. */
+  const flood = build({
+    from: '    if (notifTime(w.at) <= notifTime(edge.at)) return;',
+    to:   '    if (false) return;'
+  });
+  if (!flood) bad('the date-bound mutation did not apply — this counter-check proves nothing');
+  else {
+    const after = flood.eval('notificationsFor("restaurant")').filter(n => n.kind === 'wine').length;
+    const before = w.eval('notificationsFor("restaurant")').filter(n => n.kind === 'wine').length;
+    if (after <= before) bad('the date bound was removed and nothing changed — section 15 proves nothing');
+    else ok('without the date bound the restaurant gets ' + after + ' wines instead of ' +
+            before + ' — section 15 catches it');
+  }
+
+  /* (d) A wine whose record has no article page must be NAMED, not
+     linked, on the new rows too — the same rule the awaiting row has
+     had since pass 2b, now reached through a different source. */
+  const unlinked = build({
+    from: ", url:'bottle-lobby-wine-costa-bianca.html', at:",
+    to:   ", at:"
+  });
+  if (!unlinked) bad('the missing-url mutation did not apply on the new source — this counter-check proves nothing');
+  else {
+    const row = unlinked.eval('notificationsFor("restaurant")')
+      .find(n => n.kind === 'wine' && /Costa Bianca/.test(n.text));
+    if (!row) bad('the mutated wine stopped being derived — the mutation changed more than the url');
+    else if (row.wine.url) bad('a wine with no article page was linked anyway to ' + row.wine.url);
+    else if (!/Costa Bianca/.test(row.text)) bad('the wine lost its name along with its link');
+    else ok('a wine with no article page is named ("' + row.text + '") and not linked');
+  }
+}
+
 console.log(fail ? '\n✗ ' + fail + ' failure(s)' : '\n✓ all checks passed');
 process.exit(fail ? 1 : 0);
