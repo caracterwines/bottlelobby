@@ -331,11 +331,20 @@ console.log('\n── what a row opens');
 
   const strange = [];
   ROLES.forEach(r => s.eval('notificationsFor("' + r + '")').forEach(n => {
-    if (!n.target) { strange.push(r + ': "' + n.title + '" has no target'); return; }
-    if (KNOWN.indexOf(n.target.type) === -1) strange.push(r + ': target type "' + n.target.type + '"');
+    if (n.target) {
+      if (KNOWN.indexOf(n.target.type) === -1) strange.push(r + ': target type "' + n.target.type + '"');
+      return;
+    }
+    /* Having no target is legitimate in exactly ONE case, and it is
+       the case C9 spells out: the row is about a WINE, and a wine is a
+       plain link in a new tab, never a popup. Then the row has to
+       carry that wine — otherwise it is a dead end, a line the reader
+       can neither open nor act on, and "no target" would have become a
+       way to smuggle those in. */
+    if (!n.wine) strange.push(r + ': "' + n.title + '" opens nothing and names no wine');
   }));
   if (strange.length) bad('rows the surface cannot open: ' + strange.slice(0, 3).join(' · '));
-  else ok('every derived entry names a destination the surface knows');
+  else ok('every derived entry either names a destination the surface knows, or is a wine and carries it');
 
   /* THE ONE THAT MATTERS. WS-2605 is `planning`, the restaurant has no
      edge to it at all (that is what makes it the regional entry), and

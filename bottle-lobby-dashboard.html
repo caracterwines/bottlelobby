@@ -10215,6 +10215,119 @@ function notifHasEdge(show, me) {
          show.exhibitors.some(function (e) { return e.producer === me; });
 }
 
+/* The A6 partnership record that says a producer is carried by the
+   distributor. Same book isActivePartner() reads — the distributor's
+   own list of active partnerships — asked for the ROW rather than for
+   a yes/no, because a notification needs the date it happened and the
+   producer's public page. In the real build this is one
+   partnership_requests row at stage `active`, readable from both ends;
+   the prototype keeps a list per dashboard, and only the distributor's
+   holds producers. */
+function distributorPartnership(winery) {
+  if (typeof activePartners === 'undefined') return null;
+  return activePartners.find(function (p) {
+    return p.type === 'winery' && p.winery === winery;
+  }) || null;
+}
+
+/* Do I have a relation to this PRODUCER, and since when? The same
+   question notifHasEdge() answers for a show, and it has exactly one
+   answer here for the same reason: two functions deciding "does this
+   touch me" is two answers, and the wider one wins silently.
+
+   Both A8 sources ask this one — the supply notification and the new
+   wine — and neither re-derives it.
+
+   Returning the DATE, not a boolean, is what makes condition 2 usable:
+   an event that happened before my relation existed did not touch my
+   relation, because there was none. A wine added to a range in 2025 is
+   not news to somebody who started following in 2026; it is catalogue,
+   and they can read it on the producer's page whenever they like. */
+function notifWineryEdge(me, winery) {
+  const edges = [];
+  wineFollowGraph.forEach(function (f) {
+    if (f.follower === me && f.winery === winery && (f.followedType || 'winery') === 'winery')
+      edges.push({ via:'follow', at:f.at });
+  });
+  /* Only a distributor can hold a partnership with a producer:
+     restaurants and retail source exclusively through a distributor
+     (invariant 3) and never partner with a winery directly. */
+  if (me === SHOW_ROLES.distributor.entity) {
+    const p = distributorPartnership(winery);
+    if (p) edges.push({ via:'partnership', at:p.at });
+  }
+  if (!edges.length) return null;
+  /* The earliest one: the relation began when the first of the two
+     did, and a second edge later does not restart it. */
+  return edges.sort(function (a, b) { return notifTime(a.at) - notifTime(b.at); })[0];
+}
+
+/* ── A8 source: "a winery I follow now has a distributor" ─────────
+   Restaurants and retailers only, and that is not a courtesy — for
+   them it is the moment a range becomes buyable at all. They source
+   exclusively through a distributor (invariant 3), so a followed
+   producer without one is a shelf they cannot reach; A8 names this
+   case and calls it open. A distributor hearing that a producer they
+   follow has signed with somebody else is a different sentence, and
+   not this one.
+
+   The date bound is condition 2 and also plain truth: a producer who
+   already had a distributor when I started following does not NOW
+   have one. */
+function notifSupply(role, me, out) {
+  if (role !== 'restaurant' && role !== 'retail') return;
+  /* The prototype records these partnerships in the distributor's own
+     book, so the other party to every row in it is that distributor. */
+  const dist = SHOW_ROLES.distributor.entity;
+  (typeof activePartners === 'undefined' ? [] : activePartners).forEach(function (p) {
+    if (p.type !== 'winery') return;
+    const edge = notifWineryEdge(me, p.winery);
+    /* Follow only. For these two roles the two kinds of edge cannot
+       both exist (invariant 3 again), so the earliest-wins rule in
+       notifWineryEdge() cannot hide a follow behind a partnership. */
+    if (!edge || edge.via !== 'follow') return;
+    if (notifTime(p.at) <= notifTime(edge.at)) return;
+    notifPush(out, me, {
+      id: notifId('supply', p.winery + '→' + dist, p.at),
+      kind:'supply', cls:'info', at:p.at, actor:p.activatedBy,
+      title: p.winery + ' now has a distributor',
+      text: 'Now distributed by ' + dist + ' — until now their range had no route to the trade.',
+      /* The producer's real public page in the A13 embed, through the
+         same branch the follow rows already use. */
+      target: p.url ? { type:'profile', url:p.url } : null
+    });
+  });
+}
+
+/* ── A8 source: a new wine ────────────────────────────────────────
+   Condition 2 decides the audience, and it is narrow on purpose: a new
+   wine at just any producer is nobody's notification. It reaches
+   whoever has a relation to that producer — an active partnership or a
+   follow — and nobody else.
+
+   The wine is a plain LINK on the row, never a popup (C9), and the
+   link comes from the record's `url`. A wine with no article page is
+   named and not linked. */
+function notifNewWines(me, out) {
+  partnerWinesPool.forEach(function (w) {
+    const edge = notifWineryEdge(me, w.winery);
+    if (!edge) return;
+    if (notifTime(w.at) <= notifTime(edge.at)) return;
+    const label = w.name + ' ' + w.vintage;
+    notifPush(out, me, {
+      id: notifId('wine', w.winery + '·' + label, w.at),
+      kind:'wine', cls:'info', at:w.at,
+      /* The producer entered it and owns the record (invariant 2), so
+         the actor needs no field of its own — it IS the winery. */
+      actor: w.winery,
+      title: 'New wine — ' + w.winery,
+      text: label + ' · ' + w.type + ' · ' + w.origin,
+      wine: { name: label, url: w.url || null },
+      target: null
+    });
+  });
+}
+
 function notifRegional(role, list) {
   if (role !== 'restaurant' && role !== 'retail') return;
   const cfg = SHOW_ROLES[role], city = ROLE_CITY[role];
@@ -10301,7 +10414,14 @@ function notificationsFor(role) {
     });
   });
 
-  /* 6. The named exception. */
+  /* 6. A8, the two buying signals — a followed producer gaining a
+     distributor, and a new wine at a producer I have a relation to.
+     Both ask notifWineryEdge() and neither decides for itself who has
+     an edge to whom. */
+  notifSupply(role, me, out);
+  notifNewWines(me, out);
+
+  /* 7. The named exception. */
   notifRegional(role, out);
 
   return out.sort(function (a, b) { return notifTime(b.at) - notifTime(a.at); });
@@ -10466,7 +10586,7 @@ function notifEsc(v) {
 /* A glyph per source, in the sidebar's vocabulary. "Awaiting you"
    overrides it: what the row wants is more important than where it
    came from. */
-const NOTIF_ICON = { show:'✦', regional:'✦', order:'◐', follow:'♥', request:'✉' };
+const NOTIF_ICON = { show:'✦', regional:'✦', order:'◐', follow:'♥', request:'✉', wine:'◈', supply:'⇄' };
 
 function notifRowHtml(n, unread) {
   const await_ = n.cls === 'await';
@@ -10611,8 +10731,20 @@ function mountNotifRows(host, role, list, unread, emptyMsg) {
     ? list.map(function (n) { return notifRowHtml(n, unread(n)); }).join('')
     : '<div style="padding:0.4rem 0;font-size:0.78rem;color:var(--dim)">' + emptyMsg + '</div>';
   Array.prototype.forEach.call(host.querySelectorAll('.msg-item'), function (row, i) {
-    if (!list[i].target) return;
-    row.addEventListener('click', function () { openNotification(role, list[i]); });
+    const n = list[i];
+    if (n.target) row.addEventListener('click', function () { openNotification(role, n); });
+    /* A row whose subject is a wine has no target — the wine is a link,
+       not a destination (C9) — so opening the row cannot be what marks
+       it read. Following the link is the act of reading it, so the
+       anchor does what the row would have done. Without this the row
+       could only ever be cleared by "Mark all as read".
+       The redraw is deferred one tick so it cannot pull the anchor out
+       of the DOM in the middle of its own navigation. */
+    const link = row.querySelector('a.icon-btn');
+    if (link) link.addEventListener('click', function () {
+      notifMarkSeen(role, n.id);
+      setTimeout(refreshNotifications, 0);
+    });
   });
 }
 
