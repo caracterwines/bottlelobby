@@ -620,7 +620,7 @@ console.log('\n── the two A8 sources');
      A test re-deriving is a second opinion; only the product may have
      just one answer. */
   const follows = s.eval('JSON.parse(JSON.stringify(wineFollowGraph))');
-  const partners = s.eval('JSON.parse(JSON.stringify(activePartners))');
+  const partners = s.eval('JSON.parse(JSON.stringify(partnerships))');
   /* "Is this house a producer" comes from the stakeholders table since
      the pass that gave profile data one owner. Reading it here is not
      the circularity the note above warns about: the mutation this
@@ -632,9 +632,10 @@ console.log('\n── the two A8 sources');
     const set = follows
       .filter(f => f.follower === me && types[f.winery] === 'winery')
       .map(f => f.winery);
-    /* Only the distributor holds producer partnerships (invariant 3). */
-    if (me === s.eval('SHOW_ROLES.distributor.entity'))
-      partners.filter(p => types[p.winery] === 'winery').forEach(p => set.push(p.winery));
+    /* Only the distributor END of a row is a relation to a producer
+       (invariant 3) — derived from the row here, not from a role. */
+    partners.filter(p => p.distributor === me && types[p.partner] === 'winery')
+            .forEach(p => set.push(p.partner));
     return set;
   };
   const strangers = [];

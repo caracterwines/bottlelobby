@@ -130,7 +130,7 @@ console.log('\n── an unanswered invitation holds no seat');
 /* ── 3. attending needs no partnership ─────────────────────────── */
 console.log('\n── a stranger may attend; the invite picker is partners only');
 {
-  const partners = w.eval('activePartners').map(p => p.winery);
+  const partners = w.eval('partnerships').map(p => p.partner);
   const strangers = [];
   w.eval('wineShows').forEach(s => (s.attendees || []).forEach(a => {
     if (partners.indexOf(a.stakeholder) === -1 && a.status === 'confirmed') strangers.push(a.stakeholder);

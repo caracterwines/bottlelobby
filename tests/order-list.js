@@ -65,7 +65,7 @@ console.log('\n── an interest is not an order');
   const fromShow = orders.filter(o => o.source && String(o.source).indexOf('wine_show') === 0);
   if (fromShow.length) bad('the order list produced ' + fromShow.length + ' order(s) — closing is the NEXT pass');
   else ok('no orders exist yet: demand first, purchase after');
-  const partners = w.eval('activePartners').map(p => p.winery);
+  const partners = w.eval('partnerships').map(p => p.partner);
   const strangers = interests('WS-2603').filter(i => partners.indexOf(i.attendee) === -1);
   if (!strangers.length) bad('every interest is from a partner — the no-partnership case is untested');
   else ok('interests from accounts with no partnership at all: ' + strangers.map(i => i.attendee).join(', '));
@@ -390,8 +390,8 @@ w.openShowDetail('WS-2599');
      reachable from a console or a second entry point must be refused
      there too (B12, A6). */
   {
-    const ap = w.eval('activePartners');
-    const idx = ap.findIndex(x => x.winery === 'Bistro Laurent');
+    const ap = w.eval('partnerships');
+    const idx = ap.findIndex(x => x.partner === 'Bistro Laurent');
     const kept = ap.splice(idx, 1)[0];
     const said = [];
     const real = w.showToast; w.showToast = m => said.push(m);
