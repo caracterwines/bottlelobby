@@ -10079,7 +10079,7 @@ function saveShow() {
   if (!title || !date || !city) { showToast('✗ Title, date and city are required'); return; }
   const vType   = document.getElementById('sf-venue-type').value;
   const partner = vType === 'partner_venue' ? document.getElementById('sf-venue-partner').value : '';
-  const pRec    = partner ? activePartners.find(p => p.winery === partner) : null;
+  const pReg    = partner ? stakeholder(partner).region : '';
   const s = {
     id: 'WS-' + (2605 + wineShows.length),
     title: title, date: showFormatDate(date), city: city,
@@ -10088,7 +10088,7 @@ function saveShow() {
     stage: 'draft', leadHost: SHOW_ROLES.distributor.entity,
     venueType: vType,
     venueEntity: partner || null,
-    venueName: partner ? partner + (pRec ? ', ' + pRec.region.split(',')[0] : '')
+    venueName: partner ? partner + (pReg ? ', ' + pReg.split(',')[0] : '')
                        : 'Hawesko Tasting Loft, Hamburg',
     /* Choosing a partner IS asking them — there is no state in which a
        restaurant is the venue without having been requested (A16.11). */
