@@ -723,6 +723,38 @@ Die Zusammenführung braucht also zuerst eine belastbare Erzeugerzuordnung je
 Wein — sonst wandert der Rateweg mit ins gemeinsame Buch. Invariante 4 und
 A14.4, dieselbe Wunde wie zweimal zuvor.
 
+**Und jetzt der Teil, der den Durchgang deutlich kleiner macht, als er klang:
+nur der Pool verliert die Erzeuger. Die anderen Bücher kennen sie.**
+`currentWinePortfolio` führt in jeder seiner sechs Zeilen den **echten
+Erzeuger** — Tempranillo steht dort korrekt auf Bodegas Ruiz, während
+`wineryOfWine()` Cantina Rossi rät. `partnerWinesPool` gehört ohnehin den
+Winzern (Invariante 2) und trägt 19 korrekte Zuordnungen. Und die
+Order-Zeilen tragen ihren Erzeuger explizit mit (`orderItemRaw`).
+
+**Gemessen über alle zehn Pool-Weine:**
+
+| Auflösbar aus | Anzahl |
+|---|---|
+| `currentWinePortfolio` | 5 |
+| `partnerWinesPool` (Winzerbesitz) | 3 |
+| nur aus einer Order-Zeile | 1 (Merlot — Bordeaux Supérieur) |
+| **aus gar keinem Buch** | **1** — `Château Belrieu Grand Vin` |
+
+**Null Widersprüche** dort, wo zwei Bücher denselben Wein nennen. Es ist also
+keine Rekonstruktion aus dem Nichts, sondern ein Join gegen Quellen, die die
+Antwort schon haben — **ein** Wein muss von Hand zugeordnet werden, und sein
+Erzeuger steht in seinem eigenen Namen und auf
+`bottle-lobby-winery-chateau-belrieu.html`.
+
+**Der Marker dazu steht in `tests/partner-counts.js` Abschnitt 7** und ist
+ausdrücklich **keine Zusicherung**: er hält fest, was heute wahr **und falsch**
+ist — alle zehn Pool-Zeilen mit `winery:'Hawesko GmbH'`, der Sonderfall in
+`wineryOfWine()`, die byteweise Gleichheit der beiden Pools. Fällt einer davon,
+ist dieser Durchgang gelandet; dann gehört der Abschnitt **gelöscht, nicht
+angepasst**. Angepasst würde er den Fehler verteidigen, den er ankündigen soll.
+Das steht so im Kommentar, und beide Fälle sind gegengeprüft: die Meldung lautet
+„MARKER FELL … DELETE this whole section", nicht „drifted apart".
+
 **Die Entscheidung, die danach fällt:** verschwinden die fünf nur-im-Pool-Weine,
 oder nimmt Hawesko sie ins Portfolio? Eine Fixture-Frage, keine
 Ableitungsfrage — deshalb lag sie nicht im Zahlen-Durchgang.
