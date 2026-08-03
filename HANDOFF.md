@@ -23,6 +23,50 @@ Kein Build-Command, Publish-Directory = Repo-Root.
 
 ## Zuletzt abgeschlossen
 
+- **03.08.: Partnerzahlen abgeleitet (Invariante 7). Spec A6 und Anhang D33
+  nachgezogen.** Drei Commits, im echten Chrome ueber die Knoepfe abgenommen.
+  Jede Zahl neben einer Partnerkarte wird gezaehlt; `distributorMeta` und
+  `partnerWines` sind aus allen neun Zeilen raus. Die Partnerschaftszeile haelt
+  jetzt ausschliesslich die Beziehung: wer, wann, wer aktiviert hat.
+  **Die Frage des Durchgangs war, welches der drei Weinbuecher „ihr Portfolio"
+  ist — beantwortet und begruendet: `currentWinePortfolio`.** Es ist das
+  einzige, das jemandem gehoert (`let`, ueber Add/Edit/Remove geschrieben, bei
+  `BLStore` registriert). Die beiden Picker-Pools sind `const`, werden nie
+  geschrieben, sind **byteweise identisch** zueinander, und ihr `winery`-Feld
+  traegt den **Lieferanten** statt den Erzeuger — `wineryOfWine()` muss
+  „Hawesko GmbH" ausdruecklich ueberspringen und auf eine Namensliste
+  zurueckfallen. Ein Buch, das Invariante 2 nicht beantworten kann, ist ein
+  Auswahlmenue.
+  **Gemessen, vorher/nachher:** Cantina Rossi 6 → **1**, Weingut Schmitt 1 →
+  **2**, Restaurant 5 → **6**; Lefèvre, Dubois, Ruiz und die Retail-Zahl 6
+  bleiben **unveraendert** — wo die Fixture richtig war, reproduziert die
+  Ableitung sie byteweise, und das ist die Kontrolle. Enoteca Milano verliert
+  seine 5: `portfolioOf()` liefert `null`, nicht `[]`, und die Zeile nennt gar
+  keinen Zaehler. **„0 wines" waere eine Behauptung**, die hier niemand kennt.
+  **Zwei Korrekturen unterwegs, beide beim Messen gefunden:**
+  (1) „**1 of your wine listed**" — der Plural gehoert zum Sortiment, nicht zur
+  Zahl; dieser Satz hat keine Einzahl. Die Verteilerkarte flektiert weiter
+  („1 wine" / „2 wines"), weil dort das Substantiv die Zahl *ist*.
+  (2) **Der eigentliche Fund, und nur der Browser hat ihn gezeigt:** nach dem
+  Aufnehmen eines Weins blieben **alle vier Partnerlisten auf der alten Zahl
+  stehen**. Neu gezeichnet wurde nur das Portfolio selbst. Solange die Zahl
+  gespeichert war, war Veralten der Entwurf; abgeleitet ist sie in dem Moment
+  falsch, in dem die Flaeche nicht folgt. `refreshPortfolioCounts()` behebt es,
+  gleiche Form und gleicher Grund wie `refreshNotifications()`.
+  **Ein Harness sieht das nicht** — es ruft den Renderer, den es gleich liest.
+  **`tests/partner-counts.js` — 17 statt 16 Harnesses, sechs Mutationen einzeln
+  rot gesehen.** Die Zusicherungen sind ueberwiegend negativ (keine Zeile darf
+  eine Zahl tragen, kein Renderer eine lesen); die eine tragende positive
+  **zaehlt `currentWinePortfolio` im Harness selbst** statt `portfolioCount()`
+  zu fragen — unter genau der Mutation, gegen die sie steht („das falsche Buch
+  zaehlen"), waere die Frage zirkulaer. Verglichen wird an der **gerenderten
+  Karte**. Abschnitt 5 steht fuer den Browser-Fund: die vier Listen werden
+  **einmal** gezeichnet und nie wieder, alles Weitere muss aus dem Produkt
+  kommen. Abschnitt 7 ist keine Pruefung, sondern eine **Markierung** — er
+  faellt an dem Tag um, an dem Picker und Portfolio ein Buch sind.
+  **Nebenbei repariert:** die Doppelungs-Mutation in `tests/stakeholders.js`
+  hing an einer Fixture-Zeile, die es nicht mehr gibt, und griff still nicht
+  mehr — gefangen von der eigenen Missed-Target-Sperre des Harnesses.
 - **03.08.: Stakeholder-Kette, Durchgaenge 1–4 — Profildaten und Beziehung
   bekommen je einen Ort. Spec A1, A2, A6, A7, C7 und Anhang D31/D32 nachgezogen.**
   Vier Commits plus ein `fix:`, jeder einzeln im Browser gegengeprueft.
@@ -593,41 +637,68 @@ Kein Build-Command, Publish-Directory = Repo-Root.
 
 ### Arbeit
 
-### ▶ NÄCHSTES: Partnerzahlen ableiten (Invariante 7)
+### ▶ NÄCHSTES: Ein Weinbuch je Distributor (Invariante 2 / A1)
 
-**Läuft unmittelbar nach der Stakeholder-Kette (Durchgänge 1–4).** Serges
-Einordnung, und sie ist die richtige: das sind **falsche Zahlen auf dem Schirm**,
-nicht bloß unsauberer Code. In der Demo zählt irgendwann jemand nach.
+**Direkt aus dem Partnerzahlen-Durchgang, und der Grund, warum der dort aufhören
+musste.** Die Zahlen sind jetzt wahre Zählungen eines benannten Buchs — sie
+konnten die Bücher nicht zur Deckung bringen.
 
-**Gemessen am 03.08. im echten Browser**, nicht geschätzt:
+**Gemessen:**
 
-| Wo | Steht da | Ist |
+| Buch | Länge | Wer schreibt es |
 |---|---|---|
-| `activePartners.meta` Cantina Rossi | „6 wines in your portfolio" | **1** |
-| `activePartners.meta` Weingut Schmitt | „1 wine in your portfolio" | **2** |
-| `activePartners.meta` Domaine Lefèvre / Henri Dubois / Bodegas Ruiz | je 1 | je 1 ✓ |
-| `rActivePartners.wines` (Restaurant → Hawesko) | 5 | — |
-| `tActivePartners.wines` (Retail → Hawesko) | 6 | — |
-| `wineryPartners.wines` Hawesko | 1 | 1 ✓ |
-| `wineryPartners.wines` Enoteca Milano | 5 | nicht ableitbar |
+| `currentWinePortfolio` | **6** | der Distributor (Add/Edit/Remove, persistiert) |
+| `rPartnerWinesPool` | **10** | niemand (`const`) |
+| `tPartnerWinesPool` | **10** | niemand (`const`), **byteweise identisch** zu `rPartnerWinesPool` |
 
-`currentWinePortfolio` (Hawesko) hat **6** Einträge, `rPartnerWinesPool` und
-`tPartnerWinesPool` je **10**. Restaurant und Retail nennen also **zwei
-verschiedene Zahlen über dasselbe Buch**, und die 5 passt zu keiner der beiden
-Quellen. Welche der beiden „ihr Portfolio" ist, ist die erste Frage des
-Durchgangs — die Beschriftung sagt „available in their portfolio", das Portfolio
-ist `currentWinePortfolio`, der Pool ist das Angebot.
+Auf dem Schirm heißt das: die Käuferkarte sagt „6 wines available in their
+portfolio", der Picker daneben zeigt **10**. Fünf Weine stehen nur im Pool,
+einer (Müller-Thurgau, auf Show WS-2603) nur im Portfolio.
 
-**Enoteca Milano ist der harte Fall:** dieser Distributor hat im Prototyp gar kein
-Portfolio-Array, die Zahl 5 ist also nicht bloß falsch, sie ist unbelegt. Sie
-abzuleiten heißt, sie verschwinden zu lassen — eine erfundene Zahl stehen zu
-lassen wäre A1, eine erfundene Ersatzzahl zu bauen auch. Die Zeile nennt dann
-keinen Zähler, und das ist die richtige Antwort.
+**Die Entscheidung, die zuerst fällt und Serge gehört:** verschwinden die fünf
+aus dem Picker, oder nimmt Hawesko sie ins Portfolio? Eine Fixture-Frage, keine
+Ableitungsfrage — deshalb liegt sie nicht im Zahlen-Durchgang.
 
-**Warum es nicht Teil der Stakeholder-Kette war:** dort geht es um A1 (ein
-Profildatum, ein Ort). Eine gespeicherte Zahl, die gezählt gehört, ist
-Invariante 7. Beides in einen Durchgang zu legen hätte den Diff unprüfbar
-gemacht — sichtbarer Text hätte sich aus zwei verschiedenen Gründen geändert.
+**Und der Befund, der die Antwort nicht freistellt: Château Belrieu.** Zwei der
+fünf Pool-Weine sind **Château Belrieu Grand Vin** und **Merlot — Bordeaux
+Supérieur** (Erzeuger Château Belrieu). Château Belrieu hat in `partnerships`
+**keine einzige Zeile** — kein Distributor, das ist der absichtlich
+stehengelassene Invariante-3-Leerfall aus der Messages-Kette. Hawesko bietet
+also zwei Weine eines Hauses an, mit dem es keine Partnerschaft hat, und
+**`ORD-2037` verkauft davon 120 Flaschen an Weinhaus Müller**. Der Verstoß sitzt
+damit nicht in einer Beschriftung, sondern im Bestelldatensatz. Sie ins
+Portfolio zu nehmen hieße, ihn festzuschreiben; A6 sagt daneben wörtlich, dass
+nur Weine aktiver Winzerpartner im Portfolio erscheinen dürfen.
+
+`tests/partner-counts.js` Abschnitt 7 fällt an dem Tag um, an dem die Bücher
+eins sind — die Markierung ist absichtlich so gebaut, dass der Durchgang seine
+eigene Landung meldet.
+
+### ▶ Die KPI-Kacheln (Invariante 7, aber zuerst eine Geschäftsfrage)
+
+**Ungefragt mitgemessen im Zahlen-Durchgang**, weil es derselbe Fehlertyp und
+die größte verbliebene falsche Zahl ist:
+
+| Rolle | Kachel | Steht | Zählbar |
+|---|---|---|---|
+| Distributor | Active Wineries | **12** | 5 Winzerpartnerschaften |
+| Distributor | Own-Label SKUs | 5 | 3 |
+| Restaurant | Wines on List | 14 | 3 |
+| Restaurant | Exclusive Wines | 6 | 3 |
+| Retail | Exclusive Wines | 18 | 3 |
+| Winzer | Wines Listed | 6 | 9 im Pool / 1 gelistet, je nach Lesart |
+
+**Warum es kein reiner Ableitungs-Durchgang ist:** dieselben vier Kacheln tragen
+„Profile Views 1.240", „Bottles Moved 180k" und „Avg. Margin 68%", die aus
+keiner Tabelle kommen können, und **jede Kachel trägt zusätzlich ein erfundenes
+Delta** („↑ +1 since last month") — eine zweite erfundene Zahl, die auch eine
+korrekte Zählung nicht liefert. Ob auf der Demo Schaufensterzahlen stehen
+dürfen, ist eine Geschäftsentscheidung. Die gehört zuerst in die Spec.
+
+### ▶ ERLEDIGT: Partnerzahlen ableiten (Invariante 7) — 03.08.
+
+Details unter „Zuletzt abgeschlossen". Die Frage, welches Buch „ihr Portfolio"
+ist, ist beantwortet: `currentWinePortfolio`, mit vier Messungen begründet.
 
 ### ▶ MESSAGES existiert nicht — aufgefallen 02.08., noch nicht gebaut
 

@@ -295,7 +295,43 @@ than a display string, and `activated_by` — because a partnership goes active
 on a manual Bottle Lobby confirmation (invariant 6), and a notification derived
 from it must not invent who did that (C9).
 
-**Prototype blueprint:** one `partnerships` array in `bottle-lobby-dashboard.html`, read through `partnershipsOf(me)` / `partnerSide(row, me)` / `arePartners(a, b)`; `renderPartnerNetwork()` (distributor), `renderWineryNetwork()`, `renderRestaurantNetwork()` and `renderRetailNetwork()` all render that one array from their own end. Requests are still per role — `partnerRequests` / `incomingRequests` / `wineryRequests` / `wineryOutgoingRequests` and the restaurant and retail pairs, with `openAcceptModal()` / `confirmAccept()` / `declineRequest()` / `openIncomingAccept()`; they hold no pair that exists twice today, but they are the same shape and the same argument applies when they are built for real. `openPartnershipModal()` / `confirmPartnership()` on all public profiles; parameterised `partnershipCopy` object in `bottle-lobby-profile-demo.html`. Guarded by `tests/stakeholders.js`.
+**A figure on a partner card is counted, never stored** (invariant 7). The row
+holds the relation and nothing else: who, when, who activated it. Every number
+beside it — how many of a producer's wines a distributor carries, how many
+wines a buyer can source through this partnership — is a count of the
+distributor's portfolio at the moment of rendering.
+
+They were stored once, and it went the way stored figures go. Cantina Rossi's
+card read *"6 wines in your portfolio"* where the portfolio held **1**, Weingut
+Schmitt's read 1 where it held **2**, and the restaurant and the retailer named
+**5** and **6** for the identical book. Nothing on either screen looked wrong.
+
+Three rules came out of the repair:
+
+- **Name the book before counting it.** The prototype had three wine lists that
+  could plausibly be called "their portfolio". Only one is owned by anybody:
+  the distributor writes it, and it is the one that persists. The other two are
+  pickers — `const`, never written, byte-identical copies of each other, and
+  their producer field holds the *supplier*, so they cannot answer invariant 2
+  at all. A list that cannot name the producer is a menu, not a portfolio.
+- **No book is not an empty book.** A distributor with no portfolio record
+  yields `null`, not an empty list, and the card names no figure. *"0 wines"*
+  is a claim that the house carries nothing; what is actually known is that
+  there is nothing here to count. Same distinction as A2's unknown stakeholder.
+- **A derived figure obliges its surface to move.** A stored number is stale by
+  design and behaves consistently; a derived one is wrong the moment its input
+  changes and the screen does not follow. Pulling one wine into a portfolio
+  changes a number on partner cards in **all four roles**, and every one of
+  them has to be repainted by that single action — no second click, no reload.
+
+**Prototype blueprint:** `portfolioOf(distributor)` / `portfolioCount(distributor, producer)`
+and `partnerMetaFor(row, me)` in `bottle-lobby-dashboard.html`, next to
+`currentWinePortfolio`; `refreshPortfolioCounts()` after every write to it.
+Guarded by `tests/partner-counts.js`, which counts the book itself rather than
+asking `portfolioCount()` — under the mutation it exists to catch, asking the
+product would be circular.
+
+**Prototype blueprint:** one `partnerships` array in `bottle-lobby-dashboard.html` — four fields, `distributor` / `partner` / `at` / `activatedBy` — read through `partnershipsOf(me)` / `partnerSide(row, me)` / `arePartners(a, b)`; `renderPartnerNetwork()` (distributor), `renderWineryNetwork()`, `renderRestaurantNetwork()` and `renderRetailNetwork()` all render that one array from their own end. Requests are still per role — `partnerRequests` / `incomingRequests` / `wineryRequests` / `wineryOutgoingRequests` and the restaurant and retail pairs, with `openAcceptModal()` / `confirmAccept()` / `declineRequest()` / `openIncomingAccept()`; they hold no pair that exists twice today, but they are the same shape and the same argument applies when they are built for real. `openPartnershipModal()` / `confirmPartnership()` on all public profiles; parameterised `partnershipCopy` object in `bottle-lobby-profile-demo.html`. Guarded by `tests/stakeholders.js` (the relation) and `tests/partner-counts.js` (the figures).
 
 ---
 
@@ -2979,6 +3015,7 @@ Without it the badge cannot be honest.
 | D27 | `orders.source` was to gain a single **`wine_show`** value, guarded by "a `wine_show` order can never carry product lines" (A16.11) | **A16.12 / A14.3** — two opposite values, `wine_show_order` (goods, down the chain, always product lines) and `wine_show_catering` (service, against the chain, never product lines), each with its own guard | The single value was drafted while the catering settlement was the only money a show produced, and it was already wrong: the show's *purpose* is the consolidated purchase (A16.0), which is a product order sourced from a show. One value would have forced the guard to be either useless or false. **Superseded before it was ever built** — noted here because the decision was taken, not because code changed. |
 | D31 | A stakeholder's own identity — type, badge, region, public page — lived **inside every list that mentioned the house**: the partner lists of all four roles, the eight request lists and the follow graph, twelve arrays in all | **A2** — one `stakeholders` record per house; every list holds a reference and asks for the rest | Not a decision anybody took, which is why it survived so long: each list was written on its own and each one needed a badge. The result was measurable drift before anything was built on it — Hawesko GmbH rendered **HW** where a badge was stored and **HG** where one was computed from the name, on two dashboards at once, and neither was identifiably the wrong one. The winery's list had no public page field at all, so the winery was the only role that could not reach its partner's profile (A11). Two rules came out of the repair: a badge is a **field**, because initials look derivable until "Cave à Vins Lyon" comes out *CÀ*; and a house that legitimately has no record must make a lookup **say so** rather than render blank (B12). |
 | D32 | An active partnership was **one list per dashboard** — `activePartners`, `wineryPartners`, and one each for restaurant and retail — while A6 already said both sides "see the identical stage of the identical request record" | **A6** — one `partnerships` row naming its two ends (`distributor`, `partner`), read from either side, with `at` in ISO and `activated_by` | The two statements could not both be true, and the copy had already drifted: Weinhaus Müller ↔ Hawesko was dated **14 Apr 2026** in one book and **"March 2026"** in the other, with nothing able to say which was right. Naming the ends removed three assumptions that had been invisible while only one book existed — a Wine Show's pickers now offer the **host's** partners rather than a platform-wide list (A16.4), `arePartners(a, b)` replaced a lookup that silently supplied "the distributor", and *"X now has a distributor"* takes the producer's **first** partnership, because gaining a route to the trade happens once and not once per distributor. |
+| D33 | Each end of a partnership carried its **own display figure as a stored field** on the row — `distributorMeta` ("6 wines in your portfolio") on the distributor's end, `partnerWines` on the other three | **A6 / invariant 7** — the row holds the relation only; every figure beside it is counted from the distributor's portfolio at render time, through `portfolioOf()` / `portfolioCount()` | Storing them survived the merge into one `partnerships` row (D32) because a figure looks like a property of the relation. It is not — it is a property of a book that changes without the relation changing, and by the time it was measured two of the four were already false on screen: Cantina Rossi's card claimed **6** where the portfolio held **1**, Weingut Schmitt's claimed **1** where it held **2**, and the restaurant and retailer named **5** and **6** for the identical book, neither matching it. The repair forced a question nobody had answered: **which of three wine lists is "their portfolio"**. Only one is owned by anyone — the distributor writes it and it persists; the other two are pickers whose producer field holds the *supplier*, so they cannot answer invariant 2 and are not portfolios at all. Two rules came with it: a house with no book yields `null` rather than an empty one, because *"0 wines"* claims something nothing here knows (A2's unknown stakeholder, again); and a derived figure obliges every surface showing it to be repainted by the action that moved it — one wine pulled in changes a number in all four roles, and leaving them standing is a defect the harnesses could not see and the browser could. |
 
 ---
 
