@@ -2683,13 +2683,24 @@ So the procedure when filling a gap in master data is:
    events, follow edges, log entries — before choosing a date. That set is
    usually larger than the one that exposed the gap: the Château Belrieu
    partnership surfaced through one order and there were two.
-2. **Take the earliest of them as the ceiling.**
-3. **Look for a floor as well.** Related records often pin the date from below,
+2. **Count only what actually happened.** A date on its own is not an event;
+   the stage says whether it occurred. A draft that was never sent, or a
+   cancelled order, carries a date and depends on nothing — treating it as a
+   dependency would pull the ceiling earlier than the facts require and could
+   force a relation to be backdated past its own beginning. Read the stage,
+   not the timestamp.
+
+   *No such case exists in this prototype* — all ten orders sit in `pending`,
+   `accepted`, `shipped` or `delivered`, every one of which happened, so the
+   Château Belrieu ceiling was unaffected. The rule is written for the real
+   build, where drafts and cancellations will exist.
+3. **Take the earliest of them as the ceiling.**
+4. **Look for a floor as well.** Related records often pin the date from below,
    which turns an invention into a deduction. Château Belrieu began following
    Hawesko on 28 Jun 2026 and the earlier of the two orders was placed on 2 Jul
    2026, so the activation date was chosen from a two-day window rather than
    from nothing.
-4. **Say in the record itself that the date is fixture authorship,** and say
+5. **Say in the record itself that the date is fixture authorship,** and say
    what pins it. Both such dates in this prototype carry that note — Enoteca
    Milano ↔ Cantina Rossi, and Château Belrieu — so that a later reader can
    tell an invented date from a measured one.
