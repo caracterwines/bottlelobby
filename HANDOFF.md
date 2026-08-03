@@ -23,29 +23,61 @@ Kein Build-Command, Publish-Directory = Repo-Root.
 
 ## ▶ EINSTIEG — Stand 3. August 2026, Abend
 
-**Der Baum ist sauber, `main` ist gepusht, 17 Harnesses gruen.** Acht Durchgaenge
-an einem Tag; alles unten unter „Zuletzt abgeschlossen" ist abgenommen.
+> Diese Datei ist ab hier die einzige Bruecke: die Sitzung vom 3.8. war sehr
+> lang und steht nicht mehr zur Verfuegung. Was zaehlt, steht hier, in der Spec
+> und in der Git-Historie — sonst nirgends.
 
-**Vor der ersten Messung im Browser, jedes Mal:**
+**Baum sauber, `main` gepusht, 18 Harnesses gruen.** Neun Durchgaenge an einem
+Tag, 22 Commits; alles unter „Zuletzt abgeschlossen" ist im Browser abgenommen.
+
+### Womit eine Sitzung anfaengt
 
 ```
-node tests/serve.js          →  http://localhost:8765   (no-store, nie python http.server)
-node tests/run-all.js        →  17 Harnesses
-node tests/stamp-assets.js   →  nach jeder Aenderung an assets/
+node tests/run-all.js        →  18 Harnesses, muss gruen sein, bevor irgendetwas beginnt
+node tests/serve.js          →  http://localhost:8765   (no-store — NIE python http.server)
+node tests/stamp-assets.js   →  nach jeder Aenderung an assets/, sonst wird check-static rot
 ```
 
-Und **`transferSize` lesen, bevor ein Browser-Befund gemeldet wird** — `0` heisst
-Cache, ein paar hundert Byte heissen 304. Vier Fehlmessungen an einem Tag kamen
-daher (Spec C7, „Browser acceptance").
+**Vor jedem Browser-Befund `transferSize` lesen.** `0` heisst Cache, ein paar
+hundert Byte heissen 304, nur nahe der dekodierten Groesse ist es frisch. **Vier
+Fehlmessungen an einem Tag kamen genau daher** (Spec C7, „Browser acceptance").
 
-**Offen, in dieser Reihenfolge sinnvoll:**
-1. **Der Supabase-Start** — ein eigener Durchgang, bevor irgendein Feature
-   gebaut wird, mit genau einer Frage: *was muss beim Supabase-Bau ANDERS sein
-   als hier beschrieben?* Die Regeln dafuer stehen in **Spec C7b**.
-2. **Die KPI-Kacheln** — vollstaendig vermessen, Entscheidung offen (geschaeftlich).
-3. **Herkunftsangaben vereinheitlichen** (A4) — jetzt moeglich, weil sie nur
-   noch an einer Stelle stehen.
-4. **Messages (b), Korrespondenz** — wartet weiter auf die Geschaeftsfrage.
+### Wo die Regeln liegen
+
+`BOTTLE-LOBBY-SPEC.md` ist die Autoritaet, ~213 KB. **Niemand liest sie ganz —
+also je Durchgang die geltenden Abschnitte benennen**, sonst wird nach
+Plausibilitaet statt nach Spec gebaut. `CLAUDE.md` hat die acht Invarianten,
+Anhang D die abgeloesten Entscheidungen (**D1–D34** — nie ohne Blick dorthin
+etwas wiedervorschlagen).
+
+Arbeitsregeln, die diesen Tag ueberdauern und in **C3/C7** stehen: jeden Commit
+eines mehrteiligen Durchgangs **einzeln pushen**, sobald er fertig ist; Fixtures
+nicht wachsen lassen, damit jede Meldungsart vorkommt; eine Zusicherung ueber
+einen Leerfall nennt den **Grund**, nicht den Zustand; eine Mutation, die sich auf
+eine Fixture verlaesst, gilt nur, solange die zufaellig passt; und beim Nachtragen
+von Stammdaten ist das **frueheste abhaengige Ereignis die Obergrenze**.
+
+### Offen, in dieser Reihenfolge sinnvoll
+
+1. **Der Supabase-Start** — ein eigener Durchgang **vor** dem ersten Feature, mit
+   genau einer Frage: *was muss beim Supabase-Bau ANDERS sein als hier
+   beschrieben?* Der Prototyp faelscht drei tragende Dinge (keine Anmeldung,
+   keine Rollentrennung auf Serverebene, keine Zugriffsrechte). Regeln: **Spec C7b**.
+2. **Die KPI-Kacheln** — alle 16 vermessen: 12 ableitbar, 4 reine Erfindung, kein
+   einziges der 16 Deltas hat eine Zeitreihe. Die Entscheidung ist
+   **geschaeftlich**, nicht technisch: Plattformzustand oder Unternehmensgroesse.
+3. **Herkunftsangaben vereinheitlichen (A4).** Der bemerkenswerteste Nebenbefund
+   des letzten Durchgangs, in Serges Worten: **die Uneinheitlichkeit war vorher
+   gar nicht sichtbar, weil dieselben Strings an drei Orten lagen. Erst ein Buch
+   macht eine Stammdatenfrage stellbar.** Das ist der Grund, warum A4 jetzt
+   naeher ist als heute frueh — nicht, dass jemand die Strings schoener finden
+   wuerde.
+4. **Messages (b), Korrespondenz** — wartet weiter auf die Geschaeftsfrage: wer
+   darf wem schreiben, und laeuft das an A6 und A3 vorbei?
+
+Dazu drei kleinere Punkte weiter unten unter „Aus den Funden vom 03.08." — der
+wiederhergestellte Snapshot als zweite Kopie, die fehlende Absicherung gegen ein
+vergessenes `VERSION`-Bump, und `SHOW_TODAY` als feste Konstante.
 
 ---
 
