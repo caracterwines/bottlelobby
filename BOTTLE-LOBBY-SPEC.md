@@ -2543,6 +2543,23 @@ Serge no longer uploads anything at the start of a new chat. Claude reads the re
 - Run the CSS class cross-check before pushing.
 - Commit messages: short, in English, conventional-commit style (`fix:`, `feat:`, `chore:`).
 
+### Push each commit of a multi-part pass as it lands, never in a batch
+
+A pass that produces several commits pushes each one **when it is finished**,
+not all of them at the end. The reason is not tidiness: **it is the only way the
+reviewer sees a commit on its own.** Batched, the first commit is checked
+through the lens of the last, and a defect it introduced reads as an artefact of
+whatever came after it.
+
+Measured cost: in the stakeholder pass the `TypeError` from commit 1 —
+`saveShow()` still reading `region` off a partnership row — survived
+undiscovered because nothing was pushed until the pass was complete. A single
+push after commit 1 would have put it in front of a browser with nothing else
+in the diff to explain it.
+
+This also gives every commit its own deploy, which is what makes "reproduced
+against the pushed version" a sentence anyone can check.
+
 ### ⚠️ Two push channels — and which constraint applies to which
 
 **From Claude Code: `git push`. No size limit, no special handling.** A local clone exists, `gh auth login` is set up, and a commit carries only the diff. `bottle-lobby-dashboard.html` is pushed this way like any other file. This is the default route for all substantial work.
@@ -2750,6 +2767,41 @@ and a test run would mutate the repo.
 much larger `decodedBodySize` means a 304 — the server was asked and said
 nothing changed. Only a transfer near the decoded size is a fresh copy. A
 measurement taken without this check is a measurement of the cache.
+
+### Do not grow the fixtures until every message type reaches every role
+
+Demo data is not a coverage matrix. **An empty case with a legible reason is
+worth more than complete coverage**, because it shows the problem the platform
+exists to solve.
+
+Bistro Laurent gets no supply notification, and the reason is that Château
+Belrieu had no distributor. That absence *is* the pitch: invariant 3 says
+restaurants source exclusively through a distributor, so a producer without one
+is unreachable — and a viewer who notices the gap has understood the model
+faster than any filled-in row could have taught them. Adding a partnership so
+the row appears would have deleted the demonstration in order to complete a
+table.
+
+So when a role is missing a message type, first ask whether the absence is
+*true*. If it is, keep it and make the reason visible. Fixtures are only
+extended when the gap is an accident of authorship rather than a fact of the
+model.
+
+> **The same rule applies to the assurances.** An assertion that pins an empty
+> case must state the REASON, not just the state — otherwise it defends the
+> emptiness once the reason stops holding.
+>
+> `tests/notifications.js` asserted *"the restaurant has NO supply row"*. That
+> was only ever shorthand for *"Cantina Rossi already had a distributor when
+> Bistro Laurent followed it, and Château Belrieu had none"*. The moment Château
+> Belrieu gained one — because two orders already depended on it — the assertion
+> failed while the product was right, and the tempting repair was to loosen it.
+> It was **replaced, not loosened**: the stale case is now named explicitly and
+> the live case is required positively, so the section can no longer pass by the
+> restaurant simply having nothing.
+>
+> Read a red assertion over an empty case as a question — *is the reason still
+> true?* — before touching either side.
 
 ### A narrative that survives two corrections without being checked is not a diagnosis
 
