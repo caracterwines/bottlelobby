@@ -23,6 +23,44 @@ Kein Build-Command, Publish-Directory = Repo-Root.
 
 ## Zuletzt abgeschlossen
 
+- **03.08.: `BLStore.VERSION` 1 → 2 — die Datums-Migration war fuer den
+  Fingerprint unsichtbar. Und meine Entwarnung „live ist alles in Ordnung" war
+  falsch.** Ein Commit.
+  **Serges Kette war richtig und dreifach abgesichert:** Assets werden frisch
+  geladen (Stempel da, 5161 B statt 300 B), in der geladenen Datei steht ISO,
+  zur Laufzeit steht das alte Format. Nachgemessen und bestaetigt: dieselbe
+  Datei per `new Function()` in derselben Seite ausgewertet ergibt
+  **2027-03-14**, das Global sagt **14 Mar 2027**. 59 von 59 Feldern.
+  **Die Ursache ist weder der Asset-Cache noch eine Umschreibung** — es gibt im
+  ganzen Repo keine Stelle, die Show-Daten zurueckschreibt. Es war
+  `BLStore.start()`: der Snapshot stammte von **vor** der Migration, und der
+  Shape-Fingerprint konnte das nicht sehen, weil sich nur **Werte** geaendert
+  haben, kein einziger Schluessel. Formal gueltig, also eingespielt — ueber die
+  frischen Fixtures.
+  **`VERSION = 2`** verwirft jeden Vor-Migrations-Snapshot einmalig. Live sofort
+  gegengeprueft: 59 Felder, **0 nicht-ISO**, ohne dass jemand etwas leeren muss;
+  die Liste zeigt „5 Dec 2026" / „18 Sept 2026", kein rohes ISO.
+  **Die Regel steht jetzt am Deklarationsort:** aendert sich das **Format**
+  gespeicherter Daten, wird `VERSION` im selben Commit hochgezaehlt. Der
+  Fingerprint sieht Struktur, nie Werte — und das soll so bleiben.
+  **`tests/persistence.js` haelt den Fall**, der wirklich eingetreten ist: ein
+  Snapshot auf der Vor-Migrations-Version mit 59 alten Datumswerten darf den
+  Live-Zustand nicht erreichen. Gegenprobe: `VERSION` zurueck auf 1 → 59 von 59
+  ueberleben, der Abschnitt wird rot und nennt den Bump als Abhilfe.
+  **Seine Grenze ausgesprochen statt kaschiert:** er faengt die **naechste**
+  Migration nicht, wenn der Bump wieder vergessen wird. Dafuer gibt es keinen
+  mechanischen Riegel, nur die Notiz an `VERSION` und diesen Abschnitt als
+  ausgearbeitetes Beispiel.
+  **Zwei Namen, die Messzeit gekostet haben, geradegerueckt:** `assertISO` und
+  `showDate` sind **keine Laufzeitfunktionen** und waren es nie. `assertISO` ist
+  die Ueberschrift eines Abschnitts in `tests/notification-sources.js` — ich
+  habe das Wort aus dem Gespraech uebernommen, und so liest es sich wie ein
+  Global. Der Formatter heisst **`blDate()`** und liegt im geteilten Asset.
+  `typeof assertISO === 'undefined'` im Browser ist also korrekt — **und benennt
+  zugleich eine echte Luecke**: diese Pruefung laeuft gegen die **Fixtures** mit
+  abgeschalteter Persistenz und meldete deshalb voellig zu Recht „alles ISO",
+  waehrend der Browser einen wiederhergestellten Snapshot hielt. Genau diese
+  Seite deckt der neue Persistenz-Abschnitt ab.
 - **03.08.: Asset-Stempel aus dem Dateiinhalt. Neu: `tests/stamp-assets.js`,
   Prüfung in `check-static.js`. Spec C7 nachgezogen — meine vorherige Empfehlung
   „keine Versionsstempel" ist damit abgelöst.** Ein Commit.
@@ -550,15 +588,20 @@ Kein Build-Command, Publish-Directory = Repo-Root.
   *Fixtures* — kommt in `bottle-lobby-data.js` ein Feld dazu, aendert er sich von
   selbst. Abweichung heisst alles verwerfen, ganz oder gar nicht, mit Hinweis im
   Toast. Ein Stand, der das Rendern bricht, fliegt raus und die Seite laedt einmal neu.
-  **⚠ Die Grenze des Fingerprints, ausgesprochen am 03.08., damit die Idee nicht
-  wiederkommt: er schuetzt vor FORM-Drift, nicht vor veralteten Werten — und das
-  ist richtig so.** Beim Asset-Cache-Fall lag der Verdacht nahe, ihn auf die
-  *Werte* auszuweiten, weil ein alter Snapshot neben neuem Code stand. Er hat
-  sich aber korrekt verhalten: die Struktur war unveraendert, der Snapshot also
-  formal gueltig. Ihn auf Werte auszudehnen hiesse, **bei jeder Datenaenderung
-  alles zu verwerfen** — dann kann man das Speichern gleich lassen, denn genau
-  die geaenderten Werte sind das, was der Nutzer behalten will (Serge). Der
-  Fehler sass im Asset-Cache und ist dort behoben (Stempel + `tests/serve.js`).
+  **⚠ Die Grenze des Fingerprints — und der Nachtrag vom selben Tag, der zeigt,
+  was sie kostet.** Er schuetzt vor FORM-Drift, nicht vor veralteten Werten, und
+  das ist richtig so: ihn auf Werte auszudehnen hiesse, **bei jeder
+  Datenaenderung alles zu verwerfen** — dann kann man das Speichern gleich
+  lassen, denn genau die geaenderten Werte sind das, was der Nutzer behalten
+  will (Serge).
+  **Aber:** damit ist eine **Format-Migration fuer ihn unsichtbar.** Genau das
+  ist am 03.08. passiert — 59 Show-Daten wechselten von „14 Mar 2027" nach ISO,
+  jeder Schluessel blieb stehen, der Snapshot blieb formal gueltig und gewann
+  gegen die neuen Fixtures. **Der richtige Hebel ist `VERSION`**, von Hand
+  hochgezaehlt in demselben Commit, der das Format aendert. Steht jetzt am
+  Deklarationsort und als Regel in der Versionierungs-Notiz; Guard 2s Zusage
+  „verlaesst sich auf niemandes Gedaechtnis" gilt fuer diesen Fall
+  ausdruecklich **nicht**. Gehalten von `tests/persistence.js`.
   **Korrektur zur Bestandsaufnahme:** `wineFollowGraph` wird heute nirgends
   veraendert (fuenf Referenzen, alle lesend) — auf Serges Wunsch trotzdem
   registriert, damit My Stars / My Fans am Tag, an dem Folgen ein Knopf wird, nicht
