@@ -526,6 +526,42 @@ Kein Build-Command, Publish-Directory = Repo-Root.
 
 ### Arbeit
 
+### ▶ NÄCHSTES: Partnerzahlen ableiten (Invariante 7)
+
+**Läuft unmittelbar nach der Stakeholder-Kette (Durchgänge 1–4).** Serges
+Einordnung, und sie ist die richtige: das sind **falsche Zahlen auf dem Schirm**,
+nicht bloß unsauberer Code. In der Demo zählt irgendwann jemand nach.
+
+**Gemessen am 03.08. im echten Browser**, nicht geschätzt:
+
+| Wo | Steht da | Ist |
+|---|---|---|
+| `activePartners.meta` Cantina Rossi | „6 wines in your portfolio" | **1** |
+| `activePartners.meta` Weingut Schmitt | „1 wine in your portfolio" | **2** |
+| `activePartners.meta` Domaine Lefèvre / Henri Dubois / Bodegas Ruiz | je 1 | je 1 ✓ |
+| `rActivePartners.wines` (Restaurant → Hawesko) | 5 | — |
+| `tActivePartners.wines` (Retail → Hawesko) | 6 | — |
+| `wineryPartners.wines` Hawesko | 1 | 1 ✓ |
+| `wineryPartners.wines` Enoteca Milano | 5 | nicht ableitbar |
+
+`currentWinePortfolio` (Hawesko) hat **6** Einträge, `rPartnerWinesPool` und
+`tPartnerWinesPool` je **10**. Restaurant und Retail nennen also **zwei
+verschiedene Zahlen über dasselbe Buch**, und die 5 passt zu keiner der beiden
+Quellen. Welche der beiden „ihr Portfolio" ist, ist die erste Frage des
+Durchgangs — die Beschriftung sagt „available in their portfolio", das Portfolio
+ist `currentWinePortfolio`, der Pool ist das Angebot.
+
+**Enoteca Milano ist der harte Fall:** dieser Distributor hat im Prototyp gar kein
+Portfolio-Array, die Zahl 5 ist also nicht bloß falsch, sie ist unbelegt. Sie
+abzuleiten heißt, sie verschwinden zu lassen — eine erfundene Zahl stehen zu
+lassen wäre A1, eine erfundene Ersatzzahl zu bauen auch. Die Zeile nennt dann
+keinen Zähler, und das ist die richtige Antwort.
+
+**Warum es nicht Teil der Stakeholder-Kette war:** dort geht es um A1 (ein
+Profildatum, ein Ort). Eine gespeicherte Zahl, die gezählt gehört, ist
+Invariante 7. Beides in einen Durchgang zu legen hätte den Diff unprüfbar
+gemacht — sichtbarer Text hätte sich aus zwei verschiedenen Gründen geändert.
+
 ### ▶ MESSAGES existiert nicht — aufgefallen 02.08., noch nicht gebaut
 
 **Befund.** Es gibt `bumpMsgBadge()` und `clearMsgBadge()` und sonst nichts: kein
