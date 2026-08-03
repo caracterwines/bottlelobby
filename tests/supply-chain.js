@@ -25,6 +25,26 @@
 
    It reports its own reach and FAILS ON ZERO. A chain check that
    examined nothing is not a clean result.
+
+   TWO THINGS THAT ARE TRUE TODAY AND MAY NOT BE TOMORROW — Serge's
+   review, and both are handled rather than only noted:
+
+     · Offers, deals and promo materials carry NO OWNER FIELD. They
+       belong to the one distributor that has a book. With a second
+       one they would be unattributable, and this file would check
+       them against the wrong house while the scope line — which
+       counts records FOUND, not records POSSIBLE — said nothing. So
+       section 3 fails outright the moment a second distributor gets a
+       portfolio, and says what the records need first.
+     · A buyer's chain is checked against EVERY distributor it
+       partners with, not the first one found. Taking the first would
+       report a wine sourced through a second distributor as
+       chain-broken — a false alarm, and false alarms are the kind of
+       finding that talks somebody into loosening the real rule. That
+       happened twice in one day here; it is not a hypothetical.
+       (The PRODUCT still picks the first distributor in its pickers.
+       That is a product limitation, not a test one, and it belongs to
+       whichever pass gives a buyer a second distributor.)
 ═══════════════════════════════════════════════════════════════════ */
 const { JSDOM, VirtualConsole } = require('jsdom');
 const { loadDashboard } = require('./load-dashboard');
@@ -77,6 +97,15 @@ function chainReader(w) {
     carries: (dist, wine) => (books[dist] || []).some(x => x.name === wine),
     producerOf: (dist, wine) => ((books[dist] || []).find(x => x.name === wine) || {}).winery
   };
+}
+
+/* Every distributor a buyer partners with — all of them, because
+   taking the first would call a wine sourced through the second one
+   chain-broken. */
+function distributorsOf(r, me) {
+  return r.parts.filter(p => p.partner === me || p.distributor === me)
+    .map(p => (p.distributor === me ? p.partner : p.distributor))
+    .filter(x => r.types[x] === 'distributor');
 }
 
 /* Every link, named, so a failure says WHICH one broke. */
@@ -162,6 +191,10 @@ console.log('\n── every order line has the relation behind it that lets good
    gap as a sale, only later. */
 console.log('\n── nothing is advertised, discounted or promised that the book does not hold');
 {
+  if (R.distributors.length !== 1) {
+    bad('there are now ' + R.distributors.length + ' distributors with a portfolio, and offers/deals/promo ' +
+        'materials carry no owner field — give them one before this section can mean anything');
+  }
   const dist = R.distributors[0];
   const named = [];
   J('exclusiveOffers').forEach(o => { if (o.wineName) named.push(['Exclusive Offer', o.wineName]); });
@@ -191,14 +224,17 @@ console.log('\n── every wine on a buyer list has all four links');
   let n = 0;
   const faults = [];
   LISTS.forEach(({ role, me, list }) => {
-    const dist = R.parts.filter(p => p.partner === me || p.distributor === me)
-      .map(p => (p.distributor === me ? p.partner : p.distributor))
-      .find(x => R.types[x] === 'distributor');
-    if (!dist) return faults.push(role + ' has no distributor partnership at all');
+    const dists = distributorsOf(R, me);
+    if (!dists.length) return faults.push(role + ' has no distributor partnership at all');
     J(list).forEach(wine => {
       n++;
-      chainFaults(R, dist, wine.name, me).forEach(f => faults.push(role + ' "' + wine.name + '": ' + f));
-      const inBook = R.producerOf(dist, wine.name);
+      /* Intact through ANY of this buyer's distributors. With one it
+         reads the same; with two it stops inventing a break. */
+      const perDist = dists.map(d => chainFaults(R, d, wine.name, me));
+      if (perDist.every(f => f.length))
+        perDist[0].forEach(f => faults.push(role + ' "' + wine.name + '": ' + f));
+      const carrier = dists.find(d => R.carries(d, wine.name));
+      const inBook = carrier && R.producerOf(carrier, wine.name);
       if (inBook && wine.winery !== inBook)
         faults.push(role + ': list says ' + wine.winery + ', book says ' + inBook + ' for "' + wine.name + '"');
     });
@@ -229,12 +265,11 @@ console.log('\n── the pickers offer nothing the distributor does not carry')
     const names = [...box.querySelectorAll('.aw-pick-name')]
       .map(e => e.childNodes[0].textContent.trim());
     if (!names.length) return faults.push(role + ': the picker offered nothing, so it cannot be checked');
-    const dist = R.parts.filter(p => p.partner === me || p.distributor === me)
-      .map(p => (p.distributor === me ? p.partner : p.distributor))
-      .find(x => R.types[x] === 'distributor');
+    const dists = distributorsOf(R, me);
     names.forEach(name => {
       n++;
-      if (!R.carries(dist, name)) faults.push(role + ' is offered "' + name + '", which ' + dist + ' does not carry');
+      if (!dists.some(d => R.carries(d, name)))
+        faults.push(role + ' is offered "' + name + '", which none of its distributors (' + dists.join(', ') + ') carries');
     });
   });
   checked += n; surfaces.push('picker rows:' + n);

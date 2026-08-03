@@ -38,14 +38,82 @@ Und **`transferSize` lesen, bevor ein Browser-Befund gemeldet wird** — `0` hei
 Cache, ein paar hundert Byte heissen 304. Vier Fehlmessungen an einem Tag kamen
 daher (Spec C7, „Browser acceptance").
 
-**Der naechste Durchgang ist entschieden und geschnitten:**
-„**Ein Weinbuch je Distributor**" — siehe „Offene Punkte". Erste Handlung dort
-ist keine Code-Aenderung, sondern die Erzeugerzuordnung je Wein; die Vorarbeit
-dazu ist gemessen und steht im Eintrag.
+**Offen, in dieser Reihenfolge sinnvoll:**
+1. **Der Supabase-Start** — ein eigener Durchgang, bevor irgendein Feature
+   gebaut wird, mit genau einer Frage: *was muss beim Supabase-Bau ANDERS sein
+   als hier beschrieben?* Die Regeln dafuer stehen in **Spec C7b**.
+2. **Die KPI-Kacheln** — vollstaendig vermessen, Entscheidung offen (geschaeftlich).
+3. **Herkunftsangaben vereinheitlichen** (A4) — jetzt moeglich, weil sie nur
+   noch an einer Stelle stehen.
+4. **Messages (b), Korrespondenz** — wartet weiter auf die Geschaeftsfrage.
 
 ---
 
 ## Zuletzt abgeschlossen
+
+- **03.08.: Ein Weinbuch je Distributor — die Kette ist zu. Spec A3, A6, C7,
+  C7b und Anhang D34 nachgezogen.** Fuenf Commits, jeder einzeln gepusht und im
+  Browser abgenommen.
+  **Serges Entscheidung, und sie traegt den ganzen Durchgang:** die fuenf
+  Nur-im-Pool-Weine werden **aufgenommen, nicht entfernt**. Sie sind seit Monaten
+  sichtbar, ein Restaurant hat danach ausgewaehlt, zwei sind verkauft. Sie zu
+  entfernen hiesse, Bestellungen auf etwas zeigen zu lassen, das es nicht mehr
+  gibt. **Der Verkauf ist die haertere Tatsache** — dieselbe Begruendung wie bei
+  Chateau Belrieu, jetzt als Regel in A3.
+  **Zuerst die Erzeugerzuordnung, wie verlangt, und sie war belegbar:** 6 Zeilen
+  bereits korrekt, 3 aus `partnerWinesPool` (Winzerbesitz, Invariante 2), 1 aus
+  einer Order-Zeile, **genau 1 von Hand** — Chateau Belrieu Grand Vin, dessen
+  Erzeuger im eigenen Namen und auf der eigenen Winzerseite steht. **Null
+  Widersprueche**, wo zwei Buecher denselben Wein nannten.
+  **Das Buch wurde 14, nicht 11.** Drei weitere Weine wurden beworben oder
+  rabattiert, ohne gefuehrt zu werden: Nero d'Avola (60 Fl. verkauft, 300
+  eingekauft), Baglio Rosso (180 Fl. geliefert, aktiver Deal), Pouilly-Fume (nur
+  ein Offer). **Der noch nicht gezuendete Fall ist der Grund fuer die Regel** —
+  ihn unterschied nichts von den anderen ausser dem Zeitpunkt.
+  **Geloescht statt verbessert:** `wineryOfWine()` (drei Pools, ein Sonderfall
+  fuer den Lieferantennamen, eine Handliste, Vorgabewert *Cantina Rossi* — zweimal
+  messbar falsch), drei `fileGuess`-Ableitungen, die eine URL nachbauten, die der
+  Datensatz schon trug, und `note`, das `ownLabel` duplizierte und die
+  *Exclusive*-Markierung des **Kaeufers** im Buch des Distributors fuehrte.
+  `orderItem()` liest jetzt das Buch **des Verkaeufers** und antwortet `null`;
+  `placeOrder()` weist an **einer** Stelle ab statt an neun.
+  **Der Riegel sitzt jetzt doppelt** (Serges Messung): der Picker bietet nichts
+  anderes an, und selbst daran vorbei antwortet die Funktion `null`. Beide Picker
+  lesen `portfolioOf(dist)`, den Distributor **aus der Partnerschaft** statt aus
+  einem festen Namen. Gruppiert nach sechs echten Erzeugern statt nach einer
+  Ueberschrift „Hawesko GmbH".
+  **`tests/supply-chain.js` — 18 Harnesses.** 71 Referenzen ueber fuenf Flaechen,
+  und die Datei nennt sie: Buecher 14 · Order-Zeilen 13 · kommerzielle
+  Datensaetze 10 · Kaeuferlisten 6 · Picker-Zeilen 28. Null ist ein Fehlschlag.
+  Vier Mutationen einzeln rot gesehen. **Der `chainReader` leitet selbst ab**
+  statt `portfolioOf()` oder `arePartners()` zu fragen — die Mutationen patchen
+  genau diese Helfer.
+  **Zwei Grenzen aus Serges Review, beide behandelt statt vermerkt:** Offers,
+  Deals und Promo-Materialien haben **kein Owner-Feld**, gehoeren also dem einen
+  Distributor mit Buch — der Abschnitt **faellt jetzt hart**, sobald ein zweiter
+  ein Portfolio bekommt, statt still das falsche Haus zu pruefen. Und die Kette
+  eines Kaeufers wird gegen **alle** seine Distributoren geprueft, nicht den
+  erstbesten; sonst waere ein ueber den zweiten bezogener Wein ein Fehlalarm —
+  und Fehlalarme sind die Sorte Befund, die heute zweimal beinahe die richtige
+  Regel gelockert haetten.
+  **Zwei Zusicherungen mussten umziehen, keine wurde gelockert.** WS-2599s
+  Vorbestell-Spalte ist leer, weil Hawesko die drei Weine inzwischen fuehrt —
+  A16.0 zu Ende erzaehlt, nicht eine Vorfuehrung, die sich abnutzt. Die Show
+  bekommt die **Umkehrung**, und die Abschlusskette **baut den April-Zustand
+  selbst**. Der Einzahl-Fall in `partner-counts.js` wird jetzt **aus den Daten
+  gewaehlt** statt benannt. Beides steht als Regel in C7.
+  **Der Marker in `partner-counts.js` Abschnitt 7 ist bei Commit 2 gefallen und
+  hat seine eigene Loeschung verlangt — 67 Zeilen raus, nicht angepasst.** Serge:
+  „der Beleg dafuer, dass das Muster funktioniert", und kuenftige Verschiebungen
+  laufen genauso.
+  **Ein Fund, den nur der Schnitt sichtbar gemacht hat:** die Kaeufer-Picker
+  zeigen `type` und `origin`. Ein neu aufgenommener Wein muss sie also
+  mitbringen — sonst staende „undefined · undefined" auf **zwei fremden**
+  Dashboards, ohne dass der Distributor je etwas merkt.
+  **Abnahme durch Serge:** eigene Ableitung aus `partnerships`,
+  `currentWinePortfolio` und `stakeholders`, ohne die Produktfunktionen zu
+  fragen — 43 Referenzen, keine gebrochene Kette. „Meine Rechnung haette deiner
+  widersprechen koennen; sie tut es nicht."
 
 - **03.08.: `BLStore.VERSION` 1 → 2 — die Datums-Migration war fuer den
   Fingerprint unsichtbar. Und meine Entwarnung „live ist alles in Ordnung" war
@@ -944,99 +1012,16 @@ die Zukunft schiebt oder echte Zeit ins Spiel kommt, ist es ein Thema — bis
 dahin ist es die richtige Wahl, weil ein wanderndes „heute" jede Abnahme
 unreproduzierbar machen wuerde.
 
-### ▶ NÄCHSTES: Ein Weinbuch je Distributor (Invariante 2 / A1)
+### ▶ ERLEDIGT: Ein Weinbuch je Distributor — 03.08.
 
-**Direkt aus dem Partnerzahlen-Durchgang, und der Grund, warum der dort aufhören
-musste.** Die Zahlen sind jetzt wahre Zählungen eines benannten Buchs — sie
-konnten die Bücher nicht zur Deckung bringen.
+Details unter „Zuletzt abgeschlossen". Der Marker in `tests/partner-counts.js`
+Abschnitt 7 ist mit Commit 2 gefallen und geloescht.
 
-**Gemessen:**
-
-| Buch | Länge | Wer schreibt es |
-|---|---|---|
-| `currentWinePortfolio` | **6** | der Distributor (Add/Edit/Remove, persistiert) |
-| `rPartnerWinesPool` | **10** | niemand (`const`) |
-| `tPartnerWinesPool` | **10** | niemand (`const`), **byteweise identisch** zu `rPartnerWinesPool` |
-
-Auf dem Schirm heißt das: die Käuferkarte sagt „6 wines available in their
-portfolio", der Picker daneben zeigt **10**. Fünf Weine stehen nur im Pool,
-einer (Müller-Thurgau, auf Show WS-2603) nur im Portfolio.
-
-**Der Durchgang ist nicht „zwei Arrays mergen" — er ist zuerst „herausfinden,
-wem diese Weine gehören"** (Serges Formulierung, und sie ist der Kern). Der
-Käufer-Pool kann die Frage nicht beantworten: sein `winery`-Feld trägt in
-**allen zehn** Zeilen „Hawesko GmbH", also den Lieferanten. Deshalb existiert
-`wineryOfWine()` überhaupt — und die Funktion **rät**:
-
-- Sie überspringt „Hawesko GmbH" ausdrücklich, sucht in drei Pools und fällt
-  danach auf eine handgeschriebene Namensliste zurück.
-- Was auch dort fehlt, bekommt `|| 'Cantina Rossi'` als Vorgabewert.
-- **Gemessen, zwei falsche Antworten heute:** `Tempranillo — Rioja Crianza` →
-  sagt *Cantina Rossi*, das Portfolio sagt **Bodegas Ruiz**.
-  `Château Belrieu Grand Vin` → sagt *Cantina Rossi*, der Name sagt
-  **Château Belrieu**.
-
-Die Zusammenführung braucht also zuerst eine belastbare Erzeugerzuordnung je
-Wein — sonst wandert der Rateweg mit ins gemeinsame Buch. Invariante 4 und
-A14.4, dieselbe Wunde wie zweimal zuvor.
-
-**Und jetzt der Teil, der den Durchgang deutlich kleiner macht, als er klang:
-nur der Pool verliert die Erzeuger. Die anderen Bücher kennen sie.**
-`currentWinePortfolio` führt in jeder seiner sechs Zeilen den **echten
-Erzeuger** — Tempranillo steht dort korrekt auf Bodegas Ruiz, während
-`wineryOfWine()` Cantina Rossi rät. `partnerWinesPool` gehört ohnehin den
-Winzern (Invariante 2) und trägt 19 korrekte Zuordnungen. Und die
-Order-Zeilen tragen ihren Erzeuger explizit mit (`orderItemRaw`).
-
-**Gemessen über alle zehn Pool-Weine:**
-
-| Auflösbar aus | Anzahl |
-|---|---|
-| `currentWinePortfolio` | 5 |
-| `partnerWinesPool` (Winzerbesitz) | 3 |
-| nur aus einer Order-Zeile | 1 (Merlot — Bordeaux Supérieur) |
-| **aus gar keinem Buch** | **1** — `Château Belrieu Grand Vin` |
-
-**Null Widersprüche** dort, wo zwei Bücher denselben Wein nennen. Es ist also
-keine Rekonstruktion aus dem Nichts, sondern ein Join gegen Quellen, die die
-Antwort schon haben — **ein** Wein muss von Hand zugeordnet werden, und sein
-Erzeuger steht in seinem eigenen Namen und auf
-`bottle-lobby-winery-chateau-belrieu.html`.
-
-**Der Marker dazu steht in `tests/partner-counts.js` Abschnitt 7** und ist
-ausdrücklich **keine Zusicherung**: er hält fest, was heute wahr **und falsch**
-ist — alle zehn Pool-Zeilen mit `winery:'Hawesko GmbH'`, der Sonderfall in
-`wineryOfWine()`, die byteweise Gleichheit der beiden Pools. Fällt einer davon,
-ist dieser Durchgang gelandet; dann gehört der Abschnitt **gelöscht, nicht
-angepasst**. Angepasst würde er den Fehler verteidigen, den er ankündigen soll.
-Das steht so im Kommentar, und beide Fälle sind gegengeprüft: die Meldung lautet
-„MARKER FELL … DELETE this whole section", nicht „drifted apart".
-
-**Die Entscheidung, die danach fällt:** verschwinden die fünf nur-im-Pool-Weine,
-oder nimmt Hawesko sie ins Portfolio? Eine Fixture-Frage, keine
-Ableitungsfrage — deshalb lag sie nicht im Zahlen-Durchgang.
-
-**Erledigt vorab (03.08.):** die Partnerschaft **Hawesko ↔ Château Belrieu**
-ist nachgetragen, siehe „Zuletzt abgeschlossen". Damit hat der Merge keine
-Invariante-3-Blutung mehr unter sich; er bleibt ein reiner A1/Invariante-2-Fall.
-
-**⚠ Beim Zusammenführen ausdrücklich mitnehmen — die Zeile „Château Belrieu ·
-0 wines in your portfolio".** Serges Abnahmebefund, und er ist richtig: es ist
-genau die Aussage, die bei Enoteca Milano bewusst vermieden wird. Der
-Unterschied ist echt und trägt — Enoteca **führt kein Buch** (`null`, kein
-Zähler), Hawesko **führt eins und es enthält keinen Belrieu-Wein** (`0`, eine
-wahre Zählung) — aber neben **zwei Bestellungen über zusammen 156 Flaschen
-Belrieu-Wein** liest sich die Null schief. Der Grund ist der Bruch selbst: die
-Weine stehen im **Käufer-Pool**, nicht im Portfolio, und verkauft wird aus dem
-Pool. **Sobald es ein Buch gibt, verschwindet die Zeile von allein** — Merlot
-— Bordeaux Supérieur und Château Belrieu Grand Vin wandern hinein und die Karte
-zählt 2 statt 0. Die Null ist damit **kein Sonderfall, der eine eigene Regel
-braucht, sondern der sichtbarste Beleg für diesen Durchgang** — bitte nach dem
-Merge nachsehen, dass sie weg ist, statt sie vorher wegzuformulieren.
-
-`tests/partner-counts.js` Abschnitt 7 fällt an dem Tag um, an dem die Bücher
-eins sind — die Markierung ist absichtlich so gebaut, dass der Durchgang seine
-eigene Landung meldet.
+**Was daraus offen bleibt:** die Herkunftsangaben sind uneinheitlich formuliert
+(„Loire Valley, France" neben „Pouilly-Fumé AOC, Loire Valley"). Das ist die
+Stammdatenfrage zu Land → Region → Appellation (A4, Invariante 4) und ein
+eigener Durchgang — im Buch steht sie jetzt nur an **einer** Stelle, was die
+Voraussetzung dafuer war.
 
 ### ▶ Die KPI-Kacheln — vollständig vermessen 03.08., Entscheidung offen
 

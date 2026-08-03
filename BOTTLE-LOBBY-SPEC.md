@@ -142,6 +142,39 @@ Consequences for the build:
 
 **This rule governs the flow of goods, not the flow of money.** A distributor invoicing a producer for a service — a Wine Show catering contribution, `source: 'wine_show_catering'` (A16.11) — runs against the arrows above and is not a breach of them: no product changes hands, and such an order may not carry product lines at all. Only a route by which wine reaches a buyer is a supply chain shortcut. Wine bought off the back of a show (`wine_show_order`, A16.12) runs the arrows the normal way and is an ordinary purchase.
 
+### Whoever advertises, discounts or names a wine as a promo condition, carries it
+
+An Exclusive Offer, an Exclusive Deal or a promo condition over a wine **outside
+the distributor's own portfolio is the same invariant 3 gap as a sale, only
+delayed** — it fires the moment somebody accepts. The order line then has to name
+a producer the distributor has no relation with, and goods move down a route that
+does not exist.
+
+This is a rule, not a case-by-case judgement, because it re-forms every time
+somebody writes a new offer. Concretely: the wine named by any commercial record
+must be in the book of the house making the promise, and `tests/supply-chain.js`
+asserts it over offers, deals and promo materials alike.
+
+Measured when the rule was written: three wines — Nero d'Avola, Baglio Rosso and
+Pouilly-Fumé — were being offered or discounted by a distributor that did not
+carry them. One had already been sold downstream, one had 180 bottles delivered
+in, and one was still only a promise. **The one that had not fired yet is the
+reason this is a rule**: nothing distinguished it from the other two except
+timing.
+
+### Removing goods is not a repair when they have already moved
+
+When the data says a wine reached a buyer, the sale is the harder fact. Deleting
+the wine to make a rule hold leaves orders pointing at something that no longer
+exists — the same contradiction, moved somewhere quieter. Add the missing
+relation instead, and date it correctly (C7: the earliest dependent event is the
+ceiling).
+
+Applied twice on 3 August 2026: Château Belrieu gained the partnership two
+orders already depended on, and eight wines that buyers had been choosing and
+being sold for months were taken into the distributor's portfolio rather than
+withdrawn from the picker.
+
 ---
 
 ## A4. Master Data (admin-maintained, never free text)
@@ -2768,6 +2801,38 @@ much larger `decodedBodySize` means a 304 — the server was asked and said
 nothing changed. Only a transfer near the decoded size is a fresh copy. A
 measurement taken without this check is a measurement of the cache.
 
+### An assertion tied to a computed state can be invalidated by correct work
+
+A check that rests on something **derived** — a column, a count, a status — can go
+red because the product improved. When it does, the assertion moves or inverts.
+**The fixtures do not follow it.**
+
+WS-2599's pre-order column emptied when the distributor took its three wines into
+the portfolio. `lineKind()` reads the portfolio live, so the column moved by
+itself: the show produced the first orders in April, and the producer is listed
+now. That is A16.0 finishing its own story, and the assertion that counted
+pre-order decisions was describing a moment, not a rule.
+
+The repair is the inverse assertion — *a show with no pre-orders asks the host
+for no decision* — which is the more useful statement anyway. The alternative was
+to give a completed April show a wine nobody has covered in four months, so that
+a test stays green: a green test and data nobody can believe.
+
+> **Corollary, and it cost three separate repairs in one day: a mutation that
+> relies on a fixture is valid only as long as that fixture happens to fit.**
+>
+> Each of these was a real change to the product that the check could no longer
+> see: "compute the badge from the name" where every fixture's initials matched
+> anyway; "the invite picker offers every producer" once every producer had
+> become a partner; "the winery sentence inflects on the count" once that winery
+> held five wines instead of one.
+>
+> A mutation must **build the state that makes its defect visible**, in the check
+> itself. Choosing the subject by property rather than by name is the cheaper
+> half of the same discipline — pick the producer that *has* exactly one wine,
+> and fail loudly when the data no longer offers one, instead of naming a
+> producer that had one when the check was written.
+
 ### Do not grow the fixtures until every message type reaches every role
 
 Demo data is not a coverage matrix. **An empty case with a legible reason is
@@ -2892,6 +2957,60 @@ all ten partnerships do, and the tightest is Weingut Schmitt — active 6 Jul
 directory is the repo root, so everything committed is served unless blocked.
 
 **OpenArt limitation:** No true alpha-channel transparency — "transparent background" renders a visible checkerboard as image content. Workaround: match the exact background hex in the prompt, or use chroma-key green (`#00FF00`) for external removal.
+
+## C7b. How the Supabase build starts
+
+**Before the first feature, one pass of its own.** The brief for it is a single
+question:
+
+> *"Read the spec and tell me what has to be DIFFERENT in the Supabase build
+> from what is described here."*
+
+Not "start building". The reason is that this document describes a **prototype
+that fakes three things**, and every one of them is load-bearing in the real
+build:
+
+- **no sign-in** — there is no account, no session, no identity;
+- **no role separation on the server** — a demo-bar button decides who you are;
+- **no access control** — every dashboard is in one HTML file and every record is
+  reachable from the console.
+
+Here the role switcher decides what is visible. In Supabase that has to be a
+**database rule**. A spec read straight through will describe the surface
+faithfully and reproduce all three fictions underneath it.
+
+**This pass is the worked example.** The buyer's picker was pointed at the
+distributor's portfolio precisely so a restaurant *cannot choose* a wine with no
+supply chain behind it — the guard moved out of the surface and into the logic.
+In Supabase that same rule belongs in the database **as well**: a constraint or an
+RLS policy that refuses the row. Otherwise only the interface protects it, and an
+interface is something you can go around. Read `tests/supply-chain.js` as the
+statement of what the constraint has to enforce — it names all four links.
+
+Three things to settle in that pass:
+
+**(a) Name the governing sections, every time.** The spec is ~213 KB. Nobody
+reads it whole per task, so each pass states which sections apply to it — and
+"the whole spec" is not an answer. Unnamed, the work gets built by plausibility
+instead of by specification, which is how a prototype's conventions get promoted
+into a schema.
+
+**(b) What falls away with no replacement.** `BLStore`, the shape fingerprint,
+the asset stamps, `localStorage` itself, `tests/serve.js`. All of it exists
+because the prototype has no server. Carrying any of it across would be carrying
+the scaffolding into the building. The **reasoning** behind them still applies —
+"a stale snapshot must not look like a code bug" becomes a migration question —
+but not one line of the code.
+
+**(c) What travels.** The spec, Appendix D, the invariants, the data shapes in
+`assets/bottle-lobby-data.js` — read that as the draft schema, not as fixtures —
+and **the harnesses**, because they describe behaviour rather than
+implementation. "A buyer may not be offered a wine outside their distributor's
+book" is true of any implementation; the jsdom around it is not.
+
+Appendix D travels for its own reason: it records decisions that were taken and
+then dropped, with why. Without it the same superseded ideas get re-proposed,
+and in a new stack they look new.
 
 ## C8. Prototype persistence — `localStorage`
 
@@ -3245,6 +3364,7 @@ Without it the badge cannot be honest.
 | D31 | A stakeholder's own identity — type, badge, region, public page — lived **inside every list that mentioned the house**: the partner lists of all four roles, the eight request lists and the follow graph, twelve arrays in all | **A2** — one `stakeholders` record per house; every list holds a reference and asks for the rest | Not a decision anybody took, which is why it survived so long: each list was written on its own and each one needed a badge. The result was measurable drift before anything was built on it — Hawesko GmbH rendered **HW** where a badge was stored and **HG** where one was computed from the name, on two dashboards at once, and neither was identifiably the wrong one. The winery's list had no public page field at all, so the winery was the only role that could not reach its partner's profile (A11). Two rules came out of the repair: a badge is a **field**, because initials look derivable until "Cave à Vins Lyon" comes out *CÀ*; and a house that legitimately has no record must make a lookup **say so** rather than render blank (B12). |
 | D32 | An active partnership was **one list per dashboard** — `activePartners`, `wineryPartners`, and one each for restaurant and retail — while A6 already said both sides "see the identical stage of the identical request record" | **A6** — one `partnerships` row naming its two ends (`distributor`, `partner`), read from either side, with `at` in ISO and `activated_by` | The two statements could not both be true, and the copy had already drifted: Weinhaus Müller ↔ Hawesko was dated **14 Apr 2026** in one book and **"March 2026"** in the other, with nothing able to say which was right. Naming the ends removed three assumptions that had been invisible while only one book existed — a Wine Show's pickers now offer the **host's** partners rather than a platform-wide list (A16.4), `arePartners(a, b)` replaced a lookup that silently supplied "the distributor", and *"X now has a distributor"* takes the producer's **first** partnership, because gaining a route to the trade happens once and not once per distributor. |
 | D33 | Each end of a partnership carried its **own display figure as a stored field** on the row — `distributorMeta` ("6 wines in your portfolio") on the distributor's end, `partnerWines` on the other three | **A6 / invariant 7** — the row holds the relation only; every figure beside it is counted from the distributor's portfolio at render time, through `portfolioOf()` / `portfolioCount()` | Storing them survived the merge into one `partnerships` row (D32) because a figure looks like a property of the relation. It is not — it is a property of a book that changes without the relation changing, and by the time it was measured two of the four were already false on screen: Cantina Rossi's card claimed **6** where the portfolio held **1**, Weingut Schmitt's claimed **1** where it held **2**, and the restaurant and retailer named **5** and **6** for the identical book, neither matching it. The repair forced a question nobody had answered: **which of three wine lists is "their portfolio"**. Only one is owned by anyone — the distributor writes it and it persists; the other two are pickers whose producer field holds the *supplier*, so they cannot answer invariant 2 and are not portfolios at all. Two rules came with it: a house with no book yields `null` rather than an empty one, because *"0 wines"* claims something nothing here knows (A2's unknown stakeholder, again); and a derived figure obliges every surface showing it to be repainted by the action that moved it — one wine pulled in changes a number in all four roles, and leaving them standing is a defect the harnesses could not see and the browser could. |
+| D34 | A distributor's wines lived in **three lists**: `currentWinePortfolio` (6 wines, owned and written), and two byte-identical picker pools of 10 whose `winery` field held the **supplier** — so `wineryOfWine()` existed to guess the producer, defaulting to *Cantina Rossi* | **A3 / A6 / invariant 2** — one book per distributor, every row naming its real producer; both buyer pickers read it through `portfolioOf()`, and the pools are gone | The pools could not answer "who made this", which is invariant 2, and nothing checked a partnership when a wine went onto a buyer's list. That is how a distributor came to offer — and twice sell — wines of a producer it had no partnership with. Merging them forced the question nobody had answered: **which of the three lists is the portfolio**. Only one was owned by anybody. The attribution was sourced rather than invented: 6 rows were already correct, 3 came from the producers' own book, 1 from an order line, and exactly **1** by hand, with **zero contradictions** where two lists named the same wine. The book grew 6 → 14, because three further wines were being advertised or discounted without being carried at all — an offer over a wine outside your book is the same gap as a sale, only delayed (A3). Deleted with it: `wineryOfWine()`, which was measurably wrong twice; three `fileGuess` slug derivations that rebuilt a URL the record already carried (A14.4); and `note`, which duplicated `ownLabel` and carried the buyer's own *Exclusive* marking into the distributor's book (A1). |
 
 ---
 
