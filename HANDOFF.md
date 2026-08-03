@@ -23,6 +23,56 @@ Kein Build-Command, Publish-Directory = Repo-Root.
 
 ## Zuletzt abgeschlossen
 
+- **03.08.: Partnerschaft Hawesko ↔ Château Belrieu nachgetragen — die
+  Invariante-3-Blutung ist zu.** Ein Commit, im echten Chrome abgenommen.
+  **Serges Entscheidung, mit seiner Begründung:** beide Weine sind verkauft
+  worden; sie aus dem Picker zu nehmen würde Orders stehen lassen, die auf
+  etwas zeigen, das es nicht mehr gibt. Der Verkauf ist die härtere Tatsache.
+  **Serges Ergänzung, nachgemessen und bestätigt: es sind zwei Orders, nicht
+  eine.** `ORD-2035` (36 Fl., platziert 2. Jul, **delivered**) und `ORD-2037`
+  (120 Fl., platziert 28. Jul, pending), beide Merlot — Bordeaux Supérieur von
+  Château Belrieu, beide an Weinhaus Müller. Ein voller Sweep über **alle**
+  Order-Zeilen zeigt danach **keine** weitere Lücke, und jede Order lief schon
+  vorher über eine bestehende Käufer-Verkäufer-Partnerschaft.
+  **Eine Hälfte des Auftrags war gegenstandslos, und das gehört hierher:
+  Domaine Lefèvre hatte die Partnerschaft bereits** — seit 7. Apr 2026,
+  Hawesko GmbH. Wahrscheinlich hat mein eigener HANDOFF-Text das nahegelegt:
+  Crémant de Bourgogne ist Lefèvres Wein und steht nur im Pool. „Nicht im
+  Portfolio" und „keine Partnerschaft" sind aber zwei verschiedene Dinge. Es
+  wurde **eine** Zeile nachgetragen, nicht zwei.
+  **Das Datum ist Fixture-Autorschaft, aber beidseitig eingeklemmt statt
+  gewählt:** Château Belrieu folgt Hawesko seit 28. Jun, die erste der beiden
+  Orders liegt auf 2. Jul. `2026-06-30` ist das einzige unauffällige Datum
+  dazwischen.
+  **Was es kostet, bewusst:** Château Belrieu war der letzte Produzent ohne
+  Distributor — der Invariante-3-Leerfall, den die C9-Kette absichtlich
+  stehengelassen hatte. **Jetzt hat jeder Produzent einen.** Dafür feuert der
+  A8-Auslöser zum ersten Mal echt: Bistro Laurent folgt Château Belrieu seit
+  27. Apr und liest jetzt „Château Belrieu now has a distributor". Restaurant
+  17 → **18**, aus diesem Grund und keinem anderen; Winzer 13, Distributor 27,
+  Retail 13 unverändert.
+  Die Verteilerkarte liest **„0 wines in your portfolio"**. Das ist eine wahre
+  Zählung, keine Lücke: Hawesko führt keinen Wein dieses Erzeugers im
+  Portfolio und verkauft trotzdem einen aus dem Pool. Genau der Widerspruch,
+  den Durchgang 2 auflöst — sichtbar ist er besser als versteckt.
+  **Zwei Harnesses fielen um, beide zu Recht, und beide anders repariert:**
+  (1) `tests/notifications.js` prüfte „das Restaurant hat **gar keine**
+  Supply-Zeile" — das war dieselbe Aussage nur so lange, wie Bistro Laurents
+  zweiter gefolgter Produzent keinen Distributor hatte. **Ersetzt, nicht
+  gelockert:** der veraltete Fall (Cantina Rossi) wird jetzt namentlich
+  ausgeschlossen, der echte (Château Belrieu) **positiv verlangt**. Gegenprobe
+  gemacht: nimmt man die Partnerschaftszeile wieder raus, wird der Abschnitt
+  rot — und zwar mit dem richtigen Satz.
+  (2) `tests/show-modals.js` — die Mutation „der Einladungs-Picker bietet jeden
+  Produzenten an, Partner oder nicht" **überlebte plötzlich**. Nicht weil der
+  Riegel weg wäre, sondern weil „jeder Winzer" und „die Winzer des Hosts"
+  seit der neuen Zeile dieselbe Menge sind. **Unbeobachtbar**, derselbe
+  Befundtyp wie C7 (1). Die Prüfung **baut den Zustand jetzt selbst** und
+  hofft nicht auf eine Fixture, die sich bewegen kann.
+  Abnahme im echten Chrome: Karte „Partner since 30 Jun 2026 · 0 wines in your
+  portfolio"; Restaurant-Badge 18, Klick auf die Zeile lädt
+  `bottle-lobby-winery-chateau-belrieu.html?preview=embed`, Badge 18 → 17.
+  Keine Konsolenfehler.
 - **03.08.: Partnerzahlen abgeleitet (Invariante 7). Spec A6 und Anhang D33
   nachgezogen.** Drei Commits, im echten Chrome ueber die Knoepfe abgenommen.
   Jede Zahl neben einer Partnerkarte wird gezaehlt; `distributorMeta` und
@@ -655,20 +705,31 @@ Auf dem Schirm heißt das: die Käuferkarte sagt „6 wines available in their
 portfolio", der Picker daneben zeigt **10**. Fünf Weine stehen nur im Pool,
 einer (Müller-Thurgau, auf Show WS-2603) nur im Portfolio.
 
-**Die Entscheidung, die zuerst fällt und Serge gehört:** verschwinden die fünf
-aus dem Picker, oder nimmt Hawesko sie ins Portfolio? Eine Fixture-Frage, keine
-Ableitungsfrage — deshalb liegt sie nicht im Zahlen-Durchgang.
+**Der Durchgang ist nicht „zwei Arrays mergen" — er ist zuerst „herausfinden,
+wem diese Weine gehören"** (Serges Formulierung, und sie ist der Kern). Der
+Käufer-Pool kann die Frage nicht beantworten: sein `winery`-Feld trägt in
+**allen zehn** Zeilen „Hawesko GmbH", also den Lieferanten. Deshalb existiert
+`wineryOfWine()` überhaupt — und die Funktion **rät**:
 
-**Und der Befund, der die Antwort nicht freistellt: Château Belrieu.** Zwei der
-fünf Pool-Weine sind **Château Belrieu Grand Vin** und **Merlot — Bordeaux
-Supérieur** (Erzeuger Château Belrieu). Château Belrieu hat in `partnerships`
-**keine einzige Zeile** — kein Distributor, das ist der absichtlich
-stehengelassene Invariante-3-Leerfall aus der Messages-Kette. Hawesko bietet
-also zwei Weine eines Hauses an, mit dem es keine Partnerschaft hat, und
-**`ORD-2037` verkauft davon 120 Flaschen an Weinhaus Müller**. Der Verstoß sitzt
-damit nicht in einer Beschriftung, sondern im Bestelldatensatz. Sie ins
-Portfolio zu nehmen hieße, ihn festzuschreiben; A6 sagt daneben wörtlich, dass
-nur Weine aktiver Winzerpartner im Portfolio erscheinen dürfen.
+- Sie überspringt „Hawesko GmbH" ausdrücklich, sucht in drei Pools und fällt
+  danach auf eine handgeschriebene Namensliste zurück.
+- Was auch dort fehlt, bekommt `|| 'Cantina Rossi'` als Vorgabewert.
+- **Gemessen, zwei falsche Antworten heute:** `Tempranillo — Rioja Crianza` →
+  sagt *Cantina Rossi*, das Portfolio sagt **Bodegas Ruiz**.
+  `Château Belrieu Grand Vin` → sagt *Cantina Rossi*, der Name sagt
+  **Château Belrieu**.
+
+Die Zusammenführung braucht also zuerst eine belastbare Erzeugerzuordnung je
+Wein — sonst wandert der Rateweg mit ins gemeinsame Buch. Invariante 4 und
+A14.4, dieselbe Wunde wie zweimal zuvor.
+
+**Die Entscheidung, die danach fällt:** verschwinden die fünf nur-im-Pool-Weine,
+oder nimmt Hawesko sie ins Portfolio? Eine Fixture-Frage, keine
+Ableitungsfrage — deshalb lag sie nicht im Zahlen-Durchgang.
+
+**Erledigt vorab (03.08.):** die Partnerschaft **Hawesko ↔ Château Belrieu**
+ist nachgetragen, siehe „Zuletzt abgeschlossen". Damit hat der Merge keine
+Invariante-3-Blutung mehr unter sich; er bleibt ein reiner A1/Invariante-2-Fall.
 
 `tests/partner-counts.js` Abschnitt 7 fällt an dem Tag um, an dem die Bücher
 eins sind — die Markierung ist absichtlich so gebaut, dass der Durchgang seine

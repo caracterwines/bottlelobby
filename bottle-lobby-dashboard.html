@@ -4163,6 +4163,36 @@ let partnerships = [
      orderable for a retailer at all (invariant 3). */
   { distributor:'Hawesko GmbH', partner:'Bodegas Ruiz', at:'2026-06-02', activatedBy:'Bottle Lobby' },
   { distributor:'Hawesko GmbH', partner:'Weingut Schmitt', at:'2026-07-06', activatedBy:'Bottle Lobby' },
+  /* Added because two orders already depend on it. Hawesko has sold
+     Château Belrieu's Merlot — Bordeaux Supérieur to Weinhaus Müller
+     twice: ORD-2035, 36 bottles, delivered, and ORD-2037, 120 bottles,
+     pending. Goods cannot reach a retailer from a producer the seller
+     has no partnership with (invariant 3), so either those orders were
+     impossible or this row was missing. Serge's call: the sale is the
+     harder fact — removing the wine would leave two orders pointing at
+     something that no longer exists.
+
+     The day is fixture authorship, like the Enoteca row below, but it
+     is pinned on both sides rather than chosen: Château Belrieu began
+     following Hawesko on 28 Jun 2026 and the first of the two orders
+     was placed on 2 Jul 2026. 30 Jun is the only unremarkable date
+     between them.
+
+     What it costs, deliberately: Château Belrieu was the last producer
+     in the data with no distributor at all — the invariant 3 empty
+     case that the C9 pass left standing on purpose. Every producer now
+     has one. In exchange the A8 trigger fires for real: Bistro Laurent
+     has followed Château Belrieu since 27 Apr 2026 and is now told
+     that it has a distributor, which is the sentence A8 promises and
+     the one moment the demand side can act on. Restaurant
+     notifications go 17 → 18 for that reason and no other.
+
+     The card this produces reads "0 wines in your portfolio", and that
+     is a true count, not a gap: Hawesko carries none of this
+     producer's wines in its portfolio while selling one of them out of
+     the picker pool. That contradiction is the second pass (HANDOFF),
+     and it is better visible than hidden. */
+  { distributor:'Hawesko GmbH', partner:'Château Belrieu', at:'2026-06-30', activatedBy:'Bottle Lobby' },
 
   /* Buyers sourcing through Hawesko. The first two are the rows that
      used to exist twice — and each end also named its own figure for

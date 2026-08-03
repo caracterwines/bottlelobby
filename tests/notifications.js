@@ -737,11 +737,23 @@ console.log('\n── an event before my relation began is not news');
 
   /* Same rule on the supply side, and there it is the sentence itself:
      Cantina Rossi already had a distributor when Bistro Laurent
-     started following, so it does not NOW have one. */
-  const stale = s.eval('notificationsFor("restaurant")')
-    .filter(n => n.kind === 'supply');
+     started following, so it does not NOW have one.
+
+     This used to assert that the restaurant had NO supply row at all,
+     which was the same claim only while Bistro Laurent's other
+     followed producer, Château Belrieu, had no distributor either.
+     It gained one on 30 Jun 2026 — two orders already depended on the
+     partnership — and Bistro Laurent followed on 27 Apr, so that row
+     is now true and must be here. REPLACED, NOT LOOSENED: the stale
+     case is named, and the live case is asserted positively, so the
+     section can no longer pass by the restaurant simply having
+     nothing. */
+  const rSupply = s.eval('notificationsFor("restaurant")').filter(n => n.kind === 'supply');
+  const stale = rSupply.filter(n => /Cantina Rossi/.test(n.title || ''));
   if (stale.length) bad('"now has a distributor" was said about a producer that already had one: ' + stale[0].title);
-  else ok('a producer that already had a distributor does not "now" have one');
+  else if (!rSupply.some(n => /Château Belrieu/.test(n.title || '')))
+    bad('Château Belrieu gained a distributor on 30 Jun, after Bistro Laurent followed it on 27 Apr — and the restaurant was not told');
+  else ok('the restaurant hears about Château Belrieu and not about Cantina Rossi — the bound cuts both ways');
 }
 
 /* ── 16. The mutations sections 14 and 15 exist for ─────────────── */

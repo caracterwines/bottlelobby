@@ -244,10 +244,21 @@ console.log('\n── counter-check: the bug this file was written for must fail
       from: "  const candidates = partnershipsOf(s.leadHost)\n    .map(p => partnerSide(p, s.leadHost))\n    .filter(n => stakeholder(n).type === 'winery' && already.indexOf(n) === -1);",
       to:   "  const candidates = stakeholders.filter(x => x.type === 'winery' && already.indexOf(x.name) === -1).map(x => x.name);",
       check: g => {
-        g.eval('openInviteModal("WS-2599")');
+        /* The discriminating state is BUILT HERE, not borrowed from
+           the fixtures. This mutation went unobservable the day every
+           producer in the data became a partner of the host — the
+           Château Belrieu row, added because two orders depended on
+           it. "Every winery" and "the host's wineries" are only
+           distinguishable while a winery exists that the host does not
+           carry, and until then the mutation was real and invisible:
+           it changed the code and nothing on the screen. So the check
+           makes such a winery instead of hoping for one. */
         const host = g.eval('wineShows.find(s => s.id === "WS-2599").leadHost');
+        g.eval('partnerships = partnerships.filter(function (p) { return p.partner !== "Château Belrieu"; })');
         const carried = g.eval('JSON.parse(JSON.stringify(partnerships))')
           .filter(p => p.distributor === host).map(p => p.partner);
+        if (carried.indexOf('Château Belrieu') !== -1) return false;  // the state was not built
+        g.eval('openInviteModal("WS-2599")');
         return options(g, 'if-producer').some(n => carried.indexOf(n) === -1);
       },
       says: 'section 3 catches a producer the host does not carry' },
