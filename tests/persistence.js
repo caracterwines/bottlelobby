@@ -621,6 +621,82 @@ console.log('\n── a snapshot that breaks the page does not strand it');
   else ok('the breaking snapshot is cleared before the reload');
 }
 
+/* ── A restored snapshot may not resurrect an abandoned format ────
+   Every other date check in this repo reads the FIXTURES. The browser
+   does not: the store applies a stored snapshot over them at start, so
+   what a returning visitor actually holds is the snapshot. That gap is
+   how 59 wine-show dates stayed in display format on the live site for
+   a full pass while `assertISO` — which runs against the fixtures with
+   persistence switched OFF — reported all-ISO and was right to.
+
+   The shape fingerprint cannot close it: moving "14 Mar 2027" to
+   "2027-03-14" leaves every key in place, so the snapshot stays
+   structurally valid and is restored. Validating VALUES was considered
+   and rejected — it would discard the whole demo on every data edit,
+   which is the same as not saving at all (Serge). VERSION is the lever
+   instead, bumped by hand in the commit that changes the format.
+
+   So this checks the concrete case that actually happened: a snapshot
+   written BEFORE the migration, holding the old format, must not reach
+   the live state. It passes because VERSION went 1 → 2 with the
+   migration; had the bump been forgotten, that snapshot would still be
+   at the current version and would be restored, and this fails.
+
+   The limit, stated rather than papered over: this cannot catch the
+   NEXT format migration if someone forgets to bump again. There is no
+   mechanical guard for that — only the note at VERSION in
+   bottle-lobby-store.js and this section as the worked example. */
+console.log('\n── a pre-migration snapshot cannot bring back the old format');
+{
+  const ISO = /^\d{4}-\d{2}-\d{2}$/;
+  const toDisplay = v => {
+    const m = ISO.exec(v || '');
+    if (!m) return v;
+    const M = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const [y, mo, d] = v.split('-');
+    return d + ' ' + M[Number(mo) - 1] + ' ' + y;
+  };
+  const area = makeStorageArea();
+  const seed = openTab(area, { persist: true });
+  seed.w.eval("wineShows[0].title = wineShows[0].title");   /* touch, so a snapshot is written */
+  nudge(seed.w); await settle(seed.w);
+
+  /* Roll the stored dates back, keeping version and fingerprint valid
+     — the snapshot a browser was really holding. */
+  const snap = read(area);
+  let rolled = 0;
+  (snap.data.wineShows || []).forEach(s => {
+    if (s.date && ISO.test(s.date)) { s.date = toDisplay(s.date); rolled++; }
+    ['venueQuotedAt', 'venueAcceptedAt'].forEach(k => { if (s[k] && ISO.test(s[k])) { s[k] = toDisplay(s[k]); rolled++; } });
+    (s.events || []).concat(s.attendees || [], s.interests || []).forEach(x => {
+      if (x.at && ISO.test(x.at)) { x.at = toDisplay(x.at); rolled++; }
+    });
+  });
+  /* Written by the store version that was current when those values
+     were — that is what a returning visitor is actually holding. */
+  snap.v = 1;
+  area._data[KEY] = JSON.stringify(snap);
+
+  if (!rolled) bad('nothing to roll back — the snapshot carried no ISO dates, so this check proves nothing');
+  else {
+    const t = openTab(area, { persist: true });
+    const live = t.w.eval('JSON.parse(JSON.stringify(wineShows))');
+    const stale = [];
+    live.forEach(s => {
+      if (s.date && !ISO.test(s.date)) stale.push(s.id + '.date="' + s.date + '"');
+      ['venueQuotedAt', 'venueAcceptedAt'].forEach(k => { if (s[k] && !ISO.test(s[k])) stale.push(s.id + '.' + k); });
+      (s.events || []).concat(s.attendees || [], s.interests || []).forEach(x => {
+        if (x.at && !ISO.test(x.at)) stale.push(s.id + '.at="' + x.at + '"');
+      });
+    });
+    if (stale.length)
+      bad(stale.length + ' of ' + rolled + ' rolled-back date(s) survived into the live state: ' +
+          stale.slice(0, 3).join(' · ') + ' — bump VERSION in bottle-lobby-store.js when the ' +
+          'FORMAT of stored data changes; the shape fingerprint cannot see it');
+    else ok('a snapshot holding ' + rolled + ' old-format dates does not reach the live state');
+  }
+}
+
 console.log(fail ? '\n✗ ' + fail + ' failure(s)' : '\n✓ all checks passed');
 process.exit(fail ? 1 : 0);
 

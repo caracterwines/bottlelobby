@@ -78,6 +78,25 @@
         fingerprint changes by itself, because the fixture is always
         the shape the new code expects.
 
+   THE DIVISION BETWEEN THEM, and it cost a day to learn: the
+   fingerprint sees SHAPE, never VALUES. A migration that changes the
+   FORMAT of a value while leaving every key in place is invisible to
+   it — and correctly so, because hashing values would mean discarding
+   the whole demo on every data edit, which is the same as not saving
+   at all.
+
+   That makes VERSION the lever for exactly this case, and guard 2's
+   "neither relies on anyone remembering anything" does NOT extend to
+   it. When the fixtures change the FORM of what they hold — 59 wine
+   show dates moving from "14 Mar 2027" to ISO — the snapshot stays
+   structurally valid, is restored over the new fixtures, and a
+   returning visitor keeps the old values for good. It looks precisely
+   like the asset cache serving a stale file, and it was mistaken for
+   one twice.
+
+   So: change the format of stored data, bump VERSION in the same
+   commit.
+
    A mismatch discards EVERYTHING, all or nothing. A partial restore
    would leave a half-migrated demo — shows from today, orders from
    last week — and that is worse than starting clean. The discard is
@@ -105,7 +124,11 @@ window.BLStore = (function () {
   'use strict';
 
   var KEY       = 'bottle-lobby-demo';
-  var VERSION   = 1;
+  /* 2 — the wine-show date migration (03.08.2026). 59 fields moved
+     from display format to ISO with every key unchanged, so the shape
+     fingerprint could not see it and every returning visitor kept the
+     old values. See the note above before changing this. */
+  var VERSION   = 2;
   var DEBOUNCE  = 200;   /* ms after the last event before a write */
   var HEARTBEAT = 2000;  /* ms between "does storage still match?" checks */
   var POLL      = 500;   /* ms between retries while the tab is busy */
