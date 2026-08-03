@@ -23,6 +23,52 @@ Kein Build-Command, Publish-Directory = Repo-Root.
 
 ## Zuletzt abgeschlossen
 
+- **03.08.: Asset-Stempel aus dem Dateiinhalt. Neu: `tests/stamp-assets.js`,
+  Prüfung in `check-static.js`. Spec C7 nachgezogen — meine vorherige Empfehlung
+  „keine Versionsstempel" ist damit abgelöst.** Ein Commit.
+  **Serges Entscheidung, nach meiner Messung, dass Netlify bereits
+  `must-revalidate` schickt.** Der Zusatznutzen ist Unabhängigkeit von *jedem*
+  Cache zwischen Datei und Leser — Proxy, großzügiger Browser, anders
+  konfigurierter lokaler Server, von Platte geöffnete Kopie. Ändert sich die URL
+  selbst, kann eine alte Kopie nicht mehr die richtige Antwort darauf sein.
+  **Inhalts-Hash, nicht Commit-Hash — Serges Vorgabe und der Kern der Sache.**
+  Ein Commit-Hash ändert sich bei jedem Commit, also lüde jeder Besucher nach
+  jedem Push alle Assets neu, obwohl sich nichts bewegt hat. Der Inhalts-Hash
+  ändert sich genau dann, wenn die Datei sich ändert. Erste acht Zeichen SHA-256.
+  **Der Befund, der den Bau geformt hat: ein veralteter Stempel ist gefährlicher
+  als gar keiner.** Ohne Stempel liefert ein Browser die alte Fassung, solange
+  seine heuristische Frische reicht — ein Zeitfenster. Mit einem Stempel, den
+  nach einer Änderung niemand nachgezogen hat, nennt die URL weiter die alte
+  Fassung, die alte Kopie bleibt also **für immer korrekt**, und aus dem Fenster
+  wird ein Dauerzustand. Deshalb prüft `check-static.js` **nicht**, ob ein `?v=`
+  dasteht, sondern **rechnet den Hash neu und vergleicht**.
+  **Umfangsmeldung, wie bei `assertISO` und aus demselben Grund:** „67 asset
+  references across 99 HTML files checked, 5 distinct assets, every stamp matches
+  its content", und **null Referenzen ist ein Fehlschlag**, kein sauberes
+  Ergebnis. Baut jemand die Einbindung um, meldet die Prüfung nicht mehr grün,
+  weil sie nichts mehr sieht.
+  **Drei Gegenproben, alle rot gesehen:** Asset geändert ohne Stempel nachzuziehen
+  (17 von 67 stimmen nicht, mit Soll- und Ist-Hash im Klartext), ein Stempel
+  entfernt, und alle Referenzen aus den Attributen herausgezogen → „NO asset
+  references found … Zero references is a broken check, not a clean result".
+  **Zwei Dinge, die beim Bauen auffielen:** `loadDashboard()` las die Assets samt
+  `?v=` von der Platte und hätte die ganze Suite zerlegt — schneidet den Stempel
+  jetzt ab, mit dem Hinweis, dass seine Richtigkeit in `check-static.js` geprüft
+  wird und nicht still hier. Und `stamp-assets.js` musste in `NOT_HARNESSES`:
+  ohne Argument **schreibt** er, `npm test` hätte einen veralteten Stempel also
+  stillschweigend repariert statt ihn zu melden — ein Testlauf, der das Repo
+  verändert.
+  **Abnahme im echten Chrome:** Dashboard und öffentliche Wine-Shows-Seite, alle
+  Asset-URLs gestempelt, alle voll übertragen, Sortierung und Formatierung
+  unverändert, kein rohes ISO. Dabei zwei Werkzeugbefunde, die nichts mit der
+  Anwendung zu tun haben und ins Protokoll gehören: **(1)** der alte Tab hatte
+  einen kaputten Evaluierungskontext — ein frisch erzeugtes `<button>` zählte
+  seine eigenen `.click()`-Aufrufe nicht; ein neuer Tab war sofort in Ordnung.
+  **(2)** die öffentliche Seite kam zunächst **ungestempelt** zurück, weil Chrome
+  die HTML-Datei noch aus dem python-Server-Cache von vorhin hielt — `no-store`
+  gilt für Antworten, die tatsächlich geholt werden, nicht für einen bereits
+  gespeicherten Eintrag. Genau das Phänomen dieses Durchgangs, an sich selbst
+  vorgeführt.
 - **03.08.: Der Cache-Punkt ist gefunden — und er saß nicht dort, wo wir ihn
   vermutet haben. Neu: `tests/serve.js`. Spec C7 um „Browser acceptance"
   ergänzt.** Ein Commit.
@@ -504,6 +550,15 @@ Kein Build-Command, Publish-Directory = Repo-Root.
   *Fixtures* — kommt in `bottle-lobby-data.js` ein Feld dazu, aendert er sich von
   selbst. Abweichung heisst alles verwerfen, ganz oder gar nicht, mit Hinweis im
   Toast. Ein Stand, der das Rendern bricht, fliegt raus und die Seite laedt einmal neu.
+  **⚠ Die Grenze des Fingerprints, ausgesprochen am 03.08., damit die Idee nicht
+  wiederkommt: er schuetzt vor FORM-Drift, nicht vor veralteten Werten — und das
+  ist richtig so.** Beim Asset-Cache-Fall lag der Verdacht nahe, ihn auf die
+  *Werte* auszuweiten, weil ein alter Snapshot neben neuem Code stand. Er hat
+  sich aber korrekt verhalten: die Struktur war unveraendert, der Snapshot also
+  formal gueltig. Ihn auf Werte auszudehnen hiesse, **bei jeder Datenaenderung
+  alles zu verwerfen** — dann kann man das Speichern gleich lassen, denn genau
+  die geaenderten Werte sind das, was der Nutzer behalten will (Serge). Der
+  Fehler sass im Asset-Cache und ist dort behoben (Stempel + `tests/serve.js`).
   **Korrektur zur Bestandsaufnahme:** `wineFollowGraph` wird heute nirgends
   veraendert (fuenf Referenzen, alle lesend) — auf Serges Wunsch trotzdem
   registriert, damit My Stars / My Fans am Tag, an dem Folgen ein Knopf wird, nicht

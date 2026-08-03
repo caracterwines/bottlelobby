@@ -2699,9 +2699,46 @@ Netlify serves every file, assets included, with:
 
 `max-age=0` makes a response stale immediately and `must-revalidate` forbids
 serving it without asking, so a deploy is picked up on the next load and the
-ETag turns the check into a 304. **Do not add version stamps to the asset URLs.**
-They would buy nothing here and cost a hash maintained by hand in 17 HTML files
-— the same value copied in many places, which is invariant 1.
+ETag turns the check into a 304.
+
+### The asset stamps
+
+    node tests/stamp-assets.js          → rewrite the stamps
+    node tests/stamp-assets.js --check  → report only
+
+Every asset reference carries `?v=<8 hex>` — the first eight characters of a
+**SHA-256 over the file's content**. Content, never the commit hash: a commit
+hash changes on every commit, so every visitor would re-fetch every asset after
+every push even when nothing in them moved. A content hash changes exactly when
+the file changes, which is the only moment a cache should be invalidated.
+
+They are **defence in depth, not the primary fix** — Netlify's headers above
+already force revalidation. What the stamps add is independence from any cache
+between the file and the reader: a proxy, a browser being generous, a local
+server configured differently, a copy opened from disk. The URL itself changes,
+so a stale copy cannot be the right answer to it.
+
+The hash is generated, never typed. Nothing in 17 HTML files is maintained by
+hand; the stamper writes them and the check recomputes them.
+
+> **A stale stamp is worse than no stamp.** Unstamped, a browser may serve an
+> old copy for as long as its heuristic freshness lasts — a window. Stamped and
+> not regenerated after an edit, the URL still names the old version, so the old
+> copy stays *correct* forever and the window becomes permanent. This is why
+> `tests/check-static.js` recomputes the hash and compares rather than checking
+> that a `?v=` is present: "somebody added a stamp once" is precisely the state
+> that produces the permanent form of the bug.
+
+The check reports its own reach — *"67 asset references across 99 HTML files
+checked, 5 distinct assets"* — and **fails on zero**. A restructuring that moved
+the references out of `src="…"` would otherwise leave it green having examined
+nothing, which is the failure `assertISO` was rebuilt for. Same rule, second
+place: a check that cannot say what it covered is indistinguishable from one
+that covered nothing.
+
+`stamp-assets.js` is in `NOT_HARNESSES`: run without arguments it rewrites the
+HTML, so `npm test` would quietly repair a stale stamp instead of reporting it,
+and a test run would mutate the repo.
 
 **Before reporting any browser finding, check what was actually transferred:**
 

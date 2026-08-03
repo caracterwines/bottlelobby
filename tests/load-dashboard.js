@@ -70,7 +70,11 @@ function loadDashboard(file, opts) {
   const styles = [];
 
   const readAsset = (src, kind) => {
-    const abs = path.resolve(dir, src);
+    /* The reference carries a cache-busting stamp — assets/x.js?v=a1b2c3d4
+       — and the file on disk does not. Strip it before resolving; the
+       stamp's correctness is checked in tests/check-static.js, which is
+       where a wrong one has to be caught, not silently here. */
+    const abs = path.resolve(dir, src.split('?')[0]);
     if (!fs.existsSync(abs))
       throw new Error(kind + ' "' + src + '" does not exist at ' + abs +
         ' — the page references an asset that is not in the repo');

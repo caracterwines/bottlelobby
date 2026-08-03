@@ -10,8 +10,12 @@ const fs = require('fs');
 /* `load-dashboard.js` is a shared module, not a harness: running it does
    nothing and would exit 0, which would read as a passing check.
    `serve.js` is worse than that — it listens, so running it here would
-   hang the suite forever rather than pass falsely. */
-const NOT_HARNESSES = ['run-all.js', 'load-dashboard.js', 'serve.js'];
+   hang the suite forever rather than pass falsely.
+   `stamp-assets.js` is worse again: run with no arguments it REWRITES
+   the HTML files, so the suite would quietly repair a stale stamp
+   instead of reporting it, and a test run would mutate the repo. The
+   stamps are verified in check-static.js, which only reads. */
+const NOT_HARNESSES = ['run-all.js', 'load-dashboard.js', 'serve.js', 'stamp-assets.js'];
 const files = fs.readdirSync(__dirname)
   .filter(f => f.endsWith('.js') && !NOT_HARNESSES.includes(f))
   .sort((a, b) => (a === 'check-static.js' ? -1 : b === 'check-static.js' ? 1 : a.localeCompare(b)));

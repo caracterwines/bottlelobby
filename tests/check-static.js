@@ -287,5 +287,74 @@ console.log('\n── shared renderer classes');
   }
 }
 
+/* ── Cache-busting stamps: present, CORRECT, and counted ──────────
+   Every `assets/x.js` reference carries `?v=<8 hex>`, the first eight
+   characters of a SHA-256 over the file's content. This check does not
+   ask whether a stamp is there; it recomputes the hash and compares.
+
+   A stale stamp is worse than no stamp, which is the reason for the
+   stricter form. Unstamped, a browser may serve an old copy while its
+   heuristic freshness lasts — a window. Stamped-but-not-regenerated,
+   the URL still names the old version, so the old copy stays correct
+   FOREVER and the window becomes permanent. "Somebody added ?v= once"
+   is exactly the state that produces that.
+
+   And it reports its own reach — N references across M files, K
+   distinct assets. A check that silently finds zero references because
+   somebody restructured the markup would otherwise go green having
+   examined nothing, which is the failure assertISO was rebuilt for.
+   Zero is a failure here, not a pass.
+
+   Runs over EVERY html file in the repo, not just FILE: the dashboard
+   is one of seventeen pages loading these assets, and a stamp is only
+   worth anything if none of them is missing it. */
+console.log('\n── cache-busting stamps on asset references');
+{
+  const crypto = require('crypto');
+  const ROOT = path.join(__dirname, '..');
+  const REF = /\b(?:src|href)="(assets\/[A-Za-z0-9._-]+)(\?v=([0-9a-f]+))?"/g;
+  const want = {};
+  const hashOf = rel => {
+    if (want[rel] === undefined) {
+      const abs = path.join(ROOT, rel);
+      want[rel] = fs.existsSync(abs)
+        ? crypto.createHash('sha256').update(fs.readFileSync(abs)).digest('hex').slice(0, 8)
+        : null;
+    }
+    return want[rel];
+  };
+
+  const pages = fs.readdirSync(ROOT).filter(f => f.endsWith('.html'));
+  let refs = 0;
+  const unstamped = [], wrong = [], missing = [];
+  pages.forEach(name => {
+    const html = fs.readFileSync(path.join(ROOT, name), 'utf8');
+    [...html.matchAll(REF)].forEach(m => {
+      refs++;
+      const [, rel, , got] = m;
+      const expect = hashOf(rel);
+      if (expect === null) missing.push(name + ' → ' + rel);
+      else if (!got) unstamped.push(name + ' → ' + rel);
+      else if (got !== expect) wrong.push(name + ' → ' + rel + ' says ?v=' + got + ', content is ' + expect);
+    });
+  });
+
+  if (!refs)
+    bad('NO asset references found in ' + pages.length + ' HTML files — the markup or the pattern ' +
+        'changed. Zero references is a broken check, not a clean result');
+  else if (missing.length)
+    bad(missing.length + ' reference(s) point at an asset not in the repo: ' + missing.slice(0, 3).join(' · '));
+  else if (unstamped.length)
+    bad(unstamped.length + ' of ' + refs + ' asset reference(s) carry no ?v= stamp: ' +
+        unstamped.slice(0, 3).join(' · ') + ' — run: node tests/stamp-assets.js');
+  else if (wrong.length)
+    bad(wrong.length + ' of ' + refs + ' stamp(s) do not match their file — a stale stamp pins the OLD ' +
+        'copy permanently: ' + wrong.slice(0, 3).join(' · ') + ' — run: node tests/stamp-assets.js');
+  else
+    ok(refs + ' asset references across ' + pages.length + ' HTML files checked, ' +
+       Object.keys(want).length + ' distinct assets, every stamp matches its content\n      ' +
+       Object.keys(want).sort().map(r => want[r] + ' ' + r.replace('assets/bottle-lobby-', '')).join(' · '));
+}
+
 console.log(fail ? `\n✗ ${fail} failure(s)` : '\n✓ all checks passed');
 process.exit(fail ? 1 : 0);
