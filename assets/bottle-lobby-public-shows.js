@@ -40,12 +40,23 @@ function showHeroImage(show) {
 const PUBLIC_UPCOMING_STAGES = ['planning', 'published'];
 const PUBLIC_PAST_STAGES     = ['completed'];
 
-/* The demo dates are display strings ("05 Dec 2026"), so sorting needs
-   them parsed. Returns a comparable number; unparseable dates sort
-   last rather than throwing. */
+/* Sorting needs the date parsed. Returns a comparable yyyymmdd number;
+   an unreadable date sorts last rather than throwing.
+
+   BOTH FORMATS, and the ISO branch comes first. This function used to
+   match the display form alone — "05 Dec 2026" — and silently returned
+   MAX_SAFE_INTEGER for anything else. That is the dangerous shape: an
+   ISO date would not have crashed here, it would have sorted every
+   show to the end and quietly reordered the public "What's Coming"
+   list. Widening the reader BEFORE the data moves is the whole point;
+   the other order leaves the sort broken in between, and broken
+   without a symptom. */
 function showDateValue(show) {
   const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const m = /^(\d{1,2})\s+([A-Za-z]{3})\s+(\d{4})$/.exec(show.date || '');
+  const raw = show.date || '';
+  const iso = /^(\d{4})-(\d{2})-(\d{2})$/.exec(raw);
+  if (iso) return Number(iso[1]) * 10000 + Number(iso[2]) * 100 + Number(iso[3]);
+  const m = /^(\d{1,2})\s+([A-Za-z]{3})\s+(\d{4})$/.exec(raw);
   if (!m) return Number.MAX_SAFE_INTEGER;
   const mi = MONTHS.indexOf(m[2]);
   if (mi === -1) return Number.MAX_SAFE_INTEGER;

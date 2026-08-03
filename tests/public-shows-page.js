@@ -166,5 +166,59 @@ console.log('\n── hero images');
   else ok(d.querySelectorAll('.ws-teaser-hero').length + ' hero images, all present in the repo');
 }
 
+/* ── 7. The sort reads both date formats ─────────────────────────
+   Written BEFORE the wine-show dates move to ISO, and that order is
+   the point. showDateValue() used to match the display form alone and
+   return MAX_SAFE_INTEGER for everything else — so an ISO date would
+   not have thrown here, it would have sorted every show to the end
+   and reordered "What's Coming" with no symptom at all. A reader that
+   is widened after its data has moved is a reader that was broken in
+   between, invisibly.
+
+   The check does not care which format the fixtures use: it asserts
+   the same shows come out in the same order when their dates are
+   rewritten into the other format. That keeps holding after the
+   migration, when the two formats swap roles. */
+console.log('\n── the sort survives the format it is given');
+{
+  const DISPLAY = /^(\d{1,2})\s+([A-Za-z]{3})\s+(\d{4})$/;
+  const ISO = /^(\d{4})-(\d{2})-(\d{2})$/;
+  const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const flip = v => {
+    let m = DISPLAY.exec(v || '');
+    if (m) return m[3] + '-' + String(MONTHS.indexOf(m[2]) + 1).padStart(2, '0') + '-' + m[1].padStart(2, '0');
+    m = ISO.exec(v || '');
+    if (m) return String(Number(m[3])).padStart(2, '0') + ' ' + MONTHS[Number(m[2]) - 1] + ' ' + m[1];
+    return null;
+  };
+  const order = () => [false, true].map(past =>
+    w.eval('publicShows(wineShows, ' + past + ')').map(s => s.id).join(','));
+
+  const before = order();
+  const originals = w.eval('wineShows').map(s => s.date);
+  const flipped = originals.map(flip);
+
+  if (flipped.some(v => v === null)) bad('a show date is in neither format: ' + JSON.stringify(originals));
+  else {
+    /* Rewrite every show date into the other format, in place. */
+    w.eval('wineShows.forEach(function (s, i) { s.date = ' + JSON.stringify(flipped) + '[i]; })');
+    const after = order();
+    w.eval('wineShows.forEach(function (s, i) { s.date = ' + JSON.stringify(originals) + '[i]; })');
+
+    if (before.join('|') !== after.join('|'))
+      bad('the order changed when the dates were rewritten into the other format:\n' +
+          '      ' + before.join('  ·  ') + '\n      ' + after.join('  ·  '));
+    else if (!before[0] || before[0].indexOf(',') === -1)
+      bad('fewer than two upcoming shows — the sort cannot be observed, so this check proves nothing');
+    else ok('upcoming and past sort identically in both formats (' + before[0].split(',').length + ' upcoming, ' +
+            before[1].split(',').length + ' past)');
+  }
+
+  /* And the unreadable case still sorts last rather than throwing. */
+  const junk = w.eval('showDateValue({ date: "sometime next spring" })');
+  if (junk !== w.eval('Number.MAX_SAFE_INTEGER')) bad('an unreadable date no longer sorts last: ' + junk);
+  else ok('an unreadable date still sorts last instead of throwing');
+}
+
 console.log(fail ? `\n✗ ${fail} failure(s)` : '\n✓ the public page discloses exactly what A16.6 allows');
 process.exit(fail ? 1 : 0);
