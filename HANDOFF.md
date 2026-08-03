@@ -23,6 +23,73 @@ Kein Build-Command, Publish-Directory = Repo-Root.
 
 ## Zuletzt abgeschlossen
 
+- **03.08.: Stakeholder-Kette, Durchgaenge 1–4 — Profildaten und Beziehung
+  bekommen je einen Ort. Spec A1, A2, A6, A7, C7 und Anhang D31/D32 nachgezogen.**
+  Vier Commits plus ein `fix:`, jeder einzeln im Browser gegengeprueft.
+  **Durchgang 1 — `stakeholders`, 18 Haeuser.** Typ, Avatar, Region, Stadt und
+  oeffentliche Seite lagen in **zwoelf** Arrays zugleich und waren bereits
+  auseinandergelaufen: Hawesko GmbH stand als **HW**, wo ein Array ein Kuerzel
+  trug, und als **HG**, wo `wnInitials()` eines rechnete — gleichzeitig, auf zwei
+  Dashboards. `wineryPartners` hatte gar kein `url`, deshalb war der Winzer die
+  einzige Rolle ohne Klickweg zum eigenen Partner (A11). Beides ist behoben und
+  war Serges ausdrueckliche Freigabe.
+  **`avatar` bleibt ein Feld, keine Rechnung** — „Cave à Vins Lyon" kaeme als
+  **CÀ** heraus. `ROLE_CITY` wird jetzt aus der Tabelle gelesen; der Kommentar
+  daneben hatte genau das vorhergesagt.
+  **Durchgang 2 — `partnerships`, zwoelf Zeilen werden neun.** Vier Buecher
+  (`activePartners`, `wineryPartners`, `rActivePartners`, `tActivePartners`),
+  **drei** Partnerschaften doppelt. Die Kopie hatte gedriftet: Weinhaus
+  Mueller ↔ Hawesko war im einen Buch **14 Apr 2026**, im anderen „March 2026",
+  und nichts konnte sagen, welches stimmt. Beide Enden lesen jetzt 14 Apr — das
+  Datum, auf dem C9/A8 schon ruhte. Damit ist auch der zweite offene Punkt aus
+  2c erledigt: kein `since:'March 2026'` mehr, **ein** Datumsformat.
+  **Drei versteckte Annahmen sind mitgefallen,** weil eine Zeile beide Enden
+  nennt: die Show-Modals fragen den **Host** nach seinen Partnern statt ein
+  globales „den Distributor"; `arePartners(a, b)` ersetzt `isActivePartner(name)`;
+  und „now has a distributor" nimmt ausdruecklich die **erste** Partnerschaft
+  eines Produzenten — Cantina Rossi hat seit dem Zusammenlegen zwei, und der
+  Zutritt zum Handel geschieht einmal, nicht einmal je Distributor.
+  **Eine Datenentscheidung, offengelegt:** die Zeile Enoteca Milano ↔ Cantina
+  Rossi hatte nur „May 2026", nie einen Tag. `2026-05-11` gesetzt und im Code
+  als **Fixture-Autorschaft** gekennzeichnet — die anderen acht Daten kamen aus
+  einem Buch, das bereits ISO fuehrte, dort ist nichts erfunden.
+  **Ein Fehler von mir, unterwegs gefunden und gepusht gewesen (Commit `a0f57ac`):**
+  `saveShow()` las `region` weiter von einer Partnerschaftszeile — „Create Show →"
+  mit Partner-Location warf einen TypeError. **Gegen die gepushte Fassung
+  reproduziert**, nicht aus dem Code geschlossen. Kein Harness hatte je ein
+  Show-Modal geoeffnet, deshalb kam der Absturz durch einen gruenen Durchlauf.
+  Danach alle verbliebenen `.avatar`/`.region`/`.url`/`.type`-Lesestellen einzeln
+  durchgesehen — die uebrigen liegen auf Weindatensaetzen, Orders und
+  Teilnahme-Records.
+  **Durchgang 3 — `tests/stakeholders.js`, `tests/show-modals.js`, 16 statt 14
+  Harnesses.** Die Zusicherungen sind ueberwiegend **negativ**: eine zweite Kopie
+  rendert tadellos, bis die beiden auseinanderlaufen — und dann rendert sie immer
+  noch tadellos. Die eine positive Pruefung, die traegt, ist die Deckung, und sie
+  faehrt dafuer **alle 19 Renderer und die vier Benachrichtigungslisten selbst**,
+  mit Vakuum-Sperre. Die drei ehemaligen Doppelungen werden **an den gerenderten
+  Karten** verglichen, nicht am Array — die Drift war auf dem Schirm.
+  **`persistence.js` hatte eine Luecke:** der Const-Mutations-Check kannte `push`,
+  aber nicht `obj[k] = v`, also war **jedes `const`-Objekt der Seite unsichtbar**.
+  `filters` war seit seiner Entstehung unklassifiziert. Jetzt sechs mit
+  Begruendung, und der Scan behauptet zusaetzlich, dass er weiterhin etwas
+  findet.
+  **Neun Mutationen, jede rot gesehen — drei erst im zweiten Anlauf**, und die
+  drei sind der Ertrag des Durchgangs. Sie stehen jetzt als Regel in **C7**:
+  (1) *unbeobachtbar* — „Avatar aus dem Namen rechnen" im Fans-Renderer, wo alle
+  Fixture-Initialen zufaellig passen; (2) *fehlgezielt* — zwei Renderer teilen
+  eine Zeile, `String.replace` nimmt die erste; (3) *abgeschwaecht*, der
+  gefaehrlichste: nur die Herkunft des Wertes zurueckgedreht, waehrend der Fix
+  auch einen Guard eingezogen hatte — aus dem Absturz wurde ein kuerzerer String.
+  Die Datei waere gegen einen Fehler zertifiziert gewesen, den sie gar nicht
+  sieht. **Schlimmer als keine Pruefung, weil sie Sicherheit vortaeuscht**
+  (Serge). Jetzt geht der Defekt in seiner **gelieferten Form** zurueck.
+  **Abnahme im echten Chrome** (lokaler Server, ueber die Knoepfe): alle vier
+  Rollen, alle Partner-, Anfrage-, Fans- und Stars-Listen; beide Enden zeigen
+  dasselbe Datum; Benachrichtigungen unveraendert 13/27/17/13; die fuenf
+  Show-Modals einzeln gefahren, `venueName="Bistro Laurent, Frankfurt"`; der
+  B12-Leerfall erzwungen (Name ohne Avatar und Link, eine Warnung). Keine
+  Konsolenfehler. Screenshots waren nicht moeglich — die Extension bekommt ihr
+  Skript in die 642-KB-Seite nicht injiziert.
 - **03.08.: Messages-Kette, Durchgang 2c — zwei A8-Kaufanlaesse. Spec C9 und A8
   nachgezogen.** Drei Commits. „Ein Winzer, dem ich folge, hat jetzt einen
   Distributor" (in A8 seit dem 02.08. als offener Fall notiert) und „ein neuer
@@ -627,22 +694,15 @@ gefahren, nicht ueber die Konsole. Details unter „Zuletzt abgeschlossen".
 abgeschlossen". Zwei Dinge sind dabei offen geblieben und gehoeren nicht in
 diesen Durchgang:
 
-- **`wineryPartners` ist dieselbe Beziehung ein zweites Mal.** Cantina
-  Rossi–Hawesko steht sowohl in `activePartners` (Distributor-Sicht) als auch in
-  `wineryPartners` (Winzer-Sicht) — ein **A1-Verstoss, der schon vorher da war**
-  und den ich nicht angefasst habe. Die Supply-Quelle liest bewusst **nur**
-  `activePartners`, weil beide zu lesen hiesse, die Kopie als legitim zu
-  behandeln. Praktische Folge heute: nur die erste Partnerschaft eines Winzers
-  wird gesehen — was fuer diese Meldung ohnehin die richtige Koernung ist („hat
-  *jetzt* einen Distributor" ist ein Ereignis, kein Zaehler). Beide Listen aus
-  einer Tabelle abzuleiten geht nicht nebenbei: sie mischen Beziehungsdaten mit
-  Profildaten (Avatar, Region, URL), also braucht es zuerst eine
-  Stakeholder-Stammtabelle. **Eigener Durchgang.**
-- **`wineryPartners`, `rActivePartners` und `tActivePartners` tragen weiter
-  `since:'March 2026'`** als Anzeigetext. Nur `activePartners` ist auf `at`
-  umgestellt, weil nur diese Liste abgeleitet wird. Auf dem Schirm stehen damit
-  in den Partnerlisten zwei Datumsformate nebeneinander — kein Defekt, aber es
-  gehoert beim naechsten Anfassen dieser Arrays mitgezogen.
+- ~~**`wineryPartners` ist dieselbe Beziehung ein zweites Mal.**~~ **ERLEDIGT
+  03.08. mit der Stakeholder-Kette.** Es waren drei Doppelungen, nicht eine, und
+  eine davon war bereits gedriftet. Die Vermutung von damals hat gestimmt: es
+  brauchte zuerst die Stammtabelle, weil die Listen Beziehungs- und Profildaten
+  mischten. Die Koernung „erste Partnerschaft" ist jetzt ausgesprochen statt
+  zufaellig — siehe `firstDistributorPartnership()`.
+- ~~**`since:'March 2026'` als Anzeigetext**~~ **ERLEDIGT im selben Durchgang.**
+  Ein Datumsformat auf dem Schirm; die Umstellung hat die Drift bei Weinhaus
+  Mueller ueberhaupt erst sichtbar gemacht.
 
 **▶ NAECHSTES aus dieser Kette: Feature (b), Korrespondenz — und zwar erst,
 wenn die Geschaeftsfrage beantwortet ist.** Die vier `Messages`-Nav-Eintraege
@@ -875,8 +935,8 @@ gehoert dir.
   `cd tests && npm install` (nur jsdom). Danach ist **`npm test` der komplette
   Durchlauf** — `check-static.js` zuerst (Syntax, doppelte IDs — inzwischen auch gegen IDs, die
   Skripte als Literal ins Markup schreiben —, div-Balance und Verschachtelung,
-  onclick, CSS-Cross-Check, Enum-Klassen), dann die **zehn Verhaltens-Harnesses**.
-  Neu in dieser Sitzung: `venue-request.js`, `attendees.js`, `order-list.js`.
+  onclick, CSS-Cross-Check, Enum-Klassen), dann die **fuenfzehn
+  Verhaltens-Harnesses**. Neu am 03.08.: `stakeholders.js` und `show-modals.js`.
   **Jedes neue Harness wird gegen absichtlich kaputte Fassungen gefahren, bevor es
   als fertig gilt** — in dieser Sitzung haben dabei dreimal Mutationen ueberlebt,
   die Pruefung war also jeweils schwaecher als sie aussah. Nichts davon muss noch von Hand nachgebaut werden.

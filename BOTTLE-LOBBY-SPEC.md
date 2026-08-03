@@ -73,21 +73,51 @@ This applies to **everything**:
 
 **A16 works this pattern out in full** — hosts, exhibitors, venue, attendees and products all hang off one `wine_shows` record, and every product on a show is a foreign key into the producer's own `products` table, never a copy. Read it as the worked example of this rule.
 
+**A2 records what the rule costs when it is missed.** The two things every other record refers to — a stakeholder's own identity, and the partnership between two of them — were the last to get an owner, and by then both had already drifted in the prototype: the same house wore two different badges on two dashboards, and one partnership carried two different start dates. Neither looked wrong on screen, which is the point. A second copy does not announce itself; it renders perfectly until the day it renders differently.
+
 ---
 
 ## A2. Ownership Map — who owns what
 
 | Data | Owner | Others get |
 |---|---|---|
+| **Stakeholder identity** — name, type, badge, region, city, public page | **The stakeholder itself, in one `stakeholders` row** | A foreign key. Never a copy of the name, the badge or the page |
 | Wines | Winery | Reference/FK relation |
 | Awards | Winery (that earned it) | Reference |
 | Press & Recognition | Winery | Reference |
 | Trade Reviews | Written by Distributor/Restaurant/Retail, **published only with winery approval** | Reference |
 | Wine Shows | Host | Participation relation |
+| Partnerships | **Neither party — the relation is its own record**, one row with two ends | Both render the same row from their own side (A6) |
 | Orders | Shared record between buyer and seller | Both render the same row |
 | Promo Materials | Distributor | Visible to active partners only |
 | Exclusive Offers & Deals | Distributor | Visible to active partners only |
 | Profile content / media | The stakeholder itself | Reference |
+
+### Identity is data, and it belongs to nobody's list
+
+The first row is the one that is easiest to skip and the one that was
+actually violated. A house's own name, badge, region and public page are not
+"details on a partner card" — they are the house's record, and every list that
+mentions the house references it.
+
+**What it cost when they were not:** the prototype carried type, badge, region
+and public page inside twelve arrays at once — the partner lists of all four
+roles, the eight request lists and the follow graph. They had already drifted.
+Hawesko GmbH rendered as **HW** wherever an array stored a badge and as **HG**
+wherever a renderer computed one from the name, on two dashboards at the same
+time, and neither was identifiably wrong. The winery's partner list carried no
+public page at all, so the winery was the one role that could not reach its own
+partner's profile (A11).
+
+Two consequences the real build must keep:
+
+- **A badge is a field, not a computation.** Initials look derivable until
+  "Cave à Vins Lyon" comes out as *CÀ*. Two letters a house is known by are a
+  choice somebody made, and a choice is data.
+- **Absence is a legitimate answer.** A house that appears only as a name on a
+  guest list has no identity record, and inventing one so a lookup succeeds is
+  the same violation from the other direction. A lookup that misses says so —
+  it renders the name, omits what it does not know, and reports the miss (B12).
 
 ---
 
@@ -232,7 +262,40 @@ All four roles use the same two-item **My Partners** sidebar section (B8). The d
 
 Each of these carries the same four-stage progress indicator, so both sides always see the identical stage of the identical request record.
 
-**Prototype blueprint:** `partnerRequests` / `activePartners` / `renderPartnerNetwork()` and `incomingRequests` / `openIncomingAccept()` in the distributor/restaurant/retail profile files; `wineryRequests` / `wineryPartners` / `openAcceptModal()` / `confirmAccept()` / `declineRequest()` in `bottle-lobby-winery-profile.html`; `openPartnershipModal()` / `confirmPartnership()` on all public profiles; parameterised `partnershipCopy` object in `bottle-lobby-profile-demo.html`.
+### One record, two ends — and what a second copy costs
+
+**A partnership is a single row naming its two ends.** Not a list per dashboard.
+The sentence above — *"both sides always see the identical stage of the
+identical request record"* — is only true if there is one record; with a book
+per role it is a hope maintained by hand.
+
+**Measured, not feared.** The prototype kept four books (`activePartners`,
+`wineryPartners`, and one each for restaurant and retail), and three
+partnerships existed in two of them at once. They had drifted: the
+Weinhaus Müller ↔ Hawesko partnership was dated **14 Apr 2026** in the
+distributor's book and **"March 2026"** in the retailer's own list, and nothing
+in the system could say which was right. Neither screen looked wrong.
+
+Two things follow for the schema:
+
+- **Every partnership has exactly one distributor.** The other three roles
+  partner only with distributors (invariant 3), so the row may name its ends
+  — `distributor` and `partner` — rather than holding an unordered pair. Each
+  end asks for its own list and renders from its own side, exactly as an order
+  does (invariant 8).
+- **A derivation that needs "the other party" reads it off the row.** Asking a
+  global "the distributor" works only while there is one, and it hides the
+  assumption instead of stating it. Concretely: a Wine Show's pickers offer the
+  **host's** partners (A16.4), not a platform-wide list, and *"X now has a
+  distributor"* (A8) takes the producer's **first** partnership — gaining a route
+  to the trade is an event that happens once, not once per distributor.
+
+**Activation date and actor belong on the row.** `at` in ISO, comparable rather
+than a display string, and `activated_by` — because a partnership goes active
+on a manual Bottle Lobby confirmation (invariant 6), and a notification derived
+from it must not invent who did that (C9).
+
+**Prototype blueprint:** one `partnerships` array in `bottle-lobby-dashboard.html`, read through `partnershipsOf(me)` / `partnerSide(row, me)` / `arePartners(a, b)`; `renderPartnerNetwork()` (distributor), `renderWineryNetwork()`, `renderRestaurantNetwork()` and `renderRetailNetwork()` all render that one array from their own end. Requests are still per role — `partnerRequests` / `incomingRequests` / `wineryRequests` / `wineryOutgoingRequests` and the restaurant and retail pairs, with `openAcceptModal()` / `confirmAccept()` / `declineRequest()` / `openIncomingAccept()`; they hold no pair that exists twice today, but they are the same shape and the same argument applies when they are built for real. `openPartnershipModal()` / `confirmPartnership()` on all public profiles; parameterised `partnershipCopy` object in `bottle-lobby-profile-demo.html`. Guarded by `tests/stakeholders.js`.
 
 ---
 
@@ -256,9 +319,11 @@ Both directions carry the same label in every role — the follow graph is one s
 
 Every role shows **both** directions. The earlier per-role labels ("Wine Stars", "Wine Fans") and the hidden cells are gone — see Appendix D (D20).
 
-**Prototype blueprint:** shared `wineFollowGraph` array in `bottle-lobby-dashboard.html`; generic renderers `renderFansFor(entityName, listId, countId, emptyMsg)` and `renderWineStarsFor(followerName, listId, countId)` — **all four roles now call both**, with only the entity name differing; shared `roleAv` / `roleTag` / `followRoleLabel` maps covering all 4 types, plus a `wn-av-winery` / `rt-winery` CSS pair for the winery role.
+**An edge is only the edge:** who follows whom, and since when. Everything about either house — its type, badge, region and public page — comes from that house's own record (A2), and the edge stores none of it. It used to store all four, describing the *follower*, which meant a house carried its own profile once per follow: Hawesko GmbH four times over.
 
-> ⚠️ **Field-naming debt to fix in the real build:** in the prototype the *followed entity* field is still called `winery`, with an optional `followedType` that defaults to `'winery'` when omitted. That was backward compatibility with the first version, when only wineries could be followed. In the real build name it properly — `followed_id` / `followed_type` — and drop the default.
+**Prototype blueprint:** shared `wineFollowGraph` array in `bottle-lobby-dashboard.html`, three fields per row — `follower` / `winery` / `at`; generic renderers `renderFansFor(entityName, listId, countId, emptyMsg)` and `renderWineStarsFor(followerName, listId, countId)` — **all four roles now call both**, with only the entity name differing; shared `roleAv` / `roleTag` / `roleLabel` maps covering all 4 types, plus a `wn-av-winery` / `rt-winery` CSS pair for the winery role.
+
+> ⚠️ **Field-naming debt to fix in the real build:** in the prototype the *followed entity* field is still called `winery`. That was backward compatibility with the first version, when only wineries could be followed. In the real build name it properly — `followed_id`. The companion `followedType` field is already gone: what the followed account **is** was never the edge's fact to hold, and `stakeholder(name).type` answers it from the one place that owns it.
 
 Demo data deliberately spans all four types (Cantina Rossi, Château Belrieu and Bistro Laurent follow Hawesko GmbH; Hawesko follows Henri Dubois Domaine, Weinhaus Müller and Osteria Marconi) so the cross-type model is visible without explanation.
 
@@ -2538,6 +2603,26 @@ of the "usual checks" is one command and nothing is re-derived by hand.
 > two of the checks here only became trustworthy after a mutation exposed that
 > they did not fire.
 
+> ⚠️ **A mutation has to be observable and faithful, or it certifies nothing.**
+> Three ways one passes while proving the opposite of what it claims, all three
+> met in a single pass (3 Aug 2026) and all three recorded at the mutation that
+> hit them:
+>
+> 1. **Unobservable.** The fault is real and the fixtures cannot show it —
+>    "compute the badge from the name" was applied where every demo house's
+>    initials happen to match its badge. Move the mutation to where the fault
+>    would actually be visible, or build the state that makes it visible.
+> 2. **Mis-aimed.** Two renderers shared a line, `String.replace` took the
+>    first, and the check read the second. Anchor a patch on text that names
+>    its target, and make the builder return `null` when a patch does not
+>    apply so a miss cannot read as "the check held".
+> 3. **Weakened.** The most dangerous one. Reproducing part of a defect can
+>    produce a milder symptom that the current code handles: restoring only
+>    where a value came from, while the fix had also added a guard, turned a
+>    crash into a shorter string. The file would then be certified against a
+>    bug it cannot see — worse than no check, because it reads as safety.
+>    Put the defect back in its **shipped shape**, line for line.
+
 `tests/` is excluded from the deployed site in `netlify.toml` — the publish
 directory is the repo root, so everything committed is served unless blocked.
 
@@ -2892,6 +2977,8 @@ Without it the badge cannot be honest.
 | D29 | A16.12 closed a wine the tally did not carry by letting the interests **`lapse`**, with the attendees "told plainly that the wine will not be listed" | **A16.12** — the host **holds it back with a reason**, the reason goes to the **producer** as a message they can answer, the interests are kept as `held_back`, and the pre-orderer is told *"not ordered this time, your note is kept"* rather than refused | "Lapsed" described an expiry, and the flat refusal ended a conversation that in this trade has barely started: a producer can carry the freight or improve the terms, and some wines need two or three shows before they carry themselves. Both of the old behaviours also destroyed the signal — a guest told "no" stops asking, and A8 loses exactly the demand nobody is serving yet. Only the wording of the guest's message was ever in doubt; the reason reaching the producer was the substantive change. |
 | D28 | `wine_show_attendees.status` carried **`waitlisted`** as a stored value, alongside a rule that the waitlist "moves up automatically" | **A16.5 / A16.9 / A16.10** — the status records only the decision (`invited` · `requested` · `confirmed` · `declined` · `withdrawn`); holding a seat or a waitlist place is computed from request order against capacity | The two could not both be true. A stored `waitlisted` has to be rewritten for everyone behind a departing attendee, which is a cascade, not an automatic move-up — and it is stale between the withdrawal and the rewrite. Computing it makes the promise in A16.5 literally true. `withdrawn` was added in the same breath: leaving of your own accord and being turned down are different facts, and only one of them may be re-invited without ceremony (the same distinction `lapsed` draws in A16.11). **Superseded before it was ever built.** |
 | D27 | `orders.source` was to gain a single **`wine_show`** value, guarded by "a `wine_show` order can never carry product lines" (A16.11) | **A16.12 / A14.3** — two opposite values, `wine_show_order` (goods, down the chain, always product lines) and `wine_show_catering` (service, against the chain, never product lines), each with its own guard | The single value was drafted while the catering settlement was the only money a show produced, and it was already wrong: the show's *purpose* is the consolidated purchase (A16.0), which is a product order sourced from a show. One value would have forced the guard to be either useless or false. **Superseded before it was ever built** — noted here because the decision was taken, not because code changed. |
+| D31 | A stakeholder's own identity — type, badge, region, public page — lived **inside every list that mentioned the house**: the partner lists of all four roles, the eight request lists and the follow graph, twelve arrays in all | **A2** — one `stakeholders` record per house; every list holds a reference and asks for the rest | Not a decision anybody took, which is why it survived so long: each list was written on its own and each one needed a badge. The result was measurable drift before anything was built on it — Hawesko GmbH rendered **HW** where a badge was stored and **HG** where one was computed from the name, on two dashboards at once, and neither was identifiably the wrong one. The winery's list had no public page field at all, so the winery was the only role that could not reach its partner's profile (A11). Two rules came out of the repair: a badge is a **field**, because initials look derivable until "Cave à Vins Lyon" comes out *CÀ*; and a house that legitimately has no record must make a lookup **say so** rather than render blank (B12). |
+| D32 | An active partnership was **one list per dashboard** — `activePartners`, `wineryPartners`, and one each for restaurant and retail — while A6 already said both sides "see the identical stage of the identical request record" | **A6** — one `partnerships` row naming its two ends (`distributor`, `partner`), read from either side, with `at` in ISO and `activated_by` | The two statements could not both be true, and the copy had already drifted: Weinhaus Müller ↔ Hawesko was dated **14 Apr 2026** in one book and **"March 2026"** in the other, with nothing able to say which was right. Naming the ends removed three assumptions that had been invisible while only one book existed — a Wine Show's pickers now offer the **host's** partners rather than a platform-wide list (A16.4), `arePartners(a, b)` replaced a lookup that silently supplied "the distributor", and *"X now has a distributor"* takes the producer's **first** partnership, because gaining a route to the trade happens once and not once per distributor. |
 
 ---
 
