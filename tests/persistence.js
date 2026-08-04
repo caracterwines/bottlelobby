@@ -721,6 +721,21 @@ console.log('\n── a pre-migration snapshot cannot bring back the old format'
    product books are registered, and a returning visitor is holding
    rows with no id at all.
 
+   WHAT THE COMPARISON ACTUALLY COMPARES, because the obvious reading
+   is wrong and cost a round of measuring. It is the WRITER's fixture
+   hash, stored in the snapshot, against the READER's fixture hash.
+   The snapshot's own data is never hashed. So a snapshot carrying
+   today's fingerprint beside pre-key rows IS restored — no build ever
+   writes that pair, but devtools can, and it is the edge of the
+   guarantee rather than a hole in this check. It is also why the seed
+   tab below is a patched BUILD and not an edited snapshot: only a
+   real older build produces the older fingerprint.
+
+   `BLStore.fingerprints()` returns a cached value computed once at
+   register(), so stripping ids from the live arrays and re-reading it
+   measures the cache and not the shape function. Measured properly,
+   the two builds hash currentWinePortfolio as 7b89eeb8 and 2b0bc140.
+
    It matters more than it looks. tests/wine-identity.js runs with
    persistence switched off and reads the fixtures, so it would report
    "39 rows, every one carrying an id" while the browser in front of

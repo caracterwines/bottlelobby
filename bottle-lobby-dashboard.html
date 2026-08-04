@@ -5016,6 +5016,102 @@ function partnerMetaFor(p, me) {
   return n === undefined ? null : n + (n === 1 ? ' wine' : ' wines') + ' in your portfolio';
 }
 
+/* ══════════════════════════════════════════════════════════════════
+   ONE QUESTION: WHICH PRODUCT IS THIS? (pass 2 of 5)
+   ------------------------------------------------------------------
+   The readers are widened here, and the references still name names.
+   That order is the whole point: a comparison taught to expect a key
+   throws nothing when it is handed a name — it finds nothing, and a
+   surface renders empty. Widening first means every step after this
+   one can be verified by the surface still being right.
+
+   ONE FUNCTION, because twenty-one places asked this question and
+   each answered it itself. They did not all ask it the same way:
+   some matched producer and name, some name alone, some name plus
+   vintage — and the show surface spells the vintage into the name,
+   so "Pouilly-Fumé" and "Pouilly-Fumé 2023" were two strings for one
+   bottle in ten cases. Every one of those readings is preserved
+   below; what changes is that there is now a single place where they
+   live, and a single place for pass 4 to delete the name branch.
+
+   `book` NARROWS THE SEARCH, and that is a rule rather than a
+   shortcut: orderItem() has to answer null for a wine outside the
+   seller's portfolio (invariant 3), not find it in somebody else's
+   book. A call without a book is asking "does this platform know
+   this product at all", which is a different question.
+══════════════════════════════════════════════════════════════════ */
+const PRODUCT_ID = /^PRD-\d{4}$/;
+
+/* Every product row the page knows, whichever book it sits in.
+
+   The try/catch is not defensive noise, it is the only way to ask.
+   This file evaluates top to bottom and several renderers run while
+   it does — before the buyers' lists further down exist. A `let` in
+   its temporal dead zone throws on `typeof` too, so the guard used
+   everywhere else in this file (`typeof x !== 'undefined'`) does not
+   work here and fails loudly rather than quietly. A book that is not
+   there yet contributes nothing; every caller that depends on a
+   specific book passes it explicitly. */
+function bookOrEmpty(read) {
+  try { const v = read(); return Array.isArray(v) ? v : []; } catch (e) { return []; }
+}
+function allProducts() {
+  return [].concat(
+    bookOrEmpty(function () { return partnerWinesPool; }),
+    bookOrEmpty(function () { return currentWinePortfolio; }),
+    bookOrEmpty(function () { return rCurrentWineList; }),
+    bookOrEmpty(function () { return tCurrentWineSelection; })
+  );
+}
+
+/* A reference → the product row it names, or null. Accepts a key, a
+   record, a {winery, name} pair, or a bare name — the last of those
+   is the legacy branch and pass 4 removes it. */
+function wineByRef(ref, book) {
+  const rows = book || allProducts();
+  if (!ref || !rows.length) return null;
+
+  if (typeof ref === 'object') {
+    if (ref.id && PRODUCT_ID.test(ref.id)) return rows.find(r => r.id === ref.id) || null;
+    return rows.find(r => r.winery === ref.winery && r.name === ref.name) || null;
+  }
+  if (PRODUCT_ID.test(ref)) return rows.find(r => r.id === ref) || null;
+
+  /* ── The legacy branch ──────────────────────────────────────────
+     A trailing four-digit year is the show surface's spelling. When
+     it is present the vintage has to match as well, exactly as the
+     `name + ' ' + vintage` comparisons this replaces did — dropping
+     that would let a 2019 reference find a 2022 bottle. */
+  const m = /^(.*?)\s+((?:19|20)\d\d)$/.exec(ref);
+  const name = m ? m[1] : ref;
+  const vintage = m ? Number(m[2]) : null;
+  return rows.find(r => r.name === name && (vintage === null || r.vintage === vintage)) || null;
+}
+
+/* THE ONE LABEL. Six places built "name vintage" by hand, which is
+   how the same bottle came to be spelled two ways; same shape and
+   same reason as blDate(). An unresolvable reference is printed as it
+   arrived rather than swallowed — a wine nobody's book knows is a
+   finding, not a blank. */
+function wineLabel(ref, book) {
+  const p = wineByRef(ref, book);
+  if (p) return p.name + ' ' + p.vintage;
+  if (typeof ref === 'string') return ref;
+  return ref && ref.name ? ref.name + (ref.vintage ? ' ' + ref.vintage : '') : '';
+}
+
+/* Two references, one bottle? Where both sides resolve this is an id
+   comparison. Where one does not — a name no book carries — it falls
+   back to the string equality it replaces, so this pass changes no
+   answer it does not have to. The fallback is the measure of what is
+   left to do, and pass 4 removes it along with the name branch. */
+function sameWine(a, b, book) {
+  const pa = wineByRef(a, book), pb = wineByRef(b, book);
+  if (pa && pb) return pa.id === pb.id;
+  const s = x => typeof x === 'string' ? x : (x && x.name) || '';
+  return !!s(a) && s(a) === s(b);
+}
+
 let awSelectedWine = null;
 let editingPortfolioIndex = null;
 
@@ -5025,7 +5121,7 @@ function renderWinePortfolioD() {
   el.innerHTML = currentWinePortfolio.map((w, idx) => `
     <div class="list-entry">
       <div class="entry-dot" style="background:${w.ownLabel ? 'var(--gold)' : 'var(--dim)'}"></div>
-      <div class="entry-name">${w.name} ${w.vintage}<div style="font-size:0.68rem;color:var(--dim);margin-top:0.2rem">${w.winery}</div></div>
+      <div class="entry-name">${wineLabel(w)}<div style="font-size:0.68rem;color:var(--dim);margin-top:0.2rem">${w.winery}</div></div>
       <div class="entry-detail"><a class="icon-btn" href="${w.url}" target="_blank">View</a></div>
       <div class="entry-tag"><span class="badge${w.ownLabel ? ' badge-gold' : ''}" style="font-size:0.55rem${w.ownLabel ? '' : ';background:rgba(247,243,238,0.05);color:var(--dim)'}">${w.ownLabel ? 'Own-Label' : 'Standard'}</span></div>
       <div class="entry-actions">
@@ -5088,7 +5184,7 @@ function renderWinePicker(search) {
   list.innerHTML = Object.keys(groups).map(winery => `
     <div class="aw-pick-group">${winery}</div>
     ${groups[winery].map(w => {
-      const taken = currentWinePortfolio.some(cw => cw.winery === w.winery && cw.name === w.name);
+      const taken = !!wineByRef(w, currentWinePortfolio);
       return `<div class="aw-pick-item${taken ? ' taken' : ''}" ${taken ? '' : `onclick="selectWineForAdd('${w.winery.replace(/'/g, "\\'")}','${w.name.replace(/'/g, "\\'")}')"`}>
         <div>
           <div class="aw-pick-name">${w.name} <span style="color:rgba(247,243,238,0.4)">${w.vintage}</span></div>
@@ -5099,7 +5195,7 @@ function renderWinePicker(search) {
     }).join('')}`).join('');
 }
 function selectWineForAdd(winery, name) {
-  awSelectedWine = partnerWinesPool.find(w => w.winery === winery && w.name === name);
+  awSelectedWine = wineByRef({ winery: winery, name: name }, partnerWinesPool);
   if (!awSelectedWine) return;
   document.getElementById('aw-selected-summary').innerHTML =
     `${awSelectedWine.name} <span>${awSelectedWine.vintage} · ${awSelectedWine.winery}</span>`;
@@ -5629,7 +5725,7 @@ function renderWineListR() {
   el.innerHTML = rCurrentWineList.map((w, idx) => `
     <div class="list-entry">
       <div class="entry-dot" style="background:${w.exclusive ? 'var(--gold)' : 'var(--dim)'}"></div>
-      <div class="entry-name">${w.name} ${w.vintage}<div style="font-size:0.68rem;color:var(--dim);margin-top:0.2rem">${w.winery}</div></div>
+      <div class="entry-name">${wineLabel(w)}<div style="font-size:0.68rem;color:var(--dim);margin-top:0.2rem">${w.winery}</div></div>
       <div class="entry-detail"><a class="icon-btn" href="${w.url}" target="_blank">View</a></div>
       <div class="entry-tag"><span class="badge${w.exclusive ? ' badge-gold' : ''}" style="font-size:0.55rem${w.exclusive ? '' : ';background:rgba(247,243,238,0.05);color:var(--dim)'}">${w.exclusive ? 'Exclusive' : 'Standard'}</span></div>
       <div class="entry-actions"><button class="icon-btn" onclick="deleteListWine(${idx})" title="Remove from list">✕</button></div>
@@ -5688,7 +5784,7 @@ function renderWinePickerR(search) {
   list.innerHTML = Object.keys(groups).sort().map(winery => `
     <div class="aw-pick-group">${winery}</div>
     ${groups[winery].map(w => {
-      const taken = rCurrentWineList.some(cw => cw.winery === w.winery && cw.name === w.name);
+      const taken = !!wineByRef(w, rCurrentWineList);
       /* Derived, not stored: `note` used to carry "Own-Label
          Available", which duplicated ownLabel, and "Exclusive", which
          is the BUYER's own marking on their own list. */
@@ -5705,7 +5801,7 @@ function renderWinePickerR(search) {
 function selectWineForAddR(winery, name) {
   const dist = partnershipsOf('Bistro Laurent').map(p => partnerSide(p, 'Bistro Laurent'))
     .find(n => stakeholder(n).type === 'distributor');
-  rAwSelectedWine = (portfolioOf(dist) || []).find(w => w.winery === winery && w.name === name);
+  rAwSelectedWine = wineByRef({ winery: winery, name: name }, portfolioOf(dist) || []);
   if (!rAwSelectedWine) return;
   document.getElementById('r-aw-selected-summary').innerHTML =
     `${rAwSelectedWine.name} <span>${rAwSelectedWine.vintage} · ${rAwSelectedWine.winery}</span>`;
@@ -6025,7 +6121,7 @@ function renderWineSelectionT() {
   el.innerHTML = tCurrentWineSelection.map((w, idx) => `
     <div class="list-entry">
       <div class="entry-dot" style="background:${w.exclusive ? 'var(--gold)' : 'var(--dim)'}"></div>
-      <div class="entry-name">${w.name} ${w.vintage}<div style="font-size:0.68rem;color:var(--dim);margin-top:0.2rem">${w.winery}</div></div>
+      <div class="entry-name">${wineLabel(w)}<div style="font-size:0.68rem;color:var(--dim);margin-top:0.2rem">${w.winery}</div></div>
       <div class="entry-detail"><a class="icon-btn" href="${w.url}" target="_blank">View</a></div>
       <div class="entry-tag"><span class="badge${w.exclusive ? ' badge-gold' : ''}" style="font-size:0.55rem${w.exclusive ? '' : ';background:rgba(247,243,238,0.05);color:var(--dim)'}">${w.exclusive ? 'Exclusive' : 'Standard'}</span></div>
       <div class="entry-actions"><button class="icon-btn" onclick="deleteSelectionWine(${idx})" title="Remove from selection">✕</button></div>
@@ -6070,7 +6166,7 @@ function renderWinePickerT(search) {
   list.innerHTML = Object.keys(groups).sort().map(winery => `
     <div class="aw-pick-group">${winery}</div>
     ${groups[winery].map(w => {
-      const taken = tCurrentWineSelection.some(cw => cw.winery === w.winery && cw.name === w.name);
+      const taken = !!wineByRef(w, tCurrentWineSelection);
       /* Derived, not stored: `note` used to carry "Own-Label
          Available", which duplicated ownLabel, and "Exclusive", which
          is the BUYER's own marking on their own list. */
@@ -6087,7 +6183,7 @@ function renderWinePickerT(search) {
 function selectWineForAddT(winery, name) {
   const dist = partnershipsOf('Weinhaus Müller').map(p => partnerSide(p, 'Weinhaus Müller'))
     .find(n => stakeholder(n).type === 'distributor');
-  tAwSelectedWine = (portfolioOf(dist) || []).find(w => w.winery === winery && w.name === name);
+  tAwSelectedWine = wineByRef({ winery: winery, name: name }, portfolioOf(dist) || []);
   if (!tAwSelectedWine) return;
   document.getElementById('t-aw-selected-summary').innerHTML =
     `${tAwSelectedWine.name} <span>${tAwSelectedWine.vintage} · ${tAwSelectedWine.winery}</span>`;
@@ -6548,7 +6644,7 @@ let rPromoProgress = { bottleCounts: { 'Sauvignon Blanc — Sancerre': 60, 'Prim
 let tPromoProgress = { bottleCounts: { 'Sauvignon Blanc — Sancerre': 60, 'Primitivo Sicilia IGT': 48 }, orderValue: 2150, singleOrdered: {}, claimed: {} };
 
 function isPromoUnlocked(m, wineList, progress) {
-  const have = m.wineName ? wineList.some(w => w.name === m.wineName) : false;
+  const have = m.wineName ? !!wineByRef(m.wineName, wineList) : false;
   if (m.condType === 'volume' && m.orderMode === 'cumulative') return have && (progress.bottleCounts[m.wineName] || 0) >= m.bottlesRequired;
   if (m.condType === 'volume' && m.orderMode === 'single') return !!progress.singleOrdered[m.id];
   if (m.condType === 'newlisting') return have;
@@ -6567,7 +6663,7 @@ function promoCardHtml(m, wineList, progress, viewerFn, claimFn) {
     statusHtml = '<span class="badge badge-gold" style="font-size:0.55rem">🎉 Unlocked</span>';
     actionHtml = `<button class="match-btn" onclick="${claimFn}(${m.id})">Claim →</button>`;
   } else if (m.condType === 'volume' && m.orderMode === 'cumulative') {
-    const have = wineList.some(w => w.name === m.wineName);
+    const have = !!wineByRef(m.wineName, wineList);
     const count = progress.bottleCounts[m.wineName] || 0;
     statusHtml = have
       ? `<span class="badge" style="font-size:0.55rem;background:rgba(247,243,238,0.05);color:var(--dim)">${count} / ${m.bottlesRequired} bottles</span>`
@@ -6635,7 +6731,7 @@ function promoWineToListEntry(wineName, ownerLabel) {
   const me = ownerLabel === 'restaurant' ? 'Bistro Laurent' : 'Weinhaus M\u00fcller';
   const dist = partnershipsOf(me).map(p => partnerSide(p, me))
     .find(n => stakeholder(n).type === 'distributor');
-  const found = (portfolioOf(dist) || []).find(w => w.name === wineName);
+  const found = wineByRef(wineName, portfolioOf(dist) || []);
   if (!found) {
     /* B12: a promo naming a wine the distributor does not carry is a
        broken record, not a row to fabricate. It is also exactly what
@@ -6653,7 +6749,7 @@ function promoWineToListEntry(wineName, ownerLabel) {
    wine" would have appended `null` to the list, which is worse than
    the invented row it replaced. Returns whether it added. */
 function addWineToBuyerList(list, wineName, ownerLabel) {
-  if (list.some(w => w.name === wineName)) return false;
+  if (wineByRef(wineName, list)) return false;
   const entry = promoWineToListEntry(wineName, ownerLabel);
   if (!entry) return false;
   list.push(entry);
@@ -7102,7 +7198,7 @@ const wineUnitPrice = {
    carry the wine (invariant 3), and placeOrder() refuses the order
    rather than inventing a producer for it. */
 function orderItem(wineName, qty, seller) {
-  const found = (portfolioOf(seller) || []).find(w => w.name === wineName);
+  const found = wineByRef(wineName, portfolioOf(seller) || []);
   if (!found) {
     console.warn('[orders] "' + wineName + '" is not in ' + seller + "'s portfolio — no order line made");
     return null;
@@ -7491,7 +7587,7 @@ function promoDueFor(o) {
   const due = [];
   promoMaterials.forEach(m => {
     if (m.condType === 'volume') {
-      const inThis = o.items.filter(i => i.wine === m.wineName).reduce((s, i) => s + i.qty, 0);
+      const inThis = o.items.filter(i => sameWine(i.wine, m.wineName)).reduce((s, i) => s + i.qty, 0);
       if (!inThis) return;
       if (m.orderMode === 'single') {
         if (inThis >= m.bottlesRequired) due.push({ m:m, why:'single order of ' + inThis + ' bottles' });
@@ -7502,7 +7598,7 @@ function promoDueFor(o) {
     } else if (m.condType === 'ordervalue') {
       if (orderGrand(o) >= m.orderValue) due.push({ m:m, why:'order value above ' + eur(m.orderValue) });
     } else if (m.condType === 'newlisting') {
-      if (o.items.some(i => i.wine === m.wineName)) due.push({ m:m, why:'new listing of ' + m.wineName });
+      if (o.items.some(i => sameWine(i.wine, m.wineName))) due.push({ m:m, why:'new listing of ' + m.wineName });
     }
   });
   return due;
@@ -8467,7 +8563,7 @@ function hostPortfolio(show) {
   return typeof currentWinePortfolio !== 'undefined' ? currentWinePortfolio : [];
 }
 function lineKind(show, productName) {
-  return hostPortfolio(show).some(w => (w.name + ' ' + w.vintage) === productName)
+  return wineByRef(productName, hostPortfolio(show))
     ? 'stock' : 'preorder';
 }
 /* What the host promises for a pre-order. Named by closing at the
@@ -8505,7 +8601,7 @@ function preorderTally(show) {
    house count is as much the signal as the bottles: 60 bottles from
    one buyer and from six are different findings. */
 function productTally(show, name) {
-  const rows = interestsOf(show).filter(i => i.product === name && i.status === 'open');
+  const rows = interestsOf(show).filter(i => sameWine(i.product, name) && i.status === 'open');
   return { bottles: rows.reduce((n, i) => n + i.qty, 0), houses: rows.length };
 }
 function showTally(show) {
@@ -8564,7 +8660,7 @@ function consolidatedOrders(show) {
   const out = {};
   orderListProducts(show).filter(w => w.kind === 'preorder').forEach(function (w) {
     const qty = preorderInterests(show)
-      .filter(i => i.product === w.product.name)
+      .filter(i => sameWine(i.product, w.product.name))
       .reduce((n, i) => n + i.qty, 0);
     if (!qty) return;
     (out[w.producer] = out[w.producer] || []).push({ name: w.product.name, qty: qty });
@@ -8590,7 +8686,7 @@ function mayClose(show) {
 function orderedUpstream(show, productName) {
   if (typeof orders === 'undefined') return false;
   return orders.some(o => o.wineShowId === show.id && o.buyer === show.leadHost &&
-    o.items.some(i => i.wine === productName));
+    o.items.some(i => sameWine(i.wine, productName)));
 }
 function mayHoldBack(show, productName) {
   return !orderedUpstream(show, productName);
@@ -8605,7 +8701,7 @@ function mayHoldBack(show, productName) {
 function preparedOrderFor(show, attendee) {
   const wines = orderListProducts(show);
   const asLine = function (i) {
-    const w = wines.find(x => x.product.name === i.product);
+    const w = wines.find(x => sameWine(x.product.name, i.product));
     return { name: i.product, producer: w ? w.producer : '',
              kind: w ? w.kind : 'preorder', qty: i.qty,
              unit: w && w.product.indicativePrice != null ? w.product.indicativePrice : 0,
@@ -8616,7 +8712,7 @@ function preparedOrderFor(show, attendee) {
      that is on its way. The rest is a note, not an order line. */
   const lines = open.filter(i => lineKind(show, i.product) === 'stock' ||
                                  orderedUpstream(show, i.product)).map(asLine);
-  const waiting = open.filter(i => lines.every(l => l.name !== i.product)).map(asLine);
+  const waiting = open.filter(i => lines.every(l => !sameWine(l.name, i.product))).map(asLine);
   const held = interestsOf(show)
     .filter(i => i.attendee === attendee && i.status === 'held_back').map(asLine);
   return { lines: lines, waiting: waiting, held: held,
@@ -9299,9 +9395,9 @@ function heldRows(s) {
   if (!names.length) return '';
   return '<div class="wn-group-title" style="margin-top:1rem">Held back</div>' +
     names.map(function (n) {
-      const rows = interestsOf(s).filter(i => i.product === n && i.status === 'held_back');
+      const rows = interestsOf(s).filter(i => sameWine(i.product, n) && i.status === 'held_back');
       const qty = rows.reduce((a, i) => a + i.qty, 0);
-      const producer = (orderListProducts(s).find(w => w.product.name === n) || {}).producer || '';
+      const producer = (orderListProducts(s).find(w => sameWine(w.product.name, n)) || {}).producer || '';
       return '<div style="padding:0.6rem 0;border-bottom:1px solid rgba(247,243,238,0.05)">' +
         '<div style="display:flex;align-items:center;gap:0.7rem;flex-wrap:wrap">' +
           '<span style="font-size:0.8rem;color:var(--paper);flex:1;min-width:150px">' + n +
@@ -9339,7 +9435,7 @@ function producerHeldBox(role, s) {
   if (!names.length) return '';
   return '<div class="odt-box"><div class="odt-box-head">Not Taken On This Time</div><div class="odt-box-body">' +
     names.map(function (n) {
-      const r = interestsOf(s).find(i => i.product === n && i.status === 'held_back');
+      const r = interestsOf(s).find(i => sameWine(i.product, n) && i.status === 'held_back');
       return '<div class="odt-kv"><span>' + n + '</span><span style="text-align:right;flex:1">' +
         (r.holdReason || '') + '</span></div>';
     }).join('') +
@@ -9359,9 +9455,9 @@ function myOrderListBox(role, s) {
   if (!may && !mine.length) return '';
 
   const wines = orderListProducts(s);
-  const qtyOf = n => { const r = mine.find(i => i.product === n); return r ? r.qty : ''; };
+  const qtyOf = n => { const r = mine.find(i => sameWine(i.product, n)); return r ? r.qty : ''; };
   const total = mine.reduce((n, i) => {
-    const w = wines.find(x => x.product.name === i.product);
+    const w = wines.find(x => sameWine(x.product.name, i.product));
     const px = w && w.product.indicativePrice;
     return px ? n + px * i.qty : n;
   }, 0);
@@ -9884,7 +9980,7 @@ function hostRespondToProduct(showId, producer, action) {
    about who may write cannot be enforced twice and differently. */
 function writeInterest(show, attendee, product, qty, by) {
   show.interests = interestsOf(show);
-  const row = show.interests.find(i => i.attendee === attendee && i.product === product);
+  const row = show.interests.find(i => i.attendee === attendee && sameWine(i.product, product));
   if (qty > 0) {
     if (row) { row.qty = qty; row.enteredBy = by; row.at = SHOW_TODAY; }
     else show.interests.push({ attendee: attendee, product: product, qty: qty,
@@ -10060,11 +10156,11 @@ function closeShowOrderList(id) {
 function holdWineBack(show, productName, reason) {
   let n = 0;
   interestsOf(show).forEach(function (i) {
-    if (i.product === productName && i.status === 'open') {
+    if (sameWine(i.product, productName) && i.status === 'open') {
       i.status = 'held_back'; i.holdReason = reason; n += i.qty;
     }
   });
-  const producer = (orderListProducts(show).find(w => w.product.name === productName) || {}).producer || '';
+  const producer = (orderListProducts(show).find(w => sameWine(w.product.name, productName)) || {}).producer || '';
   logShow(show, show.leadHost, 'Held back ' + productName + ' (' + n + ' btl asked for) — to ' +
     producer + ': "' + reason + '"');
   return n;
@@ -10075,9 +10171,9 @@ function holdWineBack(show, productName, reason) {
    will hear if that changes" from a politeness into a mechanism. */
 function releaseHeldWine(id, productName) {
   const s = actionShow(id); if (!s) return;
-  const rows = interestsOf(s).filter(i => i.product === productName && i.status === 'held_back');
+  const rows = interestsOf(s).filter(i => sameWine(i.product, productName) && i.status === 'held_back');
   if (!rows.length) { actionSay('Nothing is held back on that wine'); return; }
-  const producer = (orderListProducts(s).find(w => w.product.name === productName) || {}).producer || '';
+  const producer = (orderListProducts(s).find(w => sameWine(w.product.name, productName)) || {}).producer || '';
   const qty = rows.reduce((n, i) => n + i.qty, 0);
   const o = {
     id: nextOrderId(), placed: todayISO(),
@@ -10101,7 +10197,7 @@ function releaseHeldWine(id, productName) {
 function withdrawInterest(id, productName) {
   const role = activeShowRole, cfg = SHOW_ROLES[role];
   const s = actionShow(id); if (!s) return;
-  const row = interestsOf(s).find(i => i.attendee === cfg.entity && i.product === productName);
+  const row = interestsOf(s).find(i => i.attendee === cfg.entity && sameWine(i.product, productName));
   if (!row) { actionSay('You have no note on that wine'); return; }
   if (row.status === 'ordered') { actionSay('That one is already on an order — cancel the order instead'); return; }
   s.interests.splice(s.interests.indexOf(row), 1);
@@ -10469,7 +10565,7 @@ function onInviteProducerChange() {
   const wines = partnerWinesPool.filter(w => w.winery === producer);
   document.getElementById('if-product').innerHTML =
     '<option value="">No preference — let the producer choose</option>' +
-    wines.map(w => '<option value="' + w.name + ' ' + w.vintage + '">' + w.name + ' ' + w.vintage + '</option>').join('');
+    wines.map(w => '<option value="' + wineLabel(w) + '">' + wineLabel(w) + '</option>').join('');
 }
 function saveInvite() {
   const s = actionShow(inviteShowId); if (!s) return;
@@ -10502,7 +10598,7 @@ function openCounterModal(id) {
     .filter(p => p.status !== 'declined' || p.proposedBy === 'producer')
     .map(p => p.name);
   const mine = partnerWinesPool.filter(w =>
-    w.winery === SHOW_ROLES[role].entity && spent.indexOf(w.name + ' ' + w.vintage) === -1);
+    w.winery === SHOW_ROLES[role].entity && !spent.some(function (p) { return sameWine(p, w); }));
   const hostWine = me.products.find(p => p.status === 'proposed' && p.proposedBy === 'host');
   const rejected = me.products.filter(p => p.status === 'declined' && p.proposedBy === 'producer').slice(-1)[0];
 
@@ -10520,7 +10616,7 @@ function openCounterModal(id) {
       : s.leadHost + ' has not named a wine. Pick the one you want to present — this takes your place on the show, and ' +
         s.leadHost + ' then confirms the wine itself.');
   document.getElementById('cf-product').innerHTML = mine.length
-    ? mine.map(w => '<option value="' + w.name + ' ' + w.vintage + '">' + w.name + ' ' + w.vintage + ' · ' + w.type + '</option>').join('')
+    ? mine.map(w => '<option value="' + wineLabel(w) + '">' + wineLabel(w) + ' · ' + w.type + '</option>').join('')
     : '<option value="">No other wine left to propose</option>';
   document.getElementById('cf-save').textContent = hostWine || rejected ? 'Propose This Wine →' : 'Confirm With This Wine →';
   document.getElementById('show-product-modal').classList.add('active');
@@ -10832,7 +10928,7 @@ function notifNewWines(me, out) {
     const edge = notifWineryEdge(me, w.winery);
     if (!edge) return;
     if (notifTime(w.at) <= notifTime(edge.at)) return;
-    const label = w.name + ' ' + w.vintage;
+    const label = wineLabel(w);
     notifPush(out, me, {
       id: notifId('wine', w.winery + '·' + label, w.at),
       kind:'wine', cls:'info', at:w.at,
@@ -10954,9 +11050,7 @@ function notificationsFor(role) {
    of the name. Returns the POOL RECORD or null; a wine the pool does
    not carry is simply not linkable, and that is the honest answer. */
 function notifWineRecord(producer, productName) {
-  return partnerWinesPool.find(function (w) {
-    return w.winery === producer && w.name + ' ' + w.vintage === productName;
-  }) || null;
+  return wineByRef(productName, partnerWinesPool.filter(function (w) { return w.winery === producer; }));
 }
 
 /* Why a show is waiting, in the words of the side that is waiting.

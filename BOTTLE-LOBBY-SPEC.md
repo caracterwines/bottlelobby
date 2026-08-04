@@ -882,11 +882,47 @@ examined nothing cannot be green.
 > **Adding the key needed no `VERSION` bump, and that was measured rather than
 > reasoned.** A new field changes the *keys* of a persisted row, which is exactly
 > what the shape fingerprint sees — unlike the date migration, where only values
-> moved and the fingerprint was blind (A14 / store notes). `tests/persistence.js`
-> seeds a snapshot from a build with the key removed and asserts it is discarded,
-> then removes the fingerprint comparison and asserts the 20 id-less rows come
-> back. Without the second half the first would pass even if the store had
-> stopped comparing shapes altogether.
+> moved and the fingerprint was blind (A14 / store notes). Measured: the pre-key
+> build hashes `currentWinePortfolio` as `7b89eeb8`, today's as `2b0bc140`.
+> `tests/persistence.js` seeds a snapshot from a build with the key removed and
+> asserts it is discarded, then removes the fingerprint comparison and asserts
+> the 20 id-less rows come back. Without the second half the first would pass
+> even if the store had stopped comparing shapes altogether.
+>
+> **What the fingerprint does NOT do, and it is worth stating because it looks
+> like it should.** The comparison is between the *writer's* fixture hash, stored
+> in the snapshot, and the *reader's* fixture hash. It never hashes the
+> snapshot's own data. So a snapshot carrying today's fingerprint beside
+> pre-key rows **is restored** — measured: 20 id-less rows reach the live state.
+> That is not reachable from a browser, because no build ever writes that pair;
+> it is reachable from devtools, and it is the boundary of the guarantee.
+> `BLStore.fingerprints()` is likewise a cached value computed once at
+> `register()`, so editing the live arrays and re-reading it measures the cache,
+> not the shape function.
+
+**One resolver, and it is widened before anything moves (pass 2).** `wineByRef(ref,
+book)` answers a key, a record, a `{producer, name}` pair or a bare name;
+`wineLabel(ref)` is the single composition of `"name vintage"`, which six places
+had built by hand; `sameWine(a, b)` compares two references. `book` narrows the
+search and that is a **rule** — `orderItem()` has to answer null for a product
+outside the seller's portfolio (invariant 3), not find it in somebody else's.
+
+The order is the point and it is the lesson of the ISO conversion restated: a
+comparison taught to expect a key throws nothing when handed a name, it finds
+nothing, and the surface renders empty. So the readers are widened while the
+references still name names; each later pass is then verifiable by the surface
+still being right. 31 join sites now ask the resolver, and the only two name
+comparisons left in the page are the legacy branch inside it — `wine-identity.js`
+counts them and names them, so the number shrinking is visible and it growing is
+a failure.
+
+> Routing `sameWine()` through the key changes **five** raw comparisons from
+> false to true, all of one shape: an order line naming a product without a
+> vintage against a show product carrying one. All five sit behind
+> `orderedUpstream()`, which is gated on `wineShowId`, and no order carries one —
+> so no answer on any surface moves. It is named here rather than left to be
+> discovered, because it is the first place where the key would have corrected
+> something, and passes 3a–3c turn the rest of that class from latent into real.
 
 ### A15.3 Components — the generalisation of grape variety
 
