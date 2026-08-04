@@ -57,6 +57,66 @@ einen Leerfall nennt den **Grund**, nicht den Zustand; eine Mutation, die sich a
 eine Fixture verlaesst, gilt nur, solange die zufaellig passt; und beim Nachtragen
 von Stammdaten ist das **frueheste abhaengige Ereignis die Obergrenze**.
 
+### ▶ OFFENE ABNAHME — Produktschluessel 3b, 3c und 4, nach Rolle
+
+> Stand 4. August, Commits `f1182b2` · `59cacd2` · `812f874`. Repo- und
+> Datenseite sind abgenommen; **die Sichtpruefung fehlt und deckt alle drei
+> Durchgaenge zusammen ab.** Nach Schritt 4 antwortet jede Stelle, die noch
+> heimlich einen Namen uebergibt, `null` und rendert leer — deshalb faellt ein
+> Rest jetzt auf und vorher nicht.
+>
+> **Klicken, nicht aufrufen** (C7). Lesen ist erlaubt.
+> **Konsole offenlassen: jedes `[product] … is not a product key` ist ein Fund.**
+> Vorbereitung: `node tests/run-all.js` → 19 · `node tests/serve.js` ·
+> vor jedem Befund `transferSize` lesen.
+
+**Distributor — Hawesko GmbH**
+1. Portfolio: 14 Weine mit Erzeuger · „Add Wine" → 6 Erzeuger, Cantina Rossi
+   **10** Weine inkl. **Terra Rossa 2022**, 7 als „Already in portfolio"
+2. Orders → **ORD-2037** anklicken: `%` „120 bottles of **Merlot — Bordeaux
+   Supérieur** qualifies for 25% off" → **Apply discount** klicken
+3. **ORD-2041**: 🎁 „60 bottles of **Sauvignon Blanc — Sancerre** at ratio 60:6"
+   plus die Promo-Zeile „12 Wine Glasses"
+4. **ORD-2040** → „+ Add line": der Prompt bietet **nur das eigene Buch**
+5. Auf ORD-2037 eine **Rechnung** erzeugen: Tabelle nennt Wein und Erzeuger
+6. Profile → Offers / Deals / Promo Materials, bei allen dreien **„+ New"**:
+   die Weinauswahl zeigt **14 Portfolio-Weine mit Erzeuger** (vorher
+   handgetippt, mit 7 Fremdweinen darin)
+7. Wine Shows → **WS-2603** Angebotsliste: Sancerre Rouge **PRE-ORDER** 2/60,
+   Müller-Thurgau **IN STOCK** 1/12
+8. **WS-2599** → „Close the Order List": zwei Entscheidungen · Haekchen ohne
+   Grund wird abgelehnt · mit Grund → Bestellung entsteht und **nennt den Wein**
+9. **WS-2604** → „+ Invite Exhibitor" → Cantina Rossi: 10 Weine mit Jahrgang
+
+**Winzer — Cantina Rossi**
+10. Wine Shows → **WS-2601**: „…invited you to exhibit with **Primitivo Riserva
+    2020**" — die Stelle, die vor 3b `undefined` schrieb
+11. „Propose another wine" → Restauswahl mit Jahrgang und Typ, einen waehlen →
+    „Your Turn" nennt ihn
+12. Notifications: eine Weinzeile, **„View wine →"** oeffnet die Artikelseite
+
+**Restaurant — Bistro Laurent**
+13. Wine List → „Add Wine to List": nur Hawesko-Portfolio, `type · origin` gefuellt
+14. Discover → Offers/Deals: **„via Château Belrieu · Hawesko GmbH"** und
+    **„via Cantina Rossi · Hawesko GmbH"** (der Erzeuger war in 3c kurz weg)
+15. Promo: „12 Wine Glasses" 🎉 Unlocked/Claim · „20 Tasting Stands" gesperrt mit
+    „Add **Riesling Spätlese — Mosel** to start" · „12 Wine Menu Cards" **gesperrt**
+16. Wine Shows → **WS-2603**: eigene Liste schreiben, Menge speichern
+17. **WS-2599** → „Your Order Is Ready", Zeilen nennen Wein und Erzeuger
+
+**Retail — Weinhaus Mueller**
+18. Selection → „Add Wine to Selection": derselbe Picker
+19. Discover → Promo: „12 Wine Menu Cards" **freigeschaltet** — der Unterschied
+    zum Restaurant, und er ist richtig (Bestellwert 2150 gegen 1450)
+20. Offers/Deals: dieselben „via"-Zeilen
+
+**Oeffentlich**
+21. `bottle-lobby-wine-shows.html` → WS-2603 nennt beide Weine mit Erzeuger.
+    **Diese Flaeche waere ohne den Umzug des Katalogs ins geteilte Asset leer**
+22. Ein Winzerprofil, Show-Abschnitt
+
+---
+
 ### Offen, in dieser Reihenfolge sinnvoll
 
 > **Korrektur vom 4. August, Serges Vorgabe: Punkt 1 ist nicht mehr der naechste
