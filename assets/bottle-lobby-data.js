@@ -238,28 +238,27 @@ function allProducts() {
   );
 }
 
-/* A reference → the product row it names, or null. Accepts a key, a
-   record, a {winery, name} pair, or a bare name — the last of those
-   is the legacy branch and pass 4 removes it. */
+/* A reference → the product row it names, or null. A KEY, or a record
+   carrying one. Nothing else.
+
+   THE NAME BRANCH IS GONE (pass 4 of 5). It accepted a bare name and,
+   for the show surface, "<name> <vintage>" — the widening that let
+   passes 3a–3c move 91 references while every surface stayed right.
+   With it removed, anything still handing over a name resolves to
+   null and renders empty, which is the point: a check after this cut
+   is worth more than one before it, because a leftover cannot hide
+   behind a string that happens to read correctly.
+
+   It is deliberately NOT lenient about shape. A `{winery, name}` pair
+   used to be accepted for the three pickers; they pass the key in
+   their onclick now, so nothing escapes an apostrophe or an em dash
+   any more — which is the failure A14.4 records. */
 function wineByRef(ref, book) {
   const rows = book || allProducts();
   if (!ref || !rows.length) return null;
-
-  if (typeof ref === 'object') {
-    if (ref.id && PRODUCT_ID.test(ref.id)) return rows.find(r => r.id === ref.id) || null;
-    return rows.find(r => r.winery === ref.winery && r.name === ref.name) || null;
-  }
-  if (PRODUCT_ID.test(ref)) return rows.find(r => r.id === ref) || null;
-
-  /* ── The legacy branch ──────────────────────────────────────────
-     A trailing four-digit year is the show surface's spelling. When
-     it is present the vintage has to match as well, exactly as the
-     `name + ' ' + vintage` comparisons this replaces did — dropping
-     that would let a 2019 reference find a 2022 bottle. */
-  const m = /^(.*?)\s+((?:19|20)\d\d)$/.exec(ref);
-  const name = m ? m[1] : ref;
-  const vintage = m ? Number(m[2]) : null;
-  return rows.find(r => r.name === name && (vintage === null || r.vintage === vintage)) || null;
+  const id = typeof ref === 'object' ? ref.id : ref;
+  if (typeof id !== 'string' || !PRODUCT_ID.test(id)) return null;
+  return rows.find(r => r.id === id) || null;
 }
 
 /* THE ONE LABEL. Six places built "name vintage" by hand, which is
@@ -269,9 +268,7 @@ function wineByRef(ref, book) {
    finding, not a blank. */
 function wineLabel(ref, book) {
   const p = wineByRef(ref, book);
-  if (p) return p.name + ' ' + p.vintage;
-  if (typeof ref === 'string') return ref;
-  return ref && ref.name ? ref.name + (ref.vintage ? ' ' + ref.vintage : '') : '';
+  return p ? p.name + ' ' + p.vintage : noProduct(ref, 'wineLabel');
 }
 
 /* wineLabel() names the BOTTLING — name and vintage — because that is
@@ -281,7 +278,18 @@ function wineLabel(ref, book) {
    a deal ought to name the vintage is a business question, not a
    consequence of giving products keys, so the printed text is left
    exactly where it was and the question is left open. */
-function wineName(ref)   { const p = wineByRef(ref); return p ? p.name : (typeof ref === 'string' ? ref : ''); }
+/* An unresolvable reference prints NOTHING, and says so on the
+   console. Returning the reference itself was right while names were
+   still travelling — it kept a surface readable mid-migration. After
+   pass 4 it would be the opposite: a stray name would render as
+   itself and look correct, which is precisely the failure this whole
+   chain exists to make impossible. */
+function noProduct(ref, who) {
+  if (window.console && console.warn)
+    console.warn('[product] ' + who + ': "' + ref + '" is not a product key — nothing to show');
+  return '';
+}
+function wineName(ref)   { const p = wineByRef(ref); return p ? p.name : noProduct(ref, 'wineName'); }
 function wineWinery(ref) { const p = wineByRef(ref); return p ? p.winery : ''; }
 
 /* Two references, one bottle? Where both sides resolve this is an id
@@ -289,11 +297,14 @@ function wineWinery(ref) { const p = wineByRef(ref); return p ? p.winery : ''; }
    back to the string equality it replaces, so this pass changes no
    answer it does not have to. The fallback is the measure of what is
    left to do, and pass 4 removes it along with the name branch. */
+/* Two references, one product? An id comparison, and nothing else.
+   The string fallback that stood here was the measure of what was
+   left to do; there is nothing left, so a reference that does not
+   resolve is not equal to anything — including another one that does
+   not resolve. Two unknowns are not a match. */
 function sameWine(a, b, book) {
   const pa = wineByRef(a, book), pb = wineByRef(b, book);
-  if (pa && pb) return pa.id === pb.id;
-  const s = x => typeof x === 'string' ? x : (x && x.name) || '';
-  return !!s(a) && s(a) === s(b);
+  return !!pa && !!pb && pa.id === pb.id;
 }
 
 let wineShows = [

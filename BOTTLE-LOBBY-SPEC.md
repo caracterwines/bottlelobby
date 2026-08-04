@@ -1005,6 +1005,25 @@ buyers' lists stay on the dashboard: they are that page's own state.
 > **values** changing format inside an unchanged shape, which is what the date
 > migration was.
 
+**The name branch is gone (pass 4 of 5), and that is what makes a check worth
+running.** `wineByRef()` takes a key, or a record carrying one, and nothing else;
+`sameWine()` is an id comparison with no string fallback; `wineLabel()` and
+`wineName()` return **nothing** for a reference they cannot resolve, and warn.
+
+Serge's reason for cutting before the browser pass rather than after: while a
+name still resolved, any site that had been missed went on working and looked
+correct. After the cut it answers null and renders empty. **A pass over the
+surfaces now checks 3b and 3c as well, under the one condition where a leftover
+actually shows.** Measured after the cut: the 178 show surfaces and the 37
+commercial surfaces are still byte-identical to their pre-3b and pre-3c
+captures, and a sweep driving **326 renderers, views and modals** raises **zero**
+resolver warnings and zero script errors.
+
+> Returning the reference itself was right while names were travelling — it kept
+> a surface readable mid-migration. Keeping it afterwards would have been the
+> opposite: a stray name would render as itself and look correct, which is
+> exactly the failure this chain exists to make impossible.
+
 **The commercial records name products (pass 3c), and the name is gone.**
 `promo_materials.product_id`, `exclusive_offers.product_id`,
 `exclusive_deals.product_ids`. `winery` is gone from offers and deals for the
@@ -1038,13 +1057,24 @@ buyer's row derives it. No stored wine name is left anywhere in the prototype.
 > the key, the buyers' offer and deal rows had lost the producer, and every
 > commercial label had silently gained a vintage.
 
-> **Which is why there are two accessors and not one.** `wineLabel()` names the
-> **bottling** — name and vintage — because that is what a show product and a
-> portfolio row have always shown. `wineName()` names the **wine**, because a
-> promo condition and a deal never carried a vintage. Whether *"Buy 120 bottles
-> of Merlot — Bordeaux Supérieur"* ought to say **2021** is a business question
-> about what a deal is a deal on, and it is not a consequence of giving products
-> keys — so the text stayed where it was and the question is open.
+**Which is why there are two accessors and not one — decided 4 August 2026.**
+`wineLabel()` names the **bottling**, name and vintage, because that is what a
+show product and a portfolio row have always shown: a show is one evening and a
+guest tastes one bottling. `wineName()` names the **wine**, without a vintage,
+and that is what a promo condition, an offer and a deal use.
+
+**Serge's reasoning, and it settles the question rather than deferring it: a deal
+runs for months and a vintage turns over.** A deal reading *"Buy 120 bottles of
+Merlot — Bordeaux Supérieur 2021"* would quietly stop matching the moment the
+producer moves to 2022 — it would not fail, it would simply find nothing, which
+is the failure mode this whole chain exists to remove. So a deal, an offer and a
+promo condition are on the **wine**.
+
+The opposite case is real and is **not** a labelling question: a distributor
+wanting to clear one specific vintage needs an optional *"applies to vintage X"*
+field on the deal, which the matching then honours. That is its own pass, and
+naming it here is what keeps somebody from solving it by putting the vintage
+back into the label.
 
 > **A fourth catalogue, found by the collision the previous pass created.**
 > `bottle-lobby-distributor-profile.html` declares its own `partnerWinesPool` of 23
@@ -3064,6 +3094,28 @@ of the "usual checks" is one command and nothing is re-derived by hand.
 >    crash into a shorter string. The file would then be certified against a
 >    bug it cannot see — worse than no check, because it reads as safety.
 >    Put the defect back in its **shipped shape**, line for line.
+
+### A browser acceptance CLICKS. It does not call functions.
+
+**Serge's rule, from his own mistake on 4 August 2026, and it is the first rule
+of the section because everything below it is worthless without it.** He called
+`openOrderDetail('ORD-2037')` from the console to save a few clicks. The function
+expects other state; mid-rebuild it threw and left a blank page — which reads
+exactly like the defect one is looking for.
+
+**What is being accepted is what a person gets, and the way there is part of
+what is being accepted.** A direct call skips the router that hides the other
+views, the renderer that repaints the badge, the guard that refuses the action,
+and the empty-state branch (B12) — every one of which has produced a real finding
+in this repo. A pass that reaches the detail pane by calling into it has tested
+the pane and nothing else.
+
+It also removes a whole class of false alarms: a thrown call leaves the page in a
+state no user can reach, and the next thing anybody looks at is wrong for a
+reason that has nothing to do with the build.
+
+The one exception is **reading**: `performance.getEntriesByType('resource')`,
+counting rows, checking a global. Reading state is not driving it.
 
 ### Browser acceptance: serve it with `tests/serve.js`, and read `transferSize`
 

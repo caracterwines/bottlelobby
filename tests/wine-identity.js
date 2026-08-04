@@ -239,77 +239,76 @@ console.log('\n── an id is a key, a url is an address');
     ok(new Set(both.map(r => r.url)).size + ' distinct article pages, every one present in the repo');
 }
 
-/* ── 5. One resolver, and it answers both spellings ──────────────
-   Pass 2. The readers are widened before any reference moves, so the
-   resolver has to answer a key AND every name shape the sites it
-   replaced accepted. If it stopped answering names, passes 3a–3c
-   would each empty a surface rather than fail. */
-console.log('\n── the resolver answers a key and, still, a name');
+/* ── 5. The resolver answers a key and NOTHING else ──────────────
+   Pass 2 widened it so the references could move; pass 4 narrows it
+   again, and the narrowing is the point. While a name still resolved,
+   a site that had been missed went on working and looked correct. Now
+   it answers null and renders empty — which is why the browser pass
+   after this cut is worth more than one before it. */
+console.log('\n── the resolver answers a key, and only a key');
 {
   const products = [...new Map(ROWS.map(r => [r.id, r])).values()];
-  const askId    = products.filter(p => (w.eval('wineByRef(' + JSON.stringify(p.id) + ')') || {}).id !== p.id);
-  const askName  = products.filter(p => (w.eval('wineByRef(' + JSON.stringify(p.name) + ')') || {}).id !== p.id);
-  const askShow  = products.filter(p =>
-    (w.eval('wineByRef(' + JSON.stringify(p.name + ' ' + p.vintage) + ')') || {}).id !== p.id);
-  const label    = products.filter(p =>
-    w.eval('wineLabel(' + JSON.stringify(p.id) + ')') !== p.name + ' ' + p.vintage);
+  const askId   = products.filter(p => (w.eval('wineByRef(' + JSON.stringify(p.id) + ')') || {}).id !== p.id);
+  const byName  = products.filter(p => w.eval('wineByRef(' + JSON.stringify(p.name) + ') !== null'));
+  const byShow  = products.filter(p => w.eval('wineByRef(' + JSON.stringify(p.name + ' ' + p.vintage) + ') !== null'));
+  const label   = products.filter(p => w.eval('wineLabel(' + JSON.stringify(p.id) + ')') !== p.name + ' ' + p.vintage);
+  const named   = products.filter(p => w.eval('wineName(' + JSON.stringify(p.id) + ')') !== p.name);
 
   if (!products.length) bad('no products to ask about — this section examined nothing');
-  else if (askId.length)   bad(askId.length + ' product(s) do not answer to their own key: ' + askId.map(wine).join(' · '));
-  else if (askName.length) bad(askName.length + ' product(s) no longer answer to their bare name — ' +
-      'the readers were narrowed before the references moved: ' + askName.map(wine).join(' · '));
-  else if (askShow.length) bad(askShow.length + ' product(s) do not answer to the show spelling "name vintage": ' +
-      askShow.map(wine).join(' · '));
-  else if (label.length)   bad(label.length + ' label(s) do not read "name vintage": ' + label.map(wine).join(' · '));
-  else ok(products.length + ' products, each answering to its key, its bare name and its show spelling, ' +
-          'and each labelling as "name vintage"');
+  else if (askId.length)  bad(askId.length + ' product(s) do not answer to their own key: ' + askId.map(wine).join(' · '));
+  else if (byName.length) bad(byName.length + ' product(s) still answer to a bare NAME — the legacy branch is back, ' +
+      'and with it every join that only looks resolved: ' + byName.map(wine).join(' · '));
+  else if (byShow.length) bad(byShow.length + ' product(s) still answer to the show spelling "name vintage": ' +
+      byShow.map(wine).join(' · '));
+  else if (label.length || named.length)
+    bad('the accessors disagree with the record for ' + (label.length + named.length) + ' product(s)');
+  else ok(products.length + ' products: each answers to its key, none to a name or a show spelling, ' +
+      'and both accessors read the record');
 
-  /* The vintage still has to bind. Dropping it would let a 2019
-     reference find a 2022 bottle, which is the one thing the
-     string comparisons this replaced got right for free. */
-  const wrongVintage = products.filter(p =>
-    w.eval('wineByRef(' + JSON.stringify(p.name + ' ' + (p.vintage + 1)) + ') !== null'));
-  if (wrongVintage.length)
-    bad(wrongVintage.length + ' product(s) answer to a vintage they do not carry: ' + wrongVintage.map(wine).join(' · '));
-  else
-    ok('and none of them answers to a vintage it does not carry');
+  /* An unresolvable reference has to render as nothing. Returning the
+     reference was right while names travelled; now it would let a
+     stray name print itself and look right. */
+  const strays = ['Pouilly-Fumé', 'Pouilly-Fumé 2023', 'PRD-9999', ''];
+  const leaks = strays.filter(x => w.eval('wineLabel(' + JSON.stringify(x) + ')') !== '' ||
+                                   w.eval('wineName(' + JSON.stringify(x) + ')') !== '');
+  if (leaks.length) bad(leaks.length + ' unresolvable reference(s) print themselves instead of nothing: ' +
+      leaks.map(x => '"' + x + '"').join(' · ') + ' — a leftover name would look correct on screen');
+  else ok('and an unresolvable reference renders as nothing, with a console warning that names it');
+
+  /* Two unknowns are not a match. */
+  if (w.eval('sameWine("Pouilly-Fumé", "Pouilly-Fumé")'))
+    bad('sameWine() still compares two unresolvable references as equal — the string fallback is back');
+  else ok('sameWine() answers false for anything that is not two products');
 }
 
-/* ── 6. How much of the name join is left ────────────────────────
-   Not a pass/fail about the number — it is 3a–3c that brings it
-   down. What must not happen is the number growing, or this scan
-   losing sight of the sites, so the reach is spoken and zero found
-   is a failure. The two inside wineByRef are the legacy branch
-   itself and are named rather than excluded by a rule that could
-   quietly swallow a third. */
-console.log('\n── the name join is confined to the resolver');
+/* ── 6. The name join is gone ────────────────────────────────────
+   Not "confined to the resolver" any more — the resolver's own two
+   lines went with pass 4. Zero is the target here, which removes the
+   vacuum guard that protected this scan while the number was falling:
+   a scan that sees nothing now reads the same as a scan that works.
+   So it says how much source it examined, and the counter-check below
+   injects a comparison and requires it to be found. */
+console.log('\n── nothing joins products by name any more');
 {
-  /* Both files: the resolver moved into the shared asset in 3b, and a
-     scan that still looked only at the dashboard would report zero
-     comparisons and call it progress. */
-  const lines = ['bottle-lobby-dashboard.html', 'assets/bottle-lobby-data.js',
-                 'assets/bottle-lobby-public-shows.js', 'assets/bottle-lobby-profile-shows.js']
-    .flatMap(f => fs.readFileSync(path.join(__dirname, '..', f), 'utf8').split('\n')
-      .map(l => ({ f: f, l: l })));
-  /* The trailing (?!\.) matters: `w.product.indicativePrice` is a
-     price comparison, not a name one, and counting it would make the
-     scan cry wolf until somebody stopped reading it. */
   const JOIN = /(\.name|\.wine|wineName|\.product)(?!\w)\s*(===|!==)\s*|(===|!==)\s*(\w+\.name|\w+\.wine|wineName|productName|\w+\.product)(?![\w.])/;
+  const FILES = ['bottle-lobby-dashboard.html', 'assets/bottle-lobby-data.js',
+                 'assets/bottle-lobby-public-shows.js', 'assets/bottle-lobby-profile-shows.js'];
+  const lines = FILES.flatMap(f => fs.readFileSync(path.join(__dirname, '..', f), 'utf8').split('\n')
+    .map(l => ({ f: f, l: l })));
   const hits = [];
+  let examined = 0;
   lines.forEach((x, i) => {
     if (/^\s*(\/\*|\*|\/\/)/.test(x.l)) return;
+    examined++;
     if (JOIN.test(x.l)) hits.push(x.f + ' ' + (i + 1) + ': ' + x.l.trim().slice(0, 78));
   });
-  const inResolver = hits.filter(h => /rows\.find/.test(h));
-  if (!hits.length)
-    bad('the scan found no wine-name comparison at all — either the resolver is gone or this ' +
-        'pattern stopped matching, and a scan that sees nothing cannot report progress');
-  else if (hits.length !== inResolver.length)
-    bad((hits.length - inResolver.length) + ' name comparison(s) still sit outside wineByRef():\n      ' +
-        hits.filter(h => !/rows\.find/.test(h)).join('\n      '));
+  if (!examined)
+    bad('the scan read no source at all — it cannot report anything');
+  else if (hits.length)
+    bad(hits.length + ' wine-name comparison(s) left: \n      ' + hits.join('\n      '));
   else
-    ok(hits.length + ' wine-name comparison(s) in the whole page, and both are the legacy branch ' +
-       'inside wineByRef() — every other join asks the resolver');
+    ok('not one wine-name comparison in ' + examined + ' lines of code across ' + FILES.length +
+       ' files — every join is an id comparison');
 }
 
 /* ── 6b. The counter-checks for the resolver ─────────────────────
@@ -322,19 +321,23 @@ console.log('\n── the resolver\'s counter-checks');
 {
   const one = ROWS[0];
   const resolverCases = [
-    { what: 'the legacy name branch is tidied away as dead code',
-      from: "  const m = /^(.*?)\\s+((?:19|20)\\d\\d)$/.exec(ref);",
-      to:   "  if (true) return null;\n  const m = /^(.*?)\\s+((?:19|20)\\d\\d)$/.exec(ref);",
-      ask:  win => (win.eval('wineByRef(' + JSON.stringify(one.name) + ')') || {}).id === one.id,
-      says: 'a name still resolves — the readers would have been narrowed before the references moved' },
+    { what: 'the name branch comes back',
+      from: "  return rows.find(r => r.id === id) || null;\n}",
+      to:   "  return rows.find(r => r.id === id) || null;\n}\n" +
+            "function __legacy(ref, book) { return (book || allProducts()).find(function (r) { return r.name === ref; }) || null; }",
+      /* Injecting the shape rather than editing the resolver: what
+         section 5 stands over is that a NAME does not resolve, and the
+         cheapest way that comes back is a helper somebody adds beside
+         it "just for this one call site". */
+      ask:  win => win.eval('typeof __legacy === "function" && __legacy(' + JSON.stringify(one.name) + ') !== null')
+              ? false : true,
+      says: 'a name resolves again through a second lookup nobody is watching' },
 
-    { what: 'the vintage stops binding',
-      from: "return rows.find(r => r.name === name && (vintage === null || r.vintage === vintage)) || null;",
-      to:   "return rows.find(r => r.name === name) || null;",
-      /* `ask` always states what SECTION 5 claims, so a true answer
-         means the section still passes and the defect got through. */
-      ask:  win => win.eval('wineByRef(' + JSON.stringify(one.name + ' ' + (one.vintage + 1)) + ') === null'),
-      says: 'a reference to a vintage nobody carries still resolves to nothing' },
+    { what: 'an unresolvable reference prints itself',
+      from: "function wineName(ref)   { const p = wineByRef(ref); return p ? p.name : noProduct(ref, 'wineName'); }",
+      to:   "function wineName(ref)   { const p = wineByRef(ref); return p ? p.name : String(ref); }",
+      ask:  win => win.eval('wineName("Pouilly-Fumé") === ""'),
+      says: 'a leftover name would render as itself and look correct' },
 
     { what: 'a join site goes back to comparing names',
       from: "const taken = !!wineByRef(w, currentWinePortfolio);",

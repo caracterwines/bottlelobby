@@ -35,7 +35,16 @@ const bad = m => { console.log('  ✗ ' + m); fail++; };
    which is the point of 3b: an attribute holding "Catarratto
    Biologico 2023" had to be escaped, a key does not. The harness
    resolves the label it means, so it still reads as the wine. */
-const keyOf = label => w.eval('wineByRef(' + JSON.stringify(label) + ').id');
+const keyOf = label => {
+  /* Re-derived here, not asked of wineByRef(): after pass 4 the
+     resolver answers keys only, and a harness that asked it to
+     translate a label would be asking for the branch this file
+     asserts is gone. */
+  const rows = JSON.parse(w.eval('JSON.stringify(partnerWinesPool.concat(currentWinePortfolio))'));
+  const hit = rows.find(r => (r.name + ' ' + r.vintage) === label || r.name === label);
+  if (!hit) throw new Error('no product reads "' + label + '" — the fixture moved under this harness');
+  return hit.id;
+};
 /* A prepared line names a product key (pass 3b). Matching on the
    label keeps these assertions readable and keeps them testing the
    wine rather than a fixture's spelling. */
@@ -43,7 +52,7 @@ const lineLabel = l => w.eval('wineLabel(' + JSON.stringify(l.productId) + ')');
 const ok  = m => console.log('  ✓ ' + m);
 const S = id => w.eval('wineShows').find(x => x.id === id);
 const interests = id => S(id).interests || [];
-const tally = (id, wine) => w.eval('productTally')(S(id), wine);
+const tally = (id, label) => w.eval('productTally')(S(id), keyOf(label));
 const paneText = pre => d.getElementById(pre + '-detail-pane').textContent;
 const boxWithHead = (pre, h) => [...d.querySelectorAll('#' + pre + '-detail-pane .odt-box')]
   .find(b => b.querySelector('.odt-box-head').textContent.includes(h));
@@ -557,10 +566,12 @@ w.openShowDetail('WS-2599');
 
 console.log('\n── holding back is not offered once a wine is on its way');
 {
-  if (w.eval('mayHoldBack')(S('WS-2599'), "Nero d'Avola Sicilia DOC 2022"))
+  /* These take a product KEY since pass 4 — the label is translated
+     here so the assertions still read as the wine they are about. */
+  if (w.eval('mayHoldBack')(S('WS-2599'), keyOf("Nero d'Avola Sicilia DOC 2022")))
     bad('a wine already ordered upstream can still be held back — that is the race');
   else ok('a wine already ordered upstream cannot be held back');
-  if (!w.eval('mayHoldBack')(S('WS-2599'), 'Catarratto Biologico 2023'))
+  if (!w.eval('mayHoldBack')(S('WS-2599'), keyOf('Catarratto Biologico 2023')))
     bad('a held wine should still be holdable — nothing was ordered');
   else ok('an unordered wine can be');
 }
@@ -591,7 +602,7 @@ console.log('\n── the negotiation succeeding');
   const before = w.eval('orders').length;
   w.showWineShows('distributor','history');
   w.openShowDetail('WS-2599');
-  w.releaseHeldWine('WS-2599','Catarratto Biologico 2023');
+  w.releaseHeldWine('WS-2599', keyOf('Catarratto Biologico 2023'));
   const made = w.eval('orders').filter(o => o.wineShowId === 'WS-2599' && o.buyer === 'Hawesko GmbH');
   if (made.length !== 2) bad('releasing did not place a purchase order, got ' + made.length);
   else ok('releasing places the purchase order at THAT point: ' + made[1].id);
@@ -611,12 +622,12 @@ console.log('\n── a note nobody is stuck with');
 {
   w.showWineShows('restaurant','history');
   const before = interests('WS-2599').length;
-  w.withdrawInterest('WS-2599','Catarratto Biologico 2023');
+  w.withdrawInterest('WS-2599', keyOf('Catarratto Biologico 2023'));
   if (interests('WS-2599').length !== before - 1) bad('the note was not withdrawn');
   else ok('a guest can take their own note off the list');
   const said = [];
   const real = w.showToast; w.showToast = m => said.push(m);
-  w.withdrawInterest('WS-2599',"Nero d'Avola Sicilia DOC 2022");   // already ordered
+  w.withdrawInterest('WS-2599', keyOf("Nero d'Avola Sicilia DOC 2022"));   // already ordered
   if (!said.length || !/order/i.test(said[0])) bad('withdrawing an ordered line was not refused: ' + said[0]);
   else ok('one already on an order is refused: "' + said[0] + '"');
   w.showToast = real;

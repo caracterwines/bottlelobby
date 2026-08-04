@@ -3977,7 +3977,7 @@ With an annual production capacity of over 1.2 million bottles, Cantina Rossi is
      also switches persistence off for every harness. See tests/README.
 -->
 <script src="assets/bottle-lobby-store.js?v=f837af35"></script>
-<script src="assets/bottle-lobby-data.js?v=5de0db83"></script>
+<script src="assets/bottle-lobby-data.js?v=e2ff5572"></script>
 <script src="assets/bottle-lobby-public-shows.js?v=66e44128"></script>
 
 <script>
@@ -4976,7 +4976,7 @@ function renderWinePicker(search) {
     <div class="aw-pick-group">${winery}</div>
     ${groups[winery].map(w => {
       const taken = !!wineByRef(w, currentWinePortfolio);
-      return `<div class="aw-pick-item${taken ? ' taken' : ''}" ${taken ? '' : `onclick="selectWineForAdd('${w.winery.replace(/'/g, "\\'")}','${w.name.replace(/'/g, "\\'")}')"`}>
+      return `<div class="aw-pick-item${taken ? ' taken' : ''}" ${taken ? '' : `onclick="selectWineForAdd('${w.id}')"`}>
         <div>
           <div class="aw-pick-name">${w.name} <span style="color:rgba(247,243,238,0.4)">${w.vintage}</span></div>
           <div class="aw-pick-meta">${w.type} · ${w.origin}</div>
@@ -4985,8 +4985,10 @@ function renderWinePicker(search) {
       </div>`;
     }).join('')}`).join('');
 }
-function selectWineForAdd(winery, name) {
-  awSelectedWine = wineByRef({ winery: winery, name: name }, partnerWinesPool);
+/* The key travels in the onclick, so nothing here escapes an
+   apostrophe or an em dash any more — the reason A14.4 exists. */
+function selectWineForAdd(id) {
+  awSelectedWine = wineByRef(id, partnerWinesPool);
   if (!awSelectedWine) return;
   document.getElementById('aw-selected-summary').innerHTML =
     `${awSelectedWine.name} <span>${awSelectedWine.vintage} · ${awSelectedWine.winery}</span>`;
@@ -5580,7 +5582,7 @@ function renderWinePickerR(search) {
          Available", which duplicated ownLabel, and "Exclusive", which
          is the BUYER's own marking on their own list. */
       const tag = taken ? 'Already on your list' : (w.ownLabel ? 'Own-Label Available' : 'Standard');
-      return `<div class="aw-pick-item${taken ? ' taken' : ''}" ${taken ? '' : `onclick="selectWineForAddR('${w.winery.replace(/'/g, "\\'")}','${w.name.replace(/'/g, "\\'")}')"`}>
+      return `<div class="aw-pick-item${taken ? ' taken' : ''}" ${taken ? '' : `onclick="selectWineForAddR('${w.id}')"`}>
         <div>
           <div class="aw-pick-name">${w.name} <span style="color:rgba(247,243,238,0.4)">${w.vintage}</span></div>
           <div class="aw-pick-meta">${w.type} · ${w.origin}</div>
@@ -5589,10 +5591,10 @@ function renderWinePickerR(search) {
       </div>`;
     }).join('')}`).join('');
 }
-function selectWineForAddR(winery, name) {
+function selectWineForAddR(id) {
   const dist = partnershipsOf('Bistro Laurent').map(p => partnerSide(p, 'Bistro Laurent'))
     .find(n => stakeholder(n).type === 'distributor');
-  rAwSelectedWine = wineByRef({ winery: winery, name: name }, portfolioOf(dist) || []);
+  rAwSelectedWine = wineByRef(id, portfolioOf(dist) || []);
   if (!rAwSelectedWine) return;
   document.getElementById('r-aw-selected-summary').innerHTML =
     `${rAwSelectedWine.name} <span>${rAwSelectedWine.vintage} · ${rAwSelectedWine.winery}</span>`;
@@ -5962,7 +5964,7 @@ function renderWinePickerT(search) {
          Available", which duplicated ownLabel, and "Exclusive", which
          is the BUYER's own marking on their own list. */
       const tag = taken ? 'Already in your selection' : (w.ownLabel ? 'Own-Label Available' : 'Standard');
-      return `<div class="aw-pick-item${taken ? ' taken' : ''}" ${taken ? '' : `onclick="selectWineForAddT('${w.winery.replace(/'/g, "\\'")}','${w.name.replace(/'/g, "\\'")}')"`}>
+      return `<div class="aw-pick-item${taken ? ' taken' : ''}" ${taken ? '' : `onclick="selectWineForAddT('${w.id}')"`}>
         <div>
           <div class="aw-pick-name">${w.name} <span style="color:rgba(247,243,238,0.4)">${w.vintage}</span></div>
           <div class="aw-pick-meta">${w.type} · ${w.origin}</div>
@@ -5971,10 +5973,10 @@ function renderWinePickerT(search) {
       </div>`;
     }).join('')}`).join('');
 }
-function selectWineForAddT(winery, name) {
+function selectWineForAddT(id) {
   const dist = partnershipsOf('Weinhaus Müller').map(p => partnerSide(p, 'Weinhaus Müller'))
     .find(n => stakeholder(n).type === 'distributor');
-  tAwSelectedWine = wineByRef({ winery: winery, name: name }, portfolioOf(dist) || []);
+  tAwSelectedWine = wineByRef(id, portfolioOf(dist) || []);
   if (!tAwSelectedWine) return;
   document.getElementById('t-aw-selected-summary').innerHTML =
     `${tAwSelectedWine.name} <span>${tAwSelectedWine.vintage} · ${tAwSelectedWine.winery}</span>`;
@@ -10908,14 +10910,14 @@ function notificationsFor(role) {
   return out.sort(function (a, b) { return notifTime(b.at) - notifTime(a.at); });
 }
 
-/* The producer's own range, by reference. A show product is stored as
-   "<name> <vintage>" (A16.9 keeps it a reference into the producer's
-   range, never product content), so the join is the producer plus that
-   pair — never a fuzzy match on the string, and never a URL built out
-   of the name. Returns the POOL RECORD or null; a wine the pool does
-   not carry is simply not linkable, and that is the honest answer. */
-function notifWineRecord(producer, productName) {
-  return wineByRef(productName, partnerWinesPool.filter(function (w) { return w.winery === producer; }));
+/* The producer's own range, by reference. A show product names a
+   product KEY (A16.9, pass 3b), so this is the producer plus that key
+   — never a fuzzy match on a string, and never a URL built out of a
+   name. Returns the POOL RECORD or null; a wine the producer's own
+   catalogue does not carry is simply not linkable, and that is the
+   honest answer rather than a guessed link. */
+function notifWineRecord(producer, ref) {
+  return wineByRef(ref, partnerWinesPool.filter(function (w) { return w.winery === producer; }));
 }
 
 /* Why a show is waiting, in the words of the side that is waiting.
@@ -10940,10 +10942,10 @@ function notifAwaitReason(role, s) {
   s.exhibitors.forEach(function (e) {
     if (cfg.side === 'producer' && e.producer !== cfg.entity) return;
     const p = openProposalFor(s, e, cfg.side);
-    if (p) open.push({ producer: e.producer, name: showProductLabel(p) });
+    if (p) open.push({ producer: e.producer, productId: p.productId, name: showProductLabel(p) });
   });
   if (open.length === 1) {
-    const rec = notifWineRecord(open[0].producer, open[0].name);
+    const rec = notifWineRecord(open[0].producer, open[0].productId);
     return {
       text: open[0].name + ' is waiting for your answer',
       /* No record, or a record with no article page → named, not
