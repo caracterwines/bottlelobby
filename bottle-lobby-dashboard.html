@@ -3792,11 +3792,6 @@ With an annual production capacity of over 1.2 million bottles, Cantina Rossi is
         <div class="frow">
           <div class="ffield"><div class="flabel">Wine (from your Wine Portfolio)</div>
             <div class="fsel-wrap"><select class="fselect" id="pm-wine">
-              <option>Sauvignon Blanc — Sancerre (Henri Dubois Domaine)</option>
-              <option>Chardonnay — Chablis Premier Cru (Domaine Lefèvre)</option>
-              <option>Primitivo Sicilia IGT (Cantina Rossi)</option>
-              <option>Tempranillo — Rioja Crianza (Bodegas Ruiz)</option>
-              <option>Riesling Spätlese — Mosel (Weingut Schmitt)</option>
             </select></div>
           </div>
           <div class="ffield"><div class="flabel">Bottles required</div><input class="finput" id="pm-bottles" type="number" step="10" placeholder="e.g. 60"></div>
@@ -3836,12 +3831,7 @@ With an annual production capacity of over 1.2 million bottles, Cantina Rossi is
       <div class="frow full">
         <div class="ffield"><div class="flabel">Wine (from your Wine Portfolio)</div>
           <div class="fsel-wrap"><select class="fselect" id="of-wine">
-            <option>Nero d'Avola Sicilia DOC (Cantina Rossi)</option>
-            <option>Pouilly-Fumé (Henri Dubois Domaine)</option>
-            <option>Rosato di Sicilia (Cantina Rossi)</option>
-            <option>Château Belrieu Grand Vin (Château Belrieu)</option>
-            <option>Rioja Blanco (Bodegas Ruiz)</option>
-          </select></div>
+            </select></div>
         </div>
       </div>
 
@@ -3902,10 +3892,6 @@ With an annual production capacity of over 1.2 million bottles, Cantina Rossi is
         <div class="frow">
           <div class="ffield"><div class="flabel">Wine (from your Wine Portfolio)</div>
             <div class="fsel-wrap"><select class="fselect" id="dl-wine">
-              <option>Merlot — Bordeaux Supérieur (Château Belrieu)</option>
-              <option>Rioja Reserva (Bodegas Ruiz)</option>
-              <option>Spätburgunder — Mosel (Weingut Schmitt)</option>
-              <option>Bourgogne Aligoté (Domaine Lefèvre)</option>
             </select></div>
           </div>
           <div class="ffield"><div class="flabel">Minimum quantity (bottles)</div><input class="finput" id="dl-minqty" type="number" step="10" placeholder="e.g. 120"></div>
@@ -3930,10 +3916,6 @@ With an annual production capacity of over 1.2 million bottles, Cantina Rossi is
           <div class="frow full">
             <div class="ffield"><div class="flabel">Wine (from your Wine Portfolio)</div>
               <div class="fsel-wrap"><select class="fselect" id="dl-single-wine">
-                <option>Sauvignon Blanc — Sancerre (Henri Dubois Domaine)</option>
-                <option>Primitivo Sicilia IGT (Cantina Rossi)</option>
-                <option>Chardonnay — Chablis Premier Cru (Domaine Lefèvre)</option>
-                <option>Riesling Spätlese — Mosel (Weingut Schmitt)</option>
               </select></div>
             </div>
           </div>
@@ -3942,10 +3924,7 @@ With an annual production capacity of over 1.2 million bottles, Cantina Rossi is
           <div class="frow full">
             <div class="ffield"><div class="flabel">Wines (select 2 or more, from your Wine Portfolio)</div>
               <div class="cb-grid" style="grid-template-columns:1fr 1fr">
-                <label class="cb-item"><input type="checkbox" class="dl-mixed-wine" value="Primitivo Sicilia IGT (Cantina Rossi)" checked><span class="cb-label">Primitivo Sicilia IGT</span></label>
-                <label class="cb-item"><input type="checkbox" class="dl-mixed-wine" value="Baglio Rosso (Cantina Rossi)" checked><span class="cb-label">Baglio Rosso</span></label>
-                <label class="cb-item"><input type="checkbox" class="dl-mixed-wine" value="Rosso di Contrada (Cantina Rossi)"><span class="cb-label">Rosso di Contrada</span></label>
-                <label class="cb-item"><input type="checkbox" class="dl-mixed-wine" value="Costa Bianca (Cantina Rossi)"><span class="cb-label">Costa Bianca</span></label>
+                <span id="dl-mixed-wines"></span>
               </div>
             </div>
           </div>
@@ -3998,7 +3977,7 @@ With an annual production capacity of over 1.2 million bottles, Cantina Rossi is
      also switches persistence off for every harness. See tests/README.
 -->
 <script src="assets/bottle-lobby-store.js?v=f837af35"></script>
-<script src="assets/bottle-lobby-data.js?v=1215f1af"></script>
+<script src="assets/bottle-lobby-data.js?v=5de0db83"></script>
 <script src="assets/bottle-lobby-public-shows.js?v=66e44128"></script>
 
 <script>
@@ -6362,24 +6341,24 @@ renderRetailFans();
 ══════════════════════════════════════════════════════════════════ */
 let promoMaterials = [
   { id:1, name:'12 Wine Glasses', desc:'Branded crystal wine glasses for your tasting counter or dining room.', qty:'12 glasses', icon:'\uD83C\uDF77',
-    condType:'volume', orderMode:'cumulative', wineName:'Sauvignon Blanc — Sancerre', bottlesRequired:60 },
+    condType:'volume', orderMode:'cumulative', productId:'PRD-1020', bottlesRequired:60 },
   { id:2, name:'20 Tasting Stands', desc:'Countertop tasting stands to introduce a new wine to your guests or customers.', qty:'20 stands', icon:'\uD83E\uDEA7',
-    condType:'newlisting', orderMode:'cumulative', wineName:'Riesling Spätlese — Mosel' },
+    condType:'newlisting', orderMode:'cumulative', productId:'PRD-1024' },
   { id:3, name:'12 Wine Menu Cards', desc:'Printed menu / shelf cards summarising tasting notes and food pairings.', qty:'12 cards', icon:'\uD83D\uDCC7',
     condType:'ordervalue', orderMode:'cumulative', orderValue:2000 },
   { id:4, name:'1 Decanter', desc:'A branded crystal decanter — awarded for a single bulk order, not accumulated over time.', qty:'1 decanter', icon:'\uD83C\uDFFA',
-    condType:'volume', orderMode:'single', wineName:'Chardonnay — Chablis Premier Cru', bottlesRequired:60 },
+    condType:'volume', orderMode:'single', productId:'PRD-1021', bottlesRequired:60 },
   { id:5, name:'6 Ice Buckets', desc:'Branded stainless steel ice buckets for chilling and tableside service.', qty:'6 ice buckets', icon:'\uD83E\uDDCA',
-    condType:'volume', orderMode:'cumulative', wineName:'Primitivo Sicilia IGT', bottlesRequired:60 }
+    condType:'volume', orderMode:'cumulative', productId:'PRD-1022', bottlesRequired:60 }
 ];
 
 function condLabel(m) {
   if (m.condType === 'volume') {
     return m.orderMode === 'single'
-      ? 'Order ' + m.bottlesRequired + ' bottles of ' + m.wineName + ' in a single order'
-      : 'Buy ' + m.bottlesRequired + ' bottles of ' + m.wineName + ' (adds up over time)';
+      ? 'Order ' + m.bottlesRequired + ' bottles of ' + wineName(m.productId) + ' in a single order'
+      : 'Buy ' + m.bottlesRequired + ' bottles of ' + wineName(m.productId) + ' (adds up over time)';
   }
-  if (m.condType === 'newlisting') return 'Add ' + m.wineName + ' to your list/selection';
+  if (m.condType === 'newlisting') return 'Add ' + wineName(m.productId) + ' to your list/selection';
   return 'Reach €' + m.orderValue.toLocaleString() + ' in orders';
 }
 
@@ -6407,6 +6386,7 @@ function openPromoModal() {
   document.getElementById('pm-order-value').value = '';
   document.getElementById('pm-cond-volume').checked = true;
   document.getElementById('pm-mode-cumulative').checked = true;
+  fillPortfolioSelect('pm-wine');
   togglePromoCondition();
   document.getElementById('promo-modal').classList.add('active');
   document.body.style.overflow = 'hidden';
@@ -6432,7 +6412,7 @@ function savePromoMaterial() {
     icon: '\uD83C\uDF81',
     condType: isVolume ? 'volume' : 'ordervalue',
     orderMode: isSingleOrder ? 'single' : 'cumulative',
-    wineName: document.getElementById('pm-wine').value.split(' (')[0],
+    productId: document.getElementById('pm-wine').value,
     bottlesRequired: parseInt(document.getElementById('pm-bottles').value) || 0,
     orderValue: parseInt(document.getElementById('pm-order-value').value) || 0
   };
@@ -6452,12 +6432,12 @@ function deletePromoMaterial(id) {
    Demo state: Sauvignon Blanc — Sancerre has already reached 60/60 bottles for BOTH
    Bistro Laurent and Weinhaus Müller, so "12 Wine Glasses" starts UNLOCKED-BUT-UNCLAIMED
    on both dashboards — showing the "Claim" step this note asked for. */
-let rPromoProgress = { bottleCounts: { 'Sauvignon Blanc — Sancerre': 60, 'Primitivo Sicilia IGT': 48 }, orderValue: 1450, singleOrdered: {}, claimed: {} };
-let tPromoProgress = { bottleCounts: { 'Sauvignon Blanc — Sancerre': 60, 'Primitivo Sicilia IGT': 48 }, orderValue: 2150, singleOrdered: {}, claimed: {} };
+let rPromoProgress = { bottleCounts: { 'PRD-1020': 60, 'PRD-1022': 48 }, orderValue: 1450, singleOrdered: {}, claimed: {} };
+let tPromoProgress = { bottleCounts: { 'PRD-1020': 60, 'PRD-1022': 48 }, orderValue: 2150, singleOrdered: {}, claimed: {} };
 
 function isPromoUnlocked(m, wineList, progress) {
-  const have = m.wineName ? !!wineByRef(m.wineName, wineList) : false;
-  if (m.condType === 'volume' && m.orderMode === 'cumulative') return have && (progress.bottleCounts[m.wineName] || 0) >= m.bottlesRequired;
+  const have = m.productId ? !!wineByRef(m.productId, wineList) : false;
+  if (m.condType === 'volume' && m.orderMode === 'cumulative') return have && (progress.bottleCounts[m.productId] || 0) >= m.bottlesRequired;
   if (m.condType === 'volume' && m.orderMode === 'single') return !!progress.singleOrdered[m.id];
   if (m.condType === 'newlisting') return have;
   return progress.orderValue >= m.orderValue;
@@ -6475,11 +6455,11 @@ function promoCardHtml(m, wineList, progress, viewerFn, claimFn) {
     statusHtml = '<span class="badge badge-gold" style="font-size:0.55rem">🎉 Unlocked</span>';
     actionHtml = `<button class="match-btn" onclick="${claimFn}(${m.id})">Claim →</button>`;
   } else if (m.condType === 'volume' && m.orderMode === 'cumulative') {
-    const have = !!wineByRef(m.wineName, wineList);
-    const count = progress.bottleCounts[m.wineName] || 0;
+    const have = !!wineByRef(m.productId, wineList);
+    const count = progress.bottleCounts[m.productId] || 0;
     statusHtml = have
       ? `<span class="badge" style="font-size:0.55rem;background:rgba(247,243,238,0.05);color:var(--dim)">${count} / ${m.bottlesRequired} bottles</span>`
-      : `<span class="badge" style="font-size:0.55rem;background:rgba(247,243,238,0.05);color:var(--dim)">Add ${m.wineName} to start</span>`;
+      : `<span class="badge" style="font-size:0.55rem;background:rgba(247,243,238,0.05);color:var(--dim)">Add ${wineName(m.productId)} to start</span>`;
     actionHtml = `<button class="match-btn" onclick="${viewerFn}(${m.id})">Order Now</button>`;
   } else if (m.condType === 'volume' && m.orderMode === 'single') {
     statusHtml = `<span class="badge" style="font-size:0.55rem;background:rgba(247,243,238,0.05);color:var(--dim)">One order of ${m.bottlesRequired}</span>`;
@@ -6539,16 +6519,16 @@ function renderRetailPromo() {
 
    `exclusive` stays false and stays here: it is the buyer's own
    marking on their own list, not a property of the wine (A1). */
-function promoWineToListEntry(wineName, ownerLabel) {
+function promoWineToListEntry(ref, ownerLabel) {
   const me = ownerLabel === 'restaurant' ? 'Bistro Laurent' : 'Weinhaus M\u00fcller';
   const dist = partnershipsOf(me).map(p => partnerSide(p, me))
     .find(n => stakeholder(n).type === 'distributor');
-  const found = wineByRef(wineName, portfolioOf(dist) || []);
+  const found = wineByRef(ref, portfolioOf(dist) || []);
   if (!found) {
     /* B12: a promo naming a wine the distributor does not carry is a
        broken record, not a row to fabricate. It is also exactly what
        the supply-chain harness asserts cannot happen. */
-    console.warn('[promo] "' + wineName + '" is not in ' + dist + "'s portfolio \u2014 nothing added");
+    console.warn('[promo] "' + ref + '" is not in ' + dist + "'s portfolio \u2014 nothing added");
     return null;
   }
   return { winery: found.winery, name: found.name, vintage: found.vintage,
@@ -6560,9 +6540,9 @@ function promoWineToListEntry(wineName, ownerLabel) {
    there" test — so a lookup that now legitimately answers "no such
    wine" would have appended `null` to the list, which is worse than
    the invented row it replaced. Returns whether it added. */
-function addWineToBuyerList(list, wineName, ownerLabel) {
-  if (wineByRef(wineName, list)) return false;
-  const entry = promoWineToListEntry(wineName, ownerLabel);
+function addWineToBuyerList(list, ref, ownerLabel) {
+  if (wineByRef(ref, list)) return false;
+  const entry = promoWineToListEntry(ref, ownerLabel);
   if (!entry) return false;
   list.push(entry);
   return true;
@@ -6572,19 +6552,19 @@ function handlePromoRequestR(id) {
   const m = promoMaterials.find(x => x.id === id);
   if (!m) return;
   if (m.condType === 'volume' && m.orderMode === 'cumulative') {
-    rPromoProgress.bottleCounts[m.wineName] = m.bottlesRequired;
-    addWineToBuyerList(rCurrentWineList, m.wineName, 'restaurant');
+    rPromoProgress.bottleCounts[m.productId] = m.bottlesRequired;
+    addWineToBuyerList(rCurrentWineList, m.productId, 'restaurant');
     placeOrder('Bistro Laurent', 'restaurant', 'Hawesko GmbH', 'distributor',
-      [orderItem(m.wineName, m.bottlesRequired, 'Hawesko GmbH')], 'Promo Material — ' + m.name);
-    showToast('✓ Order placed — ' + m.bottlesRequired + ' bottles of ' + m.wineName + ' requested from Hawesko GmbH');
+      [orderItem(m.productId, m.bottlesRequired, 'Hawesko GmbH')], 'Promo Material — ' + m.name);
+    showToast('✓ Order placed — ' + m.bottlesRequired + ' bottles of ' + wineName(m.productId) + ' requested from Hawesko GmbH');
   } else if (m.condType === 'volume' && m.orderMode === 'single') {
     rPromoProgress.singleOrdered[m.id] = true;
     placeOrder('Bistro Laurent', 'restaurant', 'Hawesko GmbH', 'distributor',
-      [orderItem(m.wineName, m.bottlesRequired, 'Hawesko GmbH')], 'Promo Material — ' + m.name);
-    showToast('✓ Single order of ' + m.bottlesRequired + ' bottles of ' + m.wineName + ' sent to Hawesko GmbH');
+      [orderItem(m.productId, m.bottlesRequired, 'Hawesko GmbH')], 'Promo Material — ' + m.name);
+    showToast('✓ Single order of ' + m.bottlesRequired + ' bottles of ' + wineName(m.productId) + ' sent to Hawesko GmbH');
   } else if (m.condType === 'newlisting') {
-    addWineToBuyerList(rCurrentWineList, m.wineName, 'restaurant');
-    showToast('✓ ' + m.wineName + ' added to your Wine List');
+    addWineToBuyerList(rCurrentWineList, m.productId, 'restaurant');
+    showToast('✓ ' + wineName(m.productId) + ' added to your Wine List');
     renderWineListR();
   } else {
     rPromoProgress.orderValue = m.orderValue;
@@ -6597,19 +6577,19 @@ function handlePromoRequestT(id) {
   const m = promoMaterials.find(x => x.id === id);
   if (!m) return;
   if (m.condType === 'volume' && m.orderMode === 'cumulative') {
-    tPromoProgress.bottleCounts[m.wineName] = m.bottlesRequired;
-    addWineToBuyerList(tCurrentWineSelection, m.wineName, 'retail');
+    tPromoProgress.bottleCounts[m.productId] = m.bottlesRequired;
+    addWineToBuyerList(tCurrentWineSelection, m.productId, 'retail');
     placeOrder('Weinhaus Müller', 'retail', 'Hawesko GmbH', 'distributor',
-      [orderItem(m.wineName, m.bottlesRequired, 'Hawesko GmbH')], 'Promo Material — ' + m.name);
-    showToast('✓ Order placed — ' + m.bottlesRequired + ' bottles of ' + m.wineName + ' requested from Hawesko GmbH');
+      [orderItem(m.productId, m.bottlesRequired, 'Hawesko GmbH')], 'Promo Material — ' + m.name);
+    showToast('✓ Order placed — ' + m.bottlesRequired + ' bottles of ' + wineName(m.productId) + ' requested from Hawesko GmbH');
   } else if (m.condType === 'volume' && m.orderMode === 'single') {
     tPromoProgress.singleOrdered[m.id] = true;
     placeOrder('Weinhaus Müller', 'retail', 'Hawesko GmbH', 'distributor',
-      [orderItem(m.wineName, m.bottlesRequired, 'Hawesko GmbH')], 'Promo Material — ' + m.name);
-    showToast('✓ Single order of ' + m.bottlesRequired + ' bottles of ' + m.wineName + ' sent to Hawesko GmbH');
+      [orderItem(m.productId, m.bottlesRequired, 'Hawesko GmbH')], 'Promo Material — ' + m.name);
+    showToast('✓ Single order of ' + m.bottlesRequired + ' bottles of ' + wineName(m.productId) + ' sent to Hawesko GmbH');
   } else if (m.condType === 'newlisting') {
-    addWineToBuyerList(tCurrentWineSelection, m.wineName, 'retail');
-    showToast('✓ ' + m.wineName + ' added to your Wine Selection');
+    addWineToBuyerList(tCurrentWineSelection, m.productId, 'retail');
+    showToast('✓ ' + wineName(m.productId) + ' added to your Wine Selection');
     renderWineSelectionT();
   } else {
     tPromoProgress.orderValue = m.orderValue;
@@ -6653,28 +6633,66 @@ function clearMsgBadge(id) {
    Materials conditions).
 ══════════════════════════════════════════════════════════════════ */
 let exclusiveOffers = [
-  { id:1, type:'discount', wineName:"Nero d'Avola Sicilia DOC", winery:'Cantina Rossi', discountPct:20, tag:'New Arrival',
+  { id:1, type:'discount', productId:'PRD-1003', discountPct:20, tag:'New Arrival',
     desc:'Newly listed — 20% off to introduce it to your guests.' },
-  { id:2, type:'freesample', wineName:'Pouilly-Fumé', winery:'Henri Dubois Domaine', freeBottles:6, tag:'Introductory Offer',
+  { id:2, type:'freesample', productId:'PRD-1015', freeBottles:6, tag:'Introductory Offer',
     desc:'6 bottles free with your first order of this wine.' }
 ];
 
 let exclusiveDeals = [
-  { id:1, dealType:'discount', wineName:'Merlot — Bordeaux Supérieur', winery:'Château Belrieu', minQty:120, discountPct:25 },
-  { id:2, dealType:'freegoods', subtype:'single', wineName:'Sauvignon Blanc — Sancerre', winery:'Henri Dubois Domaine', ratio:'60:6' },
-  { id:3, dealType:'freegoods', subtype:'mixed', wineNames:['Primitivo Sicilia IGT','Baglio Rosso'], winery:'Cantina Rossi', ratio:'120:12' }
+  { id:1, dealType:'discount', productIds:['PRD-1025'], minQty:120, discountPct:25 },
+  { id:2, dealType:'freegoods', subtype:'single', productIds:['PRD-1020'], ratio:'60:6' },
+  { id:3, dealType:'freegoods', subtype:'mixed', productIds:['PRD-1022','PRD-1008'], ratio:'120:12' }
 ];
+
+/* A deal names one product or several; a discount deal names one and
+   a mixed-case deal names the set. One accessor, so nothing else has
+   to know which shape it is — that `d.wineNames || [d.wineName]`
+   fallback was repeated at four call sites. */
+function dealProducts(d) { return d.productIds || []; }
+/* The producer behind a deal — one for a single-wine deal, and for a
+   mixed case only when every wine in it is the same house's, which is
+   what the buyer's row said while it was a stored field. */
+function dealWinery(d) {
+  const w = dealProducts(d).map(wineWinery);
+  return w.length && w.every(x => x === w[0]) ? w[0] : '';
+}
+
+/* THE THREE COMMERCIAL MODALS OFFER THE BOOK, and until 3c they
+   offered a hand-typed list under the label "from your Wine
+   Portfolio". Measured while moving them: between them the three
+   lists named SEVEN wines Hawesko does not carry — Rosato di Sicilia,
+   Château Belrieu Grand Vin, Rioja Blanco, Rioja Reserva,
+   Spätburgunder, Bourgogne Aligoté, Tempranillo — so an offer over a
+   wine outside the book could be created through the interface, which
+   is the invariant-3 gap tests/supply-chain.js exists for, only
+   upstream of it.
+
+   The option VALUE is the product key and the text is the label, the
+   same shape as the show modals in 3b. */
+function fillPortfolioSelect(id, checkboxes) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const book = portfolioOf('Hawesko GmbH') || [];
+  el.innerHTML = book.map(function (wn) {
+    return checkboxes
+      ? '<label class="cb-item"><input type="checkbox" class="dl-mixed-wine" value="' + wn.id + '">' +
+        '<span>' + wineLabel(wn) + '</span></label>'
+      : '<option value="' + wn.id + '">' + wineLabel(wn) + ' (' + wn.winery + ')</option>';
+  }).join('');
+}
 
 function offerLabel(o) {
   return o.type === 'discount'
-    ? o.discountPct + '% off ' + o.wineName
-    : o.freeBottles + ' bottles free — ' + o.wineName;
+    ? o.discountPct + '% off ' + wineName(o.productId)
+    : o.freeBottles + ' bottles free — ' + wineName(o.productId);
 }
 function dealLabel(d) {
   const parts = d.ratio ? d.ratio.split(':') : [];
-  if (d.dealType === 'discount') return 'Buy ' + d.minQty + ' bottles of ' + d.wineName + ' → ' + d.discountPct + '% off (single order)';
-  if (d.subtype === 'single') return 'Buy ' + parts[0] + ' bottles of ' + d.wineName + ' → ' + parts[1] + ' free (single order)';
-  return 'Buy ' + parts[0] + ' bottles combined across ' + d.wineNames.join(' + ') + ' → ' + parts[1] + ' free, proportional (single order)';
+  const labels = dealProducts(d).map(wineName);
+  if (d.dealType === 'discount') return 'Buy ' + d.minQty + ' bottles of ' + labels[0] + ' → ' + d.discountPct + '% off (single order)';
+  if (d.subtype === 'single') return 'Buy ' + parts[0] + ' bottles of ' + labels[0] + ' → ' + parts[1] + ' free (single order)';
+  return 'Buy ' + parts[0] + ' bottles combined across ' + labels.join(' + ') + ' → ' + parts[1] + ' free, proportional (single order)';
 }
 
 /* ── Distributor: CRUD list rendering ── */
@@ -6716,6 +6734,7 @@ function openOfferModal() {
   document.getElementById('of-tag-b').value = '';
   document.getElementById('of-free-bottles').value = '';
   document.getElementById('of-type-discount').checked = true;
+  fillPortfolioSelect('of-wine');
   toggleOfferType();
   document.getElementById('offer-modal').classList.add('active');
   document.body.style.overflow = 'hidden';
@@ -6735,8 +6754,7 @@ function saveOffer() {
   const newItem = {
     id: Date.now(),
     type: isDiscount ? 'discount' : 'freesample',
-    wineName: wineSel.split(' (')[0],
-    winery: (wineSel.match(/\(([^)]+)\)/) || [,''])[1],
+    productId: wineSel,
     discountPct: parseInt(document.getElementById('of-discount-pct').value) || 0,
     freeBottles: parseInt(document.getElementById('of-free-bottles').value) || 0,
     tag: (isDiscount ? document.getElementById('of-tag-a').value : document.getElementById('of-tag-b').value) || '',
@@ -6760,6 +6778,9 @@ function openDealModal() {
   document.getElementById('dl-subtype-single').checked = true;
   document.getElementById('dl-minqty').value = '';
   toggleDealType();
+  fillPortfolioSelect('dl-wine');
+  fillPortfolioSelect('dl-single-wine');
+  fillPortfolioSelect('dl-mixed-wines', true);
   toggleDealSubtype();
   document.getElementById('deal-modal').classList.add('active');
   document.body.style.overflow = 'hidden';
@@ -6785,8 +6806,7 @@ function saveDeal() {
     const wineSel = document.getElementById('dl-wine').value;
     newItem = {
       id: Date.now(), dealType: 'discount',
-      wineName: wineSel.split(' (')[0],
-      winery: (wineSel.match(/\(([^)]+)\)/) || [,''])[1],
+      productIds: [wineSel],
       minQty: parseInt(document.getElementById('dl-minqty').value) || 0,
       discountPct: parseInt(document.getElementById('dl-discount-pct').value) || 0
     };
@@ -6794,8 +6814,7 @@ function saveDeal() {
     const wineSel = document.getElementById('dl-single-wine').value;
     newItem = {
       id: Date.now(), dealType: 'freegoods', subtype: 'single',
-      wineName: wineSel.split(' (')[0],
-      winery: (wineSel.match(/\(([^)]+)\)/) || [,''])[1],
+      productIds: [wineSel],
       ratio: document.getElementById('dl-ratio').value
     };
   } else {
@@ -6803,8 +6822,7 @@ function saveDeal() {
     if (checked.length < 2) { alert('Select at least 2 wines for a mixed case.'); return; }
     newItem = {
       id: Date.now(), dealType: 'freegoods', subtype: 'mixed',
-      wineNames: checked.map(v => v.split(' (')[0]),
-      winery: (checked[0].match(/\(([^)]+)\)/) || [,''])[1],
+      productIds: checked,
       ratio: document.getElementById('dl-ratio').value
     };
   }
@@ -6826,7 +6844,7 @@ function offerCardHtml(o, requestFn) {
     <div class="list-entry">
       <div class="entry-dot" style="background:var(--gold)"></div>
       <div class="entry-name">${offerLabel(o)}<div style="font-size:0.68rem;color:var(--dim);margin-top:0.2rem">${o.desc}</div></div>
-      <div class="entry-detail" style="width:auto">via ${o.winery ? o.winery + ' · ' : ''}Hawesko GmbH${o.tag ? ' · ' + o.tag : ''}</div>
+      <div class="entry-detail" style="width:auto">via ${wineWinery(o.productId) ? wineWinery(o.productId) + ' · ' : ''}Hawesko GmbH${o.tag ? ' · ' + o.tag : ''}</div>
       <div class="entry-tag" style="width:auto"><button class="match-btn" onclick="${requestFn}(${o.id})">Request</button></div>
     </div>`;
 }
@@ -6836,7 +6854,7 @@ function dealCardHtml(d, requestFn) {
     <div class="list-entry">
       <div class="entry-dot" style="background:var(--gold)"></div>
       <div class="entry-name">${icon} ${dealLabel(d)}</div>
-      <div class="entry-detail" style="width:auto">via ${d.winery ? d.winery + ' · ' : ''}Hawesko GmbH</div>
+      <div class="entry-detail" style="width:auto">via ${dealWinery(d) ? dealWinery(d) + ' · ' : ''}Hawesko GmbH</div>
       <div class="entry-tag" style="width:auto"><button class="match-btn" onclick="${requestFn}(${d.id})">Request</button></div>
     </div>`;
 }
@@ -6860,38 +6878,38 @@ function renderExclusiveDealsRetail() {
 function handleOfferRequestR(id) {
   const o = exclusiveOffers.find(x => x.id === id);
   if (!o) return;
-  if (addWineToBuyerList(rCurrentWineList, o.wineName, 'restaurant')) renderWineListR();
+  if (addWineToBuyerList(rCurrentWineList, o.productId, 'restaurant')) renderWineListR();
   const ordR = placeOrder('Bistro Laurent', 'restaurant', 'Hawesko GmbH', 'distributor',
-    [orderItem(o.wineName, o.qty || 12, 'Hawesko GmbH')], 'Exclusive Offer — ' + offerLabel(o));
+    [orderItem(o.productId, o.qty || 12, 'Hawesko GmbH')], 'Exclusive Offer — ' + offerLabel(o));
   showToast('✓ Order ' + ordR.id + ' sent to Hawesko GmbH — ' + offerLabel(o));
   bumpMsgBadge('rmsg-badge');
 }
 function handleOfferRequestT(id) {
   const o = exclusiveOffers.find(x => x.id === id);
   if (!o) return;
-  if (addWineToBuyerList(tCurrentWineSelection, o.wineName, 'retail')) renderWineSelectionT();
+  if (addWineToBuyerList(tCurrentWineSelection, o.productId, 'retail')) renderWineSelectionT();
   const ordT = placeOrder('Weinhaus Müller', 'retail', 'Hawesko GmbH', 'distributor',
-    [orderItem(o.wineName, o.qty || 12, 'Hawesko GmbH')], 'Exclusive Offer — ' + offerLabel(o));
+    [orderItem(o.productId, o.qty || 12, 'Hawesko GmbH')], 'Exclusive Offer — ' + offerLabel(o));
   showToast('✓ Order ' + ordT.id + ' sent to Hawesko GmbH — ' + offerLabel(o));
   bumpMsgBadge('tmsg-badge');
 }
 function handleDealRequestR(id) {
   const d = exclusiveDeals.find(x => x.id === id);
   if (!d) return;
-  (d.wineNames || [d.wineName]).forEach(n => addWineToBuyerList(rCurrentWineList, n, 'restaurant'));
+  dealProducts(d).forEach(n => addWineToBuyerList(rCurrentWineList, n, 'restaurant'));
   renderWineListR();
   const dOrdR = placeOrder('Bistro Laurent', 'restaurant', 'Hawesko GmbH', 'distributor',
-    (d.wineNames || [d.wineName]).map(n => orderItem(n, d.minQty || 60, 'Hawesko GmbH')), 'Exclusive Deal — ' + dealLabel(d));
+    dealProducts(d).map(n => orderItem(n, d.minQty || 60, 'Hawesko GmbH')), 'Exclusive Deal — ' + dealLabel(d));
   showToast('✓ Order ' + dOrdR.id + ' sent to Hawesko GmbH — ' + dealLabel(d));
   bumpMsgBadge('rmsg-badge');
 }
 function handleDealRequestT(id) {
   const d = exclusiveDeals.find(x => x.id === id);
   if (!d) return;
-  (d.wineNames || [d.wineName]).forEach(n => addWineToBuyerList(tCurrentWineSelection, n, 'retail'));
+  dealProducts(d).forEach(n => addWineToBuyerList(tCurrentWineSelection, n, 'retail'));
   renderWineSelectionT();
   const dOrdT = placeOrder('Weinhaus Müller', 'retail', 'Hawesko GmbH', 'distributor',
-    (d.wineNames || [d.wineName]).map(n => orderItem(n, d.minQty || 60, 'Hawesko GmbH')), 'Exclusive Deal — ' + dealLabel(d));
+    dealProducts(d).map(n => orderItem(n, d.minQty || 60, 'Hawesko GmbH')), 'Exclusive Deal — ' + dealLabel(d));
   showToast('✓ Order ' + dOrdT.id + ' sent to Hawesko GmbH — ' + dealLabel(d));
   bumpMsgBadge('tmsg-badge');
 }
@@ -7421,18 +7439,18 @@ function promoDueFor(o) {
   const due = [];
   promoMaterials.forEach(m => {
     if (m.condType === 'volume') {
-      const inThis = o.items.filter(i => sameWine(i.productId, m.wineName)).reduce((s, i) => s + i.qty, 0);
+      const inThis = o.items.filter(i => sameWine(i.productId, m.productId)).reduce((s, i) => s + i.qty, 0);
       if (!inThis) return;
       if (m.orderMode === 'single') {
         if (inThis >= m.bottlesRequired) due.push({ m:m, why:'single order of ' + inThis + ' bottles' });
       } else {
-        const cum = prog.bottleCounts[m.wineName] || 0;
+        const cum = prog.bottleCounts[m.productId] || 0;
         if (cum >= m.bottlesRequired) due.push({ m:m, why:'cumulative total of ' + cum + ' bottles reached' });
       }
     } else if (m.condType === 'ordervalue') {
       if (orderGrand(o) >= m.orderValue) due.push({ m:m, why:'order value above ' + eur(m.orderValue) });
     } else if (m.condType === 'newlisting') {
-      if (o.items.some(i => sameWine(i.productId, m.wineName))) due.push({ m:m, why:'new listing of ' + m.wineName });
+      if (o.items.some(i => sameWine(i.productId, m.productId))) due.push({ m:m, why:'new listing of ' + wineName(m.productId) });
     }
   });
   return due;
@@ -7442,18 +7460,18 @@ function dealFreeGoodsFor(o) {
   if (o.sellerType !== 'distributor' || typeof exclusiveDeals === 'undefined') return [];
   const out = [];
   exclusiveDeals.forEach(d => {
-    const names = d.wineNames || [d.wineName];
-    const qty = o.items.filter(i => !i.free && names.some(n => sameWine(n, i.productId))).reduce((s, i) => s + i.qty, 0);
+    const keys = dealProducts(d);
+    const qty = o.items.filter(i => !i.free && keys.some(n => sameWine(n, i.productId))).reduce((s, i) => s + i.qty, 0);
     if (!qty) return;
     if (d.dealType === 'freegoods') {
       const parts = String(d.ratio).split(':').map(Number);
       const times = Math.floor(qty / parts[0]);
       if (times > 0) {
-        const already = o.items.filter(i => i.free && names.some(n => sameWine(n, i.productId))).reduce((s, i) => s + i.qty, 0);
-        out.push({ deal:d, names:names, free:times * parts[1], basis:qty, applied:already > 0 });
+        const already = o.items.filter(i => i.free && keys.some(n => sameWine(n, i.productId))).reduce((s, i) => s + i.qty, 0);
+        out.push({ deal:d, products:keys, free:times * parts[1], basis:qty, applied:already > 0 });
       }
     } else if (d.dealType === 'discount' && qty >= d.minQty) {
-      out.push({ deal:d, names:names, discount:d.discountPct, basis:qty, applied:o.discountPct >= d.discountPct });
+      out.push({ deal:d, products:keys, discount:d.discountPct, basis:qty, applied:o.discountPct >= d.discountPct });
     }
   });
   return out;
@@ -7463,7 +7481,7 @@ function applyFreeGoods(id, dealId) {
   const o = normalizeOrder(orders.find(x => x.id === id));
   const info = dealFreeGoodsFor(o).find(f => f.deal.id === dealId && f.free);
   if (!info) return;
-  const target = wineByRef(info.names[0]);
+  const target = wineByRef(info.products[0]);
   if (!target) { showToast('✗ That deal names a wine no book carries'); return; }
   const cost = wineUnitPrice[target.id] ? +(wineUnitPrice[target.id] * 0.62).toFixed(2) : 0;
   o.items.push({ productId:target.id, qty:info.free, unit:0, cost:cost, discount:0, free:true });
@@ -7792,14 +7810,14 @@ function renderOrderDetail(id) {
   dealFreeGoodsFor(o).forEach(f => {
     if (f.free) {
       alerts += '<div class="odt-alert alert-deal"><span>🎁</span><div>Deal condition met — <b>' + f.basis +
-        ' bottles</b> of ' + f.names.join(' + ') + ' at ratio ' + f.deal.ratio + '. Customer is entitled to <b>' +
+        ' bottles</b> of ' + f.products.map(wineName).join(' + ') + ' at ratio ' + f.deal.ratio + '. Customer is entitled to <b>' +
         f.free + ' free bottles</b>.' + (f.applied ? ' <em style="color:#4caf7d">Already added.</em>' :
         ' <button class="icon-btn" style="margin-left:0.5rem" onclick="applyFreeGoods(\'' + id + '\',' + f.deal.id + ')">Add free goods</button>') +
         '</div></div>';
     }
     if (f.discount) {
       alerts += '<div class="odt-alert alert-deal"><span>%</span><div>Deal threshold reached — <b>' + f.basis +
-        ' bottles</b> of ' + f.names.join(' + ') + ' qualifies for <b>' + f.discount + '% off</b>.' +
+        ' bottles</b> of ' + f.products.map(wineName).join(' + ') + ' qualifies for <b>' + f.discount + '% off</b>.' +
         (f.applied ? ' <em style="color:#4caf7d">Already applied.</em>' :
         ' <button class="icon-btn" style="margin-left:0.5rem" onclick="applyDealDiscount(\'' + id + '\',' + f.deal.id + ')">Apply discount</button>') +
         '</div></div>';

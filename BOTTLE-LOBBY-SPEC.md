@@ -995,8 +995,58 @@ buyers' lists stay on the dashboard: they are that page's own state.
 > asserts it, with the comparison-removed counter-check beside it. **The fragility
 > is still real** — an id built from a label is an id that moves when the label
 > does — and it is the *event identity* pass, not this one.
+>
+> **And the general answer, Serge's, which settles this without measuring it
+> again: `restore()` is ALL OR NOTHING.** It names every mismatch and then throws
+> the whole snapshot away. So whenever a *registered* collection changes shape, a
+> returning visitor loses the entire stored state anyway — `notifSeen` included,
+> whatever its ids say. A `VERSION` bump in that situation does exactly the same
+> thing and repairs nothing. The bump is for the case the fingerprint cannot see:
+> **values** changing format inside an unchanged shape, which is what the date
+> migration was.
 
-> **A fourth catalogue, found by the collision this pass created.**
+**The commercial records name products (pass 3c), and the name is gone.**
+`promo_materials.product_id`, `exclusive_offers.product_id`,
+`exclusive_deals.product_ids`. `winery` is gone from offers and deals for the
+same reason it left the order line: it was a copy of the producer, and the
+buyer's row derives it. No stored wine name is left anywhere in the prototype.
+
+> **The bridge that was holding, and it is why this pass was worth doing rather
+> than deferring.** Serge's observation while accepting 3b: `dealFreeGoodsFor()`
+> still matched a deal's `wineName` against an order line's *key* and answered
+> **correctly**, because the resolver took either. That is the shape of a defect
+> this project has paid for twice — a thing that works for a reason nobody
+> intended, until the reason is removed.
+
+> **The three commercial modals offered wines the distributor does not carry.**
+> Under a label reading *"from your Wine Portfolio"*, the promo, offer and deal
+> forms held hand-typed option lists naming, between them, **seven wines outside
+> the book** — Rosato di Sicilia, Château Belrieu Grand Vin, Rioja Blanco, Rioja
+> Reserva, Spätburgunder, Bourgogne Aligoté, Tempranillo. An offer over a wine
+> outside your book is the invariant-3 gap A3 describes, and here it was
+> creatable through the interface, upstream of where `tests/supply-chain.js`
+> catches it. They are filled from `portfolioOf()` now, key as value and label as
+> text, the same shape as the show modals.
+
+> **Verified the way 3b was, on the surfaces Serge named.** 37 commercial
+> surfaces captured before and after — every promo tile at both buyers with its
+> unlocked/claimed state, both offer and deal lists in all three roles, every
+> order's promo-due and deal-goods computation, and the order details that carry
+> the banners. **37 of 37 identical**, including *"Deal threshold reached — 120
+> bottles of Merlot — Bordeaux Supérieur qualifies for 25% off"* on ORD-2037.
+> Three real defects showed up only in that comparison: the deal banner printed
+> the key, the buyers' offer and deal rows had lost the producer, and every
+> commercial label had silently gained a vintage.
+
+> **Which is why there are two accessors and not one.** `wineLabel()` names the
+> **bottling** — name and vintage — because that is what a show product and a
+> portfolio row have always shown. `wineName()` names the **wine**, because a
+> promo condition and a deal never carried a vintage. Whether *"Buy 120 bottles
+> of Merlot — Bordeaux Supérieur"* ought to say **2021** is a business question
+> about what a deal is a deal on, and it is not a consequence of giving products
+> keys — so the text stayed where it was and the question is open.
+
+> **A fourth catalogue, found by the collision the previous pass created.**
 > `bottle-lobby-distributor-profile.html` declares its own `partnerWinesPool` of 23
 > rows, which became a `SyntaxError` the moment the shared one existed. It is not a
 > smaller copy but a **different** one: it carries ten wines the catalogue does not,

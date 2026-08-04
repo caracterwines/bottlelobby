@@ -229,13 +229,16 @@ console.log('\n── nothing is advertised, discounted or promised that the boo
   }
   const dist = R.distributors[0];
   const named = [];
-  J('exclusiveOffers').forEach(o => { if (o.wineName) named.push(['Exclusive Offer', o.wineName]); });
-  J('exclusiveDeals').forEach(d => (d.wineNames || [d.wineName]).forEach(x => { if (x) named.push(['Exclusive Deal', x]); }));
-  J('promoMaterials').forEach(m => { if (m.wineName) named.push(['Promo Material', m.wineName]); });
+  /* They name a product key since 3c. Read here as a key OR a name,
+     because this file stands over the chain and not over the pass: a
+     record that went back to a name has to be checked, not skipped. */
+  J('exclusiveOffers').forEach(o => { const x = o.productId || o.wineName; if (x) named.push(['Exclusive Offer', x]); });
+  J('exclusiveDeals').forEach(d => (d.productIds || d.wineNames || [d.wineName]).forEach(x => { if (x) named.push(['Exclusive Deal', x]); }));
+  J('promoMaterials').forEach(m => { const x = m.productId || m.wineName; if (x) named.push(['Promo Material', x]); });
 
   const faults = [];
   named.forEach(([kind, wine]) => {
-    chainFaults(R, dist, wine, null).forEach(f => faults.push(kind + ' "' + wine + '": ' + f));
+    chainFaults(R, dist, wine, null).forEach(f => faults.push(kind + ' "' + R.label(wine) + '": ' + f));
   });
   checked += named.length; surfaces.push('commercial records:' + named.length);
   if (!named.length) bad('no offers, deals or promo materials name a wine — this section proves nothing');
@@ -339,12 +342,14 @@ console.log('\n── counter-check: the breaks this file was written for');
          of the row: a row gains a field now and then — `id` did in the
          product-key pass — and an anchor that spans the opening brace
          turns into a missed target rather than a finding. */
-      from: "winery:'Henri Dubois Domaine', name:'Pouilly-Fumé', vintage:2023, ownLabel:false,",
-      to:   "winery:'Henri Dubois Domaine', name:'Pouilly-Fumé NOT CARRIED', vintage:2023, ownLabel:false,",
+      /* The offer names a KEY now, so a renamed row no longer breaks
+         the join — the book simply stops carrying that product. */
+      from: "{ id:'PRD-1015', winery:'Henri Dubois Domaine', name:'Pouilly-Fumé', vintage:2023, ownLabel:false,",
+      to:   "{ id:'PRD-9015', winery:'Henri Dubois Domaine', name:'Pouilly-Fumé', vintage:2023, ownLabel:false,",
       check: g => {
         const r = chainReader(g);
         const offers = JSON.parse(g.eval('JSON.stringify(exclusiveOffers)'));
-        return offers.some(o => o.wineName && chainFaults(r, r.distributors[0], o.wineName, null).length);
+        return offers.some(o => o.productId && chainFaults(r, r.distributors[0], o.productId, null).length);
       },
       says: 'section 3 catches an Exclusive Offer over a wine outside the book' },
 

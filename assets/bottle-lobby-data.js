@@ -274,6 +274,16 @@ function wineLabel(ref, book) {
   return ref && ref.name ? ref.name + (ref.vintage ? ' ' + ref.vintage : '') : '';
 }
 
+/* wineLabel() names the BOTTLING — name and vintage — because that is
+   what a show product and a portfolio row have always shown. A promo
+   condition, an offer and a deal name the WINE and have never carried
+   a vintage: "Buy 60 bottles of Sauvignon Blanc — Sancerre". Whether
+   a deal ought to name the vintage is a business question, not a
+   consequence of giving products keys, so the printed text is left
+   exactly where it was and the question is left open. */
+function wineName(ref)   { const p = wineByRef(ref); return p ? p.name : (typeof ref === 'string' ? ref : ''); }
+function wineWinery(ref) { const p = wineByRef(ref); return p ? p.winery : ''; }
+
 /* Two references, one bottle? Where both sides resolve this is an id
    comparison. Where one does not — a name no book carries — it falls
    back to the string equality it replaces, so this pass changes no

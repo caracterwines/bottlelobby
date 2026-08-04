@@ -445,6 +445,85 @@ console.log('\n── show products and interests name products');
   else ok('and every show label is the product record\'s own, composed in one place');
 }
 
+/* ── 6c-3. The commercial records name products (pass 3c) ────────
+   Promos, offers and deals were the last holders of a wine name, and
+   the resolver had been bridging it — `dealFreeGoodsFor()` matched a
+   deal's `wineName` against an order line's key and still answered
+   correctly, which is exactly the kind of quiet success that survives
+   until the bridge is removed in pass 4.
+
+   `winery` is gone from offers and deals with the same reasoning as
+   on an order line: it was a copy of the producer, and the buyer's
+   row derives it now. */
+console.log('\n── promos, offers and deals name products');
+{
+  const known = new Set(ROWS.map(r => r.id));
+  const rec = [];
+  J('promoMaterials').forEach(m => rec.push(['promo #' + m.id, m.productId, m]));
+  J('exclusiveOffers').forEach(o => rec.push(['offer #' + o.id, o.productId, o]));
+  J('exclusiveDeals').forEach(d => (d.productIds || [undefined]).forEach(x => rec.push(['deal #' + d.id, x, d])));
+
+  const noKey = rec.filter(r => !r[1] && !('condType' in r[2] && r[2].condType === 'ordervalue'));
+  const dead  = rec.filter(r => r[1] && !known.has(r[1]));
+  const copy  = rec.filter(r => 'wineName' in r[2] || 'wineNames' in r[2] || 'winery' in r[2]);
+
+  if (!rec.length) bad('no commercial records at all — this section examined nothing');
+  else if (noKey.length) bad(noKey.length + ' commercial record(s) name no product: ' + noKey.map(r => r[0]).join(' · '));
+  else if (dead.length) bad(dead.length + ' commercial record(s) name a key no book carries: ' +
+      dead.map(r => r[0] + ' → ' + r[1]).join(' · '));
+  else if (copy.length) bad(copy.length + ' commercial record(s) still carry a wine name or a producer: ' +
+      copy.map(r => r[0]).join(' · ') + ' — invariant 2, and the drift comes back with it');
+  else ok(rec.length + ' commercial references across ' + J('promoMaterials').length + ' promos, ' +
+      J('exclusiveOffers').length + ' offers and ' + J('exclusiveDeals').length +
+      ' deals, every one naming a product that exists and none carrying a copy of it');
+
+  /* THE TWO DETECTIONS, held by name because that is how Serge reads
+     them on screen. Not a frozen string list — computed from the
+     records, so it keeps holding as fixtures change. */
+  const merlot = J("orders.find(function (o) { return o.id === 'ORD-2037'; })");
+  const flag = w.eval("JSON.stringify(dealFreeGoodsFor(orders.find(function (o) { return o.id === 'ORD-2037'; }))" +
+    ".map(function (f) { return f.deal.id + ':' + f.discount + ':' + f.basis; }))");
+  if (!merlot) bad('ORD-2037 is gone — the threshold check examined nothing');
+  else if (JSON.parse(flag).join() !== '1:25:120')
+    bad('the 25% threshold on ORD-2037 no longer fires: ' + flag +
+        ' — the deal and the order line must resolve to the same product');
+  else ok('ORD-2037 still reports deal 1 at 25% on a basis of 120 bottles');
+
+  /* The five tiles, re-derived HERE from the promo condition and the
+     buyer's own list and progress — not asked of isPromoUnlocked(),
+     which is the function under test, and not frozen as a string,
+     which would only record today's fixtures. The two buyers
+     legitimately differ on the order-value tile (1450 against 2150),
+     and a check that expected them to agree would be asserting a
+     coincidence. */
+  const promos = J('promoMaterials');
+  const sides = [
+    { role: 'restaurant', list: J('rCurrentWineList'), prog: J('rPromoProgress') },
+    { role: 'retail',     list: J('tCurrentWineSelection'), prog: J('tPromoProgress') }
+  ];
+  const wrongState = [];
+  sides.forEach(side => {
+    const onList = id => side.list.some(x => x.id === id);
+    promos.forEach(m => {
+      let mine;
+      if (m.condType === 'ordervalue') mine = side.prog.orderValue >= m.orderValue;
+      else if (m.condType === 'newlisting') mine = onList(m.productId);
+      else if (m.orderMode === 'single') mine = !!side.prog.singleOrdered[m.id];
+      else mine = onList(m.productId) && (side.prog.bottleCounts[m.productId] || 0) >= m.bottlesRequired;
+      const theirs = w.eval('isPromoUnlocked(promoMaterials.find(function (x) { return x.id === ' + m.id + '; }), ' +
+        (side.role === 'restaurant' ? 'rCurrentWineList, rPromoProgress' : 'tCurrentWineSelection, tPromoProgress') + ')');
+      if (mine !== theirs)
+        wrongState.push(side.role + '/' + m.name + ': the page says ' + (theirs ? 'unlocked' : 'locked') +
+          ', the condition says ' + (mine ? 'unlocked' : 'locked'));
+    });
+  });
+  if (!promos.length) bad('no promo materials — the tile check examined nothing');
+  else if (wrongState.length) bad(wrongState.length + ' promo tile(s) disagree with their own condition: ' +
+      wrongState.join(' · ') + ' — a key that stopped matching shows up here first');
+  else ok((promos.length * 2) + ' promo tiles across both buyers, every one agreeing with its condition ' +
+      're-derived from the list and the progress');
+}
+
 /* ── 6d. The counter-checks for the order side ───────────────── */
 console.log('\n── the order side\'s counter-checks');
 {
@@ -482,6 +561,25 @@ console.log('\n── the order side\'s counter-checks');
         return J2(win, 'wineShows').flatMap(s => s.interests || []).every(i => ids.has(i.productId));
       },
       says: 'a line on the order list that resolves to nothing, rendering blank' },
+
+    { what: 'a deal goes back to naming a wine',
+      from: "{ id:1, dealType:'discount', productIds:['PRD-1025'], minQty:120, discountPct:25 },",
+      to:   "{ id:1, dealType:'discount', wineName:'Merlot — Bordeaux Supérieur', winery:'Château Belrieu', minQty:120, discountPct:25 },",
+      ask:  win => J2(win, 'exclusiveDeals').every(d => d.productIds && !('wineName' in d) && !('winery' in d)),
+      says: 'the bridge pass 4 removes is being leaned on again' },
+
+    { what: 'a promo names a product outside the distributor\'s book',
+      from: "condType:'volume', orderMode:'cumulative', productId:'PRD-1020', bottlesRequired:60 },",
+      to:   "condType:'volume', orderMode:'cumulative', productId:'PRD-1017', bottlesRequired:60 },",
+      /* Section 6c-3 only asks whether the key exists; this is the
+         chain question, and supply-chain.js is where it is answered.
+         Asked here as well because the promo modals were the way such
+         a record could be created through the interface. */
+      ask:  win => {
+        const book = new Set(JSON.parse(win.eval("JSON.stringify((portfolioOf('Hawesko GmbH') || []).map(function (x) { return x.id; }))")));
+        return J2(win, 'promoMaterials').every(m => !m.productId || book.has(m.productId));
+      },
+      says: 'a promo condition over a wine the distributor does not carry' },
 
     { what: 'a price key names a product that does not exist',
       from: "'PRD-1027': 12.10    /* Terra Rossa — the entry that had no record until A3 */",
