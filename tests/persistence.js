@@ -797,6 +797,79 @@ console.log('\n── a snapshot from before the product key does not come back'
   }
 }
 
+/* ── A snapshot from before the show products named keys ──────────
+   Pass 3b moved `wineShows[].exhibitors[].products[].name` and
+   `interests[].product` onto `productId`. `wineShows` is registered,
+   so this is a KEY change in a persisted collection and the same
+   mechanism applies — but "the same mechanism applies" is exactly the
+   sentence that was wrong once already, so it is measured rather than
+   assumed.
+
+   IT ALSO SETTLES THE notifSeen QUESTION. The read marker's ids are
+   built from rendered text (`notifId('wine', winery + '·' + label,
+   at)`), so a changed label silently marks every notification unread
+   again — and the shape fingerprint could not see that, because ids
+   are strings either way. Measured across all 178 rendered surfaces
+   before and after this pass: the labels are byte-identical, so no id
+   moved. Nothing to bump. The fragility itself is real and is the
+   "event identity" pass; it is not repaired here. */
+console.log('\n── a snapshot from before the show products named keys');
+{
+  const area = makeStorageArea();
+  /* The seed tab is the pre-3b build: the field is called `name`
+     again, which is the shape change, and its own fingerprint follows. */
+  const seed = openTab(area, { persist: true, patch: { from: /productId:'(PRD-\d{4})'/g, to: "name:'$1'" } });
+  const oldShape = seed.w.eval(`(function () {
+    var n = 0;
+    wineShows.forEach(function (s) {
+      (s.exhibitors || []).forEach(function (x) { (x.products || []).forEach(function (p) { if (!p.productId) n++; }); });
+      (s.interests || []).forEach(function (i) { if (!i.productId) n++; });
+    });
+    return n;
+  })()`);
+  seed.w.eval("wineShows[0].title = wineShows[0].title");
+  nudge(seed.w); await settle(seed.w);
+  const raw = area._data[KEY];
+
+  if (!raw) bad('the pre-3b build wrote no snapshot — this check proves nothing');
+  else if (!oldShape) bad('the seed tab still had productId everywhere — the patch did not change the shape');
+  else {
+    const t = openTab(area, { persist: true });
+    const back = t.w.eval(`(function () {
+      var n = 0;
+      wineShows.forEach(function (s) {
+        (s.exhibitors || []).forEach(function (x) { (x.products || []).forEach(function (p) { if (!p.productId) n++; }); });
+        (s.interests || []).forEach(function (i) { if (!i.productId) n++; });
+      });
+      return n;
+    })()`);
+    if (back)
+      bad(back + ' of ' + oldShape + ' pre-3b show reference(s) reached the live state — every ' +
+          'surface reading productId would render blank, and the fingerprint did not stop it');
+    else
+      ok('a snapshot holding ' + oldShape + ' show references in the old shape is discarded');
+
+    area._data[KEY] = raw;
+    const blind = openTab(area, { persist: true, patch: {
+      from: "else if (fp[e.name] !== fixtureFp[e.name]) changed.push(e.name + ' (shape changed)');",
+      to:   "else if (false) changed.push(e.name + ' (shape changed)');" } });
+    const returned = blind.w.eval(`(function () {
+      var n = 0;
+      wineShows.forEach(function (s) {
+        (s.exhibitors || []).forEach(function (x) { (x.products || []).forEach(function (p) { if (!p.productId) n++; }); });
+        (s.interests || []).forEach(function (i) { if (!i.productId) n++; });
+      });
+      return n;
+    })()`);
+    if (returned === oldShape)
+      ok('caught: with the shape comparison removed, all ' + returned + ' come back — ' +
+         'so it is the fingerprint doing this and not the version number');
+    else
+      bad('with the comparison removed only ' + returned + ' of ' + oldShape + ' came back — ' +
+          'something else is doing this work and the check above does not prove what it says');
+  }
+}
+
 console.log(fail ? '\n✗ ' + fail + ' failure(s)' : '\n✓ all checks passed');
 process.exit(fail ? 1 : 0);
 

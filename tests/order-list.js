@@ -31,6 +31,15 @@ console.log('script evaluated cleanly\n');
 
 let fail = 0;
 const bad = m => { console.log('  ✗ ' + m); fail++; };
+/* The hold-back controls are keyed by product now, not by name —
+   which is the point of 3b: an attribute holding "Catarratto
+   Biologico 2023" had to be escaped, a key does not. The harness
+   resolves the label it means, so it still reads as the wine. */
+const keyOf = label => w.eval('wineByRef(' + JSON.stringify(label) + ').id');
+/* A prepared line names a product key (pass 3b). Matching on the
+   label keeps these assertions readable and keeps them testing the
+   wine rather than a fixture's spelling. */
+const lineLabel = l => w.eval('wineLabel(' + JSON.stringify(l.productId) + ')');
 const ok  = m => console.log('  ✓ ' + m);
 const S = id => w.eval('wineShows').find(x => x.id === id);
 const interests = id => S(id).interests || [];
@@ -130,7 +139,7 @@ w.openShowDetail('WS-2603');
   const inputs = [...d.querySelectorAll('#rshow-detail-pane .ol-qty')];
   inputs[0].value = '0';
   w.saveMyOrderList('WS-2603');
-  if (interests('WS-2603').some(i => i.attendee === 'Bistro Laurent' && i.product === SANCERRE))
+  if (interests('WS-2603').some(i => i.attendee === 'Bistro Laurent' && i.productId === keyOf(SANCERRE)))
     bad('a zero was stored as a row');
   else ok('setting a quantity to zero removes the line');
   inputs[0].value = '36';
@@ -154,7 +163,8 @@ w.openShowDetail('WS-2603');
   d.getElementById('oif-wine').value = '1';           // the Mosel
   d.getElementById('oif-qty').value = '6';
   w.saveInterestForGuest();
-  const row = interests('WS-2603').find(i => i.attendee === 'Vinoteca Alster' && i.product === MOSEL);
+  const row = interests('WS-2603').find(i => i.attendee === 'Vinoteca Alster' &&
+    w.eval('wineLabel(' + JSON.stringify(i.productId) + ')') === MOSEL);
   if (!row) bad('the host-entered line was not written');
   else if (row.enteredBy !== 'host') bad('enteredBy should be host, is ' + row.enteredBy);
   else ok('same row, same function, only enteredBy differs');
@@ -216,8 +226,11 @@ console.log('\n── stock and pre-order, side by side on one show');
     bad('the column was written into the show record — it must be read from the portfolio');
   else ok('nothing about the column is stored on the show');
 
-  const portfolio = w.eval('currentWinePortfolio');
-  const listed = portfolio.some(x => (x.name + ' ' + x.vintage) === stk[0].product.name);
+  /* Compared by KEY. Building "name vintage" on both sides was the
+     join this pass removed, and leaving it here would mean the check
+     kept passing on a spelling rather than on a reference. */
+  const portfolio = JSON.parse(w.eval('JSON.stringify(currentWinePortfolio)'));
+  const listed = portfolio.some(x => x.id === stk[0].product.productId);
   if (!listed) bad('a wine called "in stock" is not in the portfolio at all');
   else ok('the in-stock wine really is in the host\u2019s portfolio (A3)');
 
@@ -352,7 +365,9 @@ console.log('\n── closing decides per wine: place, or hold back with a reaso
 
   /* Refuse a hold-back with no reason: the reason is the whole point —
      it is a message the producer can answer (A16.12). */
-  const catarratto = holds.find(el => /Catarratto/.test(el.getAttribute('data-wine')));
+  const CAT = keyOf('Catarratto Biologico 2023');
+  const catarratto = holds.find(el => el.getAttribute('data-wine') === CAT);
+  if (!catarratto) bad('no hold-back control for Catarratto — the rest of this section proves nothing');
   catarratto.checked = true;
   const said = [];
   const real = w.showToast; w.showToast = m => said.push(m);
@@ -363,7 +378,7 @@ console.log('\n── closing decides per wine: place, or hold back with a reaso
   w.showToast = real;
 
   [...box.querySelectorAll('.cl-reason')]
-    .find(el => /Catarratto/.test(el.getAttribute('data-wine')))
+    .find(el => el.getAttribute('data-wine') === CAT)
     .value = 'Only 6 bottles — I need 36 to justify the freight';
   w.closeShowOrderList('WS-2599');
   const made = w.eval('orders').filter(o => o.wineShowId === 'WS-2599');
@@ -463,7 +478,7 @@ w.openShowDetail('WS-2599');
   const placedRows = rows.filter(i => i.status === 'ordered');
   const heldRow    = rows.filter(i => i.status === 'held_back');
   if (placedRows.length !== 2) bad('the placed interests were not marked ordered: ' +
-    JSON.stringify(rows.map(i => i.product + '=' + i.status)));
+    JSON.stringify(rows.map(i => w.eval('wineLabel(' + JSON.stringify(i.productId) + ')') + '=' + i.status)));
   else if (!placedRows[0].orderId) bad('the interest does not point at the order it became');
   else ok('the two deliverable notes are `ordered` and point at ' + placedRows[0].orderId);
   if (heldRow.length !== 1) bad('the held note should be untouched by the placing');
@@ -562,10 +577,10 @@ console.log('\n── an undecided line is not placeable either');
   const keptStatus = row.status, keptReason = row.holdReason;
   row.status = 'open'; delete row.holdReason;          // decided by nobody, ordered by nobody
   const prep = w.eval('preparedOrderFor')(S('WS-2599'), 'Bistro Laurent');
-  if (prep.lines.some(l => /Catarratto/.test(l.name)))
+  if (prep.lines.some(l => /Catarratto/.test(lineLabel(l))))
     bad('a pre-order line with no purchase order behind it was offered for placing');
   else ok('open but unordered → not placeable, so a host may decide next week without exposure');
-  if (!prep.waiting.some(l => /Catarratto/.test(l.name)))
+  if (!prep.waiting.some(l => /Catarratto/.test(lineLabel(l))))
     bad('the line vanished entirely rather than waiting');
   else ok('it waits rather than disappearing');
   row.status = keptStatus; row.holdReason = keptReason;
@@ -580,14 +595,14 @@ console.log('\n── the negotiation succeeding');
   const made = w.eval('orders').filter(o => o.wineShowId === 'WS-2599' && o.buyer === 'Hawesko GmbH');
   if (made.length !== 2) bad('releasing did not place a purchase order, got ' + made.length);
   else ok('releasing places the purchase order at THAT point: ' + made[1].id);
-  const row = interests('WS-2599').find(i => i.product === 'Catarratto Biologico 2023');
+  const row = interests('WS-2599').find(i => i.productId === keyOf('Catarratto Biologico 2023'));
   if (row.status !== 'open') bad('the kept note was not reopened, is ' + row.status);
   else if (row.holdReason) bad('the old reason is still hanging on the row');
   else ok('the kept note is open again — "you will hear if that changes" made good');
   w.showWineShows('restaurant','history');
   w.openShowDetail('WS-2599');
   const prep = w.eval('preparedOrderFor')(S('WS-2599'), 'Bistro Laurent');
-  if (!prep.lines.some(l => /Catarratto/.test(l.name)))
+  if (!prep.lines.some(l => /Catarratto/.test(lineLabel(l))))
     bad('the reopened line is still not placeable');
   else ok('and the guest can now place it');
 }

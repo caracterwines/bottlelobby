@@ -963,6 +963,51 @@ prices are keyed by product for the same reason.
 > counts unchanged at 13 / 27 / 18 / 13, which is the point — a wine that has
 > been on the public guide for a year is news to nobody.
 
+**The show surface names products (pass 3b), and the catalogue moved to reach it.**
+`wine_show_products.product_id` and `wine_show_interests.product_id`. A16.9 always
+called these references into a producer's range; they stored `"<name> <vintage>"`,
+which is the second spelling every join had to bridge.
+
+What forced the move: **seventeen public pages render those references and none of
+them loads the dashboard**, where the catalogue lived. A name renders without
+being resolved, so nobody noticed; a key cannot, and a public page holding a key
+and no catalogue can only print the key. So `partnerWinesPool` and the resolver
+now live in `assets/bottle-lobby-data.js` — the file every surface loads — for the
+same reason and by the same move as `blDate()`. The distributor's book and the
+buyers' lists stay on the dashboard: they are that page's own state.
+
+> **Verified by comparison, not by argument.** 178 rendered surfaces were captured
+> before the pass and after it — every show list and detail pane in all four roles,
+> both tabs, all six shows, the public cards, the A16.12 order lists, the prepared
+> orders, and every notification id and line of text. **178 of 178 identical.** Two
+> real defects turned up that way and only that way: the producer's invitation box
+> and the "Your Turn" box read `p.name` and rendered *"invited you to exhibit with
+> undefined"*.
+>
+> **`BLStore.VERSION` was NOT bumped, and that is the measured answer rather than
+> an omission.** The concern was `notifSeen`: notification ids are built from
+> rendered text, so a changed label silently marks everything unread, and the shape
+> fingerprint cannot see it because ids are strings either way. The comparison
+> above includes every notification id — none moved, because `wineLabel()` produces
+> exactly the string the show fixtures used to store. Separately, `wineShows` is a
+> registered collection whose *keys* changed, so a pre-3b snapshot is discarded by
+> the fingerprint anyway; `tests/persistence.js` seeds one from a patched build and
+> asserts it, with the comparison-removed counter-check beside it. **The fragility
+> is still real** — an id built from a label is an id that moves when the label
+> does — and it is the *event identity* pass, not this one.
+
+> **A fourth catalogue, found by the collision this pass created.**
+> `bottle-lobby-distributor-profile.html` declares its own `partnerWinesPool` of 23
+> rows, which became a `SyntaxError` the moment the shared one existed. It is not a
+> smaller copy but a **different** one: it carries ten wines the catalogue does not,
+> including **all five of Château Belrieu's** — a producer with no catalogue row at
+> all — and three whose article pages are among the 15 orphans; it is missing seven
+> the catalogue does carry. Renamed rather than merged, because merging is a data
+> decision with a date on every row. The other two profile pages carry a 19-row copy
+> each whose every `winery` field reads *Hawesko GmbH* — the supplier-as-producer
+> defect D34 records as deleted, still alive on two pages nobody reads from. All of
+> it belongs to the "complete the catalogue" pass.
+
 > **A sixth book, found while doing this and not touched here.**
 > `bottle-lobby-wine-guide.html` carries **40 product rows with slug-shaped ids
 > of their own**, 15 of which no dashboard book knows — the same 15 orphaned

@@ -1,5 +1,19 @@
 const path = require('path');
 const { loadDashboard } = require('./load-dashboard');
+/* The wine selects carry the product KEY as their value and the label
+   as their text (pass 3b). A harness that assigns a label would set
+   nothing and the action would silently return — so it picks the
+   option the way a person does, by what is written on it, and fails
+   loudly when no option says that. */
+function pickWine(d, selectId, label) {
+  const sel = d.getElementById(selectId);
+  if (!sel) throw new Error(selectId + ' is not on the page');
+  const opt = [...sel.options].find(o => o.textContent.trim().startsWith(label));
+  if (!opt) throw new Error('no option reading "' + label + '" in #' + selectId +
+    ' — offered: ' + [...sel.options].map(o => o.textContent.trim()).join(' | '));
+  sel.value = opt.value;
+  return opt.value;
+}
 const DASHBOARD = path.join(__dirname, '..', 'bottle-lobby-dashboard.html');
 const { JSDOM, VirtualConsole } = require('jsdom');
 const fs = require('fs');
@@ -24,7 +38,7 @@ w.showWineShows('distributor','current');
 w.openShowDetail('WS-2604');
 w.openInviteModal('WS-2604');
 d.getElementById('if-producer').value = 'Cantina Rossi'; w.onInviteProducerChange();
-d.getElementById('if-product').value = 'Primitivo Riserva 2020';
+pickWine(d, 'if-product', 'Primitivo Riserva 2020');
 w.saveInvite();
 let t = exhibitorPaneText();
 if (!t.includes('Cantina Rossi')) bad('exhibitor NOT rendered after saveInvite: ' + JSON.stringify(t.slice(0,120)));

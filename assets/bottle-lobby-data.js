@@ -68,6 +68,224 @@ const SHOW_HERO_FALLBACK = 'images/duesseldorf-tasting-wide.jpg';
    until a closing turns them into order lines. WS-2603 carries a
    worked example because it is the only released show with a full
    room — the tally there is what a host reads on the evening. */
+/* ══════════════════════════════════════════════════════════════════
+   THE PRODUCERS' CATALOGUE AND THE ONE RESOLVER — moved here in 3b
+   ------------------------------------------------------------------
+   Both used to live in the dashboard, and pass 3b is what made that
+   impossible. A show product is a REFERENCE into a producer's range
+   (A16.9), and SEVENTEEN public pages render those references — none
+   of which loads the dashboard. While the reference was the string
+   "Pouilly-Fumé 2023" that went unnoticed, because a name renders
+   without being resolved. A key does not: a public page holding a key
+   and no catalogue can only print the key.
+
+   So the catalogue and the resolver belong in the file EVERY surface
+   loads, which is this one — same move and same reason as blDate().
+   The distributor's book and the buyers' lists stay in the dashboard:
+   they are that page's own state, and allProducts() reaches them
+   through the global lexical scope classic scripts share.
+══════════════════════════════════════════════════════════════════ */
+/* `url` is the wine's public article page — a FIELD, not a rule. It was
+   added with C9 pass 2b, where a notification names the wine somebody
+   is waiting on and links to it.
+
+   Deriving it from the name instead ("Primitivo Riserva" →
+   bottle-lobby-wine-primitivo-riserva.html) was the obvious shortcut
+   and is the one thing not to do here: invariant 4 exists because a
+   cross-feature match has to be the same RECORD, and this prototype has
+   already paid for string matching twice (the em dash in "Riesling
+   Spätlese — Mosel", A14.4). A wine with no article page gets no `url`
+   and is then named without a link — no link beats a guessed one.
+
+   `at` is the day the producer added the wine to their range, and it
+   was added for the same reason `url` was: C9 requires every source to
+   answer **who** and **when** about every event it emits, and "a new
+   wine" is an event. `who` needs no field — the producer owns the
+   record (invariant 2), so the actor IS `winery`. Without `at` the row
+   could not be sorted and, worse, the read marker could not stay
+   stable, because the notification id carries the date.
+
+   The dates are not decoration. They decide who hears about which
+   wine: a wine only reaches a reader whose relation to the producer
+   already existed when it was added (see notifWineryEdge). Baglio
+   Rosso sits between Bistro Laurent's follow and Weinhaus Müller's on
+   purpose — one of them hears about it, the other does not, and both
+   are right. */
+
+/* ── `id` — THE PRODUCT KEY (pass 1 of 5) ──────────────────────────
+   Nothing reads it yet. It exists first so that the readers can be
+   widened before any reference moves — moving the data first would
+   leave every name comparison silently finding nothing, which renders
+   as an empty surface rather than an error.
+
+   WHAT IT REPLACES. 91 wine references across eleven sources, 52 of
+   them joined by NAME. The same bottle is spelled two ways on purpose
+   in ten cases, because the show surface appends the vintage:
+   "Pouilly-Fumé" in the book, "Pouilly-Fumé 2023" on the show floor.
+   A join that has to strip a trailing four-digit year to work is a
+   guess with good odds, not a key.
+
+   WHY IT IS OPAQUE and not the slug that `url` already carries.
+   Renaming. A16 has the appellation master-data pass ahead of it (A4),
+   several wine names carry their appellation, and the origin strings
+   are already measured as inconsistent. A slug-shaped key leaves only
+   bad options when a name changes: stay and lie, or follow and prove
+   it was never an identifier. Two reasonable slugifiers already
+   disagree about exactly one of these 26 wines — "Nero d'Avola",
+   apostrophe dropped or turned into a separator — and that
+   disagreement fails as a silent 404, not as an error.
+
+   `PRD-`, not `W-`: invariant 5 says the entity is a PRODUCT. A wine
+   prefix would have to be migrated the day spirits are switched on,
+   and `W-` is the obvious prefix for a winery once stakeholders get
+   ids of their own. Taken today: ORD, WS, and QU/PF/PP/IN/DN/CN from
+   DOC_TYPES.
+
+   `id` sits FIRST, before the name, so a fixture row still says what
+   it is at a glance. That is the whole payment for readability — at a
+   reference site there is no such trick, which is why pass 2 brings
+   wineLabel(id) and why every harness finding prints the resolved
+   label rather than the bare id.
+
+   `url` stays beside it and keeps its own job: it is the ADDRESS of
+   the article page and may change. An id is never rendered, a url is
+   never compared — tests/wine-identity.js holds both halves.
+
+   Numbering follows partnerWinesPool first, because a product record
+   belongs to its producer (invariant 2). PRD-1020 … PRD-1026 exist
+   only in the distributor's book: seven wines nobody's catalogue
+   knows. The numbering records that gap rather than smoothing it —
+   closing it is the "complete the catalogue" pass. */
+const partnerWinesPool = [
+  { id:'PRD-1001', winery:'Cantina Rossi', name:'Catarratto Biologico', vintage:2023, type:'White', note:'Organic', origin:'Sicilia DOC, Sicily', url:'bottle-lobby-wine-catarratto-biologico.html', at:'2025-03-14' },
+  { id:'PRD-1002', winery:'Cantina Rossi', name:'Grillo Sicilia DOC', vintage:2023, type:'White', note:'Own-Label Available', origin:'Sicilia DOC, Sicily', url:'bottle-lobby-wine-grillo-sicilia-doc.html', at:'2025-04-02' },
+  { id:'PRD-1003', winery:'Cantina Rossi', name:"Nero d'Avola Sicilia DOC", vintage:2022, type:'Red', note:'Own-Label Available', origin:'Sicilia DOC, Sicily', url:'bottle-lobby-wine-nero-davola-sicilia-doc.html', at:'2025-05-20' },
+  { id:'PRD-1004', winery:'Cantina Rossi', name:'Primitivo Riserva', vintage:2020, type:'Red', note:'Riserva · Premium Tier', origin:'Alcamo DOC, Sicily', url:'bottle-lobby-wine-primitivo-riserva.html', at:'2025-02-11' },
+  { id:'PRD-1005', winery:'Cantina Rossi', name:'Rosato di Sicilia', vintage:2023, type:'Rosé', note:'Own-Label Available', origin:'Sicilia DOC, Sicily', url:'bottle-lobby-wine-rosato-di-sicilia.html', at:'2025-06-09' },
+  { id:'PRD-1006', winery:'Cantina Rossi', name:'Rosso di Contrada', vintage:2023, type:'Red', note:'Standard', origin:'Sicilia DOC, Sicily', url:'bottle-lobby-wine-rosso-di-contrada.html', at:'2025-09-16' },
+  /* Backfilled 4 Aug 2026 under A3: the price table carried a trade price
+     for this wine, the article page and the public Wine Guide carry the
+     wine, and only the producer's catalogue did not. A3 says add the
+     missing record rather than remove the offending one.
+     `at` is fixture authorship and bounded: the Wine Guide names Enoteca
+     Milano as its distributor, and that partnership starts 2026-05-11, so
+     the wine cannot be younger than that (C7 — the earliest dependent
+     event is the ceiling). Placed in the 2025 block because that is the
+     class it belongs to: publicly listed all along, unlike the two 2026
+     rows above, which are dated late on purpose to demonstrate A8. */
+  { id:'PRD-1027', winery:'Cantina Rossi', name:'Terra Rossa', vintage:2022, type:'Red', note:'Standard', origin:'Sicilia DOC, Sicily', url:'bottle-lobby-wine-terra-rossa.html', at:'2025-07-22' },
+  { id:'PRD-1007', winery:'Cantina Rossi', name:'Trinacria Bianco', vintage:2023, type:'White', note:'Standard', origin:'Terre Siciliane IGT, Sicily', url:'bottle-lobby-wine-trinacria-bianco.html', at:'2025-11-04' },
+  /* The two deliberate ones: added AFTER somebody started following. */
+  { id:'PRD-1008', winery:'Cantina Rossi', name:'Baglio Rosso', vintage:2021, type:'Red', note:'Standard', origin:'Terre Siciliane IGT, Sicily', url:'bottle-lobby-wine-baglio-rosso.html', at:'2026-04-20' },
+  { id:'PRD-1009', winery:'Cantina Rossi', name:'Costa Bianca', vintage:2023, type:'White', note:'Standard', origin:'Terre Siciliane IGT, Sicily', url:'bottle-lobby-wine-costa-bianca.html', at:'2026-05-28' },
+  { id:'PRD-1010', winery:'Domaine Lefèvre', name:'Bourgogne Passetoutgrain', vintage:2023, type:'Red', note:'Standard', origin:'Bourgogne Passetoutgrain AOC, France', url:'bottle-lobby-wine-bourgogne-passetoutgrain.html', at:'2025-10-07' },
+  { id:'PRD-1011', winery:'Domaine Lefèvre', name:'Crémant de Bourgogne', vintage:2022, type:'White', note:'Standard', origin:'Crémant de Bourgogne AOC, France', url:'bottle-lobby-wine-cremant-de-bourgogne.html', at:'2025-08-19' },
+  { id:'PRD-1012', winery:'Domaine Lefèvre', name:'Bourgogne Aligoté', vintage:2023, type:'White', note:'Standard', origin:'Bourgogne Aligoté AOC, France', url:'bottle-lobby-wine-bourgogne-aligote.html', at:'2026-01-15' },
+  { id:'PRD-1013', winery:'Domaine Lefèvre', name:'Mâcon-Villages', vintage:2023, type:'White', note:'Standard', origin:'Mâcon-Villages AOC, France', url:'bottle-lobby-wine-macon-villages.html', at:'2026-02-26' },
+  { id:'PRD-1014', winery:'Henri Dubois Domaine', name:'Sancerre Rouge', vintage:2022, type:'Red', note:'Standard', origin:'Sancerre AOC, Loire Valley', url:'bottle-lobby-wine-sancerre-rouge.html', at:'2025-07-03' },
+  { id:'PRD-1015', winery:'Henri Dubois Domaine', name:'Pouilly-Fumé', vintage:2023, type:'White', note:'Standard', origin:'Pouilly-Fumé AOC, Loire Valley', url:'bottle-lobby-wine-pouilly-fume.html', at:'2025-12-08' },
+  { id:'PRD-1016', winery:'Bodegas Ruiz', name:'Rioja Reserva', vintage:2019, type:'Red', note:'Standard', origin:'Rioja DOCa, Spain', url:'bottle-lobby-wine-rioja-reserva.html', at:'2025-09-10' },
+  { id:'PRD-1017', winery:'Bodegas Ruiz', name:'Rioja Blanco', vintage:2023, type:'White', note:'Standard', origin:'Rioja DOCa, Spain', url:'bottle-lobby-wine-rioja-blanco.html', at:'2026-06-20' },
+  { id:'PRD-1018', winery:'Weingut Schmitt', name:'Müller-Thurgau — Mosel', vintage:2023, type:'White', note:'Standard', origin:'Mosel QbA, Germany', url:'bottle-lobby-wine-muller-thurgau-mosel.html', at:'2026-07-25' },
+  { id:'PRD-1019', winery:'Weingut Schmitt', name:'Spätburgunder — Mosel', vintage:2022, type:'Red', note:'Standard', origin:'Mosel QbA, Germany', url:'bottle-lobby-wine-spatburgunder-mosel.html', at:'2026-01-22' }
+];
+
+/* ══════════════════════════════════════════════════════════════════
+   ONE QUESTION: WHICH PRODUCT IS THIS? (pass 2 of 5, moved here in 3b)
+   ------------------------------------------------------------------
+   The readers are widened here, and the references still name names.
+   That order is the whole point: a comparison taught to expect a key
+   throws nothing when it is handed a name — it finds nothing, and a
+   surface renders empty. Widening first means every step after this
+   one can be verified by the surface still being right.
+
+   ONE FUNCTION, because twenty-one places asked this question and
+   each answered it itself. They did not all ask it the same way:
+   some matched producer and name, some name alone, some name plus
+   vintage — and the show surface spells the vintage into the name,
+   so "Pouilly-Fumé" and "Pouilly-Fumé 2023" were two strings for one
+   bottle in ten cases. Every one of those readings is preserved
+   below; what changes is that there is now a single place where they
+   live, and a single place for pass 4 to delete the name branch.
+
+   `book` NARROWS THE SEARCH, and that is a rule rather than a
+   shortcut: orderItem() has to answer null for a wine outside the
+   seller's portfolio (invariant 3), not find it in somebody else's
+   book. A call without a book is asking "does this platform know
+   this product at all", which is a different question.
+══════════════════════════════════════════════════════════════════ */
+const PRODUCT_ID = /^PRD-\d{4}$/;
+
+/* Every product row the page knows, whichever book it sits in.
+
+   The try/catch is not defensive noise, it is the only way to ask.
+   This file evaluates top to bottom and several renderers run while
+   it does — before the buyers' lists further down exist. A `let` in
+   its temporal dead zone throws on `typeof` too, so the guard used
+   everywhere else in this file (`typeof x !== 'undefined'`) does not
+   work here and fails loudly rather than quietly. A book that is not
+   there yet contributes nothing; every caller that depends on a
+   specific book passes it explicitly. */
+function bookOrEmpty(read) {
+  try { const v = read(); return Array.isArray(v) ? v : []; } catch (e) { return []; }
+}
+function allProducts() {
+  return [].concat(
+    bookOrEmpty(function () { return partnerWinesPool; }),
+    bookOrEmpty(function () { return currentWinePortfolio; }),
+    bookOrEmpty(function () { return rCurrentWineList; }),
+    bookOrEmpty(function () { return tCurrentWineSelection; })
+  );
+}
+
+/* A reference → the product row it names, or null. Accepts a key, a
+   record, a {winery, name} pair, or a bare name — the last of those
+   is the legacy branch and pass 4 removes it. */
+function wineByRef(ref, book) {
+  const rows = book || allProducts();
+  if (!ref || !rows.length) return null;
+
+  if (typeof ref === 'object') {
+    if (ref.id && PRODUCT_ID.test(ref.id)) return rows.find(r => r.id === ref.id) || null;
+    return rows.find(r => r.winery === ref.winery && r.name === ref.name) || null;
+  }
+  if (PRODUCT_ID.test(ref)) return rows.find(r => r.id === ref) || null;
+
+  /* ── The legacy branch ──────────────────────────────────────────
+     A trailing four-digit year is the show surface's spelling. When
+     it is present the vintage has to match as well, exactly as the
+     `name + ' ' + vintage` comparisons this replaces did — dropping
+     that would let a 2019 reference find a 2022 bottle. */
+  const m = /^(.*?)\s+((?:19|20)\d\d)$/.exec(ref);
+  const name = m ? m[1] : ref;
+  const vintage = m ? Number(m[2]) : null;
+  return rows.find(r => r.name === name && (vintage === null || r.vintage === vintage)) || null;
+}
+
+/* THE ONE LABEL. Six places built "name vintage" by hand, which is
+   how the same bottle came to be spelled two ways; same shape and
+   same reason as blDate(). An unresolvable reference is printed as it
+   arrived rather than swallowed — a wine nobody's book knows is a
+   finding, not a blank. */
+function wineLabel(ref, book) {
+  const p = wineByRef(ref, book);
+  if (p) return p.name + ' ' + p.vintage;
+  if (typeof ref === 'string') return ref;
+  return ref && ref.name ? ref.name + (ref.vintage ? ' ' + ref.vintage : '') : '';
+}
+
+/* Two references, one bottle? Where both sides resolve this is an id
+   comparison. Where one does not — a name no book carries — it falls
+   back to the string equality it replaces, so this pass changes no
+   answer it does not have to. The fallback is the measure of what is
+   left to do, and pass 4 removes it along with the name branch. */
+function sameWine(a, b, book) {
+  const pa = wineByRef(a, book), pb = wineByRef(b, book);
+  if (pa && pb) return pa.id === pb.id;
+  const s = x => typeof x === 'string' ? x : (x && x.name) || '';
+  return !!s(a) && s(a) === s(b);
+}
+
 let wineShows = [
   { id:'WS-2604', title:'Sicilia Prima', date:'2027-03-14', city:'Frankfurt',
     focus:'Sicilian indigenous varieties for the on-trade',
@@ -104,7 +322,7 @@ let wineShows = [
     capacity:50, attendees:[],
     exhibitors:[
       { producer:'Weingut Schmitt', status:'confirmed', source:'invitation',
-        products:[ { name:'Spätburgunder — Mosel 2022', proposedBy:'host', status:'confirmed' } ] } ],
+        products:[ { productId:'PRD-1019', proposedBy:'host', status:'confirmed' } ] } ],
     events:[
       { at:'2026-07-20', actor:'Hawesko GmbH', text:'Show created as a draft' },
       { at:'2026-07-26', actor:'Weingut Schmitt', text:'Confirmed with Spätburgunder — Mosel 2022' },
@@ -123,12 +341,12 @@ let wineShows = [
     ],
     exhibitors:[
       { producer:'Bodegas Ruiz', status:'confirmed', source:'invitation',
-        products:[ { name:'Rioja Reserva 2019', proposedBy:'host', status:'confirmed' } ] },
+        products:[ { productId:'PRD-1016', proposedBy:'host', status:'confirmed' } ] },
       /* Producer proposed, host has not answered — the host is at turn. */
       { producer:'Weingut Schmitt', status:'confirmed', source:'invitation',
-        products:[ { name:'Spätburgunder — Mosel 2022', proposedBy:'producer', status:'proposed' } ] },
+        products:[ { productId:'PRD-1019', proposedBy:'producer', status:'proposed' } ] },
       { producer:'Cantina Rossi', status:'invited', source:'invitation',
-        products:[ { name:'Primitivo Riserva 2020', proposedBy:'host', status:'proposed' } ] }
+        products:[ { productId:'PRD-1004', proposedBy:'host', status:'proposed' } ] }
     ],
     events:[
       { at:'2026-07-12', actor:'Hawesko GmbH', text:'Show created as a draft' },
@@ -151,9 +369,9 @@ let wineShows = [
     capacity:50, attendees:[],
     exhibitors:[
       { producer:'Cantina Rossi', status:'confirmed', source:'invitation',
-        products:[ { name:'Grillo Sicilia DOC 2023', proposedBy:'producer', status:'confirmed' } ] },
+        products:[ { productId:'PRD-1002', proposedBy:'producer', status:'confirmed' } ] },
       { producer:'Henri Dubois Domaine', status:'confirmed', source:'invitation',
-        products:[ { name:'Pouilly-Fumé 2023', proposedBy:'host', status:'confirmed' } ] }
+        products:[ { productId:'PRD-1015', proposedBy:'host', status:'confirmed' } ] }
     ],
     events:[
       { at:'2026-07-02', actor:'Hawesko GmbH', text:'Show created as a draft' },
@@ -187,21 +405,21 @@ let wineShows = [
     ],
     exhibitors:[
       { producer:'Henri Dubois Domaine', status:'confirmed', source:'invitation',
-        products:[ { name:'Sancerre Rouge 2022', proposedBy:'host', status:'confirmed',
+        products:[ { productId:'PRD-1014', proposedBy:'host', status:'confirmed',
                      indicativePrice:14.5 } ] },
       { producer:'Weingut Schmitt', status:'confirmed', source:'invitation',
-        products:[ { name:'Müller-Thurgau — Mosel 2023', proposedBy:'host', status:'confirmed',
+        products:[ { productId:'PRD-1018', proposedBy:'host', status:'confirmed',
                      indicativePrice:8.9 } ] }
     ],
     /* Two houses have written a list, a third has not yet — so the
        tally shows something and the demo still has an empty seat to
        fill by hand. */
     interests:[
-      { attendee:'Restaurant Hafenkante', product:'Sancerre Rouge 2022',
+      { attendee:'Restaurant Hafenkante', productId:'PRD-1014',
         qty:24, enteredBy:'attendee', status:'open', at:'2026-09-18' },
-      { attendee:'Restaurant Hafenkante', product:'Müller-Thurgau — Mosel 2023',
+      { attendee:'Restaurant Hafenkante', productId:'PRD-1018',
         qty:12, enteredBy:'attendee', status:'open', at:'2026-09-18' },
-      { attendee:'Vinoteca Alster', product:'Sancerre Rouge 2022',
+      { attendee:'Vinoteca Alster', productId:'PRD-1014',
         qty:36, enteredBy:'host', status:'open', at:'2026-09-18' }
     ],
     events:[
@@ -231,9 +449,9 @@ let wineShows = [
          they sit in the two different columns of A16.12: the Primitivo
          is in the distributor's portfolio, the Nero d'Avola is not. */
       { producer:'Cantina Rossi', status:'confirmed', source:'invitation',
-        products:[ { name:"Nero d'Avola Sicilia DOC 2022", proposedBy:'host', status:'confirmed',
+        products:[ { productId:'PRD-1003', proposedBy:'host', status:'confirmed',
                      indicativePrice:11.5 },
-                   { name:'Primitivo Sicilia IGT 2022', proposedBy:'host', status:'confirmed',
+                   { productId:'PRD-1022', proposedBy:'host', status:'confirmed',
                      indicativePrice:13.9 },
                    /* The thin one, on purpose: six bottles from a single
                       house is exactly the case a host holds back and takes
@@ -243,7 +461,7 @@ let wineShows = [
                       winery dashboard IS Cantina Rossi. A show where
                       everything clears would demonstrate the closing but
                       never the negotiation. */
-                   { name:'Catarratto Biologico 2023', proposedBy:'host', status:'confirmed',
+                   { productId:'PRD-1001', proposedBy:'host', status:'confirmed',
                      indicativePrice:9.9 } ] }
     ],
     /* The show that gets CLOSED in the demo: it is over (`completed`),
@@ -257,13 +475,13 @@ let wineShows = [
        prepared order has to wait for one (A6) — the case A16.12
        describes and the reason the show is called an entry point. */
     interests:[
-      { attendee:'Bistro Laurent', product:"Nero d'Avola Sicilia DOC 2022",
+      { attendee:'Bistro Laurent', productId:'PRD-1003',
         qty:18, enteredBy:'attendee', status:'open', at:'2026-04-12' },
-      { attendee:'Bistro Laurent', product:'Primitivo Sicilia IGT 2022',
+      { attendee:'Bistro Laurent', productId:'PRD-1022',
         qty:24, enteredBy:'attendee', status:'open', at:'2026-04-12' },
-      { attendee:'Vinoteca Alster', product:"Nero d'Avola Sicilia DOC 2022",
+      { attendee:'Vinoteca Alster', productId:'PRD-1003',
         qty:36, enteredBy:'host', status:'open', at:'2026-04-12' },
-      { attendee:'Bistro Laurent', product:'Catarratto Biologico 2023',
+      { attendee:'Bistro Laurent', productId:'PRD-1001',
         qty:6, enteredBy:'attendee', status:'open', at:'2026-04-12' }
     ],
     events:[

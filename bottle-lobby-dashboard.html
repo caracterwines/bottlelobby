@@ -3998,8 +3998,8 @@ With an annual production capacity of over 1.2 million bottles, Cantina Rossi is
      also switches persistence off for every harness. See tests/README.
 -->
 <script src="assets/bottle-lobby-store.js?v=f837af35"></script>
-<script src="assets/bottle-lobby-data.js?v=b6a5195b"></script>
-<script src="assets/bottle-lobby-public-shows.js?v=b2af0560"></script>
+<script src="assets/bottle-lobby-data.js?v=1215f1af"></script>
+<script src="assets/bottle-lobby-public-shows.js?v=66e44128"></script>
 
 <script>
 
@@ -4762,110 +4762,6 @@ function openDistributorPublicPreview() {
    WINE PORTFOLIO — pulled from winery partners, own-label/volume only
    (distributors never create wine data — see architecture notes)
 ══════════════════════════════════════════════════════════════════ */
-/* `url` is the wine's public article page — a FIELD, not a rule. It was
-   added with C9 pass 2b, where a notification names the wine somebody
-   is waiting on and links to it.
-
-   Deriving it from the name instead ("Primitivo Riserva" →
-   bottle-lobby-wine-primitivo-riserva.html) was the obvious shortcut
-   and is the one thing not to do here: invariant 4 exists because a
-   cross-feature match has to be the same RECORD, and this prototype has
-   already paid for string matching twice (the em dash in "Riesling
-   Spätlese — Mosel", A14.4). A wine with no article page gets no `url`
-   and is then named without a link — no link beats a guessed one.
-
-   `at` is the day the producer added the wine to their range, and it
-   was added for the same reason `url` was: C9 requires every source to
-   answer **who** and **when** about every event it emits, and "a new
-   wine" is an event. `who` needs no field — the producer owns the
-   record (invariant 2), so the actor IS `winery`. Without `at` the row
-   could not be sorted and, worse, the read marker could not stay
-   stable, because the notification id carries the date.
-
-   The dates are not decoration. They decide who hears about which
-   wine: a wine only reaches a reader whose relation to the producer
-   already existed when it was added (see notifWineryEdge). Baglio
-   Rosso sits between Bistro Laurent's follow and Weinhaus Müller's on
-   purpose — one of them hears about it, the other does not, and both
-   are right. */
-
-/* ── `id` — THE PRODUCT KEY (pass 1 of 5) ──────────────────────────
-   Nothing reads it yet. It exists first so that the readers can be
-   widened before any reference moves — moving the data first would
-   leave every name comparison silently finding nothing, which renders
-   as an empty surface rather than an error.
-
-   WHAT IT REPLACES. 91 wine references across eleven sources, 52 of
-   them joined by NAME. The same bottle is spelled two ways on purpose
-   in ten cases, because the show surface appends the vintage:
-   "Pouilly-Fumé" in the book, "Pouilly-Fumé 2023" on the show floor.
-   A join that has to strip a trailing four-digit year to work is a
-   guess with good odds, not a key.
-
-   WHY IT IS OPAQUE and not the slug that `url` already carries.
-   Renaming. A16 has the appellation master-data pass ahead of it (A4),
-   several wine names carry their appellation, and the origin strings
-   are already measured as inconsistent. A slug-shaped key leaves only
-   bad options when a name changes: stay and lie, or follow and prove
-   it was never an identifier. Two reasonable slugifiers already
-   disagree about exactly one of these 26 wines — "Nero d'Avola",
-   apostrophe dropped or turned into a separator — and that
-   disagreement fails as a silent 404, not as an error.
-
-   `PRD-`, not `W-`: invariant 5 says the entity is a PRODUCT. A wine
-   prefix would have to be migrated the day spirits are switched on,
-   and `W-` is the obvious prefix for a winery once stakeholders get
-   ids of their own. Taken today: ORD, WS, and QU/PF/PP/IN/DN/CN from
-   DOC_TYPES.
-
-   `id` sits FIRST, before the name, so a fixture row still says what
-   it is at a glance. That is the whole payment for readability — at a
-   reference site there is no such trick, which is why pass 2 brings
-   wineLabel(id) and why every harness finding prints the resolved
-   label rather than the bare id.
-
-   `url` stays beside it and keeps its own job: it is the ADDRESS of
-   the article page and may change. An id is never rendered, a url is
-   never compared — tests/wine-identity.js holds both halves.
-
-   Numbering follows partnerWinesPool first, because a product record
-   belongs to its producer (invariant 2). PRD-1020 … PRD-1026 exist
-   only in the distributor's book: seven wines nobody's catalogue
-   knows. The numbering records that gap rather than smoothing it —
-   closing it is the "complete the catalogue" pass. */
-const partnerWinesPool = [
-  { id:'PRD-1001', winery:'Cantina Rossi', name:'Catarratto Biologico', vintage:2023, type:'White', note:'Organic', origin:'Sicilia DOC, Sicily', url:'bottle-lobby-wine-catarratto-biologico.html', at:'2025-03-14' },
-  { id:'PRD-1002', winery:'Cantina Rossi', name:'Grillo Sicilia DOC', vintage:2023, type:'White', note:'Own-Label Available', origin:'Sicilia DOC, Sicily', url:'bottle-lobby-wine-grillo-sicilia-doc.html', at:'2025-04-02' },
-  { id:'PRD-1003', winery:'Cantina Rossi', name:"Nero d'Avola Sicilia DOC", vintage:2022, type:'Red', note:'Own-Label Available', origin:'Sicilia DOC, Sicily', url:'bottle-lobby-wine-nero-davola-sicilia-doc.html', at:'2025-05-20' },
-  { id:'PRD-1004', winery:'Cantina Rossi', name:'Primitivo Riserva', vintage:2020, type:'Red', note:'Riserva · Premium Tier', origin:'Alcamo DOC, Sicily', url:'bottle-lobby-wine-primitivo-riserva.html', at:'2025-02-11' },
-  { id:'PRD-1005', winery:'Cantina Rossi', name:'Rosato di Sicilia', vintage:2023, type:'Rosé', note:'Own-Label Available', origin:'Sicilia DOC, Sicily', url:'bottle-lobby-wine-rosato-di-sicilia.html', at:'2025-06-09' },
-  { id:'PRD-1006', winery:'Cantina Rossi', name:'Rosso di Contrada', vintage:2023, type:'Red', note:'Standard', origin:'Sicilia DOC, Sicily', url:'bottle-lobby-wine-rosso-di-contrada.html', at:'2025-09-16' },
-  /* Backfilled 4 Aug 2026 under A3: the price table carried a trade price
-     for this wine, the article page and the public Wine Guide carry the
-     wine, and only the producer's catalogue did not. A3 says add the
-     missing record rather than remove the offending one.
-     `at` is fixture authorship and bounded: the Wine Guide names Enoteca
-     Milano as its distributor, and that partnership starts 2026-05-11, so
-     the wine cannot be younger than that (C7 — the earliest dependent
-     event is the ceiling). Placed in the 2025 block because that is the
-     class it belongs to: publicly listed all along, unlike the two 2026
-     rows above, which are dated late on purpose to demonstrate A8. */
-  { id:'PRD-1027', winery:'Cantina Rossi', name:'Terra Rossa', vintage:2022, type:'Red', note:'Standard', origin:'Sicilia DOC, Sicily', url:'bottle-lobby-wine-terra-rossa.html', at:'2025-07-22' },
-  { id:'PRD-1007', winery:'Cantina Rossi', name:'Trinacria Bianco', vintage:2023, type:'White', note:'Standard', origin:'Terre Siciliane IGT, Sicily', url:'bottle-lobby-wine-trinacria-bianco.html', at:'2025-11-04' },
-  /* The two deliberate ones: added AFTER somebody started following. */
-  { id:'PRD-1008', winery:'Cantina Rossi', name:'Baglio Rosso', vintage:2021, type:'Red', note:'Standard', origin:'Terre Siciliane IGT, Sicily', url:'bottle-lobby-wine-baglio-rosso.html', at:'2026-04-20' },
-  { id:'PRD-1009', winery:'Cantina Rossi', name:'Costa Bianca', vintage:2023, type:'White', note:'Standard', origin:'Terre Siciliane IGT, Sicily', url:'bottle-lobby-wine-costa-bianca.html', at:'2026-05-28' },
-  { id:'PRD-1010', winery:'Domaine Lefèvre', name:'Bourgogne Passetoutgrain', vintage:2023, type:'Red', note:'Standard', origin:'Bourgogne Passetoutgrain AOC, France', url:'bottle-lobby-wine-bourgogne-passetoutgrain.html', at:'2025-10-07' },
-  { id:'PRD-1011', winery:'Domaine Lefèvre', name:'Crémant de Bourgogne', vintage:2022, type:'White', note:'Standard', origin:'Crémant de Bourgogne AOC, France', url:'bottle-lobby-wine-cremant-de-bourgogne.html', at:'2025-08-19' },
-  { id:'PRD-1012', winery:'Domaine Lefèvre', name:'Bourgogne Aligoté', vintage:2023, type:'White', note:'Standard', origin:'Bourgogne Aligoté AOC, France', url:'bottle-lobby-wine-bourgogne-aligote.html', at:'2026-01-15' },
-  { id:'PRD-1013', winery:'Domaine Lefèvre', name:'Mâcon-Villages', vintage:2023, type:'White', note:'Standard', origin:'Mâcon-Villages AOC, France', url:'bottle-lobby-wine-macon-villages.html', at:'2026-02-26' },
-  { id:'PRD-1014', winery:'Henri Dubois Domaine', name:'Sancerre Rouge', vintage:2022, type:'Red', note:'Standard', origin:'Sancerre AOC, Loire Valley', url:'bottle-lobby-wine-sancerre-rouge.html', at:'2025-07-03' },
-  { id:'PRD-1015', winery:'Henri Dubois Domaine', name:'Pouilly-Fumé', vintage:2023, type:'White', note:'Standard', origin:'Pouilly-Fumé AOC, Loire Valley', url:'bottle-lobby-wine-pouilly-fume.html', at:'2025-12-08' },
-  { id:'PRD-1016', winery:'Bodegas Ruiz', name:'Rioja Reserva', vintage:2019, type:'Red', note:'Standard', origin:'Rioja DOCa, Spain', url:'bottle-lobby-wine-rioja-reserva.html', at:'2025-09-10' },
-  { id:'PRD-1017', winery:'Bodegas Ruiz', name:'Rioja Blanco', vintage:2023, type:'White', note:'Standard', origin:'Rioja DOCa, Spain', url:'bottle-lobby-wine-rioja-blanco.html', at:'2026-06-20' },
-  { id:'PRD-1018', winery:'Weingut Schmitt', name:'Müller-Thurgau — Mosel', vintage:2023, type:'White', note:'Standard', origin:'Mosel QbA, Germany', url:'bottle-lobby-wine-muller-thurgau-mosel.html', at:'2026-07-25' },
-  { id:'PRD-1019', winery:'Weingut Schmitt', name:'Spätburgunder — Mosel', vintage:2022, type:'Red', note:'Standard', origin:'Mosel QbA, Germany', url:'bottle-lobby-wine-spatburgunder-mosel.html', at:'2026-01-22' }
-];
 
 /* ══════════════════════════════════════════════════════════════════
    THE DISTRIBUTOR'S PORTFOLIO — one book, and it names the producer
@@ -5027,101 +4923,6 @@ function partnerMetaFor(p, me) {
   return n === undefined ? null : n + (n === 1 ? ' wine' : ' wines') + ' in your portfolio';
 }
 
-/* ══════════════════════════════════════════════════════════════════
-   ONE QUESTION: WHICH PRODUCT IS THIS? (pass 2 of 5)
-   ------------------------------------------------------------------
-   The readers are widened here, and the references still name names.
-   That order is the whole point: a comparison taught to expect a key
-   throws nothing when it is handed a name — it finds nothing, and a
-   surface renders empty. Widening first means every step after this
-   one can be verified by the surface still being right.
-
-   ONE FUNCTION, because twenty-one places asked this question and
-   each answered it itself. They did not all ask it the same way:
-   some matched producer and name, some name alone, some name plus
-   vintage — and the show surface spells the vintage into the name,
-   so "Pouilly-Fumé" and "Pouilly-Fumé 2023" were two strings for one
-   bottle in ten cases. Every one of those readings is preserved
-   below; what changes is that there is now a single place where they
-   live, and a single place for pass 4 to delete the name branch.
-
-   `book` NARROWS THE SEARCH, and that is a rule rather than a
-   shortcut: orderItem() has to answer null for a wine outside the
-   seller's portfolio (invariant 3), not find it in somebody else's
-   book. A call without a book is asking "does this platform know
-   this product at all", which is a different question.
-══════════════════════════════════════════════════════════════════ */
-const PRODUCT_ID = /^PRD-\d{4}$/;
-
-/* Every product row the page knows, whichever book it sits in.
-
-   The try/catch is not defensive noise, it is the only way to ask.
-   This file evaluates top to bottom and several renderers run while
-   it does — before the buyers' lists further down exist. A `let` in
-   its temporal dead zone throws on `typeof` too, so the guard used
-   everywhere else in this file (`typeof x !== 'undefined'`) does not
-   work here and fails loudly rather than quietly. A book that is not
-   there yet contributes nothing; every caller that depends on a
-   specific book passes it explicitly. */
-function bookOrEmpty(read) {
-  try { const v = read(); return Array.isArray(v) ? v : []; } catch (e) { return []; }
-}
-function allProducts() {
-  return [].concat(
-    bookOrEmpty(function () { return partnerWinesPool; }),
-    bookOrEmpty(function () { return currentWinePortfolio; }),
-    bookOrEmpty(function () { return rCurrentWineList; }),
-    bookOrEmpty(function () { return tCurrentWineSelection; })
-  );
-}
-
-/* A reference → the product row it names, or null. Accepts a key, a
-   record, a {winery, name} pair, or a bare name — the last of those
-   is the legacy branch and pass 4 removes it. */
-function wineByRef(ref, book) {
-  const rows = book || allProducts();
-  if (!ref || !rows.length) return null;
-
-  if (typeof ref === 'object') {
-    if (ref.id && PRODUCT_ID.test(ref.id)) return rows.find(r => r.id === ref.id) || null;
-    return rows.find(r => r.winery === ref.winery && r.name === ref.name) || null;
-  }
-  if (PRODUCT_ID.test(ref)) return rows.find(r => r.id === ref) || null;
-
-  /* ── The legacy branch ──────────────────────────────────────────
-     A trailing four-digit year is the show surface's spelling. When
-     it is present the vintage has to match as well, exactly as the
-     `name + ' ' + vintage` comparisons this replaces did — dropping
-     that would let a 2019 reference find a 2022 bottle. */
-  const m = /^(.*?)\s+((?:19|20)\d\d)$/.exec(ref);
-  const name = m ? m[1] : ref;
-  const vintage = m ? Number(m[2]) : null;
-  return rows.find(r => r.name === name && (vintage === null || r.vintage === vintage)) || null;
-}
-
-/* THE ONE LABEL. Six places built "name vintage" by hand, which is
-   how the same bottle came to be spelled two ways; same shape and
-   same reason as blDate(). An unresolvable reference is printed as it
-   arrived rather than swallowed — a wine nobody's book knows is a
-   finding, not a blank. */
-function wineLabel(ref, book) {
-  const p = wineByRef(ref, book);
-  if (p) return p.name + ' ' + p.vintage;
-  if (typeof ref === 'string') return ref;
-  return ref && ref.name ? ref.name + (ref.vintage ? ' ' + ref.vintage : '') : '';
-}
-
-/* Two references, one bottle? Where both sides resolve this is an id
-   comparison. Where one does not — a name no book carries — it falls
-   back to the string equality it replaces, so this pass changes no
-   answer it does not have to. The fallback is the measure of what is
-   left to do, and pass 4 removes it along with the name branch. */
-function sameWine(a, b, book) {
-  const pa = wineByRef(a, book), pb = wineByRef(b, book);
-  if (pa && pb) return pa.id === pb.id;
-  const s = x => typeof x === 'string' ? x : (x && x.name) || '';
-  return !!s(a) && s(a) === s(b);
-}
 
 let awSelectedWine = null;
 let editingPortfolioIndex = null;
@@ -7287,6 +7088,15 @@ function orderItemRaw(productId, qty, unit) { return { productId, qty, unit }; }
    than a blank: a line naming a product no book carries is a finding,
    and A3 says the answer to one is a record, not a deletion. */
 function lineProduct(i) { return i ? wineByRef(i.productId) : null; }
+
+/* A16.9 always called a show product and an interest a REFERENCE into
+   the producer's range rather than product content. They stored that
+   reference as "<name> <vintage>" — which is why the same bottle was
+   spelled one way here and another in every book, and why ten joins
+   had to strip a trailing year to work. They store the key now, and
+   these are how a surface reads one back. */
+function showProductLabel(p) { return p ? wineLabel(p.productId) : ''; }
+function interestLabel(i)    { return i ? wineLabel(i.productId) : ''; }
 function lineName(i)    { const p = lineProduct(i); return p ? p.name   : (i && i.productId) || ''; }
 function lineWinery(i)  { const p = lineProduct(i); return p ? p.winery : ''; }
 
@@ -8613,16 +8423,16 @@ function orderListProducts(show) {
   const out = [];
   confirmedExhibitors(show).forEach(e =>
     e.products.filter(p => p.status === 'confirmed').forEach(p =>
-      out.push({ producer: e.producer, product: p, kind: lineKind(show, p.name) })));
+      out.push({ producer: e.producer, product: p, kind: lineKind(show, p.productId) })));
   return out;
 }
 /* The instrument's own number (A16.0): what the room wants of the
    wines the host does NOT yet list. Ordinary revenue is not part of
    it — it was never at risk. */
 function preorderTally(show) {
-  const names = orderListProducts(show).filter(w => w.kind === 'preorder')
-    .map(w => w.product.name);
-  const rows = interestsOf(show).filter(i => i.status === 'open' && names.indexOf(i.product) !== -1);
+  const keys = orderListProducts(show).filter(w => w.kind === 'preorder')
+    .map(w => w.product.productId);
+  const rows = interestsOf(show).filter(i => i.status === 'open' && keys.indexOf(i.productId) !== -1);
   return { bottles: rows.reduce((n, i) => n + i.qty, 0),
            houses: new Set(rows.map(i => i.attendee)).size };
 }
@@ -8630,8 +8440,8 @@ function preorderTally(show) {
 /* The tally — SUM over open interests, never stored (A16.10). The
    house count is as much the signal as the bottles: 60 bottles from
    one buyer and from six are different findings. */
-function productTally(show, name) {
-  const rows = interestsOf(show).filter(i => sameWine(i.product, name) && i.status === 'open');
+function productTally(show, ref) {
+  const rows = interestsOf(show).filter(i => sameWine(i.productId, ref) && i.status === 'open');
   return { bottles: rows.reduce((n, i) => n + i.qty, 0), houses: rows.length };
 }
 function showTally(show) {
@@ -8672,10 +8482,10 @@ function mayWriteOrderList(role, show) {
    feeds a purchase order therefore starts from `preorderInterests()`,
    and `showTally()` is not called anywhere in the closing path. */
 function preorderInterests(show, producer) {
-  const names = orderListProducts(show)
+  const keys = orderListProducts(show)
     .filter(w => w.kind === 'preorder' && (!producer || w.producer === producer))
-    .map(w => w.product.name);
-  return interestsOf(show).filter(i => i.status === 'open' && names.indexOf(i.product) !== -1);
+    .map(w => w.product.productId);
+  return interestsOf(show).filter(i => i.status === 'open' && keys.indexOf(i.productId) !== -1);
 }
 /* Which producers a closing would order from, and how much of what.
 
@@ -8690,10 +8500,10 @@ function consolidatedOrders(show) {
   const out = {};
   orderListProducts(show).filter(w => w.kind === 'preorder').forEach(function (w) {
     const qty = preorderInterests(show)
-      .filter(i => sameWine(i.product, w.product.name))
+      .filter(i => sameWine(i.productId, w.product.productId))
       .reduce((n, i) => n + i.qty, 0);
     if (!qty) return;
-    (out[w.producer] = out[w.producer] || []).push({ name: w.product.name, qty: qty });
+    (out[w.producer] = out[w.producer] || []).push({ productId: w.product.productId, qty: qty });
   });
   return out;
 }
@@ -8731,8 +8541,8 @@ function mayHoldBack(show, productName) {
 function preparedOrderFor(show, attendee) {
   const wines = orderListProducts(show);
   const asLine = function (i) {
-    const w = wines.find(x => sameWine(x.product.name, i.product));
-    return { name: i.product, producer: w ? w.producer : '',
+    const w = wines.find(x => sameWine(x.product.productId, i.productId));
+    return { productId: i.productId, producer: w ? w.producer : '',
              kind: w ? w.kind : 'preorder', qty: i.qty,
              unit: w && w.product.indicativePrice != null ? w.product.indicativePrice : 0,
              reason: i.holdReason || '' };
@@ -8740,9 +8550,9 @@ function preparedOrderFor(show, attendee) {
   const open = interestsOf(show).filter(i => i.attendee === attendee && i.status === 'open');
   /* Only what the host can actually deliver — stock, or a pre-order
      that is on its way. The rest is a note, not an order line. */
-  const lines = open.filter(i => lineKind(show, i.product) === 'stock' ||
-                                 orderedUpstream(show, i.product)).map(asLine);
-  const waiting = open.filter(i => lines.every(l => !sameWine(l.name, i.product))).map(asLine);
+  const lines = open.filter(i => lineKind(show, i.productId) === 'stock' ||
+                                 orderedUpstream(show, i.productId)).map(asLine);
+  const waiting = open.filter(i => lines.every(l => !sameWine(l.productId, i.productId))).map(asLine);
   const held = interestsOf(show)
     .filter(i => i.attendee === attendee && i.status === 'held_back').map(asLine);
   return { lines: lines, waiting: waiting, held: held,
@@ -9290,12 +9100,12 @@ function orderListBook(s) {
   const live = ORDER_LIST_STAGES().indexOf(s.stage) !== -1;
 
   const rows = wines.map(function (w, i) {
-    const tal = productTally(s, w.product.name);
+    const tal = productTally(s, w.product.productId);
     const px  = w.product.indicativePrice;
     const pre = w.kind === 'preorder';
     return '<div style="padding:0.75rem 0;border-bottom:1px solid rgba(247,243,238,0.05)">' +
       '<div style="display:flex;align-items:center;gap:0.7rem;flex-wrap:wrap">' +
-        '<span style="font-size:0.84rem;color:var(--paper);flex:1;min-width:150px">' + w.product.name +
+        '<span style="font-size:0.84rem;color:var(--paper);flex:1;min-width:150px">' + showProductLabel(w.product) +
           '<em class="otbl-dim" style="display:block;font-size:0.68rem;font-style:normal">' + w.producer + '</em></span>' +
         '<span class="ord-stage ' + (pre ? 'ws-waitlist' : 'ws-seat') + '" style="min-width:86px;text-align:center">' +
           (pre ? 'pre-order' : 'in stock') + '</span>' +
@@ -9389,10 +9199,14 @@ function closingBox(s) {
     (producers.length
       ? '<div class="wn-group-title">Decide per wine</div>' +
         producers.map(pr => byProducer[pr].map(function (l) {
-          const esc = l.name.replace(/"/g, '&quot;');
+          /* The key IS the attribute now. The note that used to sit
+             here — about apostrophes and em dashes in wine names
+             breaking a selector — describes a problem the key does
+             not have, which is a small piece of the case for it. */
+          const esc = l.productId;
           return '<div style="padding:0.6rem 0;border-bottom:1px solid rgba(247,243,238,0.05)">' +
             '<div style="display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap">' +
-              '<span style="font-size:0.82rem;color:var(--paper);flex:1;min-width:150px">' + l.qty + ' × ' + l.name +
+              '<span style="font-size:0.82rem;color:var(--paper);flex:1;min-width:150px">' + l.qty + ' × ' + wineLabel(l.productId) +
                 '<em class="otbl-dim" style="display:block;font-size:0.68rem;font-style:normal">from ' + pr + '</em></span>' +
               '<label style="font-size:0.72rem;color:var(--dim);display:flex;align-items:center;gap:0.35rem">' +
                 '<input type="checkbox" class="cl-hold" data-wine="' + esc + '"> hold back</label>' +
@@ -9421,13 +9235,13 @@ function closingBox(s) {
    argument for the next round, so they sit in front of the host rather
    than in an archive (A16.12). */
 function heldRows(s) {
-  const names = [...new Set(interestsOf(s).filter(i => i.status === 'held_back').map(i => i.product))];
+  const names = [...new Set(interestsOf(s).filter(i => i.status === 'held_back').map(i => i.productId))];
   if (!names.length) return '';
   return '<div class="wn-group-title" style="margin-top:1rem">Held back</div>' +
     names.map(function (n) {
-      const rows = interestsOf(s).filter(i => sameWine(i.product, n) && i.status === 'held_back');
+      const rows = interestsOf(s).filter(i => sameWine(i.productId, n) && i.status === 'held_back');
       const qty = rows.reduce((a, i) => a + i.qty, 0);
-      const producer = (orderListProducts(s).find(w => sameWine(w.product.name, n)) || {}).producer || '';
+      const producer = (orderListProducts(s).find(w => sameWine(w.product.productId, n)) || {}).producer || '';
       return '<div style="padding:0.6rem 0;border-bottom:1px solid rgba(247,243,238,0.05)">' +
         '<div style="display:flex;align-items:center;gap:0.7rem;flex-wrap:wrap">' +
           '<span style="font-size:0.8rem;color:var(--paper);flex:1;min-width:150px">' + n +
@@ -9447,11 +9261,12 @@ function heldRows(s) {
    one whose list is entirely held. */
 function heldRow2(s) {
   return function (l) {
-    return '<div class="odt-kv"><span>' + l.name +
+    return '<div class="odt-kv"><span>' + wineLabel(l.productId) +
       '<em class="otbl-dim" style="display:block;font-size:0.66rem;font-style:normal">Not ordered this time</em>' +
       '</span><span style="text-align:right">' + l.qty + ' bottles ' +
+      /* The key needs no escaping — a wine name did (A14.4). */
       '<button class="icon-btn" onclick="withdrawInterest(\'' + s.id + '\',\'' +
-        l.name.replace(/'/g, "\\'") + '\')">Withdraw</button></span></div>';
+        l.productId + '\')">Withdraw</button></span></div>';
   };
 }
 
@@ -9459,14 +9274,14 @@ function heldRow2(s) {
    The reason reaches them because it is a message, not a filing (A16.12). */
 function producerHeldBox(role, s) {
   const me = SHOW_ROLES[role].entity;
-  const mine = orderListProducts(s).filter(w => w.producer === me).map(w => w.product.name);
+  const mine = orderListProducts(s).filter(w => w.producer === me).map(w => w.product.productId);
   const names = [...new Set(interestsOf(s)
-    .filter(i => i.status === 'held_back' && mine.indexOf(i.product) !== -1).map(i => i.product))];
+    .filter(i => i.status === 'held_back' && mine.indexOf(i.productId) !== -1).map(i => i.productId))];
   if (!names.length) return '';
   return '<div class="odt-box"><div class="odt-box-head">Not Taken On This Time</div><div class="odt-box-body">' +
     names.map(function (n) {
-      const r = interestsOf(s).find(i => sameWine(i.product, n) && i.status === 'held_back');
-      return '<div class="odt-kv"><span>' + n + '</span><span style="text-align:right;flex:1">' +
+      const r = interestsOf(s).find(i => sameWine(i.productId, n) && i.status === 'held_back');
+      return '<div class="odt-kv"><span>' + wineLabel(n) + '</span><span style="text-align:right;flex:1">' +
         (r.holdReason || '') + '</span></div>';
     }).join('') +
     '<div class="edit-section-sub" style="margin:0.9rem 0 0">' + s.leadHost + ' did not take this on after the ' +
@@ -9485,9 +9300,9 @@ function myOrderListBox(role, s) {
   if (!may && !mine.length) return '';
 
   const wines = orderListProducts(s);
-  const qtyOf = n => { const r = mine.find(i => sameWine(i.product, n)); return r ? r.qty : ''; };
+  const qtyOf = n => { const r = mine.find(i => sameWine(i.productId, n)); return r ? r.qty : ''; };
   const total = mine.reduce((n, i) => {
-    const w = wines.find(x => sameWine(x.product.name, i.product));
+    const w = wines.find(x => sameWine(x.product.productId, i.productId));
     const px = w && w.product.indicativePrice;
     return px ? n + px * i.qty : n;
   }, 0);
@@ -9497,9 +9312,9 @@ function myOrderListBox(role, s) {
     const open   = mine.filter(i => i.status === 'open');
     const prep   = preparedOrderFor(s, SHOW_ROLES[role].entity);
     const ready  = isClosed(s) && open.length;
-    const lineRow = i => '<div class="odt-kv"><span>' + i.product +
+    const lineRow = i => '<div class="odt-kv"><span>' + interestLabel(i) +
       '<em class="otbl-dim" style="display:block;font-size:0.66rem;font-style:normal">' +
-      (lineKind(s, i.product) === 'preorder' ? 'Pre-order — ' + preorderLeadText(s) : 'In stock') +
+      (lineKind(s, i.productId) === 'preorder' ? 'Pre-order — ' + preorderLeadText(s) : 'In stock') +
       '</em></span><span>' + i.qty + ' bottles</span></div>';
 
     /* Computed once and appended to EVERY branch. A guest who has
@@ -9559,7 +9374,7 @@ function myOrderListBox(role, s) {
     const px = w.product.indicativePrice;
     const pre = w.kind === 'preorder';
     return '<div style="display:flex;align-items:center;gap:0.7rem;padding:0.6rem 0;border-bottom:1px solid rgba(247,243,238,0.05)">' +
-      '<span style="font-size:0.82rem;color:var(--paper);flex:1;min-width:140px">' + w.product.name +
+      '<span style="font-size:0.82rem;color:var(--paper);flex:1;min-width:140px">' + showProductLabel(w.product) +
         '<em class="otbl-dim" style="display:block;font-size:0.68rem;font-style:normal">' + w.producer +
         (px == null ? ' · price on request' : ' · ' + eur(px) + ' a bottle, indicative') + '</em>' +
         '<em style="display:block;font-size:0.68rem;font-style:normal;margin-top:0.15rem;color:' +
@@ -9707,7 +9522,7 @@ function renderShowDetail(id) {
     : s.exhibitors.length ? s.exhibitors.map(e => {
     const prods = e.products.map(p =>
       '<div class="ord-item">' +
-        '<span class="ord-item-name">' + p.name + '</span>' +
+        '<span class="ord-item-name">' + showProductLabel(p) + '</span>' +
         '<span class="ord-stage wse-' + p.status + '">' + p.status + '</span>' +
         '<span class="otbl-dim" style="font-size:0.66rem">by the ' +
           (p.proposedBy === 'producer' ? 'producer' : 'host') + '</span>' +
@@ -9741,7 +9556,7 @@ function renderShowDetail(id) {
             const p = openProposalFor(s, e, 'host');
             return '<div style="padding:0.75rem 0;border-bottom:1px solid rgba(247,243,238,0.05)">' +
               '<div style="font-size:0.84rem;color:var(--paper)">' + e.producer + '</div>' +
-              '<div class="otbl-dim" style="font-size:0.74rem;margin-top:0.2rem">' + p.name + '</div>' +
+              '<div class="otbl-dim" style="font-size:0.74rem;margin-top:0.2rem">' + showProductLabel(p) + '</div>' +
               '<div class="ord-actions" style="margin-top:0.6rem">' +
                 '<button class="btn-sm btn-gold" onclick="hostRespondToProduct(\'' + s.id + '\',\'' +
                   e.producer.replace(/'/g, "\\'") + '\',\'confirm\')">Confirm this wine</button>' +
@@ -9810,14 +9625,14 @@ function renderShowDetail(id) {
 
     if (turn === 'producer' && hostWine) {
       head = 'Your Invitation';
-      body = s.leadHost + ' has invited you to exhibit with <strong style="color:var(--paper)">' + hostWine.name +
+      body = s.leadHost + ' has invited you to exhibit with <strong style="color:var(--paper)">' + showProductLabel(hostWine) +
              '</strong>. The wine is a proposal, not an instruction — you can present a different one.';
       acts = '<button class="btn-sm btn-gold" onclick="respondToInvite(\'' + s.id + '\',\'confirm\')">Confirm</button>' +
              '<button class="btn-sm btn-outline" onclick="openCounterModal(\'' + s.id + '\')">Confirm with a different wine</button>' +
              declineBtn;
     } else if (turn === 'producer' && rejected) {
       head = 'Your Turn';
-      body = s.leadHost + ' declined <strong style="color:var(--paper)">' + rejected.name +
+      body = s.leadHost + ' declined <strong style="color:var(--paper)">' + showProductLabel(rejected) +
              '</strong>. You are still on the show — put another wine forward.';
       acts = '<button class="btn-sm btn-gold" onclick="openCounterModal(\'' + s.id + '\')">Propose another wine</button>' + declineBtn;
     } else if (turn === 'producer') {
@@ -9827,11 +9642,11 @@ function renderShowDetail(id) {
       acts = '<button class="btn-sm btn-gold" onclick="openCounterModal(\'' + s.id + '\')">Choose a wine &amp; confirm</button>' + declineBtn;
     } else if (turn === 'host' && mine) {
       head = 'Waiting for ' + s.leadHost;
-      body = 'You proposed <strong style="color:var(--paper)">' + mine.name + '</strong>. ' + s.leadHost +
+      body = 'You proposed <strong style="color:var(--paper)">' + showProductLabel(mine) + '</strong>. ' + s.leadHost +
              ' still has to confirm it — a wine counts towards the show only once both sides have agreed it.';
     } else if (agreed) {
       head = 'You Are Exhibiting';
-      body = '<strong style="color:var(--paper)">' + agreed.name + '</strong> is agreed by both sides.';
+      body = '<strong style="color:var(--paper)">' + showProductLabel(agreed) + '</strong> is agreed by both sides.';
     }
 
     if (head) {
@@ -9991,13 +9806,13 @@ function hostRespondToProduct(showId, producer, action) {
   if (action === 'decline') {
     if (!confirm('Decline ' + proposal.name + ' for ' + producer + '? They stay on the show and can propose another wine.')) return;
     proposal.status = 'declined';
-    logShow(s, s.leadHost, 'Declined ' + proposal.name + ' — ' + producer + ' can propose another wine');
+    logShow(s, s.leadHost, 'Declined ' + showProductLabel(proposal) + ' — ' + producer + ' can propose another wine');
     refreshShows();
     showToast('Wine declined — ' + producer + ' has been asked for another');
     return;
   }
   proposal.status = 'confirmed';
-  logShow(s, s.leadHost, 'Confirmed ' + proposal.name + ' for ' + producer + ' — the wine is agreed by both sides');
+  logShow(s, s.leadHost, 'Confirmed ' + showProductLabel(proposal) + ' for ' + producer + ' — the wine is agreed by both sides');
   promoteIfReady(s);
   refreshShows();
   showToast('✓ ' + proposal.name + ' confirmed for ' + producer);
@@ -10008,12 +9823,14 @@ function hostRespondToProduct(showId, producer, action) {
    single mutation: everything else — the attendee's own list, the
    host writing on a guest's behalf — goes through it, so the rules
    about who may write cannot be enforced twice and differently. */
-function writeInterest(show, attendee, product, qty, by) {
+function writeInterest(show, attendee, ref, qty, by) {
   show.interests = interestsOf(show);
-  const row = show.interests.find(i => i.attendee === attendee && sameWine(i.product, product));
+  const p = wineByRef(ref);
+  if (!p) { console.warn('[shows] no product for "' + ref + '" — no interest written'); return 'none'; }
+  const row = show.interests.find(i => i.attendee === attendee && sameWine(i.productId, p.id));
   if (qty > 0) {
     if (row) { row.qty = qty; row.enteredBy = by; row.at = SHOW_TODAY; }
-    else show.interests.push({ attendee: attendee, product: product, qty: qty,
+    else show.interests.push({ attendee: attendee, productId: p.id, qty: qty,
                                enteredBy: by, status:'open', at: SHOW_TODAY });
     return 'set';
   }
@@ -10033,12 +9850,12 @@ function saveMyOrderList(id) {
     const w = wines[parseInt(el.getAttribute('data-wine'), 10)];
     if (!w) return;
     const qty = parseInt(el.value, 10) || 0;
-    if (writeInterest(s, cfg.entity, w.product.name, qty, 'attendee') !== 'none') changed++;
+    if (writeInterest(s, cfg.entity, w.product.productId, qty, 'attendee') !== 'none') changed++;
   });
   if (!changed) { actionSay('Nothing to save — note a quantity first'); return; }
   const mine = myInterests(role, s);
   logShow(s, cfg.entity, mine.length
-    ? 'Wrote an order list: ' + mine.map(i => i.qty + ' × ' + i.product).join(', ')
+    ? 'Wrote an order list: ' + mine.map(i => i.qty + ' × ' + interestLabel(i)).join(', ')
     : 'Cleared their order list');
   refreshShows();
   showToast('✓ Order list saved — ' + s.leadHost + ' consolidates it after the show');
@@ -10080,7 +9897,7 @@ function openInterestModal(id) {
     : '<option value="">Nobody holds a place at this show yet</option>';
   const wines = orderListProducts(s);
   document.getElementById('oif-wine').innerHTML = wines.length
-    ? wines.map((w, i) => '<option value="' + i + '">' + w.product.name + ' · ' + w.producer + '</option>').join('')
+    ? wines.map((w, i) => '<option value="' + i + '">' + showProductLabel(w.product) + ' · ' + w.producer + '</option>').join('')
     : '<option value="">No confirmed wine to order yet</option>';
   document.getElementById('oif-qty').value = '';
   document.getElementById('wine-show-interest-modal').classList.add('active');
@@ -10097,11 +9914,11 @@ function saveInterestForGuest() {
   if (qty <= 0) { actionSay('Note how many bottles'); return; }
   const w = orderListProducts(s)[parseInt(idx, 10)];
   if (!w) { actionSay('That wine is no longer on the show'); return; }
-  writeInterest(s, who, w.product.name, qty, 'host');
-  logShow(s, s.leadHost, 'Wrote an order list for ' + who + ': ' + qty + ' × ' + w.product.name);
+  writeInterest(s, who, w.product.productId, qty, 'host');
+  logShow(s, s.leadHost, 'Wrote an order list for ' + who + ': ' + qty + ' × ' + showProductLabel(w.product));
   closeInterestModal();
   refreshShows();
-  showToast('✓ ' + qty + ' × ' + w.product.name + ' noted for ' + who);
+  showToast('✓ ' + qty + ' × ' + showProductLabel(w.product) + ' noted for ' + who);
 }
 
 /* ── CLOSING THE ORDER LIST (A16.12) ──────────────────────────
@@ -10136,7 +9953,7 @@ function closeShowOrderList(id) {
 
   const byProducer = consolidatedOrders(s);
   Object.keys(byProducer).forEach(function (pr) {
-    byProducer[pr] = byProducer[pr].filter(l => !(l.name in held));
+    byProducer[pr] = byProducer[pr].filter(l => !(l.productId in held));
     if (!byProducer[pr].length) delete byProducer[pr];
   });
   const producers = Object.keys(byProducer);
@@ -10160,13 +9977,13 @@ function closeShowOrderList(id) {
          partnership terms, so it is taken from the agreed list where
          one exists and left for the host to fill in where it does not
          — never invented (A1). */
-      items: lines.map(l => orderItemRaw((wineByRef(l.name) || {}).id, l.qty, purchasePriceFor(l.name)))
+      items: lines.map(l => orderItemRaw(l.productId, l.qty, purchasePriceFor(l.productId)))
     };
     orders.unshift(normalizeOrder(o));
     logEvent(o, o.seller, 'Consolidated from ' + s.title + ': ' +
-      lines.map(l => l.qty + ' × ' + l.name).join(', '));
+      lines.map(l => l.qty + ' × ' + wineLabel(l.productId)).join(', '));
     logShow(s, s.leadHost, 'Ordered from ' + producer + ': ' +
-      lines.map(l => l.qty + ' × ' + l.name).join(', ') + ' (' + o.id + ')');
+      lines.map(l => l.qty + ' × ' + wineLabel(l.productId)).join(', ') + ' (' + o.id + ')');
   });
 
   s.closedAt = SHOW_TODAY;
@@ -10186,12 +10003,12 @@ function closeShowOrderList(id) {
 function holdWineBack(show, productName, reason) {
   let n = 0;
   interestsOf(show).forEach(function (i) {
-    if (sameWine(i.product, productName) && i.status === 'open') {
+    if (sameWine(i.productId, productName) && i.status === 'open') {
       i.status = 'held_back'; i.holdReason = reason; n += i.qty;
     }
   });
-  const producer = (orderListProducts(show).find(w => sameWine(w.product.name, productName)) || {}).producer || '';
-  logShow(show, show.leadHost, 'Held back ' + productName + ' (' + n + ' btl asked for) — to ' +
+  const producer = (orderListProducts(show).find(w => sameWine(w.product.productId, productName)) || {}).producer || '';
+  logShow(show, show.leadHost, 'Held back ' + wineLabel(productName) + ' (' + n + ' btl asked for) — to ' +
     producer + ': "' + reason + '"');
   return n;
 }
@@ -10201,9 +10018,9 @@ function holdWineBack(show, productName, reason) {
    will hear if that changes" from a politeness into a mechanism. */
 function releaseHeldWine(id, productName) {
   const s = actionShow(id); if (!s) return;
-  const rows = interestsOf(s).filter(i => sameWine(i.product, productName) && i.status === 'held_back');
+  const rows = interestsOf(s).filter(i => sameWine(i.productId, productName) && i.status === 'held_back');
   if (!rows.length) { actionSay('Nothing is held back on that wine'); return; }
-  const producer = (orderListProducts(s).find(w => sameWine(w.product.name, productName)) || {}).producer || '';
+  const producer = (orderListProducts(s).find(w => sameWine(w.product.productId, productName)) || {}).producer || '';
   const qty = rows.reduce((n, i) => n + i.qty, 0);
   const o = {
     id: nextOrderId(), placed: todayISO(),
@@ -10227,7 +10044,7 @@ function releaseHeldWine(id, productName) {
 function withdrawInterest(id, productName) {
   const role = activeShowRole, cfg = SHOW_ROLES[role];
   const s = actionShow(id); if (!s) return;
-  const row = interestsOf(s).find(i => i.attendee === cfg.entity && sameWine(i.product, productName));
+  const row = interestsOf(s).find(i => i.attendee === cfg.entity && sameWine(i.productId, productName));
   if (!row) { actionSay('You have no note on that wine'); return; }
   if (row.status === 'ordered') { actionSay('That one is already on an order — cancel the order instead'); return; }
   s.interests.splice(s.interests.indexOf(row), 1);
@@ -10595,7 +10412,7 @@ function onInviteProducerChange() {
   const wines = partnerWinesPool.filter(w => w.winery === producer);
   document.getElementById('if-product').innerHTML =
     '<option value="">No preference — let the producer choose</option>' +
-    wines.map(w => '<option value="' + wineLabel(w) + '">' + wineLabel(w) + '</option>').join('');
+    wines.map(w => '<option value="' + w.id + '">' + wineLabel(w) + '</option>').join('');
 }
 function saveInvite() {
   const s = actionShow(inviteShowId); if (!s) return;
@@ -10603,8 +10420,8 @@ function saveInvite() {
   if (!producer) { showToast('✗ Pick a producer first'); return; }
   const product = document.getElementById('if-product').value;
   s.exhibitors.push({ producer: producer, status:'invited', source:'invitation',
-    products: product ? [ { name: product, proposedBy:'host', status:'proposed' } ] : [] });
-  logShow(s, s.leadHost, producer + ' invited' + (product ? ' with ' + product : ' — no wine proposed'));
+    products: product ? [ { productId: product, proposedBy:'host', status:'proposed' } ] : [] });
+  logShow(s, s.leadHost, producer + ' invited' + (product ? ' with ' + wineLabel(product) : ' — no wine proposed'));
   closeInviteModal();
   refreshShows();
   showToast('✓ ' + producer + ' invited to ' + s.title);
@@ -10626,9 +10443,9 @@ function openCounterModal(id) {
      producer's proposal, and only the producer replaces the host's. */
   const spent = me.products
     .filter(p => p.status !== 'declined' || p.proposedBy === 'producer')
-    .map(p => p.name);
+    .map(p => p.productId);
   const mine = partnerWinesPool.filter(w =>
-    w.winery === SHOW_ROLES[role].entity && !spent.some(function (p) { return sameWine(p, w); }));
+    w.winery === SHOW_ROLES[role].entity && spent.indexOf(w.id) === -1);
   const hostWine = me.products.find(p => p.status === 'proposed' && p.proposedBy === 'host');
   const rejected = me.products.filter(p => p.status === 'declined' && p.proposedBy === 'producer').slice(-1)[0];
 
@@ -10638,15 +10455,15 @@ function openCounterModal(id) {
     : (rejected ? 'Propose <span>Another Wine</span>' : 'Choose Your <span>Wine</span>');
   document.getElementById('cf-show').textContent = s.title + ' · ' + orderDate(s.date) + ' · ' + s.city;
   document.getElementById('cf-intro').innerHTML = hostWine
-    ? 'Proposed by the host: <strong style="color:var(--paper)">' + hostWine.name + '</strong>. Pick the wine you would rather present — ' +
+    ? 'Proposed by the host: <strong style="color:var(--paper)">' + showProductLabel(hostWine) + '</strong>. Pick the wine you would rather present — ' +
       s.leadHost + ' confirms it, and only then does it count towards the show.'
     : (rejected
-      ? s.leadHost + ' declined <strong style="color:var(--paper)">' + rejected.name + '</strong>. Pick another — ' +
+      ? s.leadHost + ' declined <strong style="color:var(--paper)">' + showProductLabel(rejected) + '</strong>. Pick another — ' +
         s.leadHost + ' confirms it, and only then does it count towards the show.'
       : s.leadHost + ' has not named a wine. Pick the one you want to present — this takes your place on the show, and ' +
         s.leadHost + ' then confirms the wine itself.');
   document.getElementById('cf-product').innerHTML = mine.length
-    ? mine.map(w => '<option value="' + wineLabel(w) + '">' + wineLabel(w) + ' · ' + w.type + '</option>').join('')
+    ? mine.map(w => '<option value="' + w.id + '">' + wineLabel(w) + ' · ' + w.type + '</option>').join('')
     : '<option value="">No other wine left to propose</option>';
   document.getElementById('cf-save').textContent = hostWine || rejected ? 'Propose This Wine →' : 'Confirm With This Wine →';
   document.getElementById('show-product-modal').classList.add('active');
@@ -10664,10 +10481,10 @@ function saveCounter() {
   /* The producer's place is taken; only the wine is still open. */
   me.status = 'confirmed';
   me.products.forEach(p => { if (p.status === 'proposed') p.status = 'declined'; });
-  me.products.push({ name: product, proposedBy:'producer', status:'proposed' });
+  me.products.push({ productId: product, proposedBy:'producer', status:'proposed' });
   logShow(s, me.producer, hadProposal
-    ? 'Proposed ' + product + ' instead of the wine ' + s.leadHost + ' suggested'
-    : 'Proposed ' + product);
+    ? 'Proposed ' + wineLabel(product) + ' instead of the wine ' + s.leadHost + ' suggested'
+    : 'Proposed ' + wineLabel(product));
   closeCounterModal();
   refreshShows();
   showToast('✓ ' + product + ' proposed — waiting for ' + s.leadHost + ' to confirm');
@@ -11105,7 +10922,7 @@ function notifAwaitReason(role, s) {
   s.exhibitors.forEach(function (e) {
     if (cfg.side === 'producer' && e.producer !== cfg.entity) return;
     const p = openProposalFor(s, e, cfg.side);
-    if (p) open.push({ producer: e.producer, name: p.name });
+    if (p) open.push({ producer: e.producer, name: showProductLabel(p) });
   });
   if (open.length === 1) {
     const rec = notifWineRecord(open[0].producer, open[0].name);

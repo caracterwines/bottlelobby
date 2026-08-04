@@ -1,5 +1,19 @@
 const path = require('path');
 const { loadDashboard } = require('./load-dashboard');
+/* The wine selects carry the product KEY as their value and the label
+   as their text (pass 3b). A harness that assigns a label would set
+   nothing and the action would silently return — so it picks the
+   option the way a person does, by what is written on it, and fails
+   loudly when no option says that. */
+function pickWine(d, selectId, label) {
+  const sel = d.getElementById(selectId);
+  if (!sel) throw new Error(selectId + ' is not on the page');
+  const opt = [...sel.options].find(o => o.textContent.trim().startsWith(label));
+  if (!opt) throw new Error('no option reading "' + label + '" in #' + selectId +
+    ' — offered: ' + [...sel.options].map(o => o.textContent.trim()).join(' | '));
+  sel.value = opt.value;
+  return opt.value;
+}
 const DASHBOARD = path.join(__dirname, '..', 'bottle-lobby-dashboard.html');
 const { JSDOM, VirtualConsole } = require('jsdom');
 const fs = require('fs');
@@ -125,7 +139,11 @@ else ok('invite modal opens');
 const prodSel = d.getElementById('if-producer');
 if (![...prodSel.options].some(o => o.value === 'Cantina Rossi')) bad('Cantina Rossi not offered');
 prodSel.value = 'Cantina Rossi'; w.onInviteProducerChange();
-const wineOpts = [...d.getElementById('if-product').options].map(o => o.value);
+/* Labels for the comparison, values for "is this a wine at all":
+   the first option is the empty "No preference" one, whose value
+   is '' and whose text is now prose. */
+const wineOpts = [...d.getElementById('if-product').options]
+  .filter(o => o.value).map(o => o.textContent.trim());
 /* Derived, not a hand-written whitelist. The list used to name nine
    of Cantina Rossi's wines, so backfilling a tenth (Terra Rossa, A3)
    read as a foreign wine being offered — a check that has to be
@@ -139,7 +157,7 @@ const foreign = wineOpts.filter(v => v && rossiWines.indexOf(v) === -1);
 if (!rossiWines.length) bad('Cantina Rossi has no wines to offer — this check examined nothing');
 else if (foreign.length) bad('foreign wine offered: ' + foreign.join(', '));
 else ok("wine picker holds only Cantina Rossi's own wines");
-d.getElementById('if-product').value = 'Primitivo Riserva 2020';
+pickWine(d, 'if-product', 'Primitivo Riserva 2020');
 w.saveInvite();
 let s = byId('WS-2604');
 if (s.exhibitors.length !== 1 || s.exhibitors[0].status !== 'invited') bad('invitation not recorded');
@@ -155,13 +173,17 @@ w.openShowDetail('WS-2604');
 w.openCounterModal('WS-2604');
 const mine = [...d.getElementById('cf-product').options].map(o => o.value);
 if (!mine.length) bad('counter modal has no wines');
-d.getElementById('cf-product').value = 'Grillo Sicilia DOC 2023';
+pickWine(d, 'cf-product', 'Grillo Sicilia DOC 2023');
 w.saveCounter();
 s = byId('WS-2604');
 const ex = s.exhibitors[0];
 if (ex.status !== 'confirmed') bad('producer place not taken');
 const live = ex.products.filter(p => p.status !== 'declined');
-if (live.length !== 1 || live[0].name !== 'Grillo Sicilia DOC 2023' || live[0].proposedBy !== 'producer'
+/* Resolved through the page: a show product names a key now, so the
+   assertion reads what a person sees rather than what the fixture
+   happens to store. */
+const liveLabel = w.eval('wineLabel(' + JSON.stringify(live[0] && live[0].productId) + ')');
+if (live.length !== 1 || liveLabel !== 'Grillo Sicilia DOC 2023' || live[0].proposedBy !== 'producer'
     || live[0].status !== 'proposed')
   bad('counter-proposal not recorded as a proposal: ' + JSON.stringify(ex.products));
 else ok('counter-proposal recorded as proposed-by-producer, awaiting the host (D23)');

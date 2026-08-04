@@ -1109,7 +1109,24 @@ const activePartners = [
    each one a join-table row (own-label flag / volume) referencing
    the winery's wine, never a copy of it.
 ══════════════════════════════════════════════════════════════════ */
-const partnerWinesPool = [
+/* ⚠ A FOURTH CATALOGUE, and 3b is what made it collide rather than
+   what created it. This page loads assets/bottle-lobby-data.js, which
+   now declares the producers' catalogue — so this local `const` of the
+   same name was a duplicate that had been shadowing nothing and became
+   a SyntaxError the moment the shared one existed.
+
+   It is NOT merged here, because it is not a smaller copy — it is a
+   DIFFERENT one, and in places a better one. Measured against the
+   shared 20 rows: it carries ten wines the catalogue does not,
+   including all five of Château Belrieu's (whose producer has no
+   catalogue row at all) and three whose article pages are among the
+   15 orphans. It is missing seven the catalogue does carry.
+
+   Merging the two is a data decision with a date on every row, and it
+   is the "complete the catalogue" pass. Renamed rather than deleted so
+   this page renders exactly as before and the duplication is visible
+   instead of resolved by whichever script loaded last. */
+const profilePagePartnerWinesPool = [
   { winery:'Cantina Rossi', name:'Catarratto Biologico', vintage:2023, type:'White', note:'Organic', origin:'Sicilia DOC, Sicily' },
   { winery:'Cantina Rossi', name:'Grillo Sicilia DOC', vintage:2023, type:'White', note:'Own-Label Available', origin:'Sicilia DOC, Sicily' },
   { winery:'Cantina Rossi', name:"Nero d'Avola Sicilia DOC", vintage:2022, type:'Red', note:'Own-Label Available', origin:'Sicilia DOC, Sicily' },
@@ -1177,7 +1194,7 @@ function renderWinePicker(search) {
     return;
   }
   const term = (search || '').toLowerCase();
-  const pool = partnerWinesPool.filter(w => activePartners.some(p => p.winery === w.winery));
+  const pool = profilePagePartnerWinesPool.filter(w => activePartners.some(p => p.winery === w.winery));
   const filtered = pool.filter(w => !term || w.name.toLowerCase().includes(term) || w.winery.toLowerCase().includes(term));
   if (!filtered.length) {
     list.innerHTML = '<div class="aw-empty">No wines match your search.</div>';
@@ -1199,7 +1216,7 @@ function renderWinePicker(search) {
     }).join('')}`).join('');
 }
 function selectWineForAdd(winery, name) {
-  awSelectedWine = partnerWinesPool.find(w => w.winery === winery && w.name === name);
+  awSelectedWine = profilePagePartnerWinesPool.find(w => w.winery === winery && w.name === name);
   if (!awSelectedWine) return;
   document.getElementById('aw-selected-summary').innerHTML =
     `${awSelectedWine.name} <span>${awSelectedWine.vintage} · ${awSelectedWine.winery}</span>`;
@@ -1578,8 +1595,8 @@ renderWinePortfolio();
      uses them. Same files as the dashboard and the Wine Shows page:
      a show exists exactly once (A16.7). Classic scripts — these pages
      are opened over file:// as well as over http. -->
-<script src="assets/bottle-lobby-data.js?v=b6a5195b"></script>
-<script src="assets/bottle-lobby-public-shows.js?v=b2af0560"></script>
+<script src="assets/bottle-lobby-data.js?v=1215f1af"></script>
+<script src="assets/bottle-lobby-public-shows.js?v=66e44128"></script>
 <script src="assets/bottle-lobby-profile-shows.js?v=b5b3b453"></script>
 
 </body>

@@ -284,16 +284,21 @@ console.log('\n── the resolver answers a key and, still, a name');
    quietly swallow a third. */
 console.log('\n── the name join is confined to the resolver');
 {
-  const src = fs.readFileSync(path.join(__dirname, '..', 'bottle-lobby-dashboard.html'), 'utf8');
-  const lines = src.split('\n');
+  /* Both files: the resolver moved into the shared asset in 3b, and a
+     scan that still looked only at the dashboard would report zero
+     comparisons and call it progress. */
+  const lines = ['bottle-lobby-dashboard.html', 'assets/bottle-lobby-data.js',
+                 'assets/bottle-lobby-public-shows.js', 'assets/bottle-lobby-profile-shows.js']
+    .flatMap(f => fs.readFileSync(path.join(__dirname, '..', f), 'utf8').split('\n')
+      .map(l => ({ f: f, l: l })));
   /* The trailing (?!\.) matters: `w.product.indicativePrice` is a
      price comparison, not a name one, and counting it would make the
      scan cry wolf until somebody stopped reading it. */
   const JOIN = /(\.name|\.wine|wineName|\.product)(?!\w)\s*(===|!==)\s*|(===|!==)\s*(\w+\.name|\w+\.wine|wineName|productName|\w+\.product)(?![\w.])/;
   const hits = [];
-  lines.forEach((l, i) => {
-    if (/^\s*(\/\*|\*|\/\/)/.test(l)) return;
-    if (JOIN.test(l)) hits.push((i + 1) + ': ' + l.trim().slice(0, 78));
+  lines.forEach((x, i) => {
+    if (/^\s*(\/\*|\*|\/\/)/.test(x.l)) return;
+    if (JOIN.test(x.l)) hits.push(x.f + ' ' + (i + 1) + ': ' + x.l.trim().slice(0, 78));
   });
   const inResolver = hits.filter(h => /rows\.find/.test(h));
   if (!hits.length)
@@ -391,6 +396,55 @@ console.log('\n── order lines and prices name products, not strings');
   else ok(keys.length + ' trade prices, every one keyed by a product that exists');
 }
 
+/* ── 6c-2. The show surface names keys (pass 3b) ─────────────────
+   A16.9 always said a show product and an interest are REFERENCES
+   into a producer's range. They stored that reference as
+   "<name> <vintage>", which is the second spelling every join had to
+   bridge. What made it impossible to leave alone is that SEVENTEEN
+   public pages render those references and none of them loads the
+   dashboard, where the catalogue lived — so the catalogue and the
+   resolver moved into the shared asset with this pass. A name renders
+   without being resolved; a key does not. */
+console.log('\n── show products and interests name products');
+{
+  const shows = J('wineShows');
+  const prods = shows.flatMap(s => (s.exhibitors || []).flatMap(x =>
+    (x.products || []).map(p => ({ s: s.id, who: x.producer, p }))));
+  const ints  = shows.flatMap(s => (s.interests || []).map(i => ({ s: s.id, i })));
+  const known = new Set(ROWS.map(r => r.id));
+
+  const pNoKey = prods.filter(x => !x.p.productId);
+  const pDead  = prods.filter(x => x.p.productId && !known.has(x.p.productId));
+  const pCopy  = prods.filter(x => 'name' in x.p);
+  const iNoKey = ints.filter(x => !x.i.productId);
+  const iDead  = ints.filter(x => x.i.productId && !known.has(x.i.productId));
+  const iCopy  = ints.filter(x => 'product' in x.i);
+
+  if (!prods.length || !ints.length)
+    bad('no show products or no interests — this section examined nothing');
+  else if (pNoKey.length || iNoKey.length)
+    bad((pNoKey.length + iNoKey.length) + ' show reference(s) name no product: ' +
+        pNoKey.concat(iNoKey).map(x => x.s).join(' · '));
+  else if (pDead.length || iDead.length)
+    bad((pDead.length + iDead.length) + ' show reference(s) name a key no book carries: ' +
+        pDead.map(x => x.s + ' → ' + x.p.productId).concat(iDead.map(x => x.s + ' → ' + x.i.productId)).join(' · '));
+  else if (pCopy.length || iCopy.length)
+    bad((pCopy.length + iCopy.length) + ' show reference(s) keep a copy of the product name beside the key: ' +
+        pCopy.concat(iCopy).map(x => x.s).join(' · ') + ' — A16.9, and the second spelling comes back with it');
+  else
+    ok(prods.length + ' show products and ' + ints.length + ' interests across ' + shows.length +
+       ' shows, every one naming a product that exists and none carrying a copy of its name');
+
+  /* THE LABEL IS THE RECORD'S. Not a frozen list of expected strings —
+     that would pass while a surface quietly built its own. Every
+     rendered show label has to BE wineLabel() of the product it
+     refers to, so a second composition anywhere disagrees here. */
+  const wrong = prods.filter(x =>
+    w.eval('showProductLabel(' + JSON.stringify(x.p) + ')') !== w.eval('wineLabel(' + JSON.stringify(x.p.productId) + ')'));
+  if (wrong.length) bad(wrong.length + ' show product(s) label differently from their record');
+  else ok('and every show label is the product record\'s own, composed in one place');
+}
+
 /* ── 6d. The counter-checks for the order side ───────────────── */
 console.log('\n── the order side\'s counter-checks');
 {
@@ -412,6 +466,22 @@ console.log('\n── the order side\'s counter-checks');
       to:   "'Pouilly-Fumé': 17.20,",
       ask:  win => Object.keys(J2(win, 'wineUnitPrice')).every(k => ID_SHAPE.test(k)),
       says: 'a price nobody can reach from a line that names a key' },
+
+    { what: 'a show product keeps the name beside the key',
+      from: "{ productId:'PRD-1014', proposedBy:'host', status:'confirmed',",
+      to:   "{ productId:'PRD-1014', name:'Sancerre Rouge 2022', proposedBy:'host', status:'confirmed',",
+      ask:  win => J2(win, 'wineShows').flatMap(s => (s.exhibitors || []).flatMap(x => x.products || []))
+              .every(p => !('name' in p)),
+      says: 'the second spelling is back on the show surface' },
+
+    { what: 'an interest names a product no book carries',
+      from: "{ attendee:'Vinoteca Alster', productId:'PRD-1014',",
+      to:   "{ attendee:'Vinoteca Alster', productId:'PRD-9999',",
+      ask:  win => {
+        const ids = new Set(harvest(win).collections.flatMap(c => c.rows).map(r => r.id));
+        return J2(win, 'wineShows').flatMap(s => s.interests || []).every(i => ids.has(i.productId));
+      },
+      says: 'a line on the order list that resolves to nothing, rendering blank' },
 
     { what: 'a price key names a product that does not exist',
       from: "'PRD-1027': 12.10    /* Terra Rossa — the entry that had no record until A3 */",

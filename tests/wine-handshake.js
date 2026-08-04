@@ -1,5 +1,19 @@
 const path = require('path');
 const { loadDashboard } = require('./load-dashboard');
+/* The wine selects carry the product KEY as their value and the label
+   as their text (pass 3b). A harness that assigns a label would set
+   nothing and the action would silently return — so it picks the
+   option the way a person does, by what is written on it, and fails
+   loudly when no option says that. */
+function pickWine(d, selectId, label) {
+  const sel = d.getElementById(selectId);
+  if (!sel) throw new Error(selectId + ' is not on the page');
+  const opt = [...sel.options].find(o => o.textContent.trim().startsWith(label));
+  if (!opt) throw new Error('no option reading "' + label + '" in #' + selectId +
+    ' — offered: ' + [...sel.options].map(o => o.textContent.trim()).join(' | '));
+  sel.value = opt.value;
+  return opt.value;
+}
 const DASHBOARD = path.join(__dirname, '..', 'bottle-lobby-dashboard.html');
 const { JSDOM, VirtualConsole } = require('jsdom');
 const fs = require('fs');
@@ -11,6 +25,10 @@ const w = dom.window, d = w.document;
 w.scrollTo = () => {}; w.confirm = () => true;
 if (errs.length) { console.log('SCRIPT ERRORS:\n' + errs.join('\n')); process.exit(1); }
 let fail = 0; const bad = m => { console.log('  ✗ ' + m); fail++; }; const ok = m => console.log('  ✓ ' + m);
+/* A show product names a key (pass 3b); its label comes from the
+   record. Resolved through the page, so this reads what a person
+   would see rather than what a fixture happens to store. */
+const plabel = p => p ? w.eval('wineLabel(' + JSON.stringify(p.productId) + ')') : '';
 const S  = id => w.eval('wineShows').find(x => x.id === id);
 const EX = (id, p) => S(id).exhibitors.find(e => e.producer === p);
 const paneText = pre => d.getElementById(pre + '-detail-pane').textContent;
@@ -95,7 +113,7 @@ console.log('\n── producer picks a wine → host must confirm');
 w.openCounterModal('WS-2604');
 if (d.getElementById('cf-save').textContent !== 'Confirm With This Wine →') bad('wrong save label: ' + d.getElementById('cf-save').textContent);
 else ok('modal reads "Confirm With This Wine" when no host wine exists');
-d.getElementById('cf-product').value = 'Grillo Sicilia DOC 2023';
+pickWine(d, 'cf-product', 'Grillo Sicilia DOC 2023');
 w.saveCounter();
 e = EX('WS-2604','Cantina Rossi');
 if (e.status !== 'confirmed') bad('producer place not taken');
@@ -261,7 +279,7 @@ if (EX(RT,'Cantina Rossi').products.length) bad('no wine should be recorded'); e
 w.showWineShows('winery','current');
 w.openShowDetail(RT);
 w.openCounterModal(RT);
-d.getElementById('cf-product').value = 'Rosato di Sicilia 2023';
+pickWine(d, 'cf-product', 'Rosato di Sicilia 2023');
 w.saveCounter();
 if (EX(RT,'Cantina Rossi').products.slice(-1)[0].status !== 'proposed') bad('first pick should be proposed');
 else ok('producer proposes Rosato di Sicilia 2023');
@@ -301,11 +319,11 @@ else ok('modal reads "Propose Another Wine"');
   else ok('host-declined wine no longer offered');
   if (!offered.length) bad('picker is empty');
 }
-d.getElementById('cf-product').value = 'Catarratto Biologico 2023';
+pickWine(d, 'cf-product', 'Catarratto Biologico 2023');
 w.saveCounter();
 rt = EX(RT,'Cantina Rossi');
 const live = rt.products.filter(p => p.status === 'proposed');
-if (live.length !== 1 || live[0].name !== 'Catarratto Biologico 2023') bad('second proposal wrong: ' + JSON.stringify(rt.products));
+if (live.length !== 1 || plabel(live[0]) !== 'Catarratto Biologico 2023') bad('second proposal wrong: ' + JSON.stringify(rt.products));
 else ok('producer proposes Catarratto Biologico 2023');
 if (w.eval('exhibitorTurn')(S(RT), rt) !== 'host') bad('turn should be the host again');
 else ok('turn with the host again');
@@ -316,7 +334,7 @@ w.showWineShows('distributor','current');
 w.openShowDetail(RT);
 w.hostRespondToProduct(RT,'Cantina Rossi','confirm');
 rt = EX(RT,'Cantina Rossi');
-if (!rt.products.some(p => p.status === 'confirmed' && p.name === 'Catarratto Biologico 2023'))
+if (!rt.products.some(p => p.status === 'confirmed' && plabel(p) === 'Catarratto Biologico 2023'))
   bad('host confirm did not stick: ' + JSON.stringify(rt.products));
 else ok('host confirmed the second wine');
 if (S(RT).stage !== 'planning') bad('show should now be planning, is ' + S(RT).stage);
@@ -324,7 +342,7 @@ else ok('round trip complete → planning');
 if (w.eval('exhibitorTurn')(S(RT), rt) !== null) bad('nobody should be at turn');
 else ok('nobody at turn');
 // the declined wine stays in the record as history, not silently dropped
-if (!rt.products.some(p => p.status === 'declined' && p.name === 'Rosato di Sicilia 2023'))
+if (!rt.products.some(p => p.status === 'declined' && plabel(p) === 'Rosato di Sicilia 2023'))
   bad('the declined wine was dropped instead of kept as history');
 else ok('declined wine kept in the record');
 const trail = S(RT).events.map(e => e.text).join(' | ');
@@ -347,20 +365,23 @@ console.log('\n── a wine the producer swapped away from stays offerable');
   const SB = w.eval('wineShows')[0].id;
   w.openInviteModal(SB);
   d.getElementById('if-producer').value = 'Cantina Rossi'; w.onInviteProducerChange();
-  d.getElementById('if-product').value = 'Primitivo Riserva 2020';   // host's suggestion
+  pickWine(d, 'if-product', 'Primitivo Riserva 2020');   // host's suggestion
   w.saveInvite();
   w.showWineShows('winery','current');
   w.openShowDetail(SB);
   w.openCounterModal(SB);
-  d.getElementById('cf-product').value = 'Grillo Sicilia DOC 2023';  // producer swaps away
+  pickWine(d, 'cf-product', 'Grillo Sicilia DOC 2023');  // producer swaps away
   w.saveCounter();
   // host declines the producer's pick, producer reopens the picker
   w.showWineShows('distributor','current'); w.openShowDetail(SB);
   w.hostRespondToProduct(SB,'Cantina Rossi','decline');
   w.showWineShows('winery','current'); w.openShowDetail(SB);
   w.openCounterModal(SB);
-  const offered = [...d.getElementById('cf-product').options].map(o => o.value);
-  if (!offered.includes('Primitivo Riserva 2020'))
+  /* By what the option says, not by its value: the value is the
+     product key now, and reading it here would make the assertion
+     depend on which key a fixture happens to hold. */
+  const offered = [...d.getElementById('cf-product').options].map(o => o.textContent.trim());
+  if (!offered.some(t => t.startsWith('Primitivo Riserva 2020')))
     bad("the host's own earlier suggestion should stay offerable: " + offered.slice(0,4));
   else ok("host's own suggestion still offerable after the producer swapped away");
   if (offered.includes('Grillo Sicilia DOC 2023'))

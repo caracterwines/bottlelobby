@@ -180,7 +180,7 @@ function publicShowCard(show, level) {
   const exh = confirmedExhibitors(show);
   const lines = exh.length
     ? exh.map(e => '<div class="ws-public-line"><b>' + e.producer + '</b> — ' +
-        (e.products.filter(p => p.status === 'confirmed').map(p => p.name).join(', ') || 'wines to be announced') +
+        (e.products.filter(p => p.status === 'confirmed').map(p => wineLabel(p.productId)).join(', ') || 'wines to be announced') +
       '</div>').join('')
     : '<div class="ws-public-line">Exhibitors to be announced.</div>';
 
