@@ -205,6 +205,12 @@ A retailer cannot sell a bottle they do not have; a wine list can name a wine
 that arrives tomorrow. This is Serge's decision of 4 August 2026 and it
 supersedes the uniform rule of 3 August (Appendix D **D35**).
 
+> **The rule holds; the prototype does not carry it yet.** Weinhaus Müller's
+> selection is still the three wines it has never bought, and the pass that
+> brings the data to this rule — *A3 retail condition* — is queued behind
+> `listings`. D35 records what has to happen and what has not happened. Read the
+> table above as the condition to build to, not as a description of the fixtures.
+
 It is worth noticing that this is **the same distinction three times over**, at
 three points in the chain: stock versus pre-order on a Wine Show (A16.12),
 portfolio versus stock at the distributor, and shelf versus menu at the buyer.
@@ -2803,6 +2809,31 @@ Claude proactively flags:
 - **(b)** When a session is heading toward heavy edits of the large files → proposes the local/manual-upload route up front (C3).
 - **(c)** When two substantial changes would land in one handover → proposes splitting them, so a fault stays unambiguously attributable.
 
+### The tense rule — added 4 August 2026, and it binds Serge as much as Claude
+
+**A paragraph describing a change to DATA is written in the past tense only once
+a commit contains it. Until then it says what is to be done.**
+
+This came out of D35. The row was written in the past — *"three purchases
+backfilled, three bought wines added, the selection growing 3 → 6"* — on the day
+the rule was decided and before any of it happened. The data still stood exactly
+as the row's own measurement described it.
+
+**Why it is worse here than in code.** This file is the authority; it is read as
+the record of what is true. A past-tense sentence about data is a claim that the
+fixtures already conform, and the next pass builds on it without checking. That
+is the same defect this whole product-key chain exists to remove — one fact in
+two places, drifting — only in the document that is supposed to arbitrate.
+
+The correction has a shape worth reusing: **the decision stays, the measurement
+stays, and only the sentence about the repair moves into the future**, together
+with the route and an explicit note that it has not been carried out. Nothing is
+deleted, because the measurement is what makes the pending work checkable when
+somebody finally does it.
+
+A rule and a fixture are different claims. Write rules in the present, data in
+whatever tense the commit log can support.
+
 ## C5. Connector setup (for when it breaks again)
 
 Diagnosed 30 July 2026 after repeated `403 Resource not accessible by integration` errors:
@@ -3625,7 +3656,7 @@ Without it the badge cannot be honest.
 | D32 | An active partnership was **one list per dashboard** — `activePartners`, `wineryPartners`, and one each for restaurant and retail — while A6 already said both sides "see the identical stage of the identical request record" | **A6** — one `partnerships` row naming its two ends (`distributor`, `partner`), read from either side, with `at` in ISO and `activated_by` | The two statements could not both be true, and the copy had already drifted: Weinhaus Müller ↔ Hawesko was dated **14 Apr 2026** in one book and **"March 2026"** in the other, with nothing able to say which was right. Naming the ends removed three assumptions that had been invisible while only one book existed — a Wine Show's pickers now offer the **host's** partners rather than a platform-wide list (A16.4), `arePartners(a, b)` replaced a lookup that silently supplied "the distributor", and *"X now has a distributor"* takes the producer's **first** partnership, because gaining a route to the trade happens once and not once per distributor. |
 | D33 | Each end of a partnership carried its **own display figure as a stored field** on the row — `distributorMeta` ("6 wines in your portfolio") on the distributor's end, `partnerWines` on the other three | **A6 / invariant 7** — the row holds the relation only; every figure beside it is counted from the distributor's portfolio at render time, through `portfolioOf()` / `portfolioCount()` | Storing them survived the merge into one `partnerships` row (D32) because a figure looks like a property of the relation. It is not — it is a property of a book that changes without the relation changing, and by the time it was measured two of the four were already false on screen: Cantina Rossi's card claimed **6** where the portfolio held **1**, Weingut Schmitt's claimed **1** where it held **2**, and the restaurant and retailer named **5** and **6** for the identical book, neither matching it. The repair forced a question nobody had answered: **which of three wine lists is "their portfolio"**. Only one is owned by anyone — the distributor writes it and it persists; the other two are pickers whose producer field holds the *supplier*, so they cannot answer invariant 2 and are not portfolios at all. Two rules came with it: a house with no book yields `null` rather than an empty one, because *"0 wines"* claims something nothing here knows (A2's unknown stakeholder, again); and a derived figure obliges every surface showing it to be repainted by the action that moved it — one wine pulled in changes a number in all four roles, and leaving them standing is a defect the harnesses could not see and the browser could. |
 | D34 | A distributor's wines lived in **three lists**: `currentWinePortfolio` (6 wines, owned and written), and two byte-identical picker pools of 10 whose `winery` field held the **supplier** — so `wineryOfWine()` existed to guess the producer, defaulting to *Cantina Rossi* | **A3 / A6 / invariant 2** — one book per distributor, every row naming its real producer; both buyer pickers read it through `portfolioOf()`, and the pools are gone | The pools could not answer "who made this", which is invariant 2, and nothing checked a partnership when a wine went onto a buyer's list. That is how a distributor came to offer — and twice sell — wines of a producer it had no partnership with. Merging them forced the question nobody had answered: **which of the three lists is the portfolio**. Only one was owned by anybody. The attribution was sourced rather than invented: 6 rows were already correct, 3 came from the producers' own book, 1 from an order line, and exactly **1** by hand, with **zero contradictions** where two lists named the same wine. The book grew 6 → 14, because three further wines were being advertised or discounted without being carried at all — an offer over a wine outside your book is the same gap as a sale, only delayed (A3). Deleted with it: `wineryOfWine()`, which was measurably wrong twice; three `fileGuess` slug derivations that rebuilt a URL the record already carried (A14.4); and `note`, which duplicated `ownLabel` and carried the buyer's own *Exclusive* marking into the distributor's book (A1). |
-| D35 | Restaurant and Retail were treated **alike**: a wine could go on either list as long as an active distributor partnership existed and the wine sat in that distributor's portfolio — no purchase of their own required | **A3** — the restaurant condition stands; Retail additionally needs **an order of its own**, a sample order or trial bottles being enough | The two lists are not the same kind of object. A wine list is an **offer**: the guest orders, the bottle is delivered just in time, and naming a wine that arrives tomorrow is normal trade. A retail selection is a **shelf**: the customer carries the bottle out of the shop, and a retailer cannot sell what they do not have. Measured when the rule was written (4 Aug 2026), the prototype showed exactly why it had gone unnoticed — Weinhaus Müller's selection held Sauvignon Blanc, Chardonnay and Primitivo, **the same three wines as Bistro Laurent's list, line for line**, while its actual purchases were Merlot (156 bottles across two orders), Nero d'Avola and Catarratto. The two sets were **disjoint**: nothing on the shelf had been bought, nothing bought was on the shelf. Serge's decision, and it was repaired by extension rather than removal (A3): three purchases backfilled, three bought wines added, the selection growing 3 → 6 and differing from the restaurant's list for the first time. |
+| D35 | Restaurant and Retail were treated **alike**: a wine could go on either list as long as an active distributor partnership existed and the wine sat in that distributor's portfolio — no purchase of their own required | **A3** — the restaurant condition stands; Retail additionally needs **an order of its own**, a sample order or trial bottles being enough | The two lists are not the same kind of object. A wine list is an **offer**: the guest orders, the bottle is delivered just in time, and naming a wine that arrives tomorrow is normal trade. A retail selection is a **shelf**: the customer carries the bottle out of the shop, and a retailer cannot sell what they do not have. Measured when the rule was written (4 Aug 2026), the prototype showed exactly why it had gone unnoticed — Weinhaus Müller's selection held Sauvignon Blanc, Chardonnay and Primitivo, **the same three wines as Bistro Laurent's list, line for line**, while its actual purchases were Merlot (156 bottles across two orders), Nero d'Avola and Catarratto. The two sets were **disjoint**: nothing on the shelf had been bought, nothing bought was on the shelf. Serge's decision. **The repair is NOT done — the data still stands as measured above, and this row said otherwise until 4 Aug 2026.** It is its own pass, *A3 retail condition*, queued behind `listings`, and it goes by extension rather than removal (A3): backfill three purchases for the three wines already on the shelf, add the three bought wines to the selection, 3 → 6, at which point the retail selection differs from the restaurant's list for the first time. The backfilled orders take their dates from C7 — the earliest dependent event is the ceiling — and there is already a dependent fact to reconcile with: `tPromoProgress.bottleCounts` asserts **60 bottles of Sauvignon Blanc and 48 of Primitivo that no order carries**, so the backfill has to agree with quantities the promo progress has been claiming all along. That second home for the same fact is itself what `listings` absorbs, which is why the two passes run in that order. |
 
 ---
 

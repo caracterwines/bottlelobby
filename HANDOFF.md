@@ -59,9 +59,46 @@ von Stammdaten ist das **frueheste abhaengige Ereignis die Obergrenze**.
 
 ### Offen, in dieser Reihenfolge sinnvoll
 
-1. **Der Supabase-Start** — ein eigener Durchgang **vor** dem ersten Feature, mit
-   genau einer Frage: *was muss beim Supabase-Bau ANDERS sein als hier
-   beschrieben?* Der Prototyp faelscht drei tragende Dinge (keine Anmeldung,
+> **Korrektur vom 4. August, Serges Vorgabe: Punkt 1 ist nicht mehr der naechste
+> Schritt.** Supabase kommt erst, wenn **A16.8 (eigene Events)**, **A8
+> (Matchmaking)** und **Messages** entschieden sind. Solange dort noch Tabellen
+> entstehen, waere jede Modelaenderung in Supabase eine Migration statt einer
+> Stunde Arbeit.
+
+**Zuerst die Produktschluessel-Kette (04.08., laeuft):** 1 Schluessel ✓ · 2
+Aufloeser ✓ · 3a Orders und Preise ✓ · **3b Show-Flaeche** · 3c kommerzielle
+Datensaetze · 4 Namenszweig faellt. Danach in dieser Reihenfolge:
+
+- **`listings`** — ein Beziehungsdatensatz je (Halter, Produkt), ohne
+  Weininhalt. Traegt `ownLabel` (Distributor), `exclusive` (Kaeufer), den
+  **Handelspreis** (heute eine flache Karte ohne Besitzer: Hawesko kauft
+  Primitivo zu 6,40 und verkauft ihn zu 11,20, die Karte kennt nur eine Zahl)
+  und `monthlyVolume`, das heute abgefragt und weggeworfen wird.
+- **A3 Retail-Bedingung** — Weinhaus Muellers Auswahl und seine Einkaeufe sind
+  **disjunkt**, und seine Auswahl ist zeilengleich mit Bistro Laurents
+  Weinkarte. Nach A3 per Ergaenzung: drei Einkaeufe nachtragen (Datum nach der
+  C7-Obergrenze, und `tPromoProgress` behauptet bereits 60 Fl. Sauvignon Blanc
+  und 48 Fl. Primitivo, die keine Order traegt), drei gekaufte Weine aufnehmen,
+  3 → 6. **Spec D35 sagt, was zu tun ist — nicht, dass es getan sei;** die Zeile
+  stand bis zum 4.8. faelschlich im Praeteritum, daher die neue Tempus-Regel in
+  **C4**.
+- **Katalog vervollstaendigen** — 41 Artikelseiten, 26 von einem Datensatz
+  benannt, **15 verwaist**. Chateau Belrieu hat sechs Weine auf der Website und
+  keine Katalogzeile. Dazu ein **sechstes Buch**: `bottle-lobby-wine-guide.html`
+  fuehrt 40 Produktzeilen mit eigenen, slug-foermigen Ids. Vorbedingung fuer
+  das abgeleitete Portfolio.
+- **Ereignis-Identitaet** — `notifId()` baut Schluessel aus Anzeigetext, die 26
+  `events[]`-Eintraege tragen `{at, actor, text}` und keine Id. Dieselbe
+  Krankheit wie der Weinname, eine Ebene hoeher.
+- **Das abgeleitete Portfolio** — die Verschaerfung vom 4.8. (bestellt **oder**
+  mit Zusage praesentiert). Gemessen: von 14 Buchweinen haben **7 weder noch**,
+  und **5 kaemen neu hinzu**. Braucht vorher Schluessel, Katalog und die
+  Antwort auf die A16.12-Kollision (Regel 2 macht die Vorbestell-Spalte
+  strukturell unerreichbar — 4 von 6 Zeilen klappen um, WS-2603 verliert seine
+  ganz).
+
+1. ~~**Der Supabase-Start**~~ — *siehe Korrektur oben; ruecken hinter A16.8, A8
+   und Messages.* Der Prototyp faelscht drei tragende Dinge (keine Anmeldung,
    keine Rollentrennung auf Serverebene, keine Zugriffsrechte). Regeln: **Spec C7b**.
 2. **Die KPI-Kacheln** — alle 16 vermessen: 12 ableitbar, 4 reine Erfindung, kein
    einziges der 16 Deltas hat eine Zeitreihe. Die Entscheidung ist
