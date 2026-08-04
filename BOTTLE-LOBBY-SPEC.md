@@ -1094,6 +1094,56 @@ back into the label.
 > article pages. It belongs to the "complete the catalogue" pass, together with
 > Château Belrieu's six wines that exist on the site and in no catalogue at all.
 
+### A15.2b A product is a wine line, not a bottling — decided 4 Aug 2026
+
+**`products.id` names the wine across vintages.** The stable key is the line;
+the vintage or batch is the physical execution of it. Serge's decision, and it
+settles a contradiction the own-label work exposed (A17.11): exclusivity has to
+follow a line across vintages, while every order has to name the bottles that
+actually shipped. Both cannot be true while a product carries one vintage and an
+order line carries none.
+
+**What hangs on the line:** listings, distributor portfolios, own-label projects,
+exclusivity, brand, offers, deals, promotions, and the public article page. All of
+them are statements about *the wine*, and none of them wants to be re-made every
+autumn.
+
+**What hangs on the execution:** the order line, the delivery, the documents.
+
+    orderLine.productId      the line
+    orderLine.vintage        the vintage actually ordered and shipped
+    orderLine.batchOrLot     where the producer works in batches
+
+> **The order line stores the vintage; it never reads it back off the product.**
+> A rollover would otherwise rewrite last year's paperwork — the same failure as
+> recomputing a historic fee from today's rate (A17, OL-12). This is not a
+> convenience field, it is the record of what was traded.
+
+**Frozen when the order is accepted**, because that is when both sides commit:
+the product name as displayed, the vintage, the batch where there is one, the
+article number, quantity, price, and whatever technical or tax identifiers the
+documents need. Invoices, delivery notes, order confirmations and credit notes
+read **only** from that snapshot. **A vintage rollover never alters a historic
+document.**
+
+**The model must not assume one live vintage per line.** A producer may carry two
+vintages of the same wine at once, and a distributor may hold both. The full shape
+is
+
+    product  →  productVintage (bottling / batch)  →  orderLine references one
+
+and the first build may collapse the middle step, storing the vintage and batch
+immutably on the order line — **provided nothing anywhere assumes a line has
+exactly one relevant vintage.** That assumption is the thing being ruled out; the
+table is only how it is eventually expressed.
+
+**Offers, deals and promotions attach to the line.** Where an action should apply
+to one vintage or batch only, it carries an optional restriction. Unrestricted, it
+covers the line and whatever vintages are orderable at the time — which is the
+answer to the deal-vintage question left open earlier on 4 August (A15.2a), now
+closed: the label stays vintage-free, and the *restriction* is where a vintage
+belongs if it is wanted at all.
+
 ### A15.3 Components — the generalisation of grape variety
 
 Grape variety is already a multi-select because of blends. That exact shape covers every
@@ -2484,6 +2534,691 @@ shown exactly what a visitor will get.
 
 ---
 
+## A17. Own Label
+
+*Written 4 August 2026 from Serge's business decisions.*
+
+Own Label is the first area where **Bottle Lobby is a party to the transaction
+rather than the place it happens**. Everywhere else two houses trade and the
+platform records and protects it. Here Bottle Lobby admits the companies,
+contracts with each of them, approves twice, and is paid per bottle. That is the
+reason for a programme with its own contracts, two review gates, and a written
+consent at every step — and why this section is long for a feature with three
+rows behind it today.
+
+---
+
+### A17.0 Normal wine is the platform; own label is an addition to it
+
+**Bottle Lobby is not an own-label marketplace.** The ordinary route — producer →
+distributor → restaurant or retailer — is the business. A normal wine keeps every
+ability it has today and none of them depends on own label: a producer publishes
+it; several suitable distributors may carry it; it enters a book with no project
+behind it; it is resold onward; it uses ordinary orders, offers and promotions; it
+carries no exclusivity; and **it never triggers a bottle fee**.
+
+**Measured, 4 August 2026 — the demo baseline.** The catalogue holds **20 products
+across 5 producers**, of which **3 advertise own-label work and 17 do not**. The
+distributor's book holds **14 wines, 3 own label and 11 ordinary**. Roughly one in
+six.
+
+> **OL-10 is a fixture rule, not a domain rule.** The demo keeps ordinary wine in
+> the clear majority so a reader can see what the platform is. That is a statement
+> about *this catalogue*, not about the trade: a real distributor may specialise
+> entirely in own label, and nothing in the model forbids it. The invariant is
+> checked against the fixtures and is silent about production.
+
+The fixtures must show four states a reader can tell apart at a glance: ordinary
+wines · ordinary wines open to own-label requests · projects in flight · finished,
+active own-label products.
+
+### A17.0a The word that means four things
+
+**Measured, and it changes the model.** The prototype uses "own label" for facts
+at four different levels:
+
+| Level | Today | Becomes |
+|---|---|---|
+| A company **may take part** in the programme | nothing | an active `ownLabelProgramMemberships` row |
+| A wine **may be asked about** | `note:'Own-Label Available'` — free text on 3 rows, all Cantina Rossi | `products.ownLabelAvailability` |
+| A **finished own-label product** exists | nothing | the winery created it from a **gate-2-approved** project |
+| A distributor **carries** an own label | `ownLabel:true` on 3 portfolio rows | derived — and **only once the first commercial order has been delivered** |
+
+One phrase, four facts, no way to tell them apart in code — the same shape as the
+three wine books (D34) and the four partner lists (D32). **Capability, project,
+finished product and active listing are four different things** and each gets its
+own home.
+
+The last two are the pair most easily collapsed, and collapsing them is exactly
+what would put a wine on a restaurant's list before a bottle exists:
+
+    project passed gate 2, winery created the product  →  a finished own label
+    first commercial order delivered                   →  active in the book
+
+**A finished own-label product is created from a gate-2-approved project; its
+active distributor listing and its `ownLabel` status are derived only after the
+first order has been delivered.** Between those two moments the product exists and
+is visible to the winery, the exclusive distributor and Bottle Lobby — inside the
+project and in the first-order draft — and to nobody else (A17.9). The rule
+*product created ≠ active in the portfolio* holds throughout.
+
+    ownLabelAvailability:  unavailable · on_request · available
+
+It says only whether a project **may be started**. It does not make the base wine
+an own label, does not restrict ordinary distribution, and a wine open to requests
+**stays ordinarily tradeable** unless a specific exclusivity agreement says
+otherwise. The free-text note is replaced, not supplemented.
+
+**A programme admission is not a product offer.** A winery admitted to the
+programme has said *this house can do own-label work*. It has not said *every wine
+of mine is available*. The second statement is made per product, afterwards.
+
+### A17.0b An own label is its own product
+
+Hawesko's Sancerre under Hawesko's brand is not Henri Dubois' Sancerre: different
+brand, different label, possibly different bottle, its own article page, its own
+key. An own label ends as a **new `PRD-` record**, produced by the winery
+(`winery` stays the producer — invariant 2 does not bend) and **branded by the
+distributor**, which the project records.
+
+That is what `ownLabel:true` was doing wrong on a base wine: marking the
+producer's product with a fact about somebody else's business.
+
+**Brand ownership, first version:** `brandOwner = distributor`, always. A
+producer-owned brand sold exclusively by one distributor is **not** an own label
+in the sense of A17; it is an ordinary product plus a distribution exclusivity,
+and it is out of scope here.
+
+---
+
+### A17.1 The programme — admission before anything else
+
+**A normal Bottle Lobby account is not enough, and neither is a partnership.**
+Both sides apply to the own-label programme, and Bottle Lobby signs a **framework
+contract with each of them separately**, before any project exists:
+
+    Bottle Lobby ↔ Distributor
+    Bottle Lobby ↔ Winery
+
+    Application → consent recorded → framework contract sent
+      → signed contract returned → Bottle Lobby reviews → company admitted
+
+**One model for both roles.** `ownLabelProgramMemberships` carries a `companyRole`
+of `distributor` or `winery`; the two applications ask different questions and
+travel the identical path. Two tables would be the same state machine written
+twice, and a copy drifts (D33).
+
+    { id, companyId, companyRole, applicationData, submittedAt,
+      consentId, contractId, reviewId,
+      validFrom, validUntil, suspendedAt, terminatedAt,
+      createdAt, updatedAt }
+
+**No `isOwnLabelPartner` boolean anywhere.** Membership is **read**, from six
+conditions:
+
+    active(m) =  m.submittedAt
+             AND m.consentId resolves to a consent
+             AND the contract at m.contractId is approved
+             AND the review at m.reviewId is approved
+             AND today is within [validFrom, validUntil]
+             AND not m.suspendedAt AND not m.terminatedAt
+
+> **`applicationStatus` is not stored either, and that is a deliberate deviation
+> from the field list.** Every step it would describe is already an act with a
+> date somewhere else — submitted, consented, contract sent, contract returned,
+> under review, approved, revision required. A status field beside them is a
+> seventh copy that can disagree with all six, and this project has paid for that
+> shape twice. What the interface needs is a **label**, and a label is computed.
+
+**The application content** is `applicationData` — a form, versioned with the
+programme terms, not a column per question. Distributor asks about territories,
+channels, customer network, expected volumes, wine types and regions, own-brand
+experience, brand and design competence, target markets, and which Bottle Lobby
+services are wanted. Winery asks about production capacity, minimum and annual
+volumes, available wine types, bespoke cuvée capability, bottling and packaging,
+bottles and closures, label options, lead times, export capability, target
+markets, certifications, private-label experience, sample capability, support
+wanted, and the responsible contact.
+
+**Suspension keeps the history.** A suspended or expired membership blocks **new**
+projects. Existing projects, orders, contracts and documents stay visible and
+readable. Nothing is deleted, ever — the record of what was agreed is the point.
+
+### A17.2 The Own Label tab before admission
+
+Both roles see the **`Own Label`** navigation item as soon as their ordinary
+account is live. Before programme approval it does not show a cockpit and it is
+**not a locked screen** — it is the page that sells the programme: what an own
+label is, what the programme gives, how the pipeline runs, that Bottle Lobby
+secures the exclusivity and the platform handling, what the obligations are, how
+relabelling and bespoke development differ, how design, samples, contracts and
+orders work, which optional services exist, and that an application and a
+framework contract are required.
+
+    Call to action:  Apply to Become an Own Label Partner
+
+**Seven states, and every one of them is read from the membership record**, never
+stored as a screen name:
+
+| State | What the tab shows |
+|---|---|
+| not applied | programme, pipeline, benefits, requirements, the button |
+| application submitted | *Application submitted*, a summary, *Waiting for Bottle Lobby* |
+| contract sent | *Own Label Partner Agreement sent*, sign and return |
+| contract under review | *Contract under review*, *Waiting for Bottle Lobby* |
+| changes required | *Application requires changes*, Bottle Lobby's note, a way to complete it |
+| approved | the full cockpit: projects, pipeline, tasks, designs, samples, contracts, first orders, active products |
+| suspended / expired | the state and its explanation, no new projects, existing work still visible, a way to renew or make contact |
+
+### A17.3 Public badge
+
+An approved company carries a public mark — *Verified Own Label Partner*,
+*Own Label Winery Partner*, *Own Label Distributor Partner* — on its profile, in
+search, in the network, in the own-label area, and on suitable wine profiles.
+
+**Derived from a currently valid membership and from nothing else.** On
+suspension, expiry or termination it disappears the same day, with no field to
+remember to clear. Historic projects and contracts are untouched: the badge says
+*is a partner now*, not *was ever one*.
+
+---
+
+### A17.4 Preconditions for a project request
+
+A distributor may open a project only when this reads true:
+
+    canStartOwnLabelProject(distributor, winery, product)
+
+      active programme membership for the distributor
+      AND active programme membership for the winery
+      AND neither suspended nor expired
+      AND an active partnership between the two houses
+      AND the product belongs to that winery
+      AND the product's ownLabelAvailability is 'on_request' or 'available'
+      AND no conflicting exclusivity blocks it
+
+**Every term is read, none is stored**, and the whole function is a reading of
+records that already exist. The refusals name the missing condition rather than
+saying no:
+
+| Missing | What is said |
+|---|---|
+| distributor not admitted | *Apply to become an Own Label Partner* |
+| winery not admitted | *Winery is not currently an Own Label Partner* |
+| product closed | *Own Label not available for this wine* |
+| no partnership | *Partnership required* |
+
+**No project record is created in any of these cases.** A refused request leaves
+nothing behind — an empty project in a "blocked" state would be a fifth way to
+describe the same conditions.
+
+### A17.5 Two product routes, chosen at request time
+
+The distributor picks one:
+
+    Rebrand an existing wine   ·   Develop a new wine with the winery
+
+**Route A — relabel.** Cuvée, varieties, vinification, ageing, the underlying
+vintage or batch and the technical values are unchanged. Brand, product name,
+front and back label, packaging and possibly bottle and closure change, as long as
+the liquid does not.
+
+    creationType: 'relabel_existing_wine'
+    sourceWineId:  <the producer's existing product>     // required
+
+Technical figures are **referenced from the source, not copied** — the rule that
+has governed wines since A1. A correction on the source reaches the own label,
+which is correct: it is the same liquid.
+
+**Route B — bespoke.** A different cuvée, other varieties, another vinification or
+ageing, a different origin or classification, its own production batch, or a wine
+developed from nothing.
+
+    creationType: 'bespoke_new_wine'
+    sourceWineId:  null
+    developmentReferenceWineId: <optional>
+
+The reference is **development history and nothing else**: it never feeds a
+technical value, is never shown as the new wine's origin, and never implies the
+two are the same wine. **A false lineage is worse than none** — it puts a second
+answer to "what is in this bottle" into the data.
+
+> **What is frozen is the agreement, not the wine.** The specification approved at
+> gate 2 is kept as an immutable snapshot, exactly as a consent is. Technical data
+> on a relabel stays live through the reference. Two different questions, two
+> different answers.
+
+Alongside the route the distributor states the opening picture: wine type, style,
+varieties, target market, volume, first-order quantity, target price, territory,
+desired start, design responsibility, and an optional message. **This is a brief,
+not a specification** — it is what the negotiation starts from.
+
+---
+
+### A17.6 The pipeline
+
+    Programme application → consent → framework contract → Bottle Lobby approval
+      → cockpit unlocked
+      → distributor chooses rebrand or develop
+      → project request
+      → project consents + project agreement → GATE 1 → project active
+      → negotiation · product and cuvée · design and brand      (in parallel)
+      → agreement to sample
+      → sample prepared → shipped → received → approved
+      → final terms (addendum if terms moved) → GATE 2
+      → winery creates the product from the project
+      → first-order draft → distributor sends it → winery accepts
+      → production → shipping → delivery
+      → active in the distributor's portfolio
+
+**Stages 2–4 run in parallel and are a summary, not gates.** Only gates 1 and 2
+belong to Bottle Lobby; the first order is the distributor's own act and is never
+sent automatically.
+
+**Version one needs no negotiation chat and no redline system.** It needs the
+**current specification plus a legible history**: the spec as it stands, and every
+change with actor and date — the same shape as an order's `log` and a show's
+`events`. A conversation layer can be added later without moving anything.
+
+### A17.7 Contract hierarchy, and how repetition is avoided
+
+Three levels, three documents, and **each obligation is written in exactly one of
+them.**
+
+**Level A — the framework contracts.** Bottle Lobby with each company separately.
+Programme participation, platform binding, anti-circumvention, roles and duties,
+Bottle Lobby's economic participation in principle, audit and documentation
+duties, suspension and termination.
+
+**Level B — the project agreement, gate 1.** Only this project's particulars: the
+wine or the development brief, territory, term, quantities, price or price frame,
+exclusivity scope, design responsibility, project-specific duties.
+
+> **Both companies have already signed level A, so gate 1 does not restate it —
+> it incorporates it by version.** The project consent stores the
+> `programTermsVersion` the company accepted, and the modal's clause text is short
+> and points at those terms rather than reprinting them. This is checkable: a
+> sentence may not appear in both texts, and a project consent may not be recorded
+> while the referenced programme membership is inactive.
+
+**Level C — the final specification or addendum, gate 2.** After the sample: final
+wine, cuvée and technical execution, brand, label, bottle and packaging, price,
+minimum quantity, first-order quantity, territory, term. Where terms moved, an
+addendum; where they did not, a confirmation without a new document.
+
+**Three acts, never one.** A pop-up acceptance, a signed contract and a Bottle
+Lobby approval are three records at every level. None may be created, implied or
+advanced by the presence of another.
+
+---
+
+### A17.8 Records
+
+Seven, each answering one question.
+
+**`ownLabelProgramMemberships`** — may this company take part (A17.1).
+
+**`ownLabelProjects`** — the working relationship and where it stands.
+
+    { id, distributor, producer, creationType, sourceWineId,
+      developmentReferenceWineId, productId, stage, brandOwner,
+      requestedAt, requestedBy }
+
+`productId` stays **null until the winery creates the product after gate 2**
+(A17.9). *This corrects the V1 draft, which allowed it from stage 5.*
+
+**`ownLabelTerms`** — party-scoped, two rows per project.
+
+Shared terms (territory, term, minimum quantity, first-order quantity, spec)
+appear on both and must agree — checkable. **The fee appears only on the winery's
+row**; the distributor's row has no fee field at all, so there is nothing to hide
+(A17.10).
+
+**`consents`** — append-only, never edited.
+
+    { id, subjectType, subjectId, party, role, termsType, termsVersion,
+      textSnapshot, byUser, forCompany, at, language }
+
+`subjectType` ∈ `membership · project`. Programme consent and project consent are
+the same act on different subjects — one shape, two callers.
+
+**`contracts`** — one shape for programme, project and addendum.
+
+    { id, subjectType, subjectId, party, kind, status,
+      sentAt, receivedAt, docNo }
+
+`kind` ∈ `program_agreement · project_agreement · addendum`.
+`status` ∈ `preparing · sent · received · under_review · approved ·
+revision_required · rejected`. **One list, party as a field** — not one chain per
+side.
+
+**`reviews`** — Bottle Lobby's approvals, and the only place its authority lives.
+
+    { id, subjectType, subjectId, gateNumber, reviewStatus,
+      reviewedBy, reviewedAt, reviewNotes, approvalType }
+
+`subjectType` ∈ `membership · contract · project`. Programme admission, contract
+approval and both gates are the same act on different subjects. When the Bottle
+Lobby operations role is built it writes these rows and nothing else changes.
+
+**`ownLabelFeeEvents`** — append-only ledger (A17.10).
+
+### A17.9 The winery creates the product
+
+**The distributor may never write a product record in the producer's name.**
+Invariant 2 is not a preference: a wine created by somebody else is a second
+answer to who made it.
+
+After `sample_approved` → final terms confirmed → gate 2 approved, the winery gets
+one button:
+
+    Create Own-Label Product from Project
+
+Prefilled from the project: creation type, source wine if relabel, distributor,
+product name, brand, label, packaging, bottle, closure, cuvée, varieties,
+technical specification, territory, term, minimum quantity, first-order quantity,
+design files. The winery reviews it, fills the technical fields only it can
+answer, and confirms. **Prefilled is not created** — the approved specification
+stays the origin of the values, and the product is a new record the producer signs
+off.
+
+**Exclusive assignment: one stored pointer.** The product carries
+
+    ownLabelProjectId: <project>
+
+and nothing more. Exclusive distributor, agreement, term, territory and commercial
+status are **derived from that project**. A stored `exclusiveDistributorId` would
+be a copy of a fact the project already holds, and **D33** records what happens
+next: the copy survives, the source moves, two surfaces disagree, and nothing can
+say which is right.
+
+Consequences, all read from that one pointer: only the producing winery edits the
+technical data; only the agreed distributor may order it; no other distributor
+sees it in a picker, may select it, order it or take it into a book; the winery
+may not offer it elsewhere. An exception requires the agreement to be varied or
+ended **and** a Bottle Lobby approval.
+
+**Visible ≠ in the book.** After creation the product is visible to the winery,
+the exclusive distributor and Bottle Lobby — on the distributor's side **inside
+the project and in the first-order draft**, not in his portfolio. It enters the
+active book on **confirmed delivery of the first commercial order**. Samples are
+not commercial orders and never activate it.
+
+> **A deliberate exception to "ordering is enough", and the reason is physical.**
+> For an ordinary wine the producer holds stock, so the purchase is the moment the
+> distributor can honestly promise it onward. **An own label does not exist until
+> it is made** — the first order triggers production. Putting it on a restaurant's
+> wine list before a bottle exists would be a promise on nothing. One rule, two
+> moments: *a wine enters the book when it can honestly be promised on.*
+
+### A17.10 The fee
+
+**A configurable fixed amount per bindingly ordered own-label bottle, paid by the
+winery.**
+
+    { feeType:'per_bottle', feePerBottle, feeCurrency,
+      feePayer:'winery', feeTrigger:'accepted_order_line', feeTermsVersion }
+
+`feeType` exists so a later percentage or tiered model needs no migration; only
+`per_bottle` is offered in the interface.
+
+**Why the distributor does not see it.** The winery prices its offer with the fee
+inside: wanting €5.00 net at a €0.25 fee, it offers €5.25. The distributor is
+quoted one price and pays it, as in any trade. What he is not shown is the
+winery's internal split. Enforced by **where the row lives**, not by a display
+rule — the distributor's `ownLabelTerms` has no fee field. That is the difference
+between a secret and an omission, and only the second survives a browser with
+developer tools open.
+
+**Trigger, decided:** the accepted order line.
+
+| Moment | Fee |
+|---|---|
+| `draft`, `submitted` | none |
+| **`accepted`** | **accrues** |
+| cancelled before shipment | reversed |
+| quantity reduced before shipment | adjusted |
+| free sample | never |
+| approved external transaction | accrues, unless Bottle Lobby waived it in writing |
+| after shipment | corrected only by a traceable credit or fee adjustment |
+
+**`ownLabelFeeEvents` — append-only, and the rate travels with the event.**
+
+    { id, type, projectId, orderId, orderLineId, bottles,
+      feePerBottle, feeCurrency, feeTermsVersion, at, note, invoiceId }
+
+`type` ∈ `accrued · adjusted · reversed · waived`.
+
+> **A historic fee is never recomputed from the current terms.** The rate and its
+> version are written into the event at accrual and read back from there forever.
+> A correction is a **new event**, never an edit of an old one, and an event that
+> a fee invoice already references is closed: it can be answered by a credit
+> event, not changed. This is the same discipline as a consent snapshot, applied
+> to money.
+
+**Fee invoicing.** The distributor receives an ordinary winery invoice for the
+full purchase price and sees no fee. Bottle Lobby invoices the winery separately.
+
+    document type: bottle_lobby_fee_invoice
+    visible to:    the winery ✓   Bottle Lobby ✓   distributor ✗   buyers ✗
+
+The invoice or its annex lists the underlying orders, bottle counts, rates and
+corrections — which is why the ledger carries the order and line, not just a
+total.
+
+**Platform binding — two valid paths and no third.** Every own-label bottle moves
+either through a platform order for the project's product, or through an exception
+approved **in writing beforehand** by Bottle Lobby and documented against the
+project afterwards. The distributor may not order or reorder outside the platform;
+the winery may not sell, export, deliver or invoice outside it. An approved
+exception remains fee-bearing unless waived in writing. Free samples are separate
+and never automatically fee-bearing.
+
+### A17.11 Vintage policy on a relabel
+
+**Exclusivity follows the agreed wine line across vintages for the term of the
+contract.** A new vintage does not need a new project or a new gate 1.
+
+The winery enters the new vintage, supplies its technical data, informs the
+distributor, offers a new sample where that is sensible, and the vintage release
+is documented in the project. Where the new vintage matches the agreed line and
+specification, a **simplified release inside the existing project** is enough.
+Where it does not, the project returns to product development and passes gate 2
+again, or takes an addendum.
+
+**Every order names the actual vintage or batch.** The model behind that sentence
+is **A15.2b** — a product is a wine line, the vintage and the batch live on the
+order line, and a historic document is never re-read from the product. It is a
+product-model rule that applies to every wine, not only to own labels; **A17.18**
+carries the two consequences specific to this section.
+
+---
+
+### A17.12 Stored versus derived
+
+**An act is stored; a state is read.**
+
+| Fact | Stored / derived | Why |
+|---|---|---|
+| an application was submitted | **stored** (`submittedAt`) | an act with a date |
+| a consent was given | **stored** | an act, at a moment, by a person |
+| a contract was sent / returned | **stored** | acts with dates |
+| Bottle Lobby approved | **stored** (`reviews`) | an act with an actor — invariant 6 |
+| a fee accrued, was adjusted, reversed, waived | **stored** (`ownLabelFeeEvents`) | acts, and money must be replayable |
+| **programme membership active** | **derived** from six conditions (A17.1) | a boolean beside them can disagree with all six |
+| **the tab's state** | **derived** from the membership record | seven screens, no screen name in the data |
+| **the public badge** | **derived** from a valid membership | nothing to clear on suspension |
+| **`canStartOwnLabelProject`** | **derived** | a reading of records that already exist |
+| **`project_active`** | **derived**: an approved gate-1 review exists | otherwise a project reads active after a contract is withdrawn |
+| **`approved_for_first_order`** | **derived**: an approved gate-2 review exists | same |
+| gate 1 is *permitted* | **derived**: both parties hold an approved project contract | a precondition is a reading, not a flag |
+| **exclusive distributor of a product** | **derived** from `ownLabelProjectId` | a stored copy drifts — D33 |
+| **`commercialStatus`** (ordinary / own-label exclusive) | **derived**: the product carries an `ownLabelProjectId` whose project passed gate 2 | one pointer, one reading — it says the product **is** an own label, not that anyone carries it yet |
+| **`ownLabel` on a listing** | **derived**: first order delivered (A17.9) | replaces today's stored flag |
+| **fee owed on an order** | **derived** from the ledger | invariant 7 |
+| what changed since the first contract | **derived** from the spec history | a diff is never a field |
+| technical data of a relabel | **referenced** from the source | same liquid, one record |
+
+**Stage is stored**, deliberately, and it is the one exception worth naming.
+Stages 2–4 describe where a *conversation* stands and leave no mechanical trace to
+derive from. Everything a stage could be checked against — consents, contracts,
+reviews, sample events, the first order — is stored separately, so a stage that
+disagrees with the facts is a finding rather than an authority.
+
+### A17.13 Visibility
+
+| Fact | Distributor | Winery | Bottle Lobby |
+|---|---|---|---|
+| project, stage, spec | ✓ | ✓ | ✓ |
+| shared terms | ✓ | ✓ | ✓ |
+| **fee per bottle, fee events, fee invoice** | **✗** | ✓ | ✓ |
+| agreed bottle price | ✓ | ✓ | ✓ |
+| own consents and contracts | ✓ | ✓ | ✓ |
+| the other side's contract *status* | ✓ (as *waiting for the winery*) | ✓ | ✓ |
+| the other side's contract *contents* | ✗ | ✗ | ✓ |
+| application content of the other side | ✗ | ✗ | ✓ |
+| review notes | ✗ | ✗ | ✓ |
+| an exclusive product, in any picker | only its distributor | its producer | ✓ |
+
+**The prototype cannot enforce any of this.** There is no login and no server;
+every array is readable from the console. These are **display rules today and
+access rules in Supabase** — this table is the RLS specification and should be
+read as such. The one rule that must not wait is the fee, and it is handled
+structurally instead (A17.8, A17.10).
+
+While Bottle Lobby has no role of its own, both sides show **"Waiting for Bottle
+Lobby"** and approvals advance through controlled fixture actions. The `reviews`
+row still names Bottle Lobby as the actor — the model does not pretend the acts
+are the parties' own.
+
+### A17.14 Fixtures and migration
+
+The existing `ownLabel:true` on **PRD-1020**, **PRD-1021**, **PRD-1022** becomes
+derived. **It does not survive as a parallel truth**: it is removed in the same
+pass that gives those wines real projects, not left beside its successor. The
+hand-written "My Labels" panel — `dlabels-list`, six typed rows against three
+flagged wines, no script writing into it — is rendered from data in the same pass.
+
+The demo shows the whole arc: a distributor application in flight · a winery
+contract under review · an admitted distributor · an admitted winery with no
+project · a project in negotiation · one in product or design work · a sample
+shipped · a sample approved with gate 2 open · a first order outstanding · one
+active own label.
+
+**Every project needs a programme membership dated before it.** A project whose
+companies were admitted afterwards is a contradiction the fixtures must not carry.
+
+Own-label availability is **spread across several producers** — today all three
+carrying it are Cantina Rossi, which would make every early-stage project come
+from one house. Ordinary wines stay clearly in the majority (A17.0).
+
+**No contradictory orders, no invented history.** The build measures before
+placing anything; nothing here is a licence to create an order.
+
+### A17.15 Invariants
+
+- **OL-1 — every own-label bottle has a path.** Platform order for the project, or
+  a documented exception with a prior written approval. Samples excluded and never
+  fee-bearing. Nothing else is valid.
+- **OL-2 — the fee is not on the distributor's side.** No structure his dashboard
+  reads contains `feePerBottle`, no fee event or fee invoice is reachable from his
+  role, and no rendered distributor surface shows the number.
+- **OL-3 — a consent is immutable.** Never edited or deleted; changing a terms text
+  never alters an existing `textSnapshot`.
+- **OL-4 — three different acts.** Consent, signed contract and Bottle Lobby
+  approval are three records at every level. None implies or advances another.
+- **OL-5 — an order for an own-label product names its project.**
+- **OL-6 — no derived state is stored.** Not membership, not the tab state, not the
+  badge, not `project_active`, not `approved_for_first_order`, not `ownLabel`, not
+  a fee total.
+- **OL-7 — no other distributor can reach an exclusive product.** Measured over
+  every product control in all four roles, the way `wine-identity.js` measures
+  them.
+- **OL-8 — a product record is created by its producer.** No path in another role
+  writes a product row.
+- **OL-9 — lineage is never invented.** `bespoke_new_wine` implies
+  `sourceWineId === null`, and `developmentReferenceWineId` never feeds a technical
+  field on any surface.
+- **OL-10 — the demo keeps ordinary wine in the majority.** A fixture invariant
+  (A17.0), silent about production.
+- **OL-11 — no project without two active memberships.** No project record exists
+  whose distributor or winery was not admitted at the time it was created.
+- **OL-12 — a fee event is never rewritten.** Corrections are new events; an event
+  referenced by a fee invoice is closed. A historic rate is read from its event,
+  never recomputed from current terms.
+- **OL-13 — programme text is not restated in a project text.** No clause sentence
+  appears in both, and a project consent references the programme terms version
+  the company accepted.
+
+### A17.16 Tests — `tests/own-label.js`
+
+Each section with the counter-check that makes it worth running:
+
+1. **Membership is read, not stored.** No boolean field anywhere; remove a consent
+   or expire a validity and the company must stop reading as admitted.
+2. **The tab's seven states** each derive from the record. Mutation: store a screen
+   name — red.
+3. **`canStartOwnLabelProject`** refuses each of its four conditions separately and
+   **creates no record** when it does.
+4. **Stage agrees with acts.** Move a stage past a gate with no review — red.
+5. **Three acts, never inferred.** Remove a consent and leave the contract; remove
+   the review and leave both contracts. Both must stop the project reading active.
+6. **The fee is on one side only.** Scan the distributor's structures and rendered
+   surfaces. Mutation: put `feePerBottle` on his terms row — red.
+7. **Consents immutable.** Change a terms text; every snapshot byte-identical.
+8. **Fee ledger replay.** Recompute every project's fee from its events and match
+   the invoices. Mutation: edit an accrued event in place — red.
+9. **OL-1, the path.** Every own-label order line belongs to a project; bottle
+   counts reconcile to orders plus approved exceptions. Zero references is a
+   failure.
+10. **Exclusivity in the pickers.** Drive every product control in all four roles.
+    Mutation: point the project at another distributor — the wine must move, both
+    directions red when it does not.
+11. **Lineage.** Every bespoke row has a null source; no rendered technical value
+    traces to `developmentReferenceWineId`.
+12. **The mix.** Print ordinary against own-label counts on the green line so a
+    drift is visible before it is a problem.
+
+The harvest is **discovered, not listed**, the green line names its reach, and zero
+found is a broken check rather than a clean result.
+
+### A17.17 Build order
+
+1. **`listings`** — the foundation. A project hangs off a (holder, product)
+   relation. **One question must be settled first: A17.18.**
+2. **Programme: application, consent, framework contract, admission** — the
+   membership record, the information page, the seven tab states, the badge.
+3. **Project: consents, project agreement, Gate 1** — the modals, the review.
+4. **Negotiation, design, sample, Gate 2** — the spec history, the second review.
+5. **Product creation, first order, portfolio activation** — and `ownLabel` derived
+   at last.
+6. **The fee ledger and the fee invoice.**
+7. **The Bottle Lobby operations role** — a fifth role that writes `reviews` and
+   changes nothing else.
+
+### A17.18 The vintage question — decided
+
+**A product is a wine line (A15.2b).** Exclusivity follows the agreed line across
+vintages for the term; every order line stores the vintage and batch it actually
+carries, and historic documents read only from that. The full decision, including
+what is frozen when an order is accepted and why offers and deals attach to the
+line, lives in **A15.2b** — it is a product-model rule, not an own-label one, and
+own label is only where the contradiction first became visible.
+
+Two consequences inside this section:
+
+- **A new vintage needs no new gate 1.** The winery releases it, supplies the
+  technical data, informs the distributor, offers a sample where that is sensible,
+  and the release is documented in the project. Within the agreed specification a
+  **simplified vintage release inside the existing project** is enough; outside it,
+  the project returns to product development and takes gate 2 or an addendum
+  (A17.11).
+- **Both routes carry it.** A relabel references the producer's existing line and
+  its orders name the vintage of that line. A bespoke own label **is its own line**
+  and may itself run several vintages or production batches during the term.
+
+---
+
 # PART B — PROTOTYPE CONVENTIONS
 
 > These are the rules that keep the static mockup consistent. Every one exists because something broke.
@@ -3844,6 +4579,7 @@ Without it the badge cannot be honest.
 | D33 | Each end of a partnership carried its **own display figure as a stored field** on the row — `distributorMeta` ("6 wines in your portfolio") on the distributor's end, `partnerWines` on the other three | **A6 / invariant 7** — the row holds the relation only; every figure beside it is counted from the distributor's portfolio at render time, through `portfolioOf()` / `portfolioCount()` | Storing them survived the merge into one `partnerships` row (D32) because a figure looks like a property of the relation. It is not — it is a property of a book that changes without the relation changing, and by the time it was measured two of the four were already false on screen: Cantina Rossi's card claimed **6** where the portfolio held **1**, Weingut Schmitt's claimed **1** where it held **2**, and the restaurant and retailer named **5** and **6** for the identical book, neither matching it. The repair forced a question nobody had answered: **which of three wine lists is "their portfolio"**. Only one is owned by anyone — the distributor writes it and it persists; the other two are pickers whose producer field holds the *supplier*, so they cannot answer invariant 2 and are not portfolios at all. Two rules came with it: a house with no book yields `null` rather than an empty one, because *"0 wines"* claims something nothing here knows (A2's unknown stakeholder, again); and a derived figure obliges every surface showing it to be repainted by the action that moved it — one wine pulled in changes a number in all four roles, and leaving them standing is a defect the harnesses could not see and the browser could. |
 | D34 | A distributor's wines lived in **three lists**: `currentWinePortfolio` (6 wines, owned and written), and two byte-identical picker pools of 10 whose `winery` field held the **supplier** — so `wineryOfWine()` existed to guess the producer, defaulting to *Cantina Rossi* | **A3 / A6 / invariant 2** — one book per distributor, every row naming its real producer; both buyer pickers read it through `portfolioOf()`, and the pools are gone | The pools could not answer "who made this", which is invariant 2, and nothing checked a partnership when a wine went onto a buyer's list. That is how a distributor came to offer — and twice sell — wines of a producer it had no partnership with. Merging them forced the question nobody had answered: **which of the three lists is the portfolio**. Only one was owned by anybody. The attribution was sourced rather than invented: 6 rows were already correct, 3 came from the producers' own book, 1 from an order line, and exactly **1** by hand, with **zero contradictions** where two lists named the same wine. The book grew 6 → 14, because three further wines were being advertised or discounted without being carried at all — an offer over a wine outside your book is the same gap as a sale, only delayed (A3). Deleted with it: `wineryOfWine()`, which was measurably wrong twice; three `fileGuess` slug derivations that rebuilt a URL the record already carried (A14.4); and `note`, which duplicated `ownLabel` and carried the buyer's own *Exclusive* marking into the distributor's book (A1). |
 | D35 | Restaurant and Retail were treated **alike**: a wine could go on either list as long as an active distributor partnership existed and the wine sat in that distributor's portfolio — no purchase of their own required | **A3** — the restaurant condition stands; Retail additionally needs **an order of its own**, a sample order or trial bottles being enough | The two lists are not the same kind of object. A wine list is an **offer**: the guest orders, the bottle is delivered just in time, and naming a wine that arrives tomorrow is normal trade. A retail selection is a **shelf**: the customer carries the bottle out of the shop, and a retailer cannot sell what they do not have. Measured when the rule was written (4 Aug 2026), the prototype showed exactly why it had gone unnoticed — Weinhaus Müller's selection held Sauvignon Blanc, Chardonnay and Primitivo, **the same three wines as Bistro Laurent's list, line for line**, while its actual purchases were Merlot (156 bottles across two orders), Nero d'Avola and Catarratto. The two sets were **disjoint**: nothing on the shelf had been bought, nothing bought was on the shelf. Serge's decision. **The repair is NOT done — the data still stands as measured above, and this row said otherwise until 4 Aug 2026.** It is its own pass, *A3 retail condition*, queued behind `listings`, and it goes by extension rather than removal (A3): backfill three purchases for the three wines already on the shelf, add the three bought wines to the selection, 3 → 6, at which point the retail selection differs from the restaurant's list for the first time. The backfilled orders take their dates from C7 — the earliest dependent event is the ceiling — and there is already a dependent fact to reconcile with: `tPromoProgress.bottleCounts` asserts **60 bottles of Sauvignon Blanc and 48 of Primitivo that no order carries**, so the backfill has to agree with quantities the promo progress has been claiming all along. That second home for the same fact is itself what `listings` absorbs, which is why the two passes run in that order. |
+| D36 | "Own label" named **four different facts with one phrase**: whether a company may take part in the programme (nothing at all), whether a wine may be asked about (`note:'Own-Label Available'` — free text beside other free text, on 3 rows, all Cantina Rossi), whether a **finished own-label product** exists (nothing at all), and whether a distributor actually **carries** one (`ownLabel:true`, stored on 3 portfolio rows) | **A17.0a** — four homes: an active `ownLabelProgramMemberships` row · `products.ownLabelAvailability` (`unavailable · on_request · available`) · the finished product, created by the winery from a **gate-2-approved** project · and a portfolio flag **derived only once the first commercial order has been delivered** | The same shape as the three wine books (D34) and the four partner lists (D32), one level further down, and it had already produced its first visible defect: the hand-written "My Labels" panel claimed **six** wines where the data carried **three**, because no script ever wrote into it. A capability is a property of the producer's wine; a project is a working relationship with a lifecycle; a finished own label is **its own product** with its own key, brand, article page and article number, produced by the winery (invariant 2 does not bend) and branded by the distributor. Marking the producer's wine with `ownLabel:true` was recording a fact about somebody else's business on a record that does not belong to them. The flag does not survive beside its replacement: it is removed in the pass that gives those three wines real projects. The last two levels are the pair most easily collapsed — a product created is **not** a product carried, and *product created ≠ active in the portfolio* is the rule that keeps a wine off a restaurant's list before a bottle of it exists (A17.9). |
 
 ---
 
