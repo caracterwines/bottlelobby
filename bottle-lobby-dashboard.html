@@ -3819,6 +3819,39 @@ With an annual production capacity of over 1.2 million bottles, Cantina Rossi is
   </div>
 </div>
 
+<!-- ADD LINES TO AN ORDER. It was a native prompt() until 4 Aug 2026,
+     and the prompt was three defects at once: nothing in it could be
+     SELECTED — the twelve names were text and only the field below was
+     writable — so a seller typed a name, and since pass 4 a typed name
+     resolves to null and the OK button did nothing at all but write a
+     console line. It also cut the book at twelve of fourteen, so
+     Pouilly-Fumé and Baglio Rosso could not be ordered by any route.
+     And a native window carries the operating system's buttons in the
+     BROWSER's language: "Abbrechen" in an otherwise English product,
+     with nothing to style and nothing to translate.
+     Multiple lines at once because an order of five positions is the
+     normal case, not the exception (Serge). There is nothing left to
+     type, so a selection that resolves to nothing cannot be made —
+     the guard in orderItem() stays and becomes unreachable. -->
+<div class="pr-overlay" id="addline-modal" onclick="if(event.target===this) closeAddLineModal()">
+  <div class="pr-panel" style="max-width:640px">
+    <div class="pr-head">
+      <div class="pr-title">Add <span>Order Lines</span></div>
+      <button class="pr-close" onclick="closeAddLineModal()">✕</button>
+    </div>
+    <div class="pr-body">
+      <div class="form-block-title" style="padding-top:0">Wines</div>
+      <div class="edit-section-sub" style="margin-top:-1rem" id="al-intro"></div>
+      <div id="al-list" class="wine-edit-list"></div>
+      <div class="edit-section-sub" id="al-empty" style="display:none"></div>
+    </div>
+    <div class="pr-foot">
+      <button class="pr-btn pr-cancel" onclick="closeAddLineModal()">Cancel</button>
+      <button class="pr-btn pr-confirm" onclick="saveAddLines()">Add to Order →</button>
+    </div>
+  </div>
+</div>
+
 <div class="pr-overlay" id="offer-modal" onclick="if(event.target===this) closeOfferModal()">
   <div class="pr-panel" style="max-width:640px">
     <div class="pr-head">
@@ -7972,21 +8005,90 @@ function setLineQty(id, idx, v) { const o = _o(id); o.items[idx].qty = Math.max(
 function setLineUnit(id, idx, v) { const o = _o(id); o.items[idx].unit = Math.max(0, parseFloat(v) || 0); logEvent(o, o.seller, 'Unit price changed on ' + lineName(o.items[idx])); renderOrderDetail(id); }
 function setLineDiscount(id, idx, v) { const o = _o(id); o.items[idx].discount = Math.min(100, Math.max(0, parseFloat(v) || 0)); renderOrderDetail(id); }
 function removeLine(id, idx) { const o = _o(id); const n = lineName(o.items[idx]); if (o.items.length === 1) return showToast('An order needs at least one line.'); o.items.splice(idx, 1); logEvent(o, o.seller, 'Line removed: ' + n); renderOrderDetail(id); }
+/* ── Adding lines to an order (A14.2) ──────────────────────────
+   The seller's own book and nothing else. It used to offer the price
+   table's keys as well, so a wine outside the book could be typed in
+   and refused a line afterwards — the guard answering after the offer
+   instead of before it. Now there is no offer to answer: what is not
+   in the book is not on the list.
+
+   The whole book, deliberately un-truncated. The old prompt showed
+   twelve of fourteen and the two it dropped could not be ordered
+   through this route at all. */
+let addLineOrderId = null;
 function addLine(id) {
   const o = _o(id);
-  /* The seller's own book, and nothing else. It used to offer the
-     price table's keys as well, which meant a wine outside the book
-     could be typed in and refused a line later — the guard answering
-     after the offer rather than before it. */
+  if (!o) return;
+  addLineOrderId = id;
   const book = portfolioOf(o.seller) || [];
-  const name = prompt('Add wine to ' + o.id + ':\n\n' + book.slice(0, 12).map(w => w.name).join('\n'),
-                      book.length ? book[0].name : '');
-  if (!name) return;
-  const line = orderItem(name.trim(), 12, o.seller);
-  if (!line) return;
-  o.items.push(line);
-  logEvent(o, o.seller, 'Line added: ' + lineName(line));
+  const already = new Set((o.items || []).map(i => i.productId));
+  const list = document.getElementById('al-list');
+  const empty = document.getElementById('al-empty');
+
+  document.getElementById('al-intro').textContent =
+    'From ' + o.seller + "'s portfolio. Pick as many as you need and say how many bottles of each — " +
+    'they go on ' + o.id + ' as separate lines.';
+
+  const rows = book.filter(wn => !already.has(wn.id));
+  empty.style.display = rows.length ? 'none' : 'block';
+  empty.textContent = book.length
+    ? 'Every wine in this portfolio is already on the order. Change a quantity on the line itself.'
+    : o.seller + ' has no wine portfolio, so there is nothing to add.';
+
+  list.innerHTML = rows.map(function (wn) {
+    return '<div class="wine-edit-entry">' +
+      '<div class="wine-edit-dot"></div>' +
+      '<div class="wine-edit-name">' +
+        '<label class="cb-item" style="border:0;padding:0;background:none">' +
+          '<input type="checkbox" class="al-pick" value="' + wn.id + '">' +
+          '<span>' + wineLabel(wn) + ' <span style="color:var(--dim)">(' + wn.winery + ')</span></span>' +
+        '</label></div>' +
+      '<div class="wine-edit-origin">' + wn.type + '</div>' +
+      '<div class="wine-edit-status">' +
+        '<input class="finput al-qty" type="number" min="1" step="1" value="12" ' +
+        'data-wine="' + wn.id + '" style="width:82px;padding:0.35rem 0.5rem;font-size:0.78rem">' +
+      '</div>' +
+    '</div>';
+  }).join('');
+
+  document.getElementById('addline-modal').classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+function closeAddLineModal() {
+  document.getElementById('addline-modal').classList.remove('active');
+  document.body.style.overflow = '';
+  addLineOrderId = null;
+}
+function saveAddLines() {
+  const id = addLineOrderId;
+  const o = _o(id); if (!o) return;
+  const picked = [].filter.call(document.querySelectorAll('.al-pick'), function (c) { return c.checked; });
+  if (!picked.length) { showToast('✗ Pick at least one wine'); return; }
+
+  const qtyOf = key => {
+    let n = 0;
+    [].forEach.call(document.querySelectorAll('.al-qty'), function (el) {
+      if (el.getAttribute('data-wine') === key) n = parseInt(el.value, 10) || 0;
+    });
+    return n;
+  };
+  const added = [];
+  picked.forEach(function (c) {
+    const qty = qtyOf(c.value);
+    if (qty <= 0) return;
+    /* The key comes from the option, never from anything typed, so
+       this cannot answer null any more — the guard stays because a
+       second caller might not be so careful. */
+    const line = orderItem(c.value, qty, o.seller);
+    if (!line) return;
+    o.items.push(line);
+    added.push(qty + ' × ' + lineName(line));
+  });
+  if (!added.length) { showToast('✗ Say how many bottles'); return; }
+  logEvent(o, o.seller, 'Lines added: ' + added.join(', '));
+  closeAddLineModal();
   renderOrderDetail(id);
+  showToast('✓ ' + added.length + (added.length === 1 ? ' line' : ' lines') + ' added to ' + o.id);
 }
 function setOrderDiscount(id, v) { const o = _o(id); o.discountPct = Math.min(100, Math.max(0, parseFloat(v) || 0)); logEvent(o, o.seller, 'Order discount set to ' + o.discountPct + '%'); renderOrderDetail(id); }
 function setShippingCost(id, v) { const o = _o(id); o.shippingCost = Math.max(0, parseFloat(v) || 0); renderOrderDetail(id); }
@@ -9806,10 +9908,10 @@ function respondToInvite(id, action) {
   if (!proposal) { showToast('✗ Pick the wine you want to present first'); return; }
   me.status = 'confirmed';
   proposal.status = 'confirmed';
-  logShow(s, me.producer, 'Accepted ' + proposal.name + ' — the wine is agreed by both sides');
+  logShow(s, me.producer, 'Accepted ' + showProductLabel(proposal) + ' — the wine is agreed by both sides');
   promoteIfReady(s);
   refreshShows();
-  showToast('✓ Confirmed — you are exhibiting ' + proposal.name);
+  showToast('✓ Confirmed — you are exhibiting ' + showProductLabel(proposal));
 }
 
 /* ── HOST SIDE ──────────────────────────────────────────────────
@@ -9824,7 +9926,7 @@ function hostRespondToProduct(showId, producer, action) {
   if (!proposal) { actionSay('There is no wine from ' + producer + ' waiting for your answer'); return; }
 
   if (action === 'decline') {
-    if (!confirm('Decline ' + proposal.name + ' for ' + producer + '? They stay on the show and can propose another wine.')) return;
+    if (!confirm('Decline ' + showProductLabel(proposal) + ' for ' + producer + '? They stay on the show and can propose another wine.')) return;
     proposal.status = 'declined';
     logShow(s, s.leadHost, 'Declined ' + showProductLabel(proposal) + ' — ' + producer + ' can propose another wine');
     refreshShows();
@@ -9835,7 +9937,7 @@ function hostRespondToProduct(showId, producer, action) {
   logShow(s, s.leadHost, 'Confirmed ' + showProductLabel(proposal) + ' for ' + producer + ' — the wine is agreed by both sides');
   promoteIfReady(s);
   refreshShows();
-  showToast('✓ ' + proposal.name + ' confirmed for ' + producer);
+  showToast('✓ ' + showProductLabel(proposal) + ' confirmed for ' + producer);
 }
 
 /* ── THE ORDER LIST (A16.12) ──────────────────────────────────
@@ -9957,9 +10059,12 @@ function closeShowOrderList(id) {
   [].forEach.call(document.querySelectorAll('.cl-hold'), function (el) {
     if (!el.checked) return;
     const name = el.getAttribute('data-wine');
-    /* Matched by attribute rather than by selector: wine names carry
-       apostrophes, em dashes and spaces, and escaping them into a
-       selector is a bug waiting for the one name that breaks it. */
+    /* Matched by attribute rather than by selector because the list
+       is short and the loop is plain. The reason that used to stand
+       here — wine names carrying apostrophes and em dashes that a
+       selector would have to escape — describes a mechanism that no
+       longer exists: the attribute has held the product key since
+       pass 3b, and the filter above compares `l.productId`. */
     let r = null;
     [].forEach.call(document.querySelectorAll('.cl-reason'), function (x) {
       if (x.getAttribute('data-wine') === name) r = x;

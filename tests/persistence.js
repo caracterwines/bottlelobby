@@ -524,6 +524,7 @@ console.log('\n── the one list stays the one list');
     inviteShowId:          'the show an open exhibitor-invite modal is about',
     venueShowId:           'the show an open venue modal is about',
     notifShowId:           'the show an open notification popup is about',
+    addLineOrderId:        'the order an open add-lines modal is about',
     shippingOrderId:       'the order an open ship modal is about',
     payingOrderId:         'the order an open payment modal is about',
     awSelectedWine:        'the wine highlighted in an open picker',

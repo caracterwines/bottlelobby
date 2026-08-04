@@ -3117,6 +3117,46 @@ reason that has nothing to do with the build.
 The one exception is **reading**: `performance.getEntriesByType('resource')`,
 counting rows, checking a global. Reading state is not driving it.
 
+### A sweep over renderers proves nothing about inputs
+
+**The companion rule, and it comes from a hole in a check of ours rather than
+from a habit.** Pass 4 was closed with a sweep that drove **326** renderers,
+views and modals and reported zero resolver warnings and zero script errors. It
+was true and it was not enough: Serge found a defect by clicking, minutes later.
+
+`addLine()` opened a native `prompt()` and handed whatever was typed to
+`orderItem()`. After pass 4 a typed name resolves to null, so pressing OK did
+**nothing at all** — two lines before, two lines after, the total unchanged, and
+one console line as the only trace.
+
+**A render pass drives what DRAWS. It cannot reach what RESPONDS.** A product
+reference that only comes into existence when somebody types, picks or checks a
+box is invisible to it by construction — and so is every guard, every toast and
+every dialog on the far side of a click. Four more sites turned up in the same
+sweep afterwards: the exhibitor handshake wrote *"Decline **undefined** for
+Weingut Schmitt?"* into a `confirm()` while the event log beside it, rendered,
+was correct.
+
+So: **an acceptance drives the input paths one at a time** — open the modal, pick
+the thing, press the button, read what came back. And a check that claims to
+cover a change has to say which of the two it did.
+
+### Native `prompt()`, `confirm()` and `alert()` are foreign bodies
+
+A native dialog cannot be styled and cannot be translated. Its buttons come from
+the operating system in the **browser's** language — *"Abbrechen"* in an
+otherwise entirely English product — and nothing in it can be *selected*: text is
+text, and only the input line accepts anything. That is three defects in one
+control, and the third is the dangerous one, because it invites a typed string
+where a key is required.
+
+The last `prompt()` was removed on 4 August 2026 and
+`tests/wine-identity.js` fails if one comes back. `confirm()` survives at
+twenty destructive actions and `alert()` at three placeholders; both are
+**stated here as debt**, not endorsed. Neither can put a wrong reference into the
+data, which is why they are not urgent — and neither belongs in a finished
+product.
+
 ### Browser acceptance: serve it with `tests/serve.js`, and read `transferSize`
 
     node tests/serve.js     → http://localhost:8765

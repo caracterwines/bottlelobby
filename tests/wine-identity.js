@@ -527,6 +527,88 @@ console.log('\n── promos, offers and deals name products');
       're-derived from the list and the progress');
 }
 
+/* ── 6c-4. Nothing hands a resolver a typed name ─────────────────
+   THE HOLE THIS CLOSES, and it was found by Serge clicking rather
+   than by any check here. `addLine()` opened a native prompt(), took
+   whatever was typed and passed it to `orderItem()`. Since pass 4 a
+   typed name resolves to null, so the OK button did nothing at all —
+   two lines before, two lines after, and one console line as the only
+   trace.
+
+   The 326-renderer sweep could not see it: it drove everything that
+   DRAWS and nothing that RESPONDS. A product reference that only
+   comes into existence when somebody types or picks is invisible to a
+   render pass by construction.
+
+   So this section stands over the inputs. Every control that names a
+   product must carry the KEY as its value — a select option, a
+   checkbox, a data attribute — and there must be no prompt() left to
+   type into. */
+console.log('\n── every product-naming input carries a key');
+{
+  const FILES = ['bottle-lobby-dashboard.html'];
+  const src = FILES.map(f => fs.readFileSync(path.join(__dirname, '..', f), 'utf8')).join('\n');
+
+  /* A native prompt is the only way a free-typed string can reach a
+     resolver at all — nothing else on this page collects one. */
+  /* HTML comments are tracked, not just JS ones: the modal that
+     replaced the prompt explains in its own comment what it replaced,
+     and a scan that counted that would report the defect it fixed. */
+  let inHtmlComment = false;
+  const prompts = src.split('\n')
+    .map((l, i) => ({ n: i + 1, l }))
+    .filter(x => {
+      const wasIn = inHtmlComment;
+      if (x.l.includes('<!--')) inHtmlComment = true;
+      if (x.l.includes('-->'))  inHtmlComment = false;
+      if (wasIn || x.l.includes('<!--')) return false;
+      if (/^\s*(\/\*|\*|\/\/)/.test(x.l)) return false;
+      return /(?:^|[^.\w])prompt\s*\(/.test(x.l);
+    });
+  if (prompts.length)
+    bad(prompts.length + ' native prompt(s) left — whatever is typed into one reaches a resolver as a ' +
+        'string and resolves to nothing: ' + prompts.map(x => 'line ' + x.n).join(' · '));
+  else ok('no native prompt() anywhere — there is nothing left to type a wine into');
+
+  /* Every control the page fills with products offers keys. Driven
+     rather than read: the options exist only after the modal that
+     builds them has been opened. */
+  const controls = [
+    { open: "openPromoModal()",              sel: '#pm-wine option' },
+    { open: "openOfferModal()",              sel: '#of-wine option' },
+    { open: "openDealModal()",               sel: '#dl-wine option, #dl-single-wine option, .dl-mixed-wine' },
+    { open: "openInviteModal('WS-2604'); onInviteProducerChange()", sel: '#if-product option' },
+    { open: "showWineShows('winery','current'); openCounterModal('WS-2601')", sel: '#cf-product option' },
+    { open: "showOrders('distributor','incoming'); renderOrderDetail('ORD-2040'); addLine('ORD-2040')",
+      sel: '.al-pick' },
+    /* The quantity field carries the key in an ATTRIBUTE — its value
+       is a number. Read the attribute, or this asserts that "12" is a
+       product. */
+    { open: "showOrders('distributor','incoming'); renderOrderDetail('ORD-2040'); addLine('ORD-2040')",
+      sel: '.al-qty', attr: 'data-wine' }
+  ];
+  const ids = new Set(ROWS.map(r => r.id));
+  const strays = [];
+  let values = 0;
+  controls.forEach(c => {
+    const win = build();
+    try { win.eval(c.open); } catch (e) { return strays.push(c.sel + ': ' + e.message); }
+    const found = [...win.document.querySelectorAll(c.sel)]
+      .map(el => c.attr ? el.getAttribute(c.attr) : el.value)
+      .filter(v => v !== '' && v != null);
+    if (!found.length) return strays.push(c.sel + ': the control offers nothing at all');
+    found.forEach(v => {
+      values++;
+      if (!ids.has(v)) strays.push(c.sel + ' offers "' + v + '", which is not a product key');
+    });
+  });
+  if (strays.length)
+    bad(strays.length + ' product control problem(s): ' + strays.slice(0, 4).join(' · '));
+  else
+    ok(values + ' options and checkboxes across ' + controls.length +
+       ' product controls, every value a key that exists — nothing typed, nothing to mistype');
+}
+
 /* ── 6d. The counter-checks for the order side ───────────────── */
 console.log('\n── the order side\'s counter-checks');
 {
@@ -583,6 +665,35 @@ console.log('\n── the order side\'s counter-checks');
         return J2(win, 'promoMaterials').every(m => !m.productId || book.has(m.productId));
       },
       says: 'a promo condition over a wine the distributor does not carry' },
+
+    { what: 'a product control offers a name again',
+      from: "'<input type=\"checkbox\" class=\"al-pick\" value=\"' + wn.id + '\">' +",
+      to:   "'<input type=\"checkbox\" class=\"al-pick\" value=\"' + wn.name + '\">' +",
+      ask:  win => {
+        try { win.eval("showOrders('distributor','incoming'); renderOrderDetail('ORD-2040'); addLine('ORD-2040')"); }
+        catch (e) { return false; }
+        const ids = new Set(harvest(win).collections.flatMap(c => c.rows).map(r => r.id));
+        return [...win.document.querySelectorAll('.al-pick')].every(el => ids.has(el.value));
+      },
+      says: 'exactly the defect Serge clicked on — a control naming a wine, and a resolver that answers null' },
+
+    { what: 'a native prompt comes back',
+      from: "let addLineOrderId = null;",
+      to:   "let addLineOrderId = null;\nfunction __typeIt(o) { return prompt('Add wine to ' + o.id); }",
+      ask:  win => {
+        const src = fs.readFileSync(path.join(__dirname, '..', 'bottle-lobby-dashboard.html'), 'utf8')
+          .replace("let addLineOrderId = null;",
+                   "let addLineOrderId = null;\nfunction __typeIt(o) { return prompt('Add wine to ' + o.id); }");
+        let inHtml = false;
+        return !src.split('\n').some(l => {
+          const was = inHtml;
+          if (l.includes('<!--')) inHtml = true;
+          if (l.includes('-->'))  inHtml = false;
+          if (was || l.includes('<!--') || /^\s*(\/\*|\*|\/\/)/.test(l)) return false;
+          return /(?:^|[^.\w])prompt\s*\(/.test(l);
+        });
+      },
+      says: 'a free-typed string reaching a resolver, which is how this class of defect arrives' },
 
     { what: 'a price key names a product that does not exist',
       from: "'PRD-1027': 12.10    /* Terra Rossa — the entry that had no record until A3 */",
