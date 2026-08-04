@@ -71,7 +71,18 @@ function openTab(area, opts) {
   /* Off unless explicitly asked for: the default must be exactly what
      the other harnesses get, or this file would be testing a setup
      nobody else uses. */
-  const html = loadDashboard(null, { persist: opts.persist === true }).html;
+  /* An optional patch, so a tab can stand in for an OLDER build of the
+     page — the only honest way to produce the snapshot a returning
+     visitor is really holding, fingerprint included. It throws rather
+     than returning: a patch that missed its target would seed a
+     snapshot from the current code and prove the opposite of what the
+     caller asked. */
+  let html = loadDashboard(null, { persist: opts.persist === true }).html;
+  if (opts.patch) {
+    const before = html;
+    html = html.replace(opts.patch.from, opts.patch.to);
+    if (html === before) throw new Error('openTab: patch never applied — ' + opts.patch.from);
+  }
   const dom = new JSDOM(html, {
     runScripts: 'dangerously', pretendToBeVisual: true,
     /* A real URL on purpose, and not just so history.replaceState works.
@@ -694,6 +705,80 @@ console.log('\n── a pre-migration snapshot cannot bring back the old format'
           stale.slice(0, 3).join(' · ') + ' — bump VERSION in bottle-lobby-store.js when the ' +
           'FORMAT of stored data changes; the shape fingerprint cannot see it');
     else ok('a snapshot holding ' + rolled + ' old-format dates does not reach the live state');
+  }
+}
+
+/* ── A snapshot from before the product key cannot come back ──────
+   The other half of the same lesson, and the reason it is checked
+   rather than reasoned about: on 03.08 the shape fingerprint was
+   blind to the date migration because only VALUES had changed, and
+   the conclusion "so the fingerprint handles the rest" was mine and
+   wrong once already.
+
+   Adding `id` to the product rows changes KEYS, which is what a shape
+   fingerprint is for — so no VERSION bump is needed here. That is a
+   claim about a mechanism, so it gets a check: three of the four
+   product books are registered, and a returning visitor is holding
+   rows with no id at all.
+
+   It matters more than it looks. tests/wine-identity.js runs with
+   persistence switched off and reads the fixtures, so it would report
+   "39 rows, every one carrying an id" while the browser in front of
+   somebody held a portfolio with none — exactly the gap that let a
+   green assertISO run sit next to a dashboard full of display
+   dates. */
+console.log('\n── a snapshot from before the product key does not come back');
+{
+  const BOOKS = ['currentWinePortfolio', 'rCurrentWineList', 'tCurrentWineSelection'];
+  const area = makeStorageArea();
+
+  /* The seed tab IS the previous build: every id removed from the
+     source, so the fixture it registers, the fingerprint it computes
+     and the snapshot it writes are all the pre-key ones. Editing a
+     current snapshot by hand instead would leave the new fingerprint
+     in place and test hand-edited storage, not a returning visitor. */
+  const seed = openTab(area, { persist: true, patch: { from: /id:'PRD-\d{4}', /g, to: '' } });
+  const seeded = seed.w.eval(BOOKS.map(b => b + '.length').join('+'));
+  const withId = seed.w.eval(BOOKS.map(b => b + ".filter(function (r) { return r.id; }).length").join('+'));
+  seed.w.eval('currentWinePortfolio[0].ownLabel = currentWinePortfolio[0].ownLabel');
+  nudge(seed.w); await settle(seed.w);
+
+  /* Kept verbatim: discarding a snapshot REMOVES it, so the tab below
+     would otherwise open on empty storage and read as "the rows did
+     not come back" for the wrong reason. */
+  const raw = area._data[KEY];
+  const snap = read(area);
+  if (!snap) bad('the previous build wrote no snapshot — this check proves nothing');
+  else if (withId) bad(withId + ' row(s) still carried an id in the seed tab — the patch did not remove the key');
+  else if (!seeded) bad('the seed tab held no product rows at all');
+  else {
+    const t = openTab(area, { persist: true });
+    const back = t.w.eval('(' + BOOKS.map(b => b + ".filter(function (r) { return !r.id; }).length").join('+') + ')');
+    if (back)
+      bad(back + ' of ' + seeded + ' id-less row(s) reached the live state — the shape ' +
+          'fingerprint did not see the new key, so adding it needed a VERSION bump after all');
+    else
+      ok('a snapshot written by the build before the key, holding ' + seeded +
+         ' id-less product rows, is discarded — the fingerprint sees a new KEY, ' +
+         'which is what it could not do for the date migration (only values moved there)');
+
+    /* Counter-check. The claim above is about ONE mechanism, so the
+       mechanism gets switched off: with the fingerprint comparison
+       gone, the same snapshot passes the version check and the id-less
+       rows must come back. Without this the section would go green
+       even if the store had stopped comparing shapes at all. */
+    area._data[KEY] = raw;
+    const blind = openTab(area, { persist: true, patch: {
+      from: "else if (fp[e.name] !== fixtureFp[e.name]) changed.push(e.name + ' (shape changed)');",
+      to:   "else if (false) changed.push(e.name + ' (shape changed)');" } });
+    const returned = blind.w.eval('(' + BOOKS.map(b => b + ".filter(function (r) { return !r.id; }).length").join('+') + ')');
+    if (returned === seeded)
+      ok('caught: with the shape comparison removed, all ' + returned +
+         ' id-less rows return — the fingerprint is what stops them, not the version');
+    else
+      bad('with the shape comparison removed only ' + returned + ' of ' + seeded +
+          ' id-less rows returned — something other than the fingerprint is doing this work, ' +
+          'so the check above does not prove what it says');
   }
 }
 

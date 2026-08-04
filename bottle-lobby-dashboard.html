@@ -4788,27 +4788,72 @@ function openDistributorPublicPreview() {
    Rosso sits between Bistro Laurent's follow and Weinhaus Müller's on
    purpose — one of them hears about it, the other does not, and both
    are right. */
+
+/* ── `id` — THE PRODUCT KEY (pass 1 of 5) ──────────────────────────
+   Nothing reads it yet. It exists first so that the readers can be
+   widened before any reference moves — moving the data first would
+   leave every name comparison silently finding nothing, which renders
+   as an empty surface rather than an error.
+
+   WHAT IT REPLACES. 91 wine references across eleven sources, 52 of
+   them joined by NAME. The same bottle is spelled two ways on purpose
+   in ten cases, because the show surface appends the vintage:
+   "Pouilly-Fumé" in the book, "Pouilly-Fumé 2023" on the show floor.
+   A join that has to strip a trailing four-digit year to work is a
+   guess with good odds, not a key.
+
+   WHY IT IS OPAQUE and not the slug that `url` already carries.
+   Renaming. A16 has the appellation master-data pass ahead of it (A4),
+   several wine names carry their appellation, and the origin strings
+   are already measured as inconsistent. A slug-shaped key leaves only
+   bad options when a name changes: stay and lie, or follow and prove
+   it was never an identifier. Two reasonable slugifiers already
+   disagree about exactly one of these 26 wines — "Nero d'Avola",
+   apostrophe dropped or turned into a separator — and that
+   disagreement fails as a silent 404, not as an error.
+
+   `PRD-`, not `W-`: invariant 5 says the entity is a PRODUCT. A wine
+   prefix would have to be migrated the day spirits are switched on,
+   and `W-` is the obvious prefix for a winery once stakeholders get
+   ids of their own. Taken today: ORD, WS, and QU/PF/PP/IN/DN/CN from
+   DOC_TYPES.
+
+   `id` sits FIRST, before the name, so a fixture row still says what
+   it is at a glance. That is the whole payment for readability — at a
+   reference site there is no such trick, which is why pass 2 brings
+   wineLabel(id) and why every harness finding prints the resolved
+   label rather than the bare id.
+
+   `url` stays beside it and keeps its own job: it is the ADDRESS of
+   the article page and may change. An id is never rendered, a url is
+   never compared — tests/wine-identity.js holds both halves.
+
+   Numbering follows partnerWinesPool first, because a product record
+   belongs to its producer (invariant 2). PRD-1020 … PRD-1026 exist
+   only in the distributor's book: seven wines nobody's catalogue
+   knows. The numbering records that gap rather than smoothing it —
+   closing it is the "complete the catalogue" pass. */
 const partnerWinesPool = [
-  { winery:'Cantina Rossi', name:'Catarratto Biologico', vintage:2023, type:'White', note:'Organic', origin:'Sicilia DOC, Sicily', url:'bottle-lobby-wine-catarratto-biologico.html', at:'2025-03-14' },
-  { winery:'Cantina Rossi', name:'Grillo Sicilia DOC', vintage:2023, type:'White', note:'Own-Label Available', origin:'Sicilia DOC, Sicily', url:'bottle-lobby-wine-grillo-sicilia-doc.html', at:'2025-04-02' },
-  { winery:'Cantina Rossi', name:"Nero d'Avola Sicilia DOC", vintage:2022, type:'Red', note:'Own-Label Available', origin:'Sicilia DOC, Sicily', url:'bottle-lobby-wine-nero-davola-sicilia-doc.html', at:'2025-05-20' },
-  { winery:'Cantina Rossi', name:'Primitivo Riserva', vintage:2020, type:'Red', note:'Riserva · Premium Tier', origin:'Alcamo DOC, Sicily', url:'bottle-lobby-wine-primitivo-riserva.html', at:'2025-02-11' },
-  { winery:'Cantina Rossi', name:'Rosato di Sicilia', vintage:2023, type:'Rosé', note:'Own-Label Available', origin:'Sicilia DOC, Sicily', url:'bottle-lobby-wine-rosato-di-sicilia.html', at:'2025-06-09' },
-  { winery:'Cantina Rossi', name:'Rosso di Contrada', vintage:2023, type:'Red', note:'Standard', origin:'Sicilia DOC, Sicily', url:'bottle-lobby-wine-rosso-di-contrada.html', at:'2025-09-16' },
-  { winery:'Cantina Rossi', name:'Trinacria Bianco', vintage:2023, type:'White', note:'Standard', origin:'Terre Siciliane IGT, Sicily', url:'bottle-lobby-wine-trinacria-bianco.html', at:'2025-11-04' },
+  { id:'PRD-1001', winery:'Cantina Rossi', name:'Catarratto Biologico', vintage:2023, type:'White', note:'Organic', origin:'Sicilia DOC, Sicily', url:'bottle-lobby-wine-catarratto-biologico.html', at:'2025-03-14' },
+  { id:'PRD-1002', winery:'Cantina Rossi', name:'Grillo Sicilia DOC', vintage:2023, type:'White', note:'Own-Label Available', origin:'Sicilia DOC, Sicily', url:'bottle-lobby-wine-grillo-sicilia-doc.html', at:'2025-04-02' },
+  { id:'PRD-1003', winery:'Cantina Rossi', name:"Nero d'Avola Sicilia DOC", vintage:2022, type:'Red', note:'Own-Label Available', origin:'Sicilia DOC, Sicily', url:'bottle-lobby-wine-nero-davola-sicilia-doc.html', at:'2025-05-20' },
+  { id:'PRD-1004', winery:'Cantina Rossi', name:'Primitivo Riserva', vintage:2020, type:'Red', note:'Riserva · Premium Tier', origin:'Alcamo DOC, Sicily', url:'bottle-lobby-wine-primitivo-riserva.html', at:'2025-02-11' },
+  { id:'PRD-1005', winery:'Cantina Rossi', name:'Rosato di Sicilia', vintage:2023, type:'Rosé', note:'Own-Label Available', origin:'Sicilia DOC, Sicily', url:'bottle-lobby-wine-rosato-di-sicilia.html', at:'2025-06-09' },
+  { id:'PRD-1006', winery:'Cantina Rossi', name:'Rosso di Contrada', vintage:2023, type:'Red', note:'Standard', origin:'Sicilia DOC, Sicily', url:'bottle-lobby-wine-rosso-di-contrada.html', at:'2025-09-16' },
+  { id:'PRD-1007', winery:'Cantina Rossi', name:'Trinacria Bianco', vintage:2023, type:'White', note:'Standard', origin:'Terre Siciliane IGT, Sicily', url:'bottle-lobby-wine-trinacria-bianco.html', at:'2025-11-04' },
   /* The two deliberate ones: added AFTER somebody started following. */
-  { winery:'Cantina Rossi', name:'Baglio Rosso', vintage:2021, type:'Red', note:'Standard', origin:'Terre Siciliane IGT, Sicily', url:'bottle-lobby-wine-baglio-rosso.html', at:'2026-04-20' },
-  { winery:'Cantina Rossi', name:'Costa Bianca', vintage:2023, type:'White', note:'Standard', origin:'Terre Siciliane IGT, Sicily', url:'bottle-lobby-wine-costa-bianca.html', at:'2026-05-28' },
-  { winery:'Domaine Lefèvre', name:'Bourgogne Passetoutgrain', vintage:2023, type:'Red', note:'Standard', origin:'Bourgogne Passetoutgrain AOC, France', url:'bottle-lobby-wine-bourgogne-passetoutgrain.html', at:'2025-10-07' },
-  { winery:'Domaine Lefèvre', name:'Crémant de Bourgogne', vintage:2022, type:'White', note:'Standard', origin:'Crémant de Bourgogne AOC, France', url:'bottle-lobby-wine-cremant-de-bourgogne.html', at:'2025-08-19' },
-  { winery:'Domaine Lefèvre', name:'Bourgogne Aligoté', vintage:2023, type:'White', note:'Standard', origin:'Bourgogne Aligoté AOC, France', url:'bottle-lobby-wine-bourgogne-aligote.html', at:'2026-01-15' },
-  { winery:'Domaine Lefèvre', name:'Mâcon-Villages', vintage:2023, type:'White', note:'Standard', origin:'Mâcon-Villages AOC, France', url:'bottle-lobby-wine-macon-villages.html', at:'2026-02-26' },
-  { winery:'Henri Dubois Domaine', name:'Sancerre Rouge', vintage:2022, type:'Red', note:'Standard', origin:'Sancerre AOC, Loire Valley', url:'bottle-lobby-wine-sancerre-rouge.html', at:'2025-07-03' },
-  { winery:'Henri Dubois Domaine', name:'Pouilly-Fumé', vintage:2023, type:'White', note:'Standard', origin:'Pouilly-Fumé AOC, Loire Valley', url:'bottle-lobby-wine-pouilly-fume.html', at:'2025-12-08' },
-  { winery:'Bodegas Ruiz', name:'Rioja Reserva', vintage:2019, type:'Red', note:'Standard', origin:'Rioja DOCa, Spain', url:'bottle-lobby-wine-rioja-reserva.html', at:'2025-09-10' },
-  { winery:'Bodegas Ruiz', name:'Rioja Blanco', vintage:2023, type:'White', note:'Standard', origin:'Rioja DOCa, Spain', url:'bottle-lobby-wine-rioja-blanco.html', at:'2026-06-20' },
-  { winery:'Weingut Schmitt', name:'Müller-Thurgau — Mosel', vintage:2023, type:'White', note:'Standard', origin:'Mosel QbA, Germany', url:'bottle-lobby-wine-muller-thurgau-mosel.html', at:'2026-07-25' },
-  { winery:'Weingut Schmitt', name:'Spätburgunder — Mosel', vintage:2022, type:'Red', note:'Standard', origin:'Mosel QbA, Germany', url:'bottle-lobby-wine-spatburgunder-mosel.html', at:'2026-01-22' }
+  { id:'PRD-1008', winery:'Cantina Rossi', name:'Baglio Rosso', vintage:2021, type:'Red', note:'Standard', origin:'Terre Siciliane IGT, Sicily', url:'bottle-lobby-wine-baglio-rosso.html', at:'2026-04-20' },
+  { id:'PRD-1009', winery:'Cantina Rossi', name:'Costa Bianca', vintage:2023, type:'White', note:'Standard', origin:'Terre Siciliane IGT, Sicily', url:'bottle-lobby-wine-costa-bianca.html', at:'2026-05-28' },
+  { id:'PRD-1010', winery:'Domaine Lefèvre', name:'Bourgogne Passetoutgrain', vintage:2023, type:'Red', note:'Standard', origin:'Bourgogne Passetoutgrain AOC, France', url:'bottle-lobby-wine-bourgogne-passetoutgrain.html', at:'2025-10-07' },
+  { id:'PRD-1011', winery:'Domaine Lefèvre', name:'Crémant de Bourgogne', vintage:2022, type:'White', note:'Standard', origin:'Crémant de Bourgogne AOC, France', url:'bottle-lobby-wine-cremant-de-bourgogne.html', at:'2025-08-19' },
+  { id:'PRD-1012', winery:'Domaine Lefèvre', name:'Bourgogne Aligoté', vintage:2023, type:'White', note:'Standard', origin:'Bourgogne Aligoté AOC, France', url:'bottle-lobby-wine-bourgogne-aligote.html', at:'2026-01-15' },
+  { id:'PRD-1013', winery:'Domaine Lefèvre', name:'Mâcon-Villages', vintage:2023, type:'White', note:'Standard', origin:'Mâcon-Villages AOC, France', url:'bottle-lobby-wine-macon-villages.html', at:'2026-02-26' },
+  { id:'PRD-1014', winery:'Henri Dubois Domaine', name:'Sancerre Rouge', vintage:2022, type:'Red', note:'Standard', origin:'Sancerre AOC, Loire Valley', url:'bottle-lobby-wine-sancerre-rouge.html', at:'2025-07-03' },
+  { id:'PRD-1015', winery:'Henri Dubois Domaine', name:'Pouilly-Fumé', vintage:2023, type:'White', note:'Standard', origin:'Pouilly-Fumé AOC, Loire Valley', url:'bottle-lobby-wine-pouilly-fume.html', at:'2025-12-08' },
+  { id:'PRD-1016', winery:'Bodegas Ruiz', name:'Rioja Reserva', vintage:2019, type:'Red', note:'Standard', origin:'Rioja DOCa, Spain', url:'bottle-lobby-wine-rioja-reserva.html', at:'2025-09-10' },
+  { id:'PRD-1017', winery:'Bodegas Ruiz', name:'Rioja Blanco', vintage:2023, type:'White', note:'Standard', origin:'Rioja DOCa, Spain', url:'bottle-lobby-wine-rioja-blanco.html', at:'2026-06-20' },
+  { id:'PRD-1018', winery:'Weingut Schmitt', name:'Müller-Thurgau — Mosel', vintage:2023, type:'White', note:'Standard', origin:'Mosel QbA, Germany', url:'bottle-lobby-wine-muller-thurgau-mosel.html', at:'2026-07-25' },
+  { id:'PRD-1019', winery:'Weingut Schmitt', name:'Spätburgunder — Mosel', vintage:2022, type:'Red', note:'Standard', origin:'Mosel QbA, Germany', url:'bottle-lobby-wine-spatburgunder-mosel.html', at:'2026-01-22' }
 ];
 
 /* ══════════════════════════════════════════════════════════════════
@@ -4858,15 +4903,15 @@ const partnerWinesPool = [
    master-data question (A4) and is not this pass.
 ══════════════════════════════════════════════════════════════════ */
 let currentWinePortfolio = [
-  { winery:'Henri Dubois Domaine', name:'Sauvignon Blanc — Sancerre', vintage:2023, ownLabel:true,
+  { id:'PRD-1020', winery:'Henri Dubois Domaine', name:'Sauvignon Blanc — Sancerre', vintage:2023, ownLabel:true,
     type:'White', origin:'Loire Valley, France', url:'bottle-lobby-wine-sauvignon-blanc-sancerre.html' },
-  { winery:'Domaine Lefèvre', name:'Chardonnay — Chablis Premier Cru', vintage:2022, ownLabel:true,
+  { id:'PRD-1021', winery:'Domaine Lefèvre', name:'Chardonnay — Chablis Premier Cru', vintage:2022, ownLabel:true,
     type:'White', origin:'Chablis, Burgundy', url:'bottle-lobby-wine-chardonnay-chablis-premier-cru.html' },
-  { winery:'Cantina Rossi', name:'Primitivo Sicilia IGT', vintage:2022, ownLabel:true,
+  { id:'PRD-1022', winery:'Cantina Rossi', name:'Primitivo Sicilia IGT', vintage:2022, ownLabel:true,
     type:'Red', origin:'Alcamo DOC, Sicily', url:'bottle-lobby-wine-primitivo-sicilia-igt.html' },
-  { winery:'Bodegas Ruiz', name:'Tempranillo — Rioja Crianza', vintage:2021, ownLabel:false,
+  { id:'PRD-1023', winery:'Bodegas Ruiz', name:'Tempranillo — Rioja Crianza', vintage:2021, ownLabel:false,
     type:'Red', origin:'Rioja Alta, Spain', url:'bottle-lobby-wine-tempranillo-rioja-crianza.html' },
-  { winery:'Weingut Schmitt', name:'Riesling Spätlese — Mosel', vintage:2023, ownLabel:false,
+  { id:'PRD-1024', winery:'Weingut Schmitt', name:'Riesling Spätlese — Mosel', vintage:2023, ownLabel:false,
     type:'White', origin:'Mosel, Germany', url:'bottle-lobby-wine-riesling-spatlese-mosel.html' },
   /* Listed on purpose: it is one of the two wines on the released show
      WS-2603, so that show carries BOTH columns of A16.12 side by side —
@@ -4874,27 +4919,27 @@ let currentWinePortfolio = [
      A distinction split across two shows would be present but never
      demonstrated. The name must match the show product exactly, em dash
      included; A14.4 records what string drift costs here. */
-  { winery:'Weingut Schmitt', name:'Müller-Thurgau — Mosel', vintage:2023, ownLabel:false,
+  { id:'PRD-1018', winery:'Weingut Schmitt', name:'Müller-Thurgau — Mosel', vintage:2023, ownLabel:false,
     type:'White', origin:'Mosel QbA, Germany', url:'bottle-lobby-wine-muller-thurgau-mosel.html' },
 
   /* ── Came in with the merge: offered to buyers all along ───────── */
-  { winery:'Cantina Rossi', name:'Catarratto Biologico', vintage:2023, ownLabel:false,
+  { id:'PRD-1001', winery:'Cantina Rossi', name:'Catarratto Biologico', vintage:2023, ownLabel:false,
     type:'White', origin:'Sicilia DOC, Sicily', url:'bottle-lobby-wine-catarratto-biologico.html' },
-  { winery:'Cantina Rossi', name:'Rosso di Contrada', vintage:2023, ownLabel:false,
+  { id:'PRD-1006', winery:'Cantina Rossi', name:'Rosso di Contrada', vintage:2023, ownLabel:false,
     type:'Red', origin:'Sicilia DOC, Sicily', url:'bottle-lobby-wine-rosso-di-contrada.html' },
-  { winery:'Château Belrieu', name:'Merlot — Bordeaux Supérieur', vintage:2021, ownLabel:false,
+  { id:'PRD-1025', winery:'Château Belrieu', name:'Merlot — Bordeaux Supérieur', vintage:2021, ownLabel:false,
     type:'Red', origin:'Bordeaux, France', url:'bottle-lobby-wine-merlot-bordeaux-superieur.html' },
-  { winery:'Château Belrieu', name:'Château Belrieu Grand Vin', vintage:2019, ownLabel:false,
+  { id:'PRD-1026', winery:'Château Belrieu', name:'Château Belrieu Grand Vin', vintage:2019, ownLabel:false,
     type:'Red', origin:'Bordeaux Supérieur AOC, France', url:'bottle-lobby-wine-chateau-belrieu-grand-vin.html' },
-  { winery:'Domaine Lefèvre', name:'Crémant de Bourgogne', vintage:2022, ownLabel:false,
+  { id:'PRD-1011', winery:'Domaine Lefèvre', name:'Crémant de Bourgogne', vintage:2022, ownLabel:false,
     type:'White', origin:'Crémant de Bourgogne AOC, France', url:'bottle-lobby-wine-cremant-de-bourgogne.html' },
 
   /* ── Came in with the merge: advertised or sold without being here ─ */
-  { winery:'Cantina Rossi', name:"Nero d'Avola Sicilia DOC", vintage:2022, ownLabel:false,
+  { id:'PRD-1003', winery:'Cantina Rossi', name:"Nero d'Avola Sicilia DOC", vintage:2022, ownLabel:false,
     type:'Red', origin:'Sicilia DOC, Sicily', url:'bottle-lobby-wine-nero-davola-sicilia-doc.html' },
-  { winery:'Henri Dubois Domaine', name:'Pouilly-Fumé', vintage:2023, ownLabel:false,
+  { id:'PRD-1015', winery:'Henri Dubois Domaine', name:'Pouilly-Fumé', vintage:2023, ownLabel:false,
     type:'White', origin:'Pouilly-Fumé AOC, Loire Valley', url:'bottle-lobby-wine-pouilly-fume.html' },
-  { winery:'Cantina Rossi', name:'Baglio Rosso', vintage:2021, ownLabel:false,
+  { id:'PRD-1008', winery:'Cantina Rossi', name:'Baglio Rosso', vintage:2021, ownLabel:false,
     type:'Red', origin:'Terre Siciliane IGT, Sicily', url:'bottle-lobby-wine-baglio-rosso.html' }
 ];
 
@@ -5571,9 +5616,9 @@ function openRestaurantPublicPreview() {
 
 
 let rCurrentWineList = [
-  { winery:'Henri Dubois Domaine', name:'Sauvignon Blanc — Sancerre', vintage:2023, exclusive:true, url:'bottle-lobby-wine-sauvignon-blanc-sancerre.html' },
-  { winery:'Domaine Lefèvre', name:'Chardonnay — Chablis Premier Cru', vintage:2022, exclusive:true, url:'bottle-lobby-wine-chardonnay-chablis-premier-cru.html' },
-  { winery:'Cantina Rossi', name:'Primitivo Sicilia IGT', vintage:2022, exclusive:true, url:'bottle-lobby-wine-primitivo-sicilia-igt.html' }
+  { id:'PRD-1020', winery:'Henri Dubois Domaine', name:'Sauvignon Blanc — Sancerre', vintage:2023, exclusive:true, url:'bottle-lobby-wine-sauvignon-blanc-sancerre.html' },
+  { id:'PRD-1021', winery:'Domaine Lefèvre', name:'Chardonnay — Chablis Premier Cru', vintage:2022, exclusive:true, url:'bottle-lobby-wine-chardonnay-chablis-premier-cru.html' },
+  { id:'PRD-1022', winery:'Cantina Rossi', name:'Primitivo Sicilia IGT', vintage:2022, exclusive:true, url:'bottle-lobby-wine-primitivo-sicilia-igt.html' }
 ];
 
 let rAwSelectedWine = null;
@@ -5967,9 +6012,9 @@ function openRetailPublicPreview() {
 
 
 let tCurrentWineSelection = [
-  { winery:'Henri Dubois Domaine', name:'Sauvignon Blanc — Sancerre', vintage:2023, exclusive:true, url:'bottle-lobby-wine-sauvignon-blanc-sancerre.html' },
-  { winery:'Domaine Lefèvre', name:'Chardonnay — Chablis Premier Cru', vintage:2022, exclusive:true, url:'bottle-lobby-wine-chardonnay-chablis-premier-cru.html' },
-  { winery:'Cantina Rossi', name:'Primitivo Sicilia IGT', vintage:2022, exclusive:true, url:'bottle-lobby-wine-primitivo-sicilia-igt.html' }
+  { id:'PRD-1020', winery:'Henri Dubois Domaine', name:'Sauvignon Blanc — Sancerre', vintage:2023, exclusive:true, url:'bottle-lobby-wine-sauvignon-blanc-sancerre.html' },
+  { id:'PRD-1021', winery:'Domaine Lefèvre', name:'Chardonnay — Chablis Premier Cru', vintage:2022, exclusive:true, url:'bottle-lobby-wine-chardonnay-chablis-premier-cru.html' },
+  { id:'PRD-1022', winery:'Cantina Rossi', name:'Primitivo Sicilia IGT', vintage:2022, exclusive:true, url:'bottle-lobby-wine-primitivo-sicilia-igt.html' }
 ];
 
 let tAwSelectedWine = null;

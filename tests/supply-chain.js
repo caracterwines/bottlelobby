@@ -303,8 +303,12 @@ console.log('\n── counter-check: the breaks this file was written for');
       says: 'section 2 catches 156 bottles sold with no relation behind them' },
 
     { name: 'a wine is offered that the distributor does not carry',
-      from: "  { winery:'Henri Dubois Domaine', name:'Pouilly-Fumé', vintage:2023, ownLabel:false,",
-      to:   "  { winery:'Henri Dubois Domaine', name:'Pouilly-Fumé NOT CARRIED', vintage:2023, ownLabel:false,",
+      /* Anchored on the fields the mutation is about, not on the start
+         of the row: a row gains a field now and then — `id` did in the
+         product-key pass — and an anchor that spans the opening brace
+         turns into a missed target rather than a finding. */
+      from: "winery:'Henri Dubois Domaine', name:'Pouilly-Fumé', vintage:2023, ownLabel:false,",
+      to:   "winery:'Henri Dubois Domaine', name:'Pouilly-Fumé NOT CARRIED', vintage:2023, ownLabel:false,",
       check: g => {
         const r = chainReader(g);
         const offers = JSON.parse(g.eval('JSON.stringify(exclusiveOffers)'));
@@ -313,8 +317,8 @@ console.log('\n── counter-check: the breaks this file was written for');
       says: 'section 3 catches an Exclusive Offer over a wine outside the book' },
 
     { name: 'the portfolio takes a wine from a house it does not partner with',
-      from: "  { winery:'Cantina Rossi', name:'Baglio Rosso', vintage:2021, ownLabel:false,",
-      to:   "  { winery:'Osteria Marconi', name:'Baglio Rosso', vintage:2021, ownLabel:false,",
+      from: "winery:'Cantina Rossi', name:'Baglio Rosso', vintage:2021, ownLabel:false,",
+      to:   "winery:'Osteria Marconi', name:'Baglio Rosso', vintage:2021, ownLabel:false,",
       check: g => {
         const r = chainReader(g);
         return (r.books[r.distributors[0]] || []).some(x =>

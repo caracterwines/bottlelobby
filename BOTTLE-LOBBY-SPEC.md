@@ -836,6 +836,58 @@ Appellation, Aging Duration, Aging Method. Whisky gets Cask Type, Age Statement,
 Region (Speyside, Islay …). Gin gets Style and Botanical origin. Each category's set is
 data, not code.
 
+### A15.2a The product key is opaque — decided 4 Aug 2026
+
+`products.id` is a key and nothing else. It is never rendered, never parsed, never
+computed, and it is **not the slug**. The prototype carries it as `PRD-nnnn`;
+Supabase carries a uuid, with the slug beside it as `products.slug`.
+
+**Measured before deciding.** 91 product references live across eleven sources in
+the prototype, and **52 of them joined by name**. Ten bottles already carry two
+spellings, because the show surface appends the vintage — `Pouilly-Fumé` in the
+book, `Pouilly-Fumé 2023` on the show floor. A join that strips a trailing
+four-digit year to bridge that is a guess with good odds, and A14.4 records what
+this project has already paid for string matching.
+
+**Why not the slug, which every product row already carries as `url`.** It is
+complete and unique — measured: 39 rows, 26 URLs, 26 products, no collision, no
+split, no dead link. It is nonetheless an **address**, and addresses change.
+Renaming is not hypothetical here: A4 puts Country → Region → Appellation on
+master data, several product names carry their appellation, and the origin
+strings are already measured as inconsistent. A slug-shaped key leaves only bad
+options the day a name changes — **stay and lie, or follow and prove it was never
+an identifier**.
+
+A slug is also not reproducible. Two reasonable slugifiers — one folding
+diacritics through NFD, one treating them as separators — agree on 25 of the
+prototype's 26 wines and disagree on exactly one: `Nero d'Avola Sicilia DOC`,
+where the apostrophe is either dropped or turned into a separator. **One in 26,
+and the symptom is a silent 404**, not an error.
+
+**`PRD-`, not `W-`.** Invariant 5: the entity is a product. A wine-shaped prefix
+would have to be migrated the day spirits are switched on, and `W-` is the
+obvious prefix for a winery once stakeholders get keys of their own. Prefixes
+already taken: `ORD` (orders), `WS` (wine shows), and `QU`/`PF`/`PP`/`IN`/`DN`/`CN`
+(A14.5 documents).
+
+**What it costs, and how that is paid.** An opaque key is unreadable, and the
+place that comes due is a fixture under review and a failure message. So: `id`
+sits **first in the row**, before the name, so a record still says what it is at
+a glance; reference sites resolve through `wineLabel(id)`; and
+`tests/wine-identity.js` prints the resolved label on every finding, never the
+bare key. That file also holds the two halves apart — **an id is never rendered,
+a url is never compared** — and fails on zero references, because a check that
+examined nothing cannot be green.
+
+> **Adding the key needed no `VERSION` bump, and that was measured rather than
+> reasoned.** A new field changes the *keys* of a persisted row, which is exactly
+> what the shape fingerprint sees — unlike the date migration, where only values
+> moved and the fingerprint was blind (A14 / store notes). `tests/persistence.js`
+> seeds a snapshot from a build with the key removed and asserts it is discarded,
+> then removes the fingerprint comparison and asserts the 20 id-less rows come
+> back. Without the second half the first would pass even if the store had
+> stopped comparing shapes altogether.
+
 ### A15.3 Components — the generalisation of grape variety
 
 Grape variety is already a multi-select because of blends. That exact shape covers every
