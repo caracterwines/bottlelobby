@@ -175,6 +175,43 @@ orders already depended on, and eight wines that buyers had been choosing and
 being sold for months were taken into the distributor's portfolio rather than
 withdrawn from the picker.
 
+**Generalised on 4 August 2026, Serge's rule and it governs every correction
+from here:** when a rule and the data disagree, **add the missing record rather
+than remove the offending one**. A deleted row takes a fact with it and obliges
+whoever deletes it to prove nothing depended on it; a backfilled order adds one
+and only has to be dated correctly. It also leaves the demo richer rather than
+thinner — more paths through the product are exercised, not fewer.
+
+> **The boundary against C7, because the two rules sit next to each other and
+> are not the same rule.** C7 forbids growing the fixtures *so that every message
+> type reaches every role* — an empty case with a nameable reason demonstrates
+> the problem the platform solves. This rule is about a fact the model says must
+> exist and the data does not carry. So: **never grow to make a check green;
+> grow to record a fact that ought to be there.** Château Belrieu's *"0 wines in
+> your portfolio"* stays — that is an empty case with a reason. A wine sold
+> without a matching purchase gets the purchase — that is a missing fact.
+
+### A list is an offer; a shelf is stock
+
+Restaurant and Retail do not carry the same condition, and treating them alike
+was wrong:
+
+| | What the list is | Condition for a wine to appear |
+|---|---|---|
+| **Restaurant** — Wine List | an **offer**. The guest orders, then it is delivered | an active distributor partnership, and the wine in that distributor's portfolio |
+| **Retail** — Wine Selection | a **shelf**. The customer carries the bottle out | additionally **an order of their own** — a sample order or trial bottles are enough |
+
+A retailer cannot sell a bottle they do not have; a wine list can name a wine
+that arrives tomorrow. This is Serge's decision of 4 August 2026 and it
+supersedes the uniform rule of 3 August (Appendix D **D35**).
+
+It is worth noticing that this is **the same distinction three times over**, at
+three points in the chain: stock versus pre-order on a Wine Show (A16.12),
+portfolio versus stock at the distributor, and shelf versus menu at the buyer.
+In each case the weaker condition is a *relationship* and the stronger one is a
+*purchase*. A rule that says the same thing in three places is usually the right
+one.
+
 ---
 
 ## A4. Master Data (admin-maintained, never free text)
@@ -2601,14 +2638,30 @@ against the pushed version" a sentence anyone can check.
 
 | File | Size | Via the connector |
 |---|---|---|
-| Variety pages | ~14–19 KB | Unproblematic |
-| Wine article pages | ~29–31 KB | Unproblematic |
-| Public profile pages, all 4 roles | ~48–68 KB | Fine |
-| `BOTTLE-LOBBY-SPEC.md` | ~88 KB | Fine |
-| `restaurant-profile.html`, `retail-profile.html` | ~100–101 KB | Expensive |
-| `why-join.html`, `distributor-profile.html` | ~111 KB | Expensive |
-| `winery-profile.html`, `profile-demo.html` | ~144–149 KB | Expensive — one per session at most |
-| **`bottle-lobby-dashboard.html`** | **~473 KB** | **Not possible — exceeds a single response** |
+| Variety pages | ~14–20 KB | Unproblematic |
+| Wine article pages | ~29–32 KB | Unproblematic |
+| Public profile pages, all 4 roles | ~50–69 KB | Fine |
+| `restaurant-profile.html`, `retail-profile.html` | ~102–103 KB | Expensive |
+| `why-join.html`, `distributor-profile.html` | ~113 KB | Expensive |
+| `winery-profile.html`, `profile-demo.html` | ~147–153 KB | Expensive — one per session at most |
+| **`HANDOFF.md`** | **~102 KB** | **Expensive — and see the note below** |
+| **`BOTTLE-LOBBY-SPEC.md`** | **~226 KB** | **No longer possible from chat** |
+| **`bottle-lobby-dashboard.html`** | **~650 KB** | **Not possible — exceeds a single response** |
+
+> **Re-measured 4 August 2026, and two rows changed category.** The sizes above
+> are read from the GitHub API, not remembered. Two of them move a document out
+> of the channel it used to travel on:
+>
+> - **The spec has outgrown the connector.** It was ~88 KB when this table was
+>   first written and is ~226 KB now. A chat session can no longer push it —
+>   the complete file would have to pass through one response. From here it goes
+>   by `git push` from Claude Code, or as a single manual upload; the copy for
+>   the project knowledge is delivered as a file either way, so both copies stay
+>   byte-identical.
+> - **`HANDOFF.md` is ~102 KB**, and its own opening rule says it holds only
+>   open items, next steps and decisions in progress. A file that size is a
+>   change log. Completed passes belong in the Git history, which already has
+>   them; what stays is what Git cannot know.
 
 **Fallback rule, chat sessions only:** when a chat session will make many changes to the large files above, work locally in the container and hand over the finished result — a single file, or a ZIP for multi-file work (max. 100 files per commit), which Serge uploads via GitHub's *Add file → Upload files*. This is an explicit, sanctioned exception, not a failure.
 
@@ -2644,6 +2697,49 @@ Diagnosed 30 July 2026 after repeated `403 Resource not accessible by integratio
 - Ask structured clarifying questions rather than guessing when feedback is vague.
 - Measure before recommending a refactor, and report the numbers even when they overturn Claude's own proposal.
 - Serge's vocabulary: "Steakholder" = Stakeholder; "freigestellt/freistellen" = image background removal.
+
+### The prompt convention
+
+Every prompt Claude writes in chat for Serge to paste into Claude Code carries a
+heading of exactly this form — bold title, `·`, italic dispatch note, one line:
+
+**PROMPT 46 V2 (Weinbuch) — Portfolio wird ableitbar** · *jetzt senden · ersetzt V1*
+
+- **The number runs across the whole project, not per chat.** This is the part
+  that has already gone wrong: read as "per conversation", a new chat restarts
+  at 1 and one and the same pass ends up carrying two numbers. At the start of a
+  new chat Claude looks up the last number used rather than guessing or
+  restarting.
+- **A revision keeps its number and gains a version suffix** — `V2`, `V3`. A
+  superseded prompt is never renumbered. The pair `46` / `46 V2` is what makes
+  "V1 was never in the terminal" a statement anybody can check.
+- **The dispatch note is mandatory**, never omitted: *jetzt senden* · *direkt
+  nach 46, keine Antwort abwarten* · *erst wenn 46 beantwortet ist* · *als
+  eigener Durchgang, nicht heute*.
+- Around the prompt the actions are numbered — send, wait, bring the answer
+  back — so the message reads as instructions rather than prose, and the prompt
+  itself sits in one code block with nothing above it inside that block.
+
+The purpose is referential: Serge says "schick 46" or "46 V2 ist raus" instead
+of describing which prompt he means.
+
+### When the terminal gets cleared
+
+Claude states with every prompt whether the Claude Code session is cleared
+first. Two cases, and they pull in opposite directions:
+
+- **Clear** when a new pass begins that builds on nothing from the previous one,
+  or when a prompt was superseded before it ran. A revoked instruction left
+  sitting in the context window is the dangerous kind of leftover — nothing in
+  the window says which of the two versions is current.
+- **Do not clear** when a measurement or a partial commit is in the window that
+  the next step rests on. A multi-part pass keeps its context until the last
+  commit lands.
+
+Absent a statement, no clear. And a paste never goes into a non-empty input
+line: the residue of the previous line ends up at the head of the new
+instruction, which is how a superseded *"mach den Schnittvorschlag"* nearly
+started a pass nobody had asked for.
 
 ## C7. Tools
 
@@ -2750,6 +2846,32 @@ Netlify serves every file, assets included, with:
 `max-age=0` makes a response stale immediately and `must-revalidate` forbids
 serving it without asking, so a deploy is picked up on the next load and the
 ETag turns the check into a 304.
+
+### Three stations, in this order — and the third is not the first repeated
+
+A pass is not finished because jsdom is content.
+
+1. **Terminal.** Harnesses green, `node --check`, and **Claude Code checks its
+   own work in the browser** over `tests/serve.js` as soon as a change is
+   visible on screen. Not "if there is time" — a renderer that silently draws
+   nothing passes every structural check there is.
+2. **Repo.** The commit is really on `main`, verified through the GitHub API
+   (`list_commits` / `get_file_contents`), **never** through
+   `raw.githubusercontent.com` — that endpoint answers from a cache and has
+   twice produced a false *"not pushed"*.
+3. **Chrome, by Claude in chat, independently.** Against the live deploy, with
+   `transferSize` read before any finding and `?v=<commit>` as the cache buster.
+
+**Station 3 is not station 1 done twice.** One runs against a local server
+sending `no-store`, the other against the real deploy in a real browser profile,
+and the gap between them is exactly where the finding of 3 August lived: a
+restored `localStorage` snapshot that was invisible in the source and invisible
+in the local run, and that beat the fresh fixtures.
+
+When the extension cannot get its script into the 660 KB dashboard page — it
+happens — the sentence is **"only checked the source, did not see the
+surface"**, said out loud rather than quietly omitted. Station 1 then carries
+the acceptance, and both sides know which one did.
 
 ### The asset stamps
 
@@ -2960,6 +3082,17 @@ directory is the repo root, so everything committed is served unless blocked.
 
 ## C7b. How the Supabase build starts
 
+**The precondition first: this pass does not start yet.** Three areas of the
+prototype still move the data model — own events for all four roles (A16.8),
+Matchmaking (A8), and Messages, where the business question of *who may write to
+whom* is unanswered and decides whether a message table exists at all. While
+tables are still being created there, a model change in Supabase is a
+**migration instead of an hour's work**, and the translation this pass produces
+would be describing a moving target. Serge's decision, 4 August 2026; it
+supersedes the HANDOFF entry that listed the Supabase start as the next item.
+
+The order is therefore: A16.8 · A8 · Messages · **then** the pass below.
+
 **Before the first feature, one pass of its own.** The brief for it is a single
 question:
 
@@ -2989,7 +3122,7 @@ statement of what the constraint has to enforce — it names all four links.
 
 Three things to settle in that pass:
 
-**(a) Name the governing sections, every time.** The spec is ~213 KB. Nobody
+**(a) Name the governing sections, every time.** The spec is ~226 KB. Nobody
 reads it whole per task, so each pass states which sections apply to it — and
 "the whole spec" is not an answer. Unnamed, the work gets built by plausibility
 instead of by specification, which is how a prototype's conventions get promoted
@@ -3365,6 +3498,7 @@ Without it the badge cannot be honest.
 | D32 | An active partnership was **one list per dashboard** — `activePartners`, `wineryPartners`, and one each for restaurant and retail — while A6 already said both sides "see the identical stage of the identical request record" | **A6** — one `partnerships` row naming its two ends (`distributor`, `partner`), read from either side, with `at` in ISO and `activated_by` | The two statements could not both be true, and the copy had already drifted: Weinhaus Müller ↔ Hawesko was dated **14 Apr 2026** in one book and **"March 2026"** in the other, with nothing able to say which was right. Naming the ends removed three assumptions that had been invisible while only one book existed — a Wine Show's pickers now offer the **host's** partners rather than a platform-wide list (A16.4), `arePartners(a, b)` replaced a lookup that silently supplied "the distributor", and *"X now has a distributor"* takes the producer's **first** partnership, because gaining a route to the trade happens once and not once per distributor. |
 | D33 | Each end of a partnership carried its **own display figure as a stored field** on the row — `distributorMeta` ("6 wines in your portfolio") on the distributor's end, `partnerWines` on the other three | **A6 / invariant 7** — the row holds the relation only; every figure beside it is counted from the distributor's portfolio at render time, through `portfolioOf()` / `portfolioCount()` | Storing them survived the merge into one `partnerships` row (D32) because a figure looks like a property of the relation. It is not — it is a property of a book that changes without the relation changing, and by the time it was measured two of the four were already false on screen: Cantina Rossi's card claimed **6** where the portfolio held **1**, Weingut Schmitt's claimed **1** where it held **2**, and the restaurant and retailer named **5** and **6** for the identical book, neither matching it. The repair forced a question nobody had answered: **which of three wine lists is "their portfolio"**. Only one is owned by anyone — the distributor writes it and it persists; the other two are pickers whose producer field holds the *supplier*, so they cannot answer invariant 2 and are not portfolios at all. Two rules came with it: a house with no book yields `null` rather than an empty one, because *"0 wines"* claims something nothing here knows (A2's unknown stakeholder, again); and a derived figure obliges every surface showing it to be repainted by the action that moved it — one wine pulled in changes a number in all four roles, and leaving them standing is a defect the harnesses could not see and the browser could. |
 | D34 | A distributor's wines lived in **three lists**: `currentWinePortfolio` (6 wines, owned and written), and two byte-identical picker pools of 10 whose `winery` field held the **supplier** — so `wineryOfWine()` existed to guess the producer, defaulting to *Cantina Rossi* | **A3 / A6 / invariant 2** — one book per distributor, every row naming its real producer; both buyer pickers read it through `portfolioOf()`, and the pools are gone | The pools could not answer "who made this", which is invariant 2, and nothing checked a partnership when a wine went onto a buyer's list. That is how a distributor came to offer — and twice sell — wines of a producer it had no partnership with. Merging them forced the question nobody had answered: **which of the three lists is the portfolio**. Only one was owned by anybody. The attribution was sourced rather than invented: 6 rows were already correct, 3 came from the producers' own book, 1 from an order line, and exactly **1** by hand, with **zero contradictions** where two lists named the same wine. The book grew 6 → 14, because three further wines were being advertised or discounted without being carried at all — an offer over a wine outside your book is the same gap as a sale, only delayed (A3). Deleted with it: `wineryOfWine()`, which was measurably wrong twice; three `fileGuess` slug derivations that rebuilt a URL the record already carried (A14.4); and `note`, which duplicated `ownLabel` and carried the buyer's own *Exclusive* marking into the distributor's book (A1). |
+| D35 | Restaurant and Retail were treated **alike**: a wine could go on either list as long as an active distributor partnership existed and the wine sat in that distributor's portfolio — no purchase of their own required | **A3** — the restaurant condition stands; Retail additionally needs **an order of its own**, a sample order or trial bottles being enough | The two lists are not the same kind of object. A wine list is an **offer**: the guest orders, the bottle is delivered just in time, and naming a wine that arrives tomorrow is normal trade. A retail selection is a **shelf**: the customer carries the bottle out of the shop, and a retailer cannot sell what they do not have. Measured when the rule was written (4 Aug 2026), the prototype showed exactly why it had gone unnoticed — Weinhaus Müller's selection held Sauvignon Blanc, Chardonnay and Primitivo, **the same three wines as Bistro Laurent's list, line for line**, while its actual purchases were Merlot (156 bottles across two orders), Nero d'Avola and Catarratto. The two sets were **disjoint**: nothing on the shelf had been bought, nothing bought was on the shelf. Serge's decision, and it was repaired by extension rather than removal (A3): three purchases backfilled, three bought wines added, the selection growing 3 → 6 and differing from the restaurant's list for the first time. |
 
 ---
 
