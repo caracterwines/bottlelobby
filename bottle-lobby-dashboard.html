@@ -4840,6 +4840,17 @@ const partnerWinesPool = [
   { id:'PRD-1004', winery:'Cantina Rossi', name:'Primitivo Riserva', vintage:2020, type:'Red', note:'Riserva · Premium Tier', origin:'Alcamo DOC, Sicily', url:'bottle-lobby-wine-primitivo-riserva.html', at:'2025-02-11' },
   { id:'PRD-1005', winery:'Cantina Rossi', name:'Rosato di Sicilia', vintage:2023, type:'Rosé', note:'Own-Label Available', origin:'Sicilia DOC, Sicily', url:'bottle-lobby-wine-rosato-di-sicilia.html', at:'2025-06-09' },
   { id:'PRD-1006', winery:'Cantina Rossi', name:'Rosso di Contrada', vintage:2023, type:'Red', note:'Standard', origin:'Sicilia DOC, Sicily', url:'bottle-lobby-wine-rosso-di-contrada.html', at:'2025-09-16' },
+  /* Backfilled 4 Aug 2026 under A3: the price table carried a trade price
+     for this wine, the article page and the public Wine Guide carry the
+     wine, and only the producer's catalogue did not. A3 says add the
+     missing record rather than remove the offending one.
+     `at` is fixture authorship and bounded: the Wine Guide names Enoteca
+     Milano as its distributor, and that partnership starts 2026-05-11, so
+     the wine cannot be younger than that (C7 — the earliest dependent
+     event is the ceiling). Placed in the 2025 block because that is the
+     class it belongs to: publicly listed all along, unlike the two 2026
+     rows above, which are dated late on purpose to demonstrate A8. */
+  { id:'PRD-1027', winery:'Cantina Rossi', name:'Terra Rossa', vintage:2022, type:'Red', note:'Standard', origin:'Sicilia DOC, Sicily', url:'bottle-lobby-wine-terra-rossa.html', at:'2025-07-22' },
   { id:'PRD-1007', winery:'Cantina Rossi', name:'Trinacria Bianco', vintage:2023, type:'White', note:'Standard', origin:'Terre Siciliane IGT, Sicily', url:'bottle-lobby-wine-trinacria-bianco.html', at:'2025-11-04' },
   /* The two deliberate ones: added AFTER somebody started following. */
   { id:'PRD-1008', winery:'Cantina Rossi', name:'Baglio Rosso', vintage:2021, type:'Red', note:'Standard', origin:'Terre Siciliane IGT, Sicily', url:'bottle-lobby-wine-baglio-rosso.html', at:'2026-04-20' },
@@ -7167,17 +7178,17 @@ if (!hashRole) {
    from an Offer/Deal/Promo request. Real build: comes from the
    distributor↔winery or distributor↔customer price list. */
 const wineUnitPrice = {
-  'Sauvignon Blanc — Sancerre': 14.90,
-  'Chardonnay — Chablis Premier Cru': 21.50,
-  'Riesling Spätlese — Mosel': 16.80,
-  'Primitivo Sicilia IGT': 11.20,
-  "Nero d'Avola Sicilia DOC": 9.80,
-  'Catarratto Biologico': 8.40,
-  'Merlot — Bordeaux Supérieur': 12.60,
-  'Baglio Rosso': 13.40,
-  'Pouilly-Fumé': 17.20,
-  'Costa Bianca': 10.60,
-  'Terra Rossa': 12.10
+  'PRD-1020': 14.90,   /* Sauvignon Blanc — Sancerre */
+  'PRD-1021': 21.50,   /* Chardonnay — Chablis Premier Cru */
+  'PRD-1024': 16.80,   /* Riesling Spätlese — Mosel */
+  'PRD-1022': 11.20,   /* Primitivo Sicilia IGT */
+  'PRD-1003':  9.80,   /* Nero d'Avola Sicilia DOC */
+  'PRD-1001':  8.40,   /* Catarratto Biologico */
+  'PRD-1025': 12.60,   /* Merlot — Bordeaux Supérieur */
+  'PRD-1008': 13.40,   /* Baglio Rosso */
+  'PRD-1015': 17.20,   /* Pouilly-Fumé */
+  'PRD-1009': 10.60,   /* Costa Bianca */
+  'PRD-1027': 12.10    /* Terra Rossa — the entry that had no record until A3 */
 };
 /* An order line names its producer by READING the seller's book, and
    there is no computation left that could answer instead.
@@ -7197,13 +7208,13 @@ const wineUnitPrice = {
    a case to paper over: goods cannot leave a distributor who does not
    carry the wine (invariant 3), and placeOrder() refuses the order
    rather than inventing a producer for it. */
-function orderItem(wineName, qty, seller) {
-  const found = wineByRef(wineName, portfolioOf(seller) || []);
+function orderItem(ref, qty, seller) {
+  const found = wineByRef(ref, portfolioOf(seller) || []);
   if (!found) {
-    console.warn('[orders] "' + wineName + '" is not in ' + seller + "'s portfolio — no order line made");
+    console.warn('[orders] "' + ref + '" is not in ' + seller + "'s portfolio — no order line made");
     return null;
   }
-  return { wine: wineName, winery: found.winery, qty: qty, unit: wineUnitPrice[wineName] || 12.00 };
+  return { productId: found.id, qty: qty, unit: wineUnitPrice[found.id] || 12.00 };
 }
 
 let orderSeq = 2042;
@@ -7214,57 +7225,70 @@ let orders = [
   /* ── Restaurant / Retail  →  Distributor ─────────────────────── */
   { id:'ORD-2041', placed:'2026-07-27', buyer:'Bistro Laurent', buyerType:'restaurant',
     seller:'Hawesko GmbH', sellerType:'distributor', stage:'pending', source:'manual', note:'Autumn list refresh',
-    items:[ orderItemRaw('Sauvignon Blanc — Sancerre','Henri Dubois Domaine',60,14.90),
-            orderItemRaw('Chardonnay — Chablis Premier Cru','Domaine Lefèvre',12,21.50) ] },
+    items:[ orderItemRaw('PRD-1020',60,14.90),
+            orderItemRaw('PRD-1021',12,21.50) ] },
 
   /* Placed straight off an Exclusive Deal — the 120-bottle Merlot threshold,
      so the detail view flags the 25% entitlement automatically. */
   { id:'ORD-2037', placed:'2026-07-28', buyer:'Weinhaus Müller', buyerType:'retail',
     seller:'Hawesko GmbH', sellerType:'distributor', stage:'pending', source:'deal',
     note:'Exclusive Deal — Buy 120 bottles of Merlot — Bordeaux Supérieur → 25% off',
-    items:[ orderItemRaw('Merlot — Bordeaux Supérieur','Château Belrieu',120,12.60) ] },
+    items:[ orderItemRaw('PRD-1025',120,12.60) ] },
 
   { id:'ORD-2038', placed:'2026-07-21', buyer:'Bistro Laurent', buyerType:'restaurant',
     seller:'Hawesko GmbH', sellerType:'distributor', stage:'shipped',
     carrier:'DHL Freight', tracking:'00340434161094042557', eta:'2026-08-04',
-    items:[ orderItemRaw('Riesling Spätlese — Mosel','Weingut Schmitt',12,16.80) ] },
+    items:[ orderItemRaw('PRD-1024',12,16.80) ] },
 
   { id:'ORD-2033', placed:'2026-06-30', buyer:'Bistro Laurent', buyerType:'restaurant',
     seller:'Hawesko GmbH', sellerType:'distributor', stage:'delivered',
     carrier:'DHL Freight', tracking:'00340434161091887402', eta:'2026-07-09',
-    items:[ orderItemRaw('Primitivo Sicilia IGT','Cantina Rossi',24,11.20) ] },
+    items:[ orderItemRaw('PRD-1022',24,11.20) ] },
 
   { id:'ORD-2040', placed:'2026-07-25', buyer:'Weinhaus Müller', buyerType:'retail',
     seller:'Hawesko GmbH', sellerType:'distributor', stage:'accepted', source:'offer', note:'Exclusive Offer — 20% off Nero d\'Avola Sicilia DOC',
-    items:[ orderItemRaw("Nero d'Avola Sicilia DOC",'Cantina Rossi',60,9.80),
-            orderItemRaw('Catarratto Biologico','Cantina Rossi',24,8.40) ] },
+    items:[ orderItemRaw('PRD-1003',60,9.80),
+            orderItemRaw('PRD-1001',24,8.40) ] },
 
   { id:'ORD-2035', placed:'2026-07-02', buyer:'Weinhaus Müller', buyerType:'retail',
     seller:'Hawesko GmbH', sellerType:'distributor', stage:'delivered',
     carrier:'GLS', tracking:'ZX8841007723DE', eta:'2026-07-11',
-    items:[ orderItemRaw('Merlot — Bordeaux Supérieur','Château Belrieu',36,12.60) ] },
+    items:[ orderItemRaw('PRD-1025',36,12.60) ] },
 
   /* ── Distributor  →  Winery  (the other half of the chain) ───── */
   { id:'ORD-2042', placed:'2026-07-29', buyer:'Hawesko GmbH', buyerType:'distributor',
     seller:'Cantina Rossi', sellerType:'winery', stage:'pending', source:'manual', note:'Q3 restock, own-label run',
-    items:[ orderItemRaw('Primitivo Sicilia IGT','Cantina Rossi',600,6.40),
-            orderItemRaw("Nero d'Avola Sicilia DOC",'Cantina Rossi',300,5.90) ] },
+    items:[ orderItemRaw('PRD-1022',600,6.40),
+            orderItemRaw('PRD-1003',300,5.90) ] },
 
   { id:'ORD-2036', placed:'2026-07-08', buyer:'Hawesko GmbH', buyerType:'distributor',
     seller:'Cantina Rossi', sellerType:'winery', stage:'shipped',
     carrier:'DB Schenker', tracking:'DBS-4471-0092-IT', eta:'2026-08-06',
-    items:[ orderItemRaw('Costa Bianca','Cantina Rossi',240,5.20) ] },
+    items:[ orderItemRaw('PRD-1009',240,5.20) ] },
 
   { id:'ORD-2029', placed:'2026-06-11', buyer:'Hawesko GmbH', buyerType:'distributor',
     seller:'Cantina Rossi', sellerType:'winery', stage:'delivered',
     carrier:'DB Schenker', tracking:'DBS-4390-7781-IT', eta:'2026-06-27',
-    items:[ orderItemRaw('Baglio Rosso','Cantina Rossi',180,7.10) ] },
+    items:[ orderItemRaw('PRD-1008',180,7.10) ] },
 
   { id:'ORD-2039', placed:'2026-07-23', buyer:'Hawesko GmbH', buyerType:'distributor',
     seller:'Weingut Schmitt', sellerType:'winery', stage:'accepted',
-    items:[ orderItemRaw('Riesling Spätlese — Mosel','Weingut Schmitt',240,7.90) ] }
+    items:[ orderItemRaw('PRD-1024',240,7.90) ] }
 ];
-function orderItemRaw(wine, winery, qty, unit) { return { wine, winery, qty, unit }; }
+/* A line names a PRODUCT and adds this order's terms. `wine` and
+   `winery` used to sit here as strings — the copy invariant 2 forbids
+   outright, and the reason an order could name a producer the seller's
+   book did not agree with. Read them back through the three helpers
+   below; there is no other way to get at them, which is the point. */
+function orderItemRaw(productId, qty, unit) { return { productId, qty, unit }; }
+
+/* The product an order line refers to, and the two fields every
+   surface asks it for. An unresolvable line prints its key rather
+   than a blank: a line naming a product no book carries is a finding,
+   and A3 says the answer to one is a record, not a deletion. */
+function lineProduct(i) { return i ? wineByRef(i.productId) : null; }
+function lineName(i)    { const p = lineProduct(i); return p ? p.name   : (i && i.productId) || ''; }
+function lineWinery(i)  { const p = lineProduct(i); return p ? p.winery : ''; }
 
 /* ── Presentation helpers ─────────────────────────────────────── */
 const orderStageLabel = { pending:'Pending', accepted:'In Progress', shipped:'Shipped', delivered:'Delivered', declined:'Declined', cancelled:'Cancelled' };
@@ -7323,7 +7347,7 @@ function orderWidgetRow(o, perspective) {
   return '<div class="list-item">' +
     '<div class="list-dot list-dot-gold"></div>' +
     '<div class="list-item-main">' +
-      '<div class="list-item-title">' + first.wine + ' · ' + orderBottles(o) + ' btl' + more + '</div>' +
+      '<div class="list-item-title">' + lineName(first) + ' · ' + orderBottles(o) + ' btl' + more + '</div>' +
       '<div class="list-item-sub">' + sub + '</div>' +
     '</div>' +
     '<div class="list-item-right"><span class="tag tag-gold">' + orderStageLabel[o.stage] + '</span></div>' +
@@ -7441,7 +7465,7 @@ function reorder(id) {
   const src = orders.find(x => x.id === id);
   if (!src) return;
   const o = placeOrder(src.buyer, src.buyerType, src.seller, src.sellerType,
-    src.items.map(i => ({ wine:i.wine, winery:i.winery, qty:i.qty, unit:i.unit })),
+    src.items.map(i => ({ productId:i.productId, qty:i.qty, unit:i.unit })),
     'Reorder of ' + src.id);
   showToast('✓ Reordered as ' + o.id + ' — sent to ' + o.seller);
 }
@@ -7587,7 +7611,7 @@ function promoDueFor(o) {
   const due = [];
   promoMaterials.forEach(m => {
     if (m.condType === 'volume') {
-      const inThis = o.items.filter(i => sameWine(i.wine, m.wineName)).reduce((s, i) => s + i.qty, 0);
+      const inThis = o.items.filter(i => sameWine(i.productId, m.wineName)).reduce((s, i) => s + i.qty, 0);
       if (!inThis) return;
       if (m.orderMode === 'single') {
         if (inThis >= m.bottlesRequired) due.push({ m:m, why:'single order of ' + inThis + ' bottles' });
@@ -7598,7 +7622,7 @@ function promoDueFor(o) {
     } else if (m.condType === 'ordervalue') {
       if (orderGrand(o) >= m.orderValue) due.push({ m:m, why:'order value above ' + eur(m.orderValue) });
     } else if (m.condType === 'newlisting') {
-      if (o.items.some(i => sameWine(i.wine, m.wineName))) due.push({ m:m, why:'new listing of ' + m.wineName });
+      if (o.items.some(i => sameWine(i.productId, m.wineName))) due.push({ m:m, why:'new listing of ' + m.wineName });
     }
   });
   return due;
@@ -7609,13 +7633,13 @@ function dealFreeGoodsFor(o) {
   const out = [];
   exclusiveDeals.forEach(d => {
     const names = d.wineNames || [d.wineName];
-    const qty = o.items.filter(i => !i.free && names.indexOf(i.wine) !== -1).reduce((s, i) => s + i.qty, 0);
+    const qty = o.items.filter(i => !i.free && names.some(n => sameWine(n, i.productId))).reduce((s, i) => s + i.qty, 0);
     if (!qty) return;
     if (d.dealType === 'freegoods') {
       const parts = String(d.ratio).split(':').map(Number);
       const times = Math.floor(qty / parts[0]);
       if (times > 0) {
-        const already = o.items.filter(i => i.free && names.indexOf(i.wine) !== -1).reduce((s, i) => s + i.qty, 0);
+        const already = o.items.filter(i => i.free && names.some(n => sameWine(n, i.productId))).reduce((s, i) => s + i.qty, 0);
         out.push({ deal:d, names:names, free:times * parts[1], basis:qty, applied:already > 0 });
       }
     } else if (d.dealType === 'discount' && qty >= d.minQty) {
@@ -7629,9 +7653,11 @@ function applyFreeGoods(id, dealId) {
   const o = normalizeOrder(orders.find(x => x.id === id));
   const info = dealFreeGoodsFor(o).find(f => f.deal.id === dealId && f.free);
   if (!info) return;
-  const target = info.names[0];
-  o.items.push({ wine:target, winery:info.deal.winery, qty:info.free, unit:0, cost:wineUnitPrice[target] ? +(wineUnitPrice[target]*0.62).toFixed(2) : 0, discount:0, free:true });
-  logEvent(o, o.seller, 'Free goods applied: ' + info.free + ' × ' + target + ' (deal ' + info.deal.ratio + ')');
+  const target = wineByRef(info.names[0]);
+  if (!target) { showToast('✗ That deal names a wine no book carries'); return; }
+  const cost = wineUnitPrice[target.id] ? +(wineUnitPrice[target.id] * 0.62).toFixed(2) : 0;
+  o.items.push({ productId:target.id, qty:info.free, unit:0, cost:cost, discount:0, free:true });
+  logEvent(o, o.seller, 'Free goods applied: ' + info.free + ' × ' + target.name + ' (deal ' + info.deal.ratio + ')');
   renderOrderDetail(id);
   showToast('✓ ' + info.free + ' free bottles added to ' + o.id);
 }
@@ -7864,7 +7890,7 @@ function renderOrders(role) {
   const term = (document.getElementById(p + '-search').value || '').toLowerCase().trim();
   if (term) {
     list = list.filter(o => (o.id + ' ' + o.buyer + ' ' + o.seller + ' ' +
-      o.items.map(i => i.wine).join(' ')).toLowerCase().indexOf(term) !== -1);
+      o.items.map(lineName).join(' ')).toLowerCase().indexOf(term) !== -1);
   }
 
   document.getElementById(p + '-kpis').innerHTML = orderKpis(role).map(k =>
@@ -7978,7 +8004,7 @@ function renderOrderDetail(id) {
   /* ── line items ── */
   const lines = o.items.map((i, idx) =>
     '<div class="oli-row">' +
-      '<span class="oli-name">' + i.wine + (i.free ? ' <span class="oli-free">free</span>' : '') + '<em>' + i.winery + '</em></span>' +
+      '<span class="oli-name">' + lineName(i) + (i.free ? ' <span class="oli-free">free</span>' : '') + '<em>' + lineWinery(i) + '</em></span>' +
       '<span><input class="oli-in" type="number" min="1" value="' + i.qty + '"' + (editable ? '' : ' disabled') +
         ' onchange="setLineQty(\'' + id + '\',' + idx + ',this.value)"></span>' +
       '<span><input class="oli-in" type="number" step="0.01" min="0" value="' + i.unit.toFixed(2) + '"' + (editable ? '' : ' disabled') +
@@ -8112,20 +8138,24 @@ function renderOrderDetail(id) {
 
 /* ══ EDIT ACTIONS ════════════════════════════════════════════════ */
 function _o(id) { return normalizeOrder(orders.find(x => x.id === id)); }
-function setLineQty(id, idx, v) { const o = _o(id); o.items[idx].qty = Math.max(1, parseInt(v) || 1); logEvent(o, o.seller, 'Quantity changed on ' + o.items[idx].wine); renderOrderDetail(id); }
-function setLineUnit(id, idx, v) { const o = _o(id); o.items[idx].unit = Math.max(0, parseFloat(v) || 0); logEvent(o, o.seller, 'Unit price changed on ' + o.items[idx].wine); renderOrderDetail(id); }
+function setLineQty(id, idx, v) { const o = _o(id); o.items[idx].qty = Math.max(1, parseInt(v) || 1); logEvent(o, o.seller, 'Quantity changed on ' + lineName(o.items[idx])); renderOrderDetail(id); }
+function setLineUnit(id, idx, v) { const o = _o(id); o.items[idx].unit = Math.max(0, parseFloat(v) || 0); logEvent(o, o.seller, 'Unit price changed on ' + lineName(o.items[idx])); renderOrderDetail(id); }
 function setLineDiscount(id, idx, v) { const o = _o(id); o.items[idx].discount = Math.min(100, Math.max(0, parseFloat(v) || 0)); renderOrderDetail(id); }
-function removeLine(id, idx) { const o = _o(id); const n = o.items[idx].wine; if (o.items.length === 1) return showToast('An order needs at least one line.'); o.items.splice(idx, 1); logEvent(o, o.seller, 'Line removed: ' + n); renderOrderDetail(id); }
+function removeLine(id, idx) { const o = _o(id); const n = lineName(o.items[idx]); if (o.items.length === 1) return showToast('An order needs at least one line.'); o.items.splice(idx, 1); logEvent(o, o.seller, 'Line removed: ' + n); renderOrderDetail(id); }
 function addLine(id) {
   const o = _o(id);
-  const pool = (typeof currentWinePortfolio !== 'undefined' ? currentWinePortfolio : []).map(w => w.name)
-    .concat(Object.keys(wineUnitPrice)).filter((v, i, a) => v && a.indexOf(v) === i);
-  const name = prompt('Add wine to ' + o.id + ':\n\n' + pool.slice(0, 12).join('\n'), pool[0] || '');
+  /* The seller's own book, and nothing else. It used to offer the
+     price table's keys as well, which meant a wine outside the book
+     could be typed in and refused a line later — the guard answering
+     after the offer rather than before it. */
+  const book = portfolioOf(o.seller) || [];
+  const name = prompt('Add wine to ' + o.id + ':\n\n' + book.slice(0, 12).map(w => w.name).join('\n'),
+                      book.length ? book[0].name : '');
   if (!name) return;
   const line = orderItem(name.trim(), 12, o.seller);
   if (!line) return;
   o.items.push(line);
-  logEvent(o, o.seller, 'Line added: ' + name.trim());
+  logEvent(o, o.seller, 'Line added: ' + lineName(line));
   renderOrderDetail(id);
 }
 function setOrderDiscount(id, v) { const o = _o(id); o.discountPct = Math.min(100, Math.max(0, parseFloat(v) || 0)); logEvent(o, o.seller, 'Order discount set to ' + o.discountPct + '%'); renderOrderDetail(id); }
@@ -8179,7 +8209,7 @@ function openDocPreview(id, key, no) {
   document.getElementById('doc-modal-title').textContent = t.label + ' ' + doc.no;
 
   const rows = o.items.map(i =>
-    '<tr><td>' + i.wine + '<br><span style="color:#8a7a5f;font-size:0.68rem">' + i.winery + '</span></td>' +
+    '<tr><td>' + lineName(i) + '<br><span style="color:#8a7a5f;font-size:0.68rem">' + lineWinery(i) + '</span></td>' +
     '<td class="num">' + i.qty + '</td>' +
     '<td class="num">' + (i.free ? '0.00' : i.unit.toFixed(2)) + '</td>' +
     '<td class="num">' + (i.discount || 0) + '%</td>' +
@@ -8686,7 +8716,7 @@ function mayClose(show) {
 function orderedUpstream(show, productName) {
   if (typeof orders === 'undefined') return false;
   return orders.some(o => o.wineShowId === show.id && o.buyer === show.leadHost &&
-    o.items.some(i => sameWine(i.wine, productName)));
+    o.items.some(i => sameWine(i.productId, productName)));
 }
 function mayHoldBack(show, productName) {
   return !orderedUpstream(show, productName);
@@ -10130,7 +10160,7 @@ function closeShowOrderList(id) {
          partnership terms, so it is taken from the agreed list where
          one exists and left for the host to fill in where it does not
          — never invented (A1). */
-      items: lines.map(l => orderItemRaw(l.name, producer, l.qty, purchasePriceFor(l.name)))
+      items: lines.map(l => orderItemRaw((wineByRef(l.name) || {}).id, l.qty, purchasePriceFor(l.name)))
     };
     orders.unshift(normalizeOrder(o));
     logEvent(o, o.seller, 'Consolidated from ' + s.title + ': ' +
@@ -10181,7 +10211,7 @@ function releaseHeldWine(id, productName) {
     seller: producer, sellerType:'winery',
     stage:'pending', source:'wine_show_order', wineShowId: s.id,
     note:'Held back at ' + s.title + ', ordered after agreeing terms',
-    items: [ orderItemRaw(productName, producer, qty, purchasePriceFor(productName)) ]
+    items: [ orderItemRaw((wineByRef(productName) || {}).id, qty, purchasePriceFor(productName)) ]
   };
   orders.unshift(normalizeOrder(o));
   logEvent(o, o.seller, 'Ordered after the terms were agreed — held back at ' + s.title);
@@ -10209,9 +10239,9 @@ function withdrawInterest(id, productName) {
 /* `wineUnitPrice` is keyed WITHOUT the vintage; show products carry it.
    A14.4 is the warning about exactly this kind of join, so the trim is
    explicit rather than hopeful. */
-function purchasePriceFor(showProductName) {
-  const bare = showProductName.replace(/\s+(19|20)\d{2}$/, '');
-  return (typeof wineUnitPrice !== 'undefined' && wineUnitPrice[bare]) || 0;
+function purchasePriceFor(ref) {
+  const p = wineByRef(ref);
+  return (p && typeof wineUnitPrice !== 'undefined' && wineUnitPrice[p.id]) || 0;
 }
 function nextOrderId() {
   const nums = orders.map(o => parseInt(String(o.id).replace(/\D/g, ''), 10)).filter(n => !isNaN(n));
@@ -10237,7 +10267,7 @@ function placePreparedOrder(id) {
     seller: s.leadHost, sellerType:'distributor',
     stage:'pending', source:'wine_show_order', wineShowId: s.id,
     note:'Ordered at ' + s.title + ' — ' + orderDate(s.date),
-    items: prep.lines.map(l => orderItemRaw(l.name, l.producer, l.qty, l.unit))
+    items: prep.lines.map(l => orderItemRaw((wineByRef(l.name) || {}).id, l.qty, l.unit))
   };
   normalizeOrder(o);
   /* A14.7: preset, then left alone — it is a decision from here on. */

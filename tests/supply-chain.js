@@ -87,15 +87,29 @@ function chainReader(w) {
   w.eval('Object.keys(DISTRIBUTOR_PORTFOLIOS)').forEach(d => {
     books[d] = J('portfolioOf(' + JSON.stringify(d) + ')') || [];
   });
+  /* Every product row, re-derived here from the books the page
+     declares — the order lines name a key now, and a check that asked
+     wineByRef() would be asking the very function it stands over. */
+  const products = {};
+  ['partnerWinesPool', 'currentWinePortfolio', 'rCurrentWineList', 'tCurrentWineSelection']
+    .forEach(n => { try { J(n).forEach(r => { if (r.id && !products[r.id]) products[r.id] = r; }); } catch (e) {} });
+
   return {
     types,
     parts,
     books,
+    products,
+    product: ref => products[ref] || null,
+    /* A label for a finding. An opaque key buys stability; the price
+       is paid here, where somebody has to read the message. */
+    label: ref => (products[ref] ? products[ref].name + ' ' + products[ref].vintage : String(ref)),
     distributors: Object.keys(books),
     partnered: (a, b) => parts.some(p => (p.distributor === a && p.partner === b) ||
                                          (p.distributor === b && p.partner === a)),
-    carries: (dist, wine) => (books[dist] || []).some(x => x.name === wine),
-    producerOf: (dist, wine) => ((books[dist] || []).find(x => x.name === wine) || {}).winery
+    /* Takes a key or a name: the commercial records still name names
+       until pass 3c, and the order lines already name keys. */
+    carries: (dist, ref) => (books[dist] || []).some(x => x.name === ref || x.id === ref),
+    producerOf: (dist, ref) => ((books[dist] || []).find(x => x.name === ref || x.id === ref) || {}).winery
   };
 }
 
@@ -109,11 +123,12 @@ function distributorsOf(r, me) {
 }
 
 /* Every link, named, so a failure says WHICH one broke. */
-function chainFaults(r, dist, wine, buyer) {
+function chainFaults(r, dist, ref, buyer) {
   const out = [];
+  const wine = r.label(ref);
   if (buyer && !r.partnered(dist, buyer)) out.push('no partnership ' + dist + ' ↔ ' + buyer);
-  if (!r.carries(dist, wine)) return out.concat(dist + ' does not carry "' + wine + '"');
-  const prod = r.producerOf(dist, wine);
+  if (!r.carries(dist, ref)) return out.concat(dist + ' does not carry "' + wine + '"');
+  const prod = r.producerOf(dist, ref);
   if (!prod) out.push('"' + wine + '" names no producer in ' + dist + "'s book");
   else if (r.types[prod] !== 'winery') out.push('"' + wine + '" is credited to ' + prod + ', which is not a producer');
   else if (!r.partnered(dist, prod)) out.push('no partnership ' + prod + ' ↔ ' + dist + ' behind "' + wine + '"');
@@ -160,24 +175,41 @@ console.log('\n── every order line has the relation behind it that lets good
   const faults = [];
   orders.forEach(o => (o.items || []).forEach(i => {
     n++;
+    /* THE DRIFT CHECK THAT USED TO LIVE HERE IS GONE, and its removal
+       is the finding rather than a loosening. A line carried `wine`
+       and `winery` as strings, so it could name a producer the
+       seller's book disagreed with, and this file had to compare the
+       two answers. A line names a product now (invariant 2), so there
+       is only one answer and the contradiction is unrepresentable.
+       What replaces it is the assertion below that the copy stays
+       gone — if the strings come back, so does the drift. */
+    const p = R.product(i.productId);
+    if (!p) {
+      faults.push(o.id + ': line references "' + i.productId + '", which is in no book');
+      return;
+    }
     if (o.sellerType === 'winery') {
-      /* Producer → distributor: the wine must be the seller's own and
-         the two must be partners. */
-      if (i.winery && i.winery !== o.seller)
-        faults.push(o.id + ': ' + o.seller + ' sells "' + i.wine + '", credited to ' + i.winery);
+      if (p.winery !== o.seller)
+        faults.push(o.id + ': ' + o.seller + ' sells "' + R.label(i.productId) + '", which is ' + p.winery + "'s");
       if (!R.partnered(o.seller, o.buyer))
         faults.push(o.id + ': no partnership ' + o.seller + ' ↔ ' + o.buyer);
       return;
     }
     if (o.sellerType !== 'distributor') return;
-    chainFaults(R, o.seller, i.wine, o.buyer).forEach(f => faults.push(o.id + ': ' + f));
-    /* And the line's own producer field must agree with the book —
-       two answers to "whose wine is this" is the drift this repo has
-       paid for twice. */
-    const inBook = R.producerOf(o.seller, i.wine);
-    if (inBook && i.winery && i.winery !== inBook)
-      faults.push(o.id + ': the line says ' + i.winery + ', the book says ' + inBook + ' for "' + i.wine + '"');
+    chainFaults(R, o.seller, i.productId, o.buyer).forEach(f => faults.push(o.id + ': ' + f));
   }));
+
+  /* The copy is gone and has to stay gone. */
+  const copies = [];
+  orders.forEach(o => (o.items || []).forEach(i => {
+    if ('wine' in i)   copies.push(o.id + '.wine');
+    if ('winery' in i) copies.push(o.id + '.winery');
+  }));
+  if (copies.length)
+    bad(copies.length + ' order line field(s) copy product content back onto the line: ' +
+        copies.slice(0, 4).join(' · ') + ' — invariant 2, and the producer drift comes back with it');
+  else
+    ok('no order line carries a product name or a producer — both are read through the key');
   checked += n; surfaces.push('order lines:' + n);
   if (!n) bad('no order lines found at all — the check is broken, not the data');
   else if (faults.length) bad(faults.length + ' of ' + n + ' order lines have no chain behind them: ' + faults.slice(0, 4).join(' · '));
@@ -298,7 +330,7 @@ console.log('\n── counter-check: the breaks this file was written for');
         const r = chainReader(g);
         const orders = JSON.parse(g.eval('JSON.stringify(orders)'));
         return orders.some(o => o.sellerType === 'distributor' &&
-          (o.items || []).some(i => chainFaults(r, o.seller, i.wine, o.buyer).length));
+          (o.items || []).some(i => chainFaults(r, o.seller, i.productId, o.buyer).length));
       },
       says: 'section 2 catches 156 bottles sold with no relation behind them' },
 

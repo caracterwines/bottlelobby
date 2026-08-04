@@ -126,7 +126,18 @@ const prodSel = d.getElementById('if-producer');
 if (![...prodSel.options].some(o => o.value === 'Cantina Rossi')) bad('Cantina Rossi not offered');
 prodSel.value = 'Cantina Rossi'; w.onInviteProducerChange();
 const wineOpts = [...d.getElementById('if-product').options].map(o => o.value);
-if (wineOpts.some(v => v && !v.match(/Catarratto|Grillo|Nero|Primitivo|Rosato|Rosso|Trinacria|Baglio|Costa/))) bad('foreign wine offered: ' + wineOpts);
+/* Derived, not a hand-written whitelist. The list used to name nine
+   of Cantina Rossi's wines, so backfilling a tenth (Terra Rossa, A3)
+   read as a foreign wine being offered — a check that has to be
+   edited whenever the data grows is measuring the editor. */
+/* w.eval, not w.partnerWinesPool: a top-level `const` in a classic
+   script is not a property of the window, only `function` is. */
+const rossiWines = JSON.parse(w.eval(
+  "JSON.stringify(partnerWinesPool.filter(function (x) { return x.winery === 'Cantina Rossi'; })" +
+  ".map(function (x) { return x.name + ' ' + x.vintage; }))"));
+const foreign = wineOpts.filter(v => v && rossiWines.indexOf(v) === -1);
+if (!rossiWines.length) bad('Cantina Rossi has no wines to offer — this check examined nothing');
+else if (foreign.length) bad('foreign wine offered: ' + foreign.join(', '));
 else ok("wine picker holds only Cantina Rossi's own wines");
 d.getElementById('if-product').value = 'Primitivo Riserva 2020';
 w.saveInvite();

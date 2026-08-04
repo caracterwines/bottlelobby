@@ -899,6 +899,16 @@ examined nothing cannot be green.
 > `BLStore.fingerprints()` is likewise a cached value computed once at
 > `register()`, so editing the live arrays and re-reading it measures the cache,
 > not the shape function.
+>
+> ⚠️ **How to measure a snapshot at all, and it is the same shape as the
+> `transferSize` rule in C7 — a probe that reloads measures its own
+> interference.** `BLStore.start()` installs a `beforeunload` listener that calls
+> `save()`, so a `location.reload()` writes the LIVE state over the snapshot you
+> just injected, *before* the page goes away. Both readings taken that way said
+> "discarded" and were reading their own write. **Write the snapshot from a page
+> where the store does not run** — `index.html` — then navigate to the dashboard.
+> Done that way the measurement holds: 20 id-less rows reach the live state.
+> Confirmed in the browser, 4 August 2026.
 
 **One resolver, and it is widened before anything moves (pass 2).** `wineByRef(ref,
 book)` answers a key, a record, a `{producer, name}` pair or a bare name;
@@ -923,6 +933,35 @@ a failure.
 > so no answer on any surface moves. It is named here rather than left to be
 > discovered, because it is the first place where the key would have corrected
 > something, and passes 3a–3c turn the rest of that class from latent into real.
+
+**The order side names products (pass 3a).** `order_items` carry `product_id`,
+`qty` and `unit_price` and nothing else about the product; `wine` and `winery`
+are gone from the line. That is invariant 2 made structural rather than checked:
+a line used to carry a producer as a string, so it could credit one the seller's
+book disagreed with — the break that started this chain — and
+`tests/supply-chain.js` had to compare the two answers. **There is one answer
+now, so the contradiction cannot be written down**, and that check was deleted
+rather than kept; what stands in its place asserts the copy stays gone. Trade
+prices are keyed by product for the same reason.
+
+> **Terra Rossa, and it is the first application of A3's 4 August rule.** The
+> price table carried a trade price for a wine that existed on its own article
+> page, on Cantina Rossi's public profile, on two variety pages and in the Wine
+> Guide — and in no catalogue. The record was added, not the price removed.
+> Its `at` is fixture authorship and it is **bounded, not chosen**: the Wine
+> Guide names Enoteca Milano as its distributor and that partnership begins
+> 2026-05-11, so under C7 the wine cannot be younger than the earliest fact that
+> depends on it. Placed at 2025-07-22, inside the 2025 block, because that is the
+> class it belongs to — publicly listed all along, unlike the two 2026 rows that
+> are dated late on purpose to demonstrate A8. Measured after: notification
+> counts unchanged at 13 / 27 / 18 / 13, which is the point — a wine that has
+> been on the public guide for a year is news to nobody.
+
+> **A sixth book, found while doing this and not touched here.**
+> `bottle-lobby-wine-guide.html` carries **40 product rows with slug-shaped ids
+> of their own**, 15 of which no dashboard book knows — the same 15 orphaned
+> article pages. It belongs to the "complete the catalogue" pass, together with
+> Château Belrieu's six wines that exist on the site and in no catalogue at all.
 
 ### A15.3 Components — the generalisation of grape variety
 

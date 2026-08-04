@@ -125,6 +125,11 @@ const ROWS = scan.collections.flatMap(c => c.rows.map(r => ({ ...r, from: c.name
    testing its own patch; what has to be shown is that THIS FILE'S
    sections go red, in the wording they would really print. */
 const wine = r => r.name + ' ' + r.vintage + ' (' + r.winery + ')';
+/* Read a global out of a window, whichever window. Top-level `let` and
+   `const` are not window properties in a classic script, so this is
+   eval and not property access. */
+const J2 = (win, name) => JSON.parse(win.eval('JSON.stringify(' + name + ')'));
+const J = name => J2(w, name);
 const CHECKS = {
   'no id': rows => rows.filter(r => typeof r.id !== 'string' || !r.id)
     .map(r => wine(r) + ' carries no id'),
@@ -347,6 +352,78 @@ console.log('\n── the resolver\'s counter-checks');
       else bad('NOT caught: ' + c.what + ' — the scan in section 6 does not see it');
       return;
     }
+    if (c.ask(win)) bad('NOT caught: ' + c.what + ' — ' + c.says + ', and nothing said so');
+    else ok('caught: ' + c.what);
+  });
+}
+
+/* ── 6c. The order side names keys (pass 3a) ─────────────────────
+   `order_items.product_id` is a reference and never a copy
+   (invariant 2). Until this pass a line carried `wine` and `winery`
+   as strings, which is how an order came to credit a producer the
+   seller's book disagreed with — the break that started this chain.
+   With a key there is one answer, so the contradiction cannot be
+   written down at all. */
+console.log('\n── order lines and prices name products, not strings');
+{
+  const lines = J('orders').flatMap(o => (o.items || []).map(i => ({ o: o.id, i })));
+  const noKey  = lines.filter(x => !x.i.productId);
+  const unres  = lines.filter(x => x.i.productId && !ROWS.some(r => r.id === x.i.productId));
+  const copies = lines.filter(x => 'wine' in x.i || 'winery' in x.i);
+
+  if (!lines.length) bad('no order lines at all — this section examined nothing');
+  else if (noKey.length) bad(noKey.length + ' of ' + lines.length + ' order line(s) name no product: ' +
+      noKey.map(x => x.o).join(' · '));
+  else if (unres.length) bad(unres.length + ' order line(s) name a key no book carries: ' +
+      unres.map(x => x.o + ' → ' + x.i.productId).join(' · '));
+  else if (copies.length) bad(copies.length + ' order line(s) copy product content back onto the line: ' +
+      copies.map(x => x.o).join(' · ') + ' — invariant 2, and the producer drift comes back with it');
+  else ok(lines.length + ' order lines across ' + J('orders').length +
+      ' orders, every one naming a product that exists and none carrying a copy of it');
+
+  const prices = J('wineUnitPrice');
+  const keys = Object.keys(prices);
+  const byName = keys.filter(k => !ID_SHAPE.test(k));
+  const dangling = keys.filter(k => ID_SHAPE.test(k) && !ROWS.some(r => r.id === k));
+  if (!keys.length) bad('the price table is empty — this check examined nothing');
+  else if (byName.length) bad(byName.length + ' price entr(ies) are still keyed by name: ' + byName.join(' · '));
+  else if (dangling.length) bad(dangling.length + ' price key(s) name no product: ' + dangling.join(' · '));
+  else ok(keys.length + ' trade prices, every one keyed by a product that exists');
+}
+
+/* ── 6d. The counter-checks for the order side ───────────────── */
+console.log('\n── the order side\'s counter-checks');
+{
+  const orderCases = [
+    { what: 'an order line goes back to naming a string',
+      from: "items:[ orderItemRaw('PRD-1025',120,12.60) ] },",
+      to:   "items:[ { wine:'Merlot — Bordeaux Supérieur', winery:'Château Belrieu', qty:120, unit:12.60 } ] },",
+      ask:  win => J2(win, 'orders').flatMap(o => o.items || []).every(i => i.productId && !('wine' in i)),
+      says: 'a line with no key and a copied producer' },
+
+    { what: 'a line keeps the producer as a string beside the key',
+      from: "function orderItemRaw(productId, qty, unit) { return { productId, qty, unit }; }",
+      to:   "function orderItemRaw(productId, qty, unit) { return { productId, qty, unit, winery:(wineByRef(productId)||{}).winery }; }",
+      ask:  win => J2(win, 'orders').flatMap(o => o.items || []).every(i => !('winery' in i)),
+      says: 'the copy is back, and with it the two answers to "whose wine is this"' },
+
+    { what: 'a price key goes back to a name',
+      from: "'PRD-1015': 17.20,   /* Pouilly-Fumé */",
+      to:   "'Pouilly-Fumé': 17.20,",
+      ask:  win => Object.keys(J2(win, 'wineUnitPrice')).every(k => ID_SHAPE.test(k)),
+      says: 'a price nobody can reach from a line that names a key' },
+
+    { what: 'a price key names a product that does not exist',
+      from: "'PRD-1027': 12.10    /* Terra Rossa — the entry that had no record until A3 */",
+      to:   "'PRD-9999': 12.10",
+      ask:  win => Object.keys(J2(win, 'wineUnitPrice'))
+              .every(k => harvest(win).collections.flatMap(c => c.rows).some(r => r.id === k)),
+      says: 'the very state A3 was invoked to repair, back again' }
+  ];
+
+  orderCases.forEach(c => {
+    const win = build({ from: c.from, to: c.to });
+    if (!win) return bad('"' + c.what + '" never applied — the check below proves nothing');
     if (c.ask(win)) bad('NOT caught: ' + c.what + ' — ' + c.says + ', and nothing said so');
     else ok('caught: ' + c.what);
   });
