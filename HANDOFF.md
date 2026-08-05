@@ -179,8 +179,10 @@ Danach in dieser Reihenfolge:
     niemand sehen darf, kann niemand kaufen.**
   A17.9 traegt seit dem 05.08. einen Satz, der die zwei Ebenen ausdruecklich
   trennt, damit die Fehllesart nicht noch einmal moeglich ist.
-  **Offen bleibt nur eine echte Frage, und sie ist neu:** die Reichweite —
-  siehe **A17.19**.
+  **Offen bleibt nur eine echte Frage, und sie ist neu:** die Reichweite eines
+  fertigen Own-Label-Produkts — wer es SIEHT, einstellbar durch den Distributor,
+  gegen wer HANDELN darf, festgelegt durch das Projekt. Steht als „Still open"
+  in **A17.13 Visibility**.
 - **Die drei Katalogkopien auf den Profilseiten (D34) — eigener Durchgang,
   haengt am Punkt darueber.** Gemessen 05.08.:
   `bottle-lobby-restaurant-profile.html` und `bottle-lobby-retail-profile.html`

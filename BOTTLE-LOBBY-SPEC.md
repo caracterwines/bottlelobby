@@ -3127,6 +3127,40 @@ Lobby"** and approvals advance through controlled fixture actions. The `reviews`
 row still names Bottle Lobby as the actor — the model does not pretend the acts
 are the parties' own.
 
+#### Still open — the reach of a live own-label product
+
+**Serge's idea, undecided.** Once an own-label product is live, its distributor
+may want to say **who gets to see it** — the same kind of setting a Wine Show
+already carries in **A16.6**, anonymised before `published` and full after it.
+Candidate levels, none of them settled:
+
+    everyone · platform members only · certain roles only ·
+    active partnerships only · this distributor's own network only
+
+**The line that must not fall, and it is the whole point of the question:**
+
+| | decides | who sets it |
+|---|---|---|
+| **Reach** | **who SEES it** | the distributor, freely, changeable |
+| **Agreement** | **who may ACT on it** | the project (A17.9), fixed for the term |
+
+**Reach can never widen an action right.** Even at reach *everyone*, another
+distributor may not order the product or take it into a book — it would see a
+card with no order button. That is the setting doing its job, not a limitation
+of it: A17.9's exclusivity is an agreement between two parties, and a display
+control cannot vary it. Only the agreement can, and only by being varied or
+ended with a Bottle Lobby approval. The last row of the table above is already
+written in those terms.
+
+> **Why this is open rather than assumed.** The obvious default — reach
+> *everyone*, exactly as today — is also the one that makes the platform work:
+> Hawesko sells these wines and a restaurant has to be able to find them
+> (A17.9). A narrower reach is a **commercial** wish (a distributor who does not
+> want competitors reading their own-label range), not a model requirement, and
+> nothing in A17 needs it today. **Decide it before building it**: a reach
+> setting added later is a field; a reach setting assumed now would silently
+> become a fifth meaning of a word that already had four (A17.0a, D36).
+
 ### A17.14 Fixtures and migration
 
 The existing `ownLabel:true` on **PRD-1020**, **PRD-1021**, **PRD-1022** becomes
@@ -3252,39 +3286,6 @@ Two consequences inside this section:
 - **Both routes carry it.** A relabel references the producer's existing line and
   its orders name the vintage of that line. A bespoke own label **is its own line**
   and may itself run several vintages or production batches during the term.
-
-### A17.19 The reach question — OPEN
-
-**Serge's idea, not yet decided.** Once an own-label product is live, its
-distributor may want to say **who gets to see it** — the same kind of setting a
-Wine Show already carries in **A16.6**, where a show is anonymised before
-`published` and full after it. Candidate levels, none of them settled:
-
-    everyone · platform members only · certain roles only ·
-    active partnerships only · this distributor's own network only
-
-**The line that must not fall, and it is the whole point of the question:**
-
-| | decides | who sets it |
-|---|---|---|
-| **Reach** | **who SEES it** | the distributor, freely, changeable |
-| **Agreement** | **who may ACT on it** | the project (A17.9), fixed for the term |
-
-**Reach can never widen an action right.** Even at reach *everyone*, another
-distributor may not order the product or take it into a book — it would see a
-card with no order button. That is not a limitation of the setting, it is the
-setting doing its job: A17.9's exclusivity is an agreement between two parties
-and a display control cannot vary it. Only the agreement can, and only by being
-varied or ended with a Bottle Lobby approval.
-
-> **Why this is open rather than assumed.** The obvious default — reach
-> *everyone*, exactly as today — is also the one that makes the platform work:
-> Hawesko sells these wines and a restaurant has to be able to find them
-> (A17.9). A narrower reach is a **commercial** wish (a distributor who does not
-> want competitors reading their own-label range), not a model requirement, and
-> nothing in A17 needs it today. **Decide it before building it**: a reach
-> setting added later is a field; a reach setting assumed now would silently
-> become the fourth meaning of a word that already had four (A17.0a, D36).
 
 ---
 
