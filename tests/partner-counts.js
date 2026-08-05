@@ -270,8 +270,10 @@ console.log('\n── counter-check: the old mistakes must not be able to return
       says: 'section 2 catches every producer being credited with the whole portfolio' },
 
     { name: 'the four cards are left standing after a wine is pulled in',
-      from: '  renderWinePortfolioD();\n  refreshPortfolioCounts();\n  closePullWineModal();',
-      to:   '  renderWinePortfolioD();\n  closePullWineModal();',
+      /* "My Labels" was wired in between these two lines in commit 3,
+         so the mutation names the whole block it is removing from. */
+      from: '  renderWinePortfolioD();\n  renderOwnLabelsD();\n  refreshPortfolioCounts();\n  closePullWineModal();',
+      to:   '  renderWinePortfolioD();\n  renderOwnLabelsD();\n  closePullWineModal();',
       check: g => {
         const before = cardFor(g, 'rpn-active-list', 'Hawesko GmbH').meta;
         g.eval('awSelectedWine = partnerWinesPool.find(function (x) { return x.name === "Grillo Sicilia DOC"; });');

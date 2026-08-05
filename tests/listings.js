@@ -253,8 +253,12 @@ console.log('\n── own label has exactly one reading');
   /* 6a. Nothing reads the bridge field except the one function. */
   const reads = CODE
     .filter(x => /legacyOwnLabel/.test(x.line))
-    .filter(x => !/legacyOwnLabel:\s*(true|false|!!)/.test(x.line));  /* the fixtures and the writer's default */
-  const outside = reads.filter(x => !/return !!\(listing && listing\.legacyOwnLabel\)/.test(x.line));
+    /* The fixture rows and addListing()'s default are DATA, not
+       readings. The bridge is three-valued since commit 3 — 'active',
+       'pending' or false — because "My Labels" listed a wine as Pending
+       for months and a boolean could only have called it licensed. */
+    .filter(x => !/legacyOwnLabel:\s*('active'|'pending'|true|false|!!)/.test(x.line));
+  const outside = reads.filter(x => !/const v = listing && listing\.legacyOwnLabel;/.test(x.line));
   if (outside.length) bad(outside.length + ' place(s) read `legacyOwnLabel` outside listingOwnLabelStatus(): ' +
     outside.map(x => 'line ' + x.n).join(' · ') + ' — the A17 pass has to change one function, not hunt for callers');
   else ok('`legacyOwnLabel` is read in exactly one function; every surface asks listingOwnLabelStatus()');
@@ -324,6 +328,61 @@ console.log('\n── the surfaces read the relation');
   });
 }
 
+/* ── 7b. "My Labels" is drawn from the data, not typed ──────────── */
+console.log('\n── My Labels renders what the records say');
+{
+  const win = build();
+  win.eval('renderOwnLabelsD()');
+  const el = win.document.getElementById('dlabels-list');
+  const count = win.document.getElementById('dlabels-count');
+  const expected = JSON.parse(win.eval('JSON.stringify(ownLabelListingsOf("Hawesko GmbH"))'));
+
+  if (!el) bad('the My Labels list has no container');
+  else {
+    const rendered = el.querySelectorAll('.wine-edit-entry').length;
+    if (!rendered) bad('the section rendered no rows at all');
+    else if (rendered !== expected.length)
+      bad(rendered + ' rows rendered for ' + expected.length + ' own-label listings');
+    else ok(rendered + ' rows, one per own-label listing');
+
+    /* THE COUNTER IS COUNTED. It read "(6)" in the markup beside rows
+       the data agreed with three of. */
+    if (!count) bad('the counter has no element — it is still typed into the heading');
+    else if (count.textContent !== '(' + expected.length + ')')
+      bad('the counter says ' + JSON.stringify(count.textContent) + ' for ' + expected.length + ' rows');
+    else ok('the counter is computed: ' + count.textContent + ', and moves with the rows');
+
+    /* The stage has to survive. A boolean bridge would have had to call
+       the Riesling licensed, and it is not. */
+    const pending = expected.filter(l => l.legacyOwnLabel === 'pending');
+    const html = el.innerHTML;
+    if (!pending.length) bad('no listing is pending — the two-stage case is not demonstrated at all');
+    else if (html.indexOf('Pending') === -1) bad('a pending own label is not shown as pending');
+    else if (!win.eval('isOwnLabel("Hawesko GmbH",' + JSON.stringify(pending[0].productId) + ') === false'))
+      bad('a pending own label is badged Own-Label in the portfolio — that claims a licence nobody signed');
+    else ok(pending.length + ' pending own label(s) show as Pending here and as Standard in the portfolio');
+  }
+
+  /* No hand-typed wine name may be left in this section's markup. */
+  const start = SRC.indexOf('id="dsection-labels"');
+  const section = SRC.slice(start, SRC.indexOf('<!-- ACTIVE PARTNERSHIPS', start));
+  const names = JSON.parse(win.eval('JSON.stringify(listings.map(l => wineName(l.productId)))'));
+  const typed = [...new Set(names)].filter(n => n && section.indexOf(n) !== -1);
+  if (start === -1 || section.length < 100) bad('the My Labels section was not found in the source');
+  else if (typed.length) bad(typed.length + ' wine name(s) are still typed into the section markup: ' + typed.join(' · '));
+  else ok('not one wine name appears in the section markup; every row comes from a record');
+
+  /* And the renderer asks the one reader, never the bridge field. */
+  const fnStart = SRC.indexOf('function renderOwnLabelsD(');
+  const body = SRC.slice(fnStart, SRC.indexOf('\nrenderWinePortfolioD();', fnStart));
+  if (fnStart === -1 || body.length < 200) bad('renderOwnLabelsD() was not found — nothing was measured');
+  else if (/legacyOwnLabel/.test(body))
+    bad('the renderer reads `legacyOwnLabel` directly — the A17 pass would have to change it too');
+  else if (!/listingOwnLabelStatus\(/.test(body))
+    bad('the renderer does not go through listingOwnLabelStatus()');
+  else ok('renderOwnLabelsD() asks listingOwnLabelStatus() and never names the bridge field');
+}
+
 /* ── 8. Taking a wine on and off carries the row with it ────────── */
 console.log('\n── the relation is created and removed with the wine');
 {
@@ -383,13 +442,13 @@ console.log('\n── the counter-checks');
       says: 'two answers to one relation, and no way to say which is right' },
 
     { what: 'the own-label reading gains a second road',
-      from: "  return !!(listing && listing.legacyOwnLabel);",
-      to:   "  return !!(listing && (listing.legacyOwnLabel || listing.ownLabelProjectId));",
+      from: "  const v = listing && listing.legacyOwnLabel;",
+      to:   "  const v = (listing && listing.legacyOwnLabel) || (listing && listing.ownLabelProjectId && 'active');",
       ask:  win => {
         const src = fs.readFileSync(path.join(__dirname, '..', 'bottle-lobby-dashboard.html'), 'utf8')
-          .replace("  return !!(listing && listing.legacyOwnLabel);",
-                   "  return !!(listing && (listing.legacyOwnLabel || listing.ownLabelProjectId));");
-        return !/legacyOwnLabel\s*\|\||\|\|\s*listing\.ownLabelProjectId/.test(src);
+          .replace("  const v = listing && listing.legacyOwnLabel;",
+                   "  const v = (listing && listing.legacyOwnLabel) || (listing && listing.ownLabelProjectId && 'active');");
+        return !/ownLabelProjectId && 'active'/.test(src);
       },
       says: 'exactly the lasting fallback A17 forbids — a listing counting as own-label either way' },
 
@@ -407,16 +466,16 @@ console.log('\n── the counter-checks');
        much would report "read in exactly one function" for a source
        full of reads. This puts a real one in, in code. */
     { what: 'a second place reads the bridge field directly',
-      from: "function isOwnLabel(holder, ref) { return listingOwnLabelStatus(listingOf(holder, ref)); }",
-      to:   "function isOwnLabel(holder, ref) { const l = listingOf(holder, ref); return !!(l && l.legacyOwnLabel); }",
+      from: "function isOwnLabel(holder, ref) { return listingOwnLabelStatus(listingOf(holder, ref)) === 'active'; }",
+      to:   "function isOwnLabel(holder, ref) { const l = listingOf(holder, ref); return (l && l.legacyOwnLabel) === 'active'; }",
       ask:  win => {
         const src = fs.readFileSync(path.join(__dirname, '..', 'bottle-lobby-dashboard.html'), 'utf8')
-          .replace("function isOwnLabel(holder, ref) { return listingOwnLabelStatus(listingOf(holder, ref)); }",
-                   "function isOwnLabel(holder, ref) { const l = listingOf(holder, ref); return !!(l && l.legacyOwnLabel); }");
+          .replace("function isOwnLabel(holder, ref) { return listingOwnLabelStatus(listingOf(holder, ref)) === 'active'; }",
+                   "function isOwnLabel(holder, ref) { const l = listingOf(holder, ref); return (l && l.legacyOwnLabel) === 'active'; }");
         return codeLines(src)
           .filter(x => /legacyOwnLabel/.test(x.line))
-          .filter(x => !/legacyOwnLabel:\s*(true|false|!!)/.test(x.line))
-          .every(x => /return !!\(listing && listing\.legacyOwnLabel\)/.test(x.line));
+          .filter(x => !/legacyOwnLabel:\s*('active'|'pending'|true|false|!!)/.test(x.line))
+          .every(x => /const v = listing && listing\.legacyOwnLabel;/.test(x.line));
       },
       says: 'a caller the A17 pass would have to hunt for — and proof the comment-blanking scan still sees code' },
 

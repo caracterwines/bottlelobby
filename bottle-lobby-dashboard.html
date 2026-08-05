@@ -1232,7 +1232,7 @@ body {
     <div class="nav-section">
       <div class="nav-section-label">My Portfolio</div>
       <div class="nav-item" id="dnav-wines" onclick="showDistributorView('profile','wines')" style="cursor:pointer"><span class="nav-icon">◈</span> My Wine Portfolio</div>
-      <div class="nav-item" id="dnav-partners" onclick="showDistributorView('profile','partners')" style="cursor:pointer"><span class="nav-icon">❖</span> My Labels</div>
+      <div class="nav-item" id="dnav-labels" onclick="showDistributorView('profile','labels')" style="cursor:pointer"><span class="nav-icon">❖</span> My Labels</div>
       <div class="nav-item" id="dnav-promo" onclick="showDistributorView('profile','promo')" style="cursor:pointer"><span class="nav-icon">◁</span> My Promo Materials</div>
       <div class="nav-item" id="dnav-offers" onclick="showDistributorView('profile','offers')" style="cursor:pointer"><span class="nav-icon">✦</span> My Offers</div>
       <div class="nav-item" id="dnav-deals" onclick="showDistributorView('profile','deals')" style="cursor:pointer"><span class="nav-icon">%</span> My Deals</div>
@@ -2028,7 +2028,7 @@ With an annual production capacity of over 1.2 million bottles, Cantina Rossi is
           <div class="widget">
             <div class="widget-header">
               <span class="widget-title">Own-Label Portfolio</span>
-              <button class="widget-action" onclick="showDistributorView('profile','partners')">Manage →</button>
+              <button class="widget-action" onclick="showDistributorView('profile','labels')">Manage →</button>
             </div>
             <div class="widget-body">
               <table class="data-table">
@@ -2328,55 +2328,19 @@ With an annual production capacity of over 1.2 million bottles, Cantina Rossi is
           </div>
 
           <!-- WINERY PARTNERS -->
-          <div class="profile-section" id="dsection-partners">
+          <div class="profile-section" id="dsection-labels">
             <div class="profile-section-header">
-              <div class="profile-section-title">My Labels <span class="profile-section-count">(6)</span></div>
+              <div class="profile-section-title">My Labels <span class="profile-section-count" id="dlabels-count"></span></div>
             </div>
             <div class="edit-sub" style="margin-top:-0.8rem">The wines you've co-developed and exclusively licensed with a winery partner — Bottle&nbsp;Lobby's own-label process at the heart of the platform. Purchased in volume, labeled for Hawesko, and unavailable to competing distributors.</div>
-            <div class="wine-edit-list" id="dlabels-list">
-              <div class="wine-edit-entry">
-                <div class="wine-edit-dot"></div>
-                <div class="wine-edit-name">Sauvignon Blanc — Sancerre<div style="font-size:0.68rem;color:var(--dim);margin-top:0.2rem">Henri Dubois Domaine · 4,200 btl/mo</div></div>
-                <div class="wine-edit-origin">Sancerre AOC, Loire Valley</div>
-                <div class="wine-edit-status"><span class="profile-badge badge-own-label" style="font-size:0.55rem">Active</span></div>
-                <div class="wine-edit-actions"><a class="icon-btn" href="bottle-lobby-wine-sauvignon-blanc-sancerre.html" target="_blank">View</a></div>
-              </div>
-              <div class="wine-edit-entry">
-                <div class="wine-edit-dot"></div>
-                <div class="wine-edit-name">Chardonnay — Chablis Premier Cru<div style="font-size:0.68rem;color:var(--dim);margin-top:0.2rem">Domaine Lefèvre · 3,800 btl/mo</div></div>
-                <div class="wine-edit-origin">Chablis Premier Cru AOC, Burgundy</div>
-                <div class="wine-edit-status"><span class="profile-badge badge-own-label" style="font-size:0.55rem">Active</span></div>
-                <div class="wine-edit-actions"><a class="icon-btn" href="bottle-lobby-wine-chardonnay-chablis-premier-cru.html" target="_blank">View</a></div>
-              </div>
-              <div class="wine-edit-entry">
-                <div class="wine-edit-dot"></div>
-                <div class="wine-edit-name">Primitivo Sicilia IGT<div style="font-size:0.68rem;color:var(--dim);margin-top:0.2rem">Cantina Rossi · 2,900 btl/mo</div></div>
-                <div class="wine-edit-origin">Alcamo DOC, Sicily</div>
-                <div class="wine-edit-status"><span class="profile-badge badge-own-label" style="font-size:0.55rem">Active</span></div>
-                <div class="wine-edit-actions"><a class="icon-btn" href="bottle-lobby-wine-primitivo-sicilia-igt.html" target="_blank">View</a></div>
-              </div>
-              <div class="wine-edit-entry">
-                <div class="wine-edit-dot"></div>
-                <div class="wine-edit-name">Tempranillo — Rioja Crianza<div style="font-size:0.68rem;color:var(--dim);margin-top:0.2rem">Bodegas Ruiz · 2,100 btl/mo</div></div>
-                <div class="wine-edit-origin">Rioja DOCa (Crianza), Rioja Alta</div>
-                <div class="wine-edit-status"><span class="profile-badge badge-own-label" style="font-size:0.55rem">Active</span></div>
-                <div class="wine-edit-actions"><a class="icon-btn" href="bottle-lobby-wine-tempranillo-rioja-crianza.html" target="_blank">View</a></div>
-              </div>
-              <div class="wine-edit-entry">
-                <div class="wine-edit-dot" style="background:var(--dim)"></div>
-                <div class="wine-edit-name">Riesling Spätlese — Mosel<div style="font-size:0.68rem;color:var(--dim);margin-top:0.2rem">Weingut Schmitt · 1,400 btl/mo</div></div>
-                <div class="wine-edit-origin">Mosel Spätlese, Germany</div>
-                <div class="wine-edit-status"><span class="profile-badge" style="font-size:0.55rem;background:rgba(184,151,90,0.1);color:var(--gold)">Pending</span></div>
-                <div class="wine-edit-actions"><a class="icon-btn" href="bottle-lobby-wine-riesling-spatlese-mosel.html" target="_blank">View</a></div>
-              </div>
-              <div class="wine-edit-entry">
-                <div class="wine-edit-dot"></div>
-                <div class="wine-edit-name">Merlot — Bordeaux Supérieur<div style="font-size:0.68rem;color:var(--dim);margin-top:0.2rem">Château Belrieu · 2,400 btl/mo</div></div>
-                <div class="wine-edit-origin">Bordeaux Supérieur AOC, France</div>
-                <div class="wine-edit-status"><span class="profile-badge badge-own-label" style="font-size:0.55rem">Active</span></div>
-                <div class="wine-edit-actions"><a class="icon-btn" href="bottle-lobby-wine-merlot-bordeaux-superieur.html" target="_blank">View</a></div>
-              </div>
-            </div>
+            <!-- Rendered by renderOwnLabelsD() from `listings`. Six wines
+                 were typed in here by hand until 5 Aug 2026, each with its
+                 producer, origin and monthly volume spelled out beside it —
+                 a second copy of facts the catalogue and the listing own.
+                 Three of the six claimed an exclusive licence that stood in
+                 no record anywhere, and the counter said "(6)" the same way
+                 it said everything else: by being typed. -->
+            <div class="wine-edit-list" id="dlabels-list"></div>
             <button class="add-btn" onclick="showToast('✓ Own-Label negotiations are started from a wine in your Wine Portfolio — mark it Own-Label there.')">+ Start a New Own-Label</button>
           </div>
 
@@ -4664,20 +4628,20 @@ renderPressList();
    group as the parent route segment.
 ════════════════════════════════════════════════════════════════════ */
 const D_SECTION_EL = {
-  basics:'dsection-basics', wines:'dsection-wines', partners:'dsection-partners',
+  basics:'dsection-basics', wines:'dsection-wines', labels:'dsection-labels',
   network:'dsection-active-partnerships', requests:'dsection-requests',
   promo:'dsection-promo', offers:'dsection-offers', deals:'dsection-deals',
   opportunities:'dsection-opportunities', winestars:'dsection-winestars', fans:'dsection-fans'
 };
 const D_NAV_EL = {
-  basics:'dnav-profile', wines:'dnav-wines', partners:'dnav-partners',
+  basics:'dnav-profile', wines:'dnav-wines', labels:'dnav-labels',
   network:'dnav-network', requests:'dnav-requests',
   promo:'dnav-promo', offers:'dnav-offers', deals:'dnav-deals',
   opportunities:'dnav-opportunities', winestars:'dnav-winestars', fans:'dnav-fans'
 };
 const D_TITLES = {
   dashboard:'Welcome back, Hawesko ✦', basics:'My Profile',
-  wines:'My Wine Portfolio', partners:'My Labels', promo:'My Promo Materials',
+  wines:'My Wine Portfolio', labels:'My Labels', promo:'My Promo Materials',
   offers:'My Offers', deals:'My Deals', network:'My Partnerships', requests:'My Requests',
   opportunities:'My Opportunities', winestars:'My Stars', fans:'My Fans'
 };
@@ -4685,7 +4649,7 @@ const D_TITLES = {
 const D_GROUPS = [
   { key:'portfolio', members:[
       { s:'wines',    label:'My Wine Portfolio' },
-      { s:'partners', label:'My Labels' },
+      { s:'labels',   label:'My Labels' },
       { s:'promo',    label:'My Promo Materials' },
       { s:'offers',   label:'My Offers' },
       { s:'deals',    label:'My Deals' } ] },
@@ -4918,12 +4882,28 @@ let currentWinePortfolio = [
    `legacyOwnLabel` is NOT the domain field. A17 says an own label
    is derived: a project past gate 2, a product the winery created,
    and a FIRST COMMERCIAL ORDER DELIVERED. None of that exists yet.
-   Until it does, this carries the three fixture rows that already
-   said `ownLabel:true`, so "My Labels" can render from data instead
-   of from typed markup.
+   Until it does, this carries what the legacy fixtures and the "My
+   Labels" markup have been saying, so that section can render from
+   data instead of from typed HTML.
+
+   IT IS THREE-VALUED — 'active', 'pending' or false — and not a
+   boolean, because the screen was never a boolean. "My Labels" has
+   listed six wines for months, five as Active and the Riesling
+   Spätlese as PENDING. A boolean bridge would have had to call that
+   sixth wine licensed, which is a claim no record supports and
+   exactly the class of overstatement this chain exists to remove.
+   A17.6 has stages for the same reason; this is the smallest legacy
+   shadow of them.
+
+   SIX ROWS, NOT THREE (A3). Three of the six were already
+   `ownLabel:true` in the portfolio fixture; the other three said
+   Active on one screen and Standard on another. A3 answers a
+   contradiction by ADDING THE MISSING RECORD, not by deleting the
+   surface — so the three are backfilled with what they have been
+   showing, and the two screens agree for the first time.
 
    Rules while it exists:
-     · taken ONLY from the three existing ownLabel:true fixtures
+     · taken ONLY from the legacy fixtures and the legacy markup
      · never written by the interface
      · never set for a new own label
      · creates no request, no exclusivity, no fee, no ordering right
@@ -4932,15 +4912,15 @@ let currentWinePortfolio = [
 const LISTED_AT = '2026-06-01';
 let listings = [
   /* ── Hawesko GmbH — the distributor's book ─────────────────────── */
-  { holder:'Hawesko GmbH', productId:'PRD-1020', legacyOwnLabel:true,  exclusive:false, listedAt:LISTED_AT, holderArticleNo:'HAW-0119', monthlyVolume:null, tradePrice:14.90 },
-  { holder:'Hawesko GmbH', productId:'PRD-1021', legacyOwnLabel:true,  exclusive:false, listedAt:LISTED_AT, holderArticleNo:'HAW-0120', monthlyVolume:null, tradePrice:21.50 },
-  { holder:'Hawesko GmbH', productId:'PRD-1022', legacyOwnLabel:true,  exclusive:false, listedAt:LISTED_AT, holderArticleNo:'HAW-0221', monthlyVolume:null, tradePrice:11.20 },
-  { holder:'Hawesko GmbH', productId:'PRD-1023', legacyOwnLabel:false, exclusive:false, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:null, tradePrice:null },
-  { holder:'Hawesko GmbH', productId:'PRD-1024', legacyOwnLabel:false, exclusive:false, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:null, tradePrice:16.80 },
+  { holder:'Hawesko GmbH', productId:'PRD-1020', legacyOwnLabel:'active',  exclusive:false, listedAt:LISTED_AT, holderArticleNo:'HAW-0119', monthlyVolume:4200, tradePrice:14.90 },
+  { holder:'Hawesko GmbH', productId:'PRD-1021', legacyOwnLabel:'active',  exclusive:false, listedAt:LISTED_AT, holderArticleNo:'HAW-0120', monthlyVolume:3800, tradePrice:21.50 },
+  { holder:'Hawesko GmbH', productId:'PRD-1022', legacyOwnLabel:'active',  exclusive:false, listedAt:LISTED_AT, holderArticleNo:'HAW-0221', monthlyVolume:2900, tradePrice:11.20 },
+  { holder:'Hawesko GmbH', productId:'PRD-1023', legacyOwnLabel:'active', exclusive:false, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:2100, tradePrice:null },
+  { holder:'Hawesko GmbH', productId:'PRD-1024', legacyOwnLabel:'pending', exclusive:false, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:1400, tradePrice:16.80 },
   { holder:'Hawesko GmbH', productId:'PRD-1018', legacyOwnLabel:false, exclusive:false, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:null, tradePrice:null },
   { holder:'Hawesko GmbH', productId:'PRD-1001', legacyOwnLabel:false, exclusive:false, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:null, tradePrice:8.40 },
   { holder:'Hawesko GmbH', productId:'PRD-1006', legacyOwnLabel:false, exclusive:false, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:null, tradePrice:null },
-  { holder:'Hawesko GmbH', productId:'PRD-1025', legacyOwnLabel:false, exclusive:false, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:null, tradePrice:12.60 },
+  { holder:'Hawesko GmbH', productId:'PRD-1025', legacyOwnLabel:'active', exclusive:false, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:2400, tradePrice:12.60 },
   { holder:'Hawesko GmbH', productId:'PRD-1026', legacyOwnLabel:false, exclusive:false, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:null, tradePrice:null },
   { holder:'Hawesko GmbH', productId:'PRD-1011', legacyOwnLabel:false, exclusive:false, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:null, tradePrice:null },
   { holder:'Hawesko GmbH', productId:'PRD-1003', legacyOwnLabel:false, exclusive:false, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:null, tradePrice:9.80 },
@@ -5013,10 +4993,21 @@ function listingPrice(holder, ref) {
    fallback under which a listing counts as own-label either through
    the bridge or through the derivation: two roads to one answer is
    how two surfaces come to disagree, which is D33 in one sentence. */
+const OWN_LABEL_STAGES = ['pending', 'active'];
 function listingOwnLabelStatus(listing) {
-  return !!(listing && listing.legacyOwnLabel);
+  const v = listing && listing.legacyOwnLabel;
+  return OWN_LABEL_STAGES.indexOf(v) === -1 ? null : v;
 }
-function isOwnLabel(holder, ref) { return listingOwnLabelStatus(listingOf(holder, ref)); }
+/* The BADGE question, which is narrower than the status. Only an
+   active licence is an own label; a project still in negotiation is
+   not one yet, and saying so on a portfolio row would claim an
+   exclusivity nobody has signed. */
+function isOwnLabel(holder, ref) { return listingOwnLabelStatus(listingOf(holder, ref)) === 'active'; }
+/* Every listing this holder holds an own-label relation on, in the
+   order they were listed. Counted, never stored (invariant 7). */
+function ownLabelListingsOf(holder) {
+  return listingsOf(holder).filter(l => listingOwnLabelStatus(l) !== null);
+}
 function isExclusiveFor(holder, ref) { const l = listingOf(holder, ref); return !!(l && l.exclusive); }
 
 /* ── Writing one ────────────────────────────────────────────────
@@ -5149,6 +5140,10 @@ function deletePortfolioWine(idx) {
   removeListing('Hawesko GmbH', currentWinePortfolio[idx]);
   currentWinePortfolio.splice(idx, 1);
   renderWinePortfolioD();
+  /* D33: a derived figure obliges every surface showing it to be
+     repainted by the action that moved it. Removing a wine removes its
+     listing, and "My Labels" counts listings. */
+  renderOwnLabelsD();
   refreshPortfolioCounts();
   showToast('✓ Wine removed from your portfolio');
 }
@@ -5251,6 +5246,7 @@ function confirmAddWine() {
     const l = listingOf('Hawesko GmbH', w.id);
     if (l) l.monthlyVolume = typedVolume();
     renderWinePortfolioD();
+    renderOwnLabelsD();   /* the volume is printed there too */
     closePullWineModal();
     showToast('✓ Portfolio entry updated');
     editingPortfolioIndex = null;
@@ -5282,11 +5278,68 @@ function confirmAddWine() {
      the interface does may add a fourth. */
   addListing('Hawesko GmbH', awSelectedWine.id, { monthlyVolume: typedVolume() });
   renderWinePortfolioD();
+  renderOwnLabelsD();
   refreshPortfolioCounts();
   closePullWineModal();
   showToast('✓ Wine pulled into your portfolio');
 }
+
+/* ══ MY LABELS — rendered from the listings ══════════════════════
+   MIGRATION-CAPABLE STOPGAP, NOT THE A17 MODEL. What it draws is the
+   bridge field `legacyOwnLabel`, read through listingOwnLabelStatus()
+   and never directly. When A17 arrives, the derivation replaces the
+   inside of that one function and this renderer does not change —
+   which is the whole reason there is only one reader.
+
+   EVERY FIELD COMES FROM ITS OWNER. The wine's name, producer, origin
+   and article page belong to the producer (invariant 2) and are read
+   from the catalogue; the monthly volume and the stage belong to the
+   holder and are read from the listing. Nothing here is typed, so
+   nothing here can disagree with the portfolio two sections above it
+   — which is exactly what the typed version did, for three wines.
+
+   THE COUNTER IS COUNTED. It read `(6)` in the markup beside six rows
+   the data agreed with three of. It was one of the five hard-typed
+   counters measured on 5 August; four are left after this one.
+
+   An empty list says why it is empty rather than rendering nothing
+   (B12): a distributor with no own-label relations has none, and that
+   is a state worth being able to read. */
+function renderOwnLabelsD() {
+  const el = document.getElementById('dlabels-list');
+  if (!el) return;
+  const rows = ownLabelListingsOf('Hawesko GmbH');
+  const countEl = document.getElementById('dlabels-count');
+  if (countEl) countEl.textContent = '(' + rows.length + ')';
+
+  if (!rows.length) {
+    el.innerHTML = '<div class="aw-empty">No own-label wines yet.<br>' +
+      'An own label starts from a wine in your Wine Portfolio.</div>';
+    return;
+  }
+  el.innerHTML = rows.map(l => {
+    const p = wineByRef(l.productId);
+    /* A listing pointing at no product is a finding, not a blank row —
+       and it is already red in tests/listings.js, section 2. */
+    if (!p) return '';
+    const active = listingOwnLabelStatus(l) === 'active';
+    const vol = l.monthlyVolume == null ? '' :
+      ' · ' + l.monthlyVolume.toLocaleString('en-GB') + ' btl/mo';
+    return `
+              <div class="wine-edit-entry">
+                <div class="wine-edit-dot"${active ? '' : ' style="background:var(--dim)"'}></div>
+                <div class="wine-edit-name">${p.name}<div style="font-size:0.68rem;color:var(--dim);margin-top:0.2rem">${p.winery}${vol}</div></div>
+                <div class="wine-edit-origin">${p.origin || ''}</div>
+                <div class="wine-edit-status">${active
+                  ? '<span class="profile-badge badge-own-label" style="font-size:0.55rem">Active</span>'
+                  : '<span class="profile-badge" style="font-size:0.55rem;background:rgba(184,151,90,0.1);color:var(--gold)">Pending</span>'}</div>
+                <div class="wine-edit-actions"><a class="icon-btn" href="${p.url}" target="_blank">View</a></div>
+              </div>`;
+  }).join('');
+}
+
 renderWinePortfolioD();
+renderOwnLabelsD();
 
 /* ══════════════════════════════════════════════════════════════════
    WINERY NETWORK — partnership requests & active distributors
@@ -11031,6 +11084,7 @@ renderAppearanceWidgets();
 function redrawAll() {
   renderPressList();
   renderWinePortfolioD();
+  renderOwnLabelsD();
   renderWineryNetwork();
   renderPartnerNetwork();
   renderIncomingRequests();
