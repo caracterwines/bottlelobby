@@ -2562,11 +2562,28 @@ across 5 producers**, of which **3 advertise own-label work and 17 do not**. The
 distributor's book holds **14 wines, 3 own label and 11 ordinary**. Roughly one in
 six.
 
+**Re-measured, 5 August 2026, after the catalogue pass.** The producer catalogue
+holds **21 products across 6 producers**; the distributor's book holds **14
+wines, 6 of them own label and 8 ordinary**; across every book the platform knows
+**27 distinct products, 6 of which are finished own labels** — plus **3** ordinary
+wines merely marked open to own-label requests, which is a capability and not a
+product (A17.0a).
+
 > **OL-10 is a fixture rule, not a domain rule.** The demo keeps ordinary wine in
 > the clear majority so a reader can see what the platform is. That is a statement
 > about *this catalogue*, not about the trade: a real distributor may specialise
 > entirely in own label, and nothing in the model forbids it. The invariant is
 > checked against the fixtures and is silent about production.
+>
+> **So is the ratio itself: six own labels among 27 products is a FIXTURE
+> DECISION, not a market observation.** It is built that way on purpose, so the
+> whole pipeline is visible at once in an investor conversation — ordinary wines,
+> wines open to requests, a project in flight and finished, active own labels,
+> the four states this section asks for, all on screen together. Nobody should
+> read one in four and a half as a claim about how much of the trade is own
+> label. **That is precisely why OL-10 is a fixture invariant and not a domain
+> rule** — a domain rule would be asserting something about the world that this
+> catalogue is in no position to assert.
 
 The fixtures must show four states a reader can tell apart at a glance: ordinary
 wines · ordinary wines open to own-label requests · projects in flight · finished,
@@ -2951,6 +2968,25 @@ not commercial orders and never activate it.
 > wine list before a bottle exists would be a promise on nothing. One rule, two
 > moments: *a wine enters the book when it can honestly be promised on.*
 
+**The three-party visibility above is a PHASE, not a permanent state — and the
+two levels must not be collapsed.** It holds **until the first commercial order
+is delivered**. After that the product is as visible as anything else in its
+distributor's book: it has an article page, it appears in the Wine Guide, a
+restaurant can find it, and it is sold. **A product nobody may see is a product
+nobody can buy.**
+
+What survives that moment is not visibility but **the action rights**, and those
+are permanent: no other distributor sees it **in a picker**, may select it, order
+it or take it into a book, and the winery may not offer it elsewhere. A17.13
+states it in exactly those terms — *an exclusive product, in any picker.*
+
+> **Why this is spelled out.** The paragraph above was read once as a permanent
+> three-party visibility, which made the demo fixtures look like a breach: six
+> finished own labels sit on public article pages and in the public Wine Guide,
+> and they belong there. It is the same collapse A17.0a exists to prevent —
+> *created is not carried* — one level further on. **Display right and action
+> right are two different questions, and only the second one is forever.**
+
 ### A17.10 The fee
 
 **A configurable fixed amount per bindingly ordered own-label bottle, paid by the
@@ -3216,6 +3252,39 @@ Two consequences inside this section:
 - **Both routes carry it.** A relabel references the producer's existing line and
   its orders name the vintage of that line. A bespoke own label **is its own line**
   and may itself run several vintages or production batches during the term.
+
+### A17.19 The reach question — OPEN
+
+**Serge's idea, not yet decided.** Once an own-label product is live, its
+distributor may want to say **who gets to see it** — the same kind of setting a
+Wine Show already carries in **A16.6**, where a show is anonymised before
+`published` and full after it. Candidate levels, none of them settled:
+
+    everyone · platform members only · certain roles only ·
+    active partnerships only · this distributor's own network only
+
+**The line that must not fall, and it is the whole point of the question:**
+
+| | decides | who sets it |
+|---|---|---|
+| **Reach** | **who SEES it** | the distributor, freely, changeable |
+| **Agreement** | **who may ACT on it** | the project (A17.9), fixed for the term |
+
+**Reach can never widen an action right.** Even at reach *everyone*, another
+distributor may not order the product or take it into a book — it would see a
+card with no order button. That is not a limitation of the setting, it is the
+setting doing its job: A17.9's exclusivity is an agreement between two parties
+and a display control cannot vary it. Only the agreement can, and only by being
+varied or ended with a Bottle Lobby approval.
+
+> **Why this is open rather than assumed.** The obvious default — reach
+> *everyone*, exactly as today — is also the one that makes the platform work:
+> Hawesko sells these wines and a restaurant has to be able to find them
+> (A17.9). A narrower reach is a **commercial** wish (a distributor who does not
+> want competitors reading their own-label range), not a model requirement, and
+> nothing in A17 needs it today. **Decide it before building it**: a reach
+> setting added later is a field; a reach setting assumed now would silently
+> become the fourth meaning of a word that already had four (A17.0a, D36).
 
 ---
 

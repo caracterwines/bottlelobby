@@ -160,11 +160,22 @@ const SHOW_HERO_FALLBACK = 'images/duesseldorf-tasting-wide.jpg';
    seven — PRD-1020 … PRD-1025 — carry `status:'Own-Label'` in the
    public Wine Guide and an `active`/`pending` `legacyOwnLabel` on
    their listing. Two independent sources, the same six wines, the
-   same boundary. A17.9 says an own-label product is visible to the
-   producing winery, the exclusive distributor and Bottle Lobby and to
-   nobody else; this pool is what every buyer browses. Adding those
-   six here would not complete a catalogue, it would break A17.9 —
-   which tests/wine-shows.js already found once and said so.
+   same boundary.
+
+   THIS POOL IS AN ORDER LIST, and that is the whole reason they stay
+   out. Any distributor may pick from it; A17.9 permanently forbids
+   any distributor but the exclusive one to see an own-label product
+   IN A PICKER, select it, order it or take it into a book. So the six
+   are absent because of an ACTION right, not a display one — they are
+   on public article pages and in the public Wine Guide at the same
+   time, and correctly: Hawesko sells them and a restaurant has to be
+   able to find them. tests/wine-shows.js says the same thing in the
+   same terms.
+
+   (A17.9's three-party VISIBILITY is a phase, not a permanent state —
+   it ends at the first delivery. Reading it as permanent once made
+   these fixtures look like a breach; A17.9 now spells the two levels
+   apart, and HANDOFF keeps the misreading on record.)
 
    PRD-1026 is the seventh and the only one with no own-label claim
    anywhere: 'Standard' in the Guide, `legacyOwnLabel:false` on its
