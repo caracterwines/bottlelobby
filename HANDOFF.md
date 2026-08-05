@@ -4,7 +4,7 @@
 > Dateiliste, Dateianzahl und Aenderungshistorie stehen in der Git-Historie — nicht hier.
 > Dauerhafte Regeln stehen in `BOTTLE-LOBBY-SPEC.md`, kurze Invarianten in `CLAUDE.md` — nicht hier.
 
-**Letzte Aktualisierung:** 3. August 2026
+**Letzte Aktualisierung:** 5. August 2026
 
 ---
 
@@ -33,7 +33,7 @@ Tag, 22 Commits; alles unter „Zuletzt abgeschlossen" ist im Browser abgenommen
 ### Womit eine Sitzung anfaengt
 
 ```
-node tests/run-all.js        →  18 Harnesses, muss gruen sein, bevor irgendetwas beginnt
+node tests/run-all.js        →  19 Harnesses, muss gruen sein, bevor irgendetwas beginnt
 node tests/serve.js          →  http://localhost:8765   (no-store — NIE python http.server)
 node tests/stamp-assets.js   →  nach jeder Aenderung an assets/, sonst wird check-static rot
 ```
@@ -47,7 +47,7 @@ Fehlmessungen an einem Tag kamen genau daher** (Spec C7, „Browser acceptance")
 `BOTTLE-LOBBY-SPEC.md` ist die Autoritaet, ~213 KB. **Niemand liest sie ganz —
 also je Durchgang die geltenden Abschnitte benennen**, sonst wird nach
 Plausibilitaet statt nach Spec gebaut. `CLAUDE.md` hat die acht Invarianten,
-Anhang D die abgeloesten Entscheidungen (**D1–D34** — nie ohne Blick dorthin
+Anhang D die abgeloesten Entscheidungen (**D1–D36** — nie ohne Blick dorthin
 etwas wiedervorschlagen).
 
 Arbeitsregeln, die diesen Tag ueberdauern und in **C3/C7** stehen: jeden Commit
@@ -56,64 +56,6 @@ nicht wachsen lassen, damit jede Meldungsart vorkommt; eine Zusicherung ueber
 einen Leerfall nennt den **Grund**, nicht den Zustand; eine Mutation, die sich auf
 eine Fixture verlaesst, gilt nur, solange die zufaellig passt; und beim Nachtragen
 von Stammdaten ist das **frueheste abhaengige Ereignis die Obergrenze**.
-
-### ▶ OFFENE ABNAHME — Produktschluessel 3b, 3c und 4, nach Rolle
-
-> Stand 4. August, Commits `f1182b2` · `59cacd2` · `812f874`. Repo- und
-> Datenseite sind abgenommen; **die Sichtpruefung fehlt und deckt alle drei
-> Durchgaenge zusammen ab.** Nach Schritt 4 antwortet jede Stelle, die noch
-> heimlich einen Namen uebergibt, `null` und rendert leer — deshalb faellt ein
-> Rest jetzt auf und vorher nicht.
->
-> **Klicken, nicht aufrufen** (C7). Lesen ist erlaubt.
-> **Konsole offenlassen: jedes `[product] … is not a product key` ist ein Fund.**
-> Vorbereitung: `node tests/run-all.js` → 19 · `node tests/serve.js` ·
-> vor jedem Befund `transferSize` lesen.
-
-**Distributor — Hawesko GmbH**
-1. Portfolio: 14 Weine mit Erzeuger · „Add Wine" → 6 Erzeuger, Cantina Rossi
-   **10** Weine inkl. **Terra Rossa 2022**, 7 als „Already in portfolio"
-2. Orders → **ORD-2037** anklicken: `%` „120 bottles of **Merlot — Bordeaux
-   Supérieur** qualifies for 25% off" → **Apply discount** klicken
-3. **ORD-2041**: 🎁 „60 bottles of **Sauvignon Blanc — Sancerre** at ratio 60:6"
-   plus die Promo-Zeile „12 Wine Glasses"
-4. **ORD-2040** → „+ Add line": der Prompt bietet **nur das eigene Buch**
-5. Auf ORD-2037 eine **Rechnung** erzeugen: Tabelle nennt Wein und Erzeuger
-6. Profile → Offers / Deals / Promo Materials, bei allen dreien **„+ New"**:
-   die Weinauswahl zeigt **14 Portfolio-Weine mit Erzeuger** (vorher
-   handgetippt, mit 7 Fremdweinen darin)
-7. Wine Shows → **WS-2603** Angebotsliste: Sancerre Rouge **PRE-ORDER** 2/60,
-   Müller-Thurgau **IN STOCK** 1/12
-8. **WS-2599** → „Close the Order List": zwei Entscheidungen · Haekchen ohne
-   Grund wird abgelehnt · mit Grund → Bestellung entsteht und **nennt den Wein**
-9. **WS-2604** → „+ Invite Exhibitor" → Cantina Rossi: 10 Weine mit Jahrgang
-
-**Winzer — Cantina Rossi**
-10. Wine Shows → **WS-2601**: „…invited you to exhibit with **Primitivo Riserva
-    2020**" — die Stelle, die vor 3b `undefined` schrieb
-11. „Propose another wine" → Restauswahl mit Jahrgang und Typ, einen waehlen →
-    „Your Turn" nennt ihn
-12. Notifications: eine Weinzeile, **„View wine →"** oeffnet die Artikelseite
-
-**Restaurant — Bistro Laurent**
-13. Wine List → „Add Wine to List": nur Hawesko-Portfolio, `type · origin` gefuellt
-14. Discover → Offers/Deals: **„via Château Belrieu · Hawesko GmbH"** und
-    **„via Cantina Rossi · Hawesko GmbH"** (der Erzeuger war in 3c kurz weg)
-15. Promo: „12 Wine Glasses" 🎉 Unlocked/Claim · „20 Tasting Stands" gesperrt mit
-    „Add **Riesling Spätlese — Mosel** to start" · „12 Wine Menu Cards" **gesperrt**
-16. Wine Shows → **WS-2603**: eigene Liste schreiben, Menge speichern
-17. **WS-2599** → „Your Order Is Ready", Zeilen nennen Wein und Erzeuger
-
-**Retail — Weinhaus Mueller**
-18. Selection → „Add Wine to Selection": derselbe Picker
-19. Discover → Promo: „12 Wine Menu Cards" **freigeschaltet** — der Unterschied
-    zum Restaurant, und er ist richtig (Bestellwert 2150 gegen 1450)
-20. Offers/Deals: dieselben „via"-Zeilen
-
-**Oeffentlich**
-21. `bottle-lobby-wine-shows.html` → WS-2603 nennt beide Weine mit Erzeuger.
-    **Diese Flaeche waere ohne den Umzug des Katalogs ins geteilte Asset leer**
-22. Ein Winzerprofil, Show-Abschnitt
 
 ---
 
@@ -125,9 +67,27 @@ von Stammdaten ist das **frueheste abhaengige Ereignis die Obergrenze**.
 > entstehen, waere jede Modelaenderung in Supabase eine Migration statt einer
 > Stunde Arbeit.
 
-**Zuerst die Produktschluessel-Kette (04.08., laeuft):** 1 Schluessel ✓ · 2
-Aufloeser ✓ · 3a Orders und Preise ✓ · **3b Show-Flaeche** · 3c kommerzielle
-Datensaetze · 4 Namenszweig faellt. Danach in dieser Reihenfolge:
+**Die Produktschluessel-Kette (04.08.) ist abgeschlossen und abgenommen** — Repo,
+Daten und Sichtpruefung ueber alle Flaechen und Rollen. Der letzte Fund der
+Sichtpruefung, ein totes „+ Add line", ist mit `74be029` repariert (echtes
+Fenster, Mehrfachauswahl, Schluessel als Wert) und am Bildschirm bestaetigt.
+Aus dem Tag liegen zwei Dinge:
+
+- **Die Zaehler in den Profil-Abschnitten (`profile-section-count`).** Gemessen:
+  **19 Stueck, nicht 20.** 14 davon tragen eine Id und werden zur Laufzeit
+  gerechnet — die koennen nicht veralten. Die uebrigen **5 stehen fest im
+  Markup**, und **2 davon sind nachweislich falsch**: der Winzer-Abschnitt
+  behauptet `My Wine Portfolio (11)` bei **10** Cantina-Rossi-Produkten im Buch,
+  der Distributor `My Wine Portfolio (5)` bei **14** Zeilen in
+  `currentWinePortfolio`. Die anderen drei — `My Labels (6)`, `My Wine List (3)`,
+  `My Wine Selection (3)` — stimmen heute zufaellig mit ihrer Liste ueberein und
+  gehen beim naechsten Hinzufuegen kaputt. Fix ist derselbe wie bei den 14: aus
+  der Liste rechnen, nicht schreiben.
+- **HANDOFF.md abspecken.** Die Datei ist **~102 KB** und soll laut ihrer eigenen
+  ersten Zeile nur Offenes tragen. Der Grossteil ist „Zuletzt abgeschlossen" —
+  also Historie, die Git bereits fuehrt.
+
+Danach in dieser Reihenfolge:
 
 - **`listings`** — ein Beziehungsdatensatz je (Halter, Produkt), ohne
   Weininhalt. Traegt `ownLabel` (Distributor), `exclusive` (Kaeufer), den
