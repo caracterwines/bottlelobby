@@ -344,8 +344,14 @@ console.log('\n── counter-check: the breaks this file was written for');
          turns into a missed target rather than a finding. */
       /* The offer names a KEY now, so a renamed row no longer breaks
          the join — the book simply stops carrying that product. */
-      from: "{ id:'PRD-1015', winery:'Henri Dubois Domaine', name:'Pouilly-Fumé', vintage:2023, ownLabel:false,",
-      to:   "{ id:'PRD-9015', winery:'Henri Dubois Domaine', name:'Pouilly-Fumé', vintage:2023, ownLabel:false,",
+      /* PINNED TO THE BOOK, not to the picker pool. The row used to
+         end `ownLabel:false,` and that alone told the two apart; once
+         the flag moved onto the listing the shorter prefix matched
+         partnerWinesPool first and the mutation stopped landing where
+         it was aimed. The continuation line is what distinguishes them
+         now — the pool keeps a `note` between type and origin. */
+      from: "{ id:'PRD-1015', winery:'Henri Dubois Domaine', name:'Pouilly-Fumé', vintage:2023,\n    type:'White', origin:",
+      to:   "{ id:'PRD-9015', winery:'Henri Dubois Domaine', name:'Pouilly-Fumé', vintage:2023,\n    type:'White', origin:",
       check: g => {
         const r = chainReader(g);
         const offers = JSON.parse(g.eval('JSON.stringify(exclusiveOffers)'));
@@ -354,8 +360,9 @@ console.log('\n── counter-check: the breaks this file was written for');
       says: 'section 3 catches an Exclusive Offer over a wine outside the book' },
 
     { name: 'the portfolio takes a wine from a house it does not partner with',
-      from: "winery:'Cantina Rossi', name:'Baglio Rosso', vintage:2021, ownLabel:false,",
-      to:   "winery:'Osteria Marconi', name:'Baglio Rosso', vintage:2021, ownLabel:false,",
+      /* Pinned to the book for the same reason as above. */
+      from: "winery:'Cantina Rossi', name:'Baglio Rosso', vintage:2021,\n    type:'Red', origin:",
+      to:   "winery:'Osteria Marconi', name:'Baglio Rosso', vintage:2021,\n    type:'Red', origin:",
       check: g => {
         const r = chainReader(g);
         return (r.books[r.distributors[0]] || []).some(x =>

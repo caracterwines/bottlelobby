@@ -3499,9 +3499,15 @@ With an annual production capacity of over 1.2 million bottles, Cantina Rossi is
     <div class="pr-body" id="aw-step-details" style="display:none">
       <div class="aw-selected" id="aw-selected-summary"></div>
       <div class="ffield" style="margin-bottom:1px"><div class="flabel">Monthly Volume (bottles)</div><input class="finput" type="number" step="100" id="aw-volume" placeholder="e.g. 2000"></div>
+      <!-- Read-only from here on. Own-label status is DERIVED (A17.12):
+           a project past gate 2, a product the winery created, and a
+           first commercial order delivered. A tick box that grants it
+           would be a fourth road to the same fact and the one nobody
+           signed a contract for, so it shows the status and no longer
+           sets it. The control that does set it arrives with A17. -->
       <label class="pr-agree" style="margin-top:1px">
-        <input type="checkbox" id="aw-ownlabel">
-        <span class="pr-agree-text">Mark as Own-Label — licensed exclusively, not available to competing distributors.</span>
+        <input type="checkbox" id="aw-ownlabel" disabled>
+        <span class="pr-agree-text">Own-Label — licensed exclusively, not available to competing distributors. Follows an own-label project; it is not set here.</span>
       </label>
       <div class="pr-foot" style="margin-top:1.4rem">
         <button class="pr-btn pr-cancel" onclick="backToPicker()">← Back</button>
@@ -4822,15 +4828,15 @@ function openDistributorPublicPreview() {
    master-data question (A4) and is not this pass.
 ══════════════════════════════════════════════════════════════════ */
 let currentWinePortfolio = [
-  { id:'PRD-1020', winery:'Henri Dubois Domaine', name:'Sauvignon Blanc — Sancerre', vintage:2023, ownLabel:true,
+  { id:'PRD-1020', winery:'Henri Dubois Domaine', name:'Sauvignon Blanc — Sancerre', vintage:2023,
     type:'White', origin:'Loire Valley, France', url:'bottle-lobby-wine-sauvignon-blanc-sancerre.html' },
-  { id:'PRD-1021', winery:'Domaine Lefèvre', name:'Chardonnay — Chablis Premier Cru', vintage:2022, ownLabel:true,
+  { id:'PRD-1021', winery:'Domaine Lefèvre', name:'Chardonnay — Chablis Premier Cru', vintage:2022,
     type:'White', origin:'Chablis, Burgundy', url:'bottle-lobby-wine-chardonnay-chablis-premier-cru.html' },
-  { id:'PRD-1022', winery:'Cantina Rossi', name:'Primitivo Sicilia IGT', vintage:2022, ownLabel:true,
+  { id:'PRD-1022', winery:'Cantina Rossi', name:'Primitivo Sicilia IGT', vintage:2022,
     type:'Red', origin:'Alcamo DOC, Sicily', url:'bottle-lobby-wine-primitivo-sicilia-igt.html' },
-  { id:'PRD-1023', winery:'Bodegas Ruiz', name:'Tempranillo — Rioja Crianza', vintage:2021, ownLabel:false,
+  { id:'PRD-1023', winery:'Bodegas Ruiz', name:'Tempranillo — Rioja Crianza', vintage:2021,
     type:'Red', origin:'Rioja Alta, Spain', url:'bottle-lobby-wine-tempranillo-rioja-crianza.html' },
-  { id:'PRD-1024', winery:'Weingut Schmitt', name:'Riesling Spätlese — Mosel', vintage:2023, ownLabel:false,
+  { id:'PRD-1024', winery:'Weingut Schmitt', name:'Riesling Spätlese — Mosel', vintage:2023,
     type:'White', origin:'Mosel, Germany', url:'bottle-lobby-wine-riesling-spatlese-mosel.html' },
   /* Listed on purpose: it is one of the two wines on the released show
      WS-2603, so that show carries BOTH columns of A16.12 side by side —
@@ -4838,29 +4844,212 @@ let currentWinePortfolio = [
      A distinction split across two shows would be present but never
      demonstrated. The name must match the show product exactly, em dash
      included; A14.4 records what string drift costs here. */
-  { id:'PRD-1018', winery:'Weingut Schmitt', name:'Müller-Thurgau — Mosel', vintage:2023, ownLabel:false,
+  { id:'PRD-1018', winery:'Weingut Schmitt', name:'Müller-Thurgau — Mosel', vintage:2023,
     type:'White', origin:'Mosel QbA, Germany', url:'bottle-lobby-wine-muller-thurgau-mosel.html' },
 
   /* ── Came in with the merge: offered to buyers all along ───────── */
-  { id:'PRD-1001', winery:'Cantina Rossi', name:'Catarratto Biologico', vintage:2023, ownLabel:false,
+  { id:'PRD-1001', winery:'Cantina Rossi', name:'Catarratto Biologico', vintage:2023,
     type:'White', origin:'Sicilia DOC, Sicily', url:'bottle-lobby-wine-catarratto-biologico.html' },
-  { id:'PRD-1006', winery:'Cantina Rossi', name:'Rosso di Contrada', vintage:2023, ownLabel:false,
+  { id:'PRD-1006', winery:'Cantina Rossi', name:'Rosso di Contrada', vintage:2023,
     type:'Red', origin:'Sicilia DOC, Sicily', url:'bottle-lobby-wine-rosso-di-contrada.html' },
-  { id:'PRD-1025', winery:'Château Belrieu', name:'Merlot — Bordeaux Supérieur', vintage:2021, ownLabel:false,
+  { id:'PRD-1025', winery:'Château Belrieu', name:'Merlot — Bordeaux Supérieur', vintage:2021,
     type:'Red', origin:'Bordeaux, France', url:'bottle-lobby-wine-merlot-bordeaux-superieur.html' },
-  { id:'PRD-1026', winery:'Château Belrieu', name:'Château Belrieu Grand Vin', vintage:2019, ownLabel:false,
+  { id:'PRD-1026', winery:'Château Belrieu', name:'Château Belrieu Grand Vin', vintage:2019,
     type:'Red', origin:'Bordeaux Supérieur AOC, France', url:'bottle-lobby-wine-chateau-belrieu-grand-vin.html' },
-  { id:'PRD-1011', winery:'Domaine Lefèvre', name:'Crémant de Bourgogne', vintage:2022, ownLabel:false,
+  { id:'PRD-1011', winery:'Domaine Lefèvre', name:'Crémant de Bourgogne', vintage:2022,
     type:'White', origin:'Crémant de Bourgogne AOC, France', url:'bottle-lobby-wine-cremant-de-bourgogne.html' },
 
   /* ── Came in with the merge: advertised or sold without being here ─ */
-  { id:'PRD-1003', winery:'Cantina Rossi', name:"Nero d'Avola Sicilia DOC", vintage:2022, ownLabel:false,
+  { id:'PRD-1003', winery:'Cantina Rossi', name:"Nero d'Avola Sicilia DOC", vintage:2022,
     type:'Red', origin:'Sicilia DOC, Sicily', url:'bottle-lobby-wine-nero-davola-sicilia-doc.html' },
-  { id:'PRD-1015', winery:'Henri Dubois Domaine', name:'Pouilly-Fumé', vintage:2023, ownLabel:false,
+  { id:'PRD-1015', winery:'Henri Dubois Domaine', name:'Pouilly-Fumé', vintage:2023,
     type:'White', origin:'Pouilly-Fumé AOC, Loire Valley', url:'bottle-lobby-wine-pouilly-fume.html' },
-  { id:'PRD-1008', winery:'Cantina Rossi', name:'Baglio Rosso', vintage:2021, ownLabel:false,
+  { id:'PRD-1008', winery:'Cantina Rossi', name:'Baglio Rosso', vintage:2021,
     type:'Red', origin:'Terre Siciliane IGT, Sicily', url:'bottle-lobby-wine-baglio-rosso.html' }
 ];
+
+/* ══════════════════════════════════════════════════════════════════
+   LISTINGS — one row per (holder, wine line), and no wine content
+   ------------------------------------------------------------------
+   A15.2b: `productId` names the LINE. A listing says what one party
+   holds true about that line, and nothing about the wine itself —
+   no name, no producer, no vintage, no url. Those have exactly one
+   owner (invariant 2) and every surface below reads them through the
+   catalogue.
+
+   THE KEY IS (holder, productId). Never a name, never a vintage: an
+   exclusivity or an own label follows the line across harvests, which
+   is the whole of A15.2b, and a key carrying a year would have to be
+   re-made every autumn.
+
+   WHAT IT ANSWERS THAT NOTHING COULD BEFORE — the price. `wineUnitPrice`
+   was a flat 11-entry map from key to number with NO OWNER, and a trade
+   price is never a property of a wine: it is what ONE PARTY charges for
+   it. Hawesko buys Primitivo from Cantina Rossi at 6.40 and sells it on
+   at 11.20. Both numbers are written down in the order fixtures already;
+   the map could only hold one of them, so the other had nowhere to live.
+   With a holder on the row the same wine carries both at once, and
+   `listingPrice(holder, product)` is answerable in both directions.
+
+   `listedAt` is one date for every fixture row, deliberately. Nothing
+   in this prototype records when a house took a wine on, and twenty
+   invented dates would be twenty claims nobody can check (A1). One
+   date that satisfies C7's ceiling — earlier than the earliest order
+   that depends on any of these listings, ORD-2029 on 2026-06-11 — says
+   the same true thing about all of them without pretending to more.
+
+   `monthlyVolume` is null everywhere, and that is the honest state:
+   nobody has typed one. The field exists because the interface has been
+   ASKING for it — `aw-volume` is set, cleared twice and never read — so
+   the number the distributor types has been thrown away every time.
+   confirmAddWine() writes it here now.
+
+   `holderArticleNo` IS A NOTE, NOT A KEY. Freely typed, changeable, and
+   the same wine deliberately carries three different ones below —
+   Hawesko's HAW-0221, Bistro Laurent's BL-77, Weinhaus Müller's
+   WM-A-14, all for PRD-1022. Nothing joins on it and the harness proves
+   nothing does. It is the holder's own shelf reference, which is a fact
+   about their warehouse and not about the wine.
+══════════════════════════════════════════════════════════════════ */
+
+/* ══ TEMPORARY A17 MIGRATION BRIDGE ══════════════════════════
+   Remove in the A17 product / first-delivery migration pass.
+
+   `legacyOwnLabel` is NOT the domain field. A17 says an own label
+   is derived: a project past gate 2, a product the winery created,
+   and a FIRST COMMERCIAL ORDER DELIVERED. None of that exists yet.
+   Until it does, this carries the three fixture rows that already
+   said `ownLabel:true`, so "My Labels" can render from data instead
+   of from typed markup.
+
+   Rules while it exists:
+     · taken ONLY from the three existing ownLabel:true fixtures
+     · never written by the interface
+     · never set for a new own label
+     · creates no request, no exclusivity, no fee, no ordering right
+     · no meaning outside the legacy fixtures
+   ════════════════════════════════════════════════════════════ */
+const LISTED_AT = '2026-06-01';
+let listings = [
+  /* ── Hawesko GmbH — the distributor's book ─────────────────────── */
+  { holder:'Hawesko GmbH', productId:'PRD-1020', legacyOwnLabel:true,  exclusive:false, listedAt:LISTED_AT, holderArticleNo:'HAW-0119', monthlyVolume:null, tradePrice:14.90 },
+  { holder:'Hawesko GmbH', productId:'PRD-1021', legacyOwnLabel:true,  exclusive:false, listedAt:LISTED_AT, holderArticleNo:'HAW-0120', monthlyVolume:null, tradePrice:21.50 },
+  { holder:'Hawesko GmbH', productId:'PRD-1022', legacyOwnLabel:true,  exclusive:false, listedAt:LISTED_AT, holderArticleNo:'HAW-0221', monthlyVolume:null, tradePrice:11.20 },
+  { holder:'Hawesko GmbH', productId:'PRD-1023', legacyOwnLabel:false, exclusive:false, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:null, tradePrice:null },
+  { holder:'Hawesko GmbH', productId:'PRD-1024', legacyOwnLabel:false, exclusive:false, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:null, tradePrice:16.80 },
+  { holder:'Hawesko GmbH', productId:'PRD-1018', legacyOwnLabel:false, exclusive:false, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:null, tradePrice:null },
+  { holder:'Hawesko GmbH', productId:'PRD-1001', legacyOwnLabel:false, exclusive:false, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:null, tradePrice:8.40 },
+  { holder:'Hawesko GmbH', productId:'PRD-1006', legacyOwnLabel:false, exclusive:false, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:null, tradePrice:null },
+  { holder:'Hawesko GmbH', productId:'PRD-1025', legacyOwnLabel:false, exclusive:false, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:null, tradePrice:12.60 },
+  { holder:'Hawesko GmbH', productId:'PRD-1026', legacyOwnLabel:false, exclusive:false, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:null, tradePrice:null },
+  { holder:'Hawesko GmbH', productId:'PRD-1011', legacyOwnLabel:false, exclusive:false, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:null, tradePrice:null },
+  { holder:'Hawesko GmbH', productId:'PRD-1003', legacyOwnLabel:false, exclusive:false, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:null, tradePrice:9.80 },
+  { holder:'Hawesko GmbH', productId:'PRD-1015', legacyOwnLabel:false, exclusive:false, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:null, tradePrice:17.20 },
+  { holder:'Hawesko GmbH', productId:'PRD-1008', legacyOwnLabel:false, exclusive:false, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:null, tradePrice:13.40 },
+
+  /* Terra Rossa had a price and no book anywhere until A3 put the
+     record in. The listing follows the same reading: Hawesko quotes it,
+     so Hawesko holds it. */
+  { holder:'Hawesko GmbH', productId:'PRD-1027', legacyOwnLabel:false, exclusive:false, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:null, tradePrice:12.10 },
+  { holder:'Hawesko GmbH', productId:'PRD-1009', legacyOwnLabel:false, exclusive:false, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:null, tradePrice:10.60 },
+
+  /* ── The producers' own lines, at ex-cellar ────────────────────
+     MEASURED, not invented: every one of these five prices is the unit
+     price on a winery→distributor order in the fixtures below, which is
+     what Hawesko actually paid. They are what makes the second half of
+     the price answerable — Primitivo is 6.40 here and 11.20 above, one
+     wine, two owners, two numbers, neither of which the old flat map
+     could have held beside the other. */
+  { holder:'Cantina Rossi',   productId:'PRD-1022', legacyOwnLabel:false, exclusive:false, listedAt:LISTED_AT, holderArticleNo:'CR-PRI-22', monthlyVolume:null, tradePrice:6.40 },
+  { holder:'Cantina Rossi',   productId:'PRD-1003', legacyOwnLabel:false, exclusive:false, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:null, tradePrice:5.90 },
+  { holder:'Cantina Rossi',   productId:'PRD-1009', legacyOwnLabel:false, exclusive:false, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:null, tradePrice:5.20 },
+  { holder:'Cantina Rossi',   productId:'PRD-1008', legacyOwnLabel:false, exclusive:false, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:null, tradePrice:7.10 },
+  { holder:'Weingut Schmitt', productId:'PRD-1024', legacyOwnLabel:false, exclusive:false, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:null, tradePrice:7.90 },
+
+  /* ── Bistro Laurent — the restaurant's wine list ───────────────── */
+  { holder:'Bistro Laurent', productId:'PRD-1020', legacyOwnLabel:false, exclusive:true, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:null, tradePrice:null },
+  { holder:'Bistro Laurent', productId:'PRD-1021', legacyOwnLabel:false, exclusive:true, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:null, tradePrice:null },
+  { holder:'Bistro Laurent', productId:'PRD-1022', legacyOwnLabel:false, exclusive:true, listedAt:LISTED_AT, holderArticleNo:'BL-77', monthlyVolume:null, tradePrice:null },
+
+  /* ── Weinhaus Müller — the retailer's selection ────────────────── */
+  { holder:'Weinhaus Müller', productId:'PRD-1020', legacyOwnLabel:false, exclusive:true, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:null, tradePrice:null },
+  { holder:'Weinhaus Müller', productId:'PRD-1021', legacyOwnLabel:false, exclusive:true, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:null, tradePrice:null },
+  { holder:'Weinhaus Müller', productId:'PRD-1022', legacyOwnLabel:false, exclusive:true, listedAt:LISTED_AT, holderArticleNo:'WM-A-14', monthlyVolume:null, tradePrice:null }
+];
+
+/* ── Reading a listing ──────────────────────────────────────────
+   (holder, productId) is the key, so this is the only lookup there
+   is. A caller that has to ask twice is asking the wrong question. */
+function listingOf(holder, ref) {
+  const id = (ref && typeof ref === 'object') ? ref.id : ref;
+  if (!holder || typeof id !== 'string') return null;
+  return listings.find(l => l.holder === holder && l.productId === id) || null;
+}
+function listingsOf(holder) { return listings.filter(l => l.holder === holder); }
+
+/* What this holder charges for this wine, or null.
+
+   NULL IS AN ANSWER AND 0 IS NOT. A house that has not agreed a price
+   has not agreed a price; printing 0.00 would state a number nobody
+   said, which is the A1 rule the show order list already follows in
+   its own words ("left for the host to fill in where it does not —
+   never invented"). Every caller decides for itself what to do with
+   an unanswered price; none of them may invent one here. */
+function listingPrice(holder, ref) {
+  const l = listingOf(holder, ref);
+  return l && l.tradePrice != null ? l.tradePrice : null;
+}
+
+/* THE ONE PLACE OWN-LABEL STATUS IS READ.
+
+   Nothing anywhere reads `legacyOwnLabel` directly, and the harness
+   measures that over the source. Today this answers from the bridge
+   alone. In the A17 pass it will answer from the derivation alone —
+   a project past gate 2, a product the winery created, a first
+   commercial order delivered, and the listing belonging to that
+   project's distributor (A17.9, A17.12).
+
+   IT IS REPLACED, NOT EXTENDED. There is deliberately no lasting
+   fallback under which a listing counts as own-label either through
+   the bridge or through the derivation: two roads to one answer is
+   how two surfaces come to disagree, which is D33 in one sentence. */
+function listingOwnLabelStatus(listing) {
+  return !!(listing && listing.legacyOwnLabel);
+}
+function isOwnLabel(holder, ref) { return listingOwnLabelStatus(listingOf(holder, ref)); }
+function isExclusiveFor(holder, ref) { const l = listingOf(holder, ref); return !!(l && l.exclusive); }
+
+/* ── Writing one ────────────────────────────────────────────────
+   The only way a listing is created, and it is deliberately the only
+   one: (holder, productId) has to stay unique, and eight call sites
+   each doing their own "is it already there" was how the buyers' lists
+   came to hold three answers to the same question.
+
+   `legacyOwnLabel` IS NOT A PARAMETER. The bridge carries the three
+   fixture rows and nothing else may ever add to it — a new own label
+   comes from an A17 project, not from an interface. */
+function addListing(holder, ref, fields) {
+  const id = (ref && typeof ref === 'object') ? ref.id : ref;
+  if (!holder || typeof id !== 'string') return null;
+  const existing = listingOf(holder, id);
+  if (existing) return existing;
+  const f = fields || {};
+  const row = { holder: holder, productId: id, legacyOwnLabel: false,
+                exclusive: !!f.exclusive, listedAt: todayISO(),
+                holderArticleNo: f.holderArticleNo == null ? null : f.holderArticleNo,
+                monthlyVolume: f.monthlyVolume == null ? null : f.monthlyVolume,
+                tradePrice: f.tradePrice == null ? null : f.tradePrice };
+  listings.push(row);
+  return row;
+}
+/* A wine leaving a book takes its listing with it. Leaving the row
+   behind would keep an exclusivity, a price and a shelf reference
+   alive for a wine the house no longer carries — the stale-copy
+   failure of D33, one level down. */
+function removeListing(holder, ref) {
+  const l = listingOf(holder, ref);
+  if (l) listings.splice(listings.indexOf(l), 1);
+}
 
 /* ══════════════════════════════════════════════════════════════════
    PORTFOLIO COUNTS — counted, never stored (invariant 7)
@@ -4944,10 +5133,10 @@ function renderWinePortfolioD() {
   if (!el) return;
   el.innerHTML = currentWinePortfolio.map((w, idx) => `
     <div class="list-entry">
-      <div class="entry-dot" style="background:${w.ownLabel ? 'var(--gold)' : 'var(--dim)'}"></div>
+      <div class="entry-dot" style="background:${isOwnLabel('Hawesko GmbH', w.id) ? 'var(--gold)' : 'var(--dim)'}"></div>
       <div class="entry-name">${wineLabel(w)}<div style="font-size:0.68rem;color:var(--dim);margin-top:0.2rem">${w.winery}</div></div>
       <div class="entry-detail"><a class="icon-btn" href="${w.url}" target="_blank">View</a></div>
-      <div class="entry-tag"><span class="badge${w.ownLabel ? ' badge-gold' : ''}" style="font-size:0.55rem${w.ownLabel ? '' : ';background:rgba(247,243,238,0.05);color:var(--dim)'}">${w.ownLabel ? 'Own-Label' : 'Standard'}</span></div>
+      <div class="entry-tag"><span class="badge${isOwnLabel('Hawesko GmbH', w.id) ? ' badge-gold' : ''}" style="font-size:0.55rem${isOwnLabel('Hawesko GmbH', w.id) ? '' : ';background:rgba(247,243,238,0.05);color:var(--dim)'}">${isOwnLabel('Hawesko GmbH', w.id) ? 'Own-Label' : 'Standard'}</span></div>
       <div class="entry-actions">
         <button class="icon-btn" onclick="editPortfolioWine(${idx})">Edit</button>
         <button class="icon-btn" onclick="deletePortfolioWine(${idx})" title="Remove from portfolio">✕</button>
@@ -4957,6 +5146,7 @@ function renderWinePortfolioD() {
 
 function deletePortfolioWine(idx) {
   if (!confirm('Remove this wine from your portfolio? It will disappear from your public profile and the Wine Guide.')) return;
+  removeListing('Hawesko GmbH', currentWinePortfolio[idx]);
   currentWinePortfolio.splice(idx, 1);
   renderWinePortfolioD();
   refreshPortfolioCounts();
@@ -4967,9 +5157,13 @@ function editPortfolioWine(idx) {
   editingPortfolioIndex = idx;
   awSelectedWine = null;
   const w = currentWinePortfolio[idx];
+  const l = listingOf('Hawesko GmbH', w.id);
   document.getElementById('aw-selected-summary').innerHTML = `${w.name} <span>${w.vintage} · ${w.winery}</span>`;
-  document.getElementById('aw-volume').value = '';
-  document.getElementById('aw-ownlabel').checked = w.ownLabel;
+  /* The volume the distributor typed is a fact about this listing and
+     is shown back to them. It used to be blanked on every open, which
+     is what "set, cleared twice and never read" looked like from here. */
+  document.getElementById('aw-volume').value = (l && l.monthlyVolume != null) ? l.monthlyVolume : '';
+  document.getElementById('aw-ownlabel').checked = listingOwnLabelStatus(l);
   document.getElementById('aw-step-pick').style.display = 'none';
   document.getElementById('aw-step-details').style.display = 'block';
   document.getElementById('aw-modal').classList.add('active');
@@ -5036,11 +5230,26 @@ function backToPicker() {
   document.getElementById('aw-step-pick').style.display = 'block';
   renderWinePicker(document.getElementById('aw-search').value);
 }
+/* The number the distributor typed, or null when they typed nothing.
+   Blank is not zero: "no figure given" and "no bottles a month" are
+   different statements and only one of them is a claim. */
+function typedVolume() {
+  const raw = (document.getElementById('aw-volume').value || '').trim();
+  if (!raw) return null;
+  const n = parseInt(raw, 10);
+  return isNaN(n) || n < 0 ? null : n;
+}
+
 function confirmAddWine() {
   if (editingPortfolioIndex !== null) {
-    // Editing an existing portfolio entry's relation fields (volume/own-label) — the
-    // wine content itself stays owned by the winery and is never edited here.
-    currentWinePortfolio[editingPortfolioIndex].ownLabel = document.getElementById('aw-ownlabel').checked;
+    /* Editing the RELATION, which is what a listing is — the wine
+       content stays the winery's (invariant 2) and own-label status is
+       derived (A17.12), so the one editable fact here is the volume.
+       It was being read off the form and dropped on the floor before
+       this pass; now it has a row to land on. */
+    const w = currentWinePortfolio[editingPortfolioIndex];
+    const l = listingOf('Hawesko GmbH', w.id);
+    if (l) l.monthlyVolume = typedVolume();
     renderWinePortfolioD();
     closePullWineModal();
     showToast('✓ Portfolio entry updated');
@@ -5048,14 +5257,16 @@ function confirmAddWine() {
     return;
   }
   if (!awSelectedWine) return;
-  /* The record carries its article page. Deriving a slug from the
-     name is the guess A14.4 records: "Müller-Thurgau — Mosel" comes
-     out `m-ller-thurgau`. A reference answers it. */
+  /* THE KEY TRAVELS. It did not until this pass: a wine pulled in got
+     winery, name, vintage, type, origin and url but no `id`, so it was
+     invisible to wineByRef() — the picker could never mark it "Already
+     in portfolio", and after this commit it could not have carried a
+     listing at all. Found while wiring the listing key. */
   currentWinePortfolio.push({
+    id: awSelectedWine.id,
     winery: awSelectedWine.winery,
     name: awSelectedWine.name,
     vintage: awSelectedWine.vintage,
-    ownLabel: document.getElementById('aw-ownlabel').checked,
     /* The buyers' pickers read this book now, and they show type and
        origin. A wine pulled in without them would render "undefined ·
        undefined" on two other dashboards — the producer owns these
@@ -5064,6 +5275,12 @@ function confirmAddWine() {
     origin: awSelectedWine.origin,
     url: awSelectedWine.url
   });
+  /* One row per (holder, line). Taking a wine on is the act; the
+     listing is the record of it, and its date is today rather than a
+     figure copied from anywhere. `legacyOwnLabel` is false and stays
+     false — the bridge carries the three legacy fixtures and nothing
+     the interface does may add a fourth. */
+  addListing('Hawesko GmbH', awSelectedWine.id, { monthlyVolume: typedVolume() });
   renderWinePortfolioD();
   refreshPortfolioCounts();
   closePullWineModal();
@@ -5538,9 +5755,9 @@ function openRestaurantPublicPreview() {
 
 
 let rCurrentWineList = [
-  { id:'PRD-1020', winery:'Henri Dubois Domaine', name:'Sauvignon Blanc — Sancerre', vintage:2023, exclusive:true, url:'bottle-lobby-wine-sauvignon-blanc-sancerre.html' },
-  { id:'PRD-1021', winery:'Domaine Lefèvre', name:'Chardonnay — Chablis Premier Cru', vintage:2022, exclusive:true, url:'bottle-lobby-wine-chardonnay-chablis-premier-cru.html' },
-  { id:'PRD-1022', winery:'Cantina Rossi', name:'Primitivo Sicilia IGT', vintage:2022, exclusive:true, url:'bottle-lobby-wine-primitivo-sicilia-igt.html' }
+  { id:'PRD-1020', winery:'Henri Dubois Domaine', name:'Sauvignon Blanc — Sancerre', vintage:2023, url:'bottle-lobby-wine-sauvignon-blanc-sancerre.html' },
+  { id:'PRD-1021', winery:'Domaine Lefèvre', name:'Chardonnay — Chablis Premier Cru', vintage:2022, url:'bottle-lobby-wine-chardonnay-chablis-premier-cru.html' },
+  { id:'PRD-1022', winery:'Cantina Rossi', name:'Primitivo Sicilia IGT', vintage:2022, url:'bottle-lobby-wine-primitivo-sicilia-igt.html' }
 ];
 
 let rAwSelectedWine = null;
@@ -5550,15 +5767,16 @@ function renderWineListR() {
   if (!el) return;
   el.innerHTML = rCurrentWineList.map((w, idx) => `
     <div class="list-entry">
-      <div class="entry-dot" style="background:${w.exclusive ? 'var(--gold)' : 'var(--dim)'}"></div>
+      <div class="entry-dot" style="background:${isExclusiveFor('Bistro Laurent', w.id) ? 'var(--gold)' : 'var(--dim)'}"></div>
       <div class="entry-name">${wineLabel(w)}<div style="font-size:0.68rem;color:var(--dim);margin-top:0.2rem">${w.winery}</div></div>
       <div class="entry-detail"><a class="icon-btn" href="${w.url}" target="_blank">View</a></div>
-      <div class="entry-tag"><span class="badge${w.exclusive ? ' badge-gold' : ''}" style="font-size:0.55rem${w.exclusive ? '' : ';background:rgba(247,243,238,0.05);color:var(--dim)'}">${w.exclusive ? 'Exclusive' : 'Standard'}</span></div>
+      <div class="entry-tag"><span class="badge${isExclusiveFor('Bistro Laurent', w.id) ? ' badge-gold' : ''}" style="font-size:0.55rem${isExclusiveFor('Bistro Laurent', w.id) ? '' : ';background:rgba(247,243,238,0.05);color:var(--dim)'}">${isExclusiveFor('Bistro Laurent', w.id) ? 'Exclusive' : 'Standard'}</span></div>
       <div class="entry-actions"><button class="icon-btn" onclick="deleteListWine(${idx})" title="Remove from list">✕</button></div>
     </div>`).join('');
 }
 function deleteListWine(idx) {
   if (!confirm('Remove this wine from your list?')) return;
+  removeListing('Bistro Laurent', rCurrentWineList[idx]);
   rCurrentWineList.splice(idx, 1);
   renderWineListR();
   showToast('✓ Wine removed from your list');
@@ -5614,7 +5832,7 @@ function renderWinePickerR(search) {
       /* Derived, not stored: `note` used to carry "Own-Label
          Available", which duplicated ownLabel, and "Exclusive", which
          is the BUYER's own marking on their own list. */
-      const tag = taken ? 'Already on your list' : (w.ownLabel ? 'Own-Label Available' : 'Standard');
+      const tag = taken ? 'Already on your list' : (isOwnLabel(dist, w.id) ? 'Own-Label Available' : 'Standard');
       return `<div class="aw-pick-item${taken ? ' taken' : ''}" ${taken ? '' : `onclick="selectWineForAddR('${w.id}')"`}>
         <div>
           <div class="aw-pick-name">${w.name} <span style="color:rgba(247,243,238,0.4)">${w.vintage}</span></div>
@@ -5648,12 +5866,16 @@ function confirmAddWineR() {
      name is the guess A14.4 records: "Müller-Thurgau — Mosel" comes
      out `m-ller-thurgau`. A reference answers it. */
   rCurrentWineList.push({
+    id: rAwSelectedWine.id,
     winery: rAwSelectedWine.winery,
     name: rAwSelectedWine.name,
     vintage: rAwSelectedWine.vintage,
-    exclusive: document.getElementById('r-aw-exclusive').checked,
     url: rAwSelectedWine.url
   });
+  /* The exclusivity is the BUYER's statement about their own house, so
+     it lives on their listing rather than on a copy of the wine. */
+  addListing('Bistro Laurent', rAwSelectedWine.id,
+             { exclusive: document.getElementById('r-aw-exclusive').checked });
   renderWineListR();
   closeAddWineModalR();
   showToast('✓ Wine added to your list');
@@ -5934,9 +6156,9 @@ function openRetailPublicPreview() {
 
 
 let tCurrentWineSelection = [
-  { id:'PRD-1020', winery:'Henri Dubois Domaine', name:'Sauvignon Blanc — Sancerre', vintage:2023, exclusive:true, url:'bottle-lobby-wine-sauvignon-blanc-sancerre.html' },
-  { id:'PRD-1021', winery:'Domaine Lefèvre', name:'Chardonnay — Chablis Premier Cru', vintage:2022, exclusive:true, url:'bottle-lobby-wine-chardonnay-chablis-premier-cru.html' },
-  { id:'PRD-1022', winery:'Cantina Rossi', name:'Primitivo Sicilia IGT', vintage:2022, exclusive:true, url:'bottle-lobby-wine-primitivo-sicilia-igt.html' }
+  { id:'PRD-1020', winery:'Henri Dubois Domaine', name:'Sauvignon Blanc — Sancerre', vintage:2023, url:'bottle-lobby-wine-sauvignon-blanc-sancerre.html' },
+  { id:'PRD-1021', winery:'Domaine Lefèvre', name:'Chardonnay — Chablis Premier Cru', vintage:2022, url:'bottle-lobby-wine-chardonnay-chablis-premier-cru.html' },
+  { id:'PRD-1022', winery:'Cantina Rossi', name:'Primitivo Sicilia IGT', vintage:2022, url:'bottle-lobby-wine-primitivo-sicilia-igt.html' }
 ];
 
 let tAwSelectedWine = null;
@@ -5946,15 +6168,16 @@ function renderWineSelectionT() {
   if (!el) return;
   el.innerHTML = tCurrentWineSelection.map((w, idx) => `
     <div class="list-entry">
-      <div class="entry-dot" style="background:${w.exclusive ? 'var(--gold)' : 'var(--dim)'}"></div>
+      <div class="entry-dot" style="background:${isExclusiveFor('Weinhaus M\u00fcller', w.id) ? 'var(--gold)' : 'var(--dim)'}"></div>
       <div class="entry-name">${wineLabel(w)}<div style="font-size:0.68rem;color:var(--dim);margin-top:0.2rem">${w.winery}</div></div>
       <div class="entry-detail"><a class="icon-btn" href="${w.url}" target="_blank">View</a></div>
-      <div class="entry-tag"><span class="badge${w.exclusive ? ' badge-gold' : ''}" style="font-size:0.55rem${w.exclusive ? '' : ';background:rgba(247,243,238,0.05);color:var(--dim)'}">${w.exclusive ? 'Exclusive' : 'Standard'}</span></div>
+      <div class="entry-tag"><span class="badge${isExclusiveFor('Weinhaus M\u00fcller', w.id) ? ' badge-gold' : ''}" style="font-size:0.55rem${isExclusiveFor('Weinhaus M\u00fcller', w.id) ? '' : ';background:rgba(247,243,238,0.05);color:var(--dim)'}">${isExclusiveFor('Weinhaus M\u00fcller', w.id) ? 'Exclusive' : 'Standard'}</span></div>
       <div class="entry-actions"><button class="icon-btn" onclick="deleteSelectionWine(${idx})" title="Remove from selection">✕</button></div>
     </div>`).join('');
 }
 function deleteSelectionWine(idx) {
   if (!confirm('Remove this wine from your selection?')) return;
+  removeListing('Weinhaus M\u00fcller', tCurrentWineSelection[idx]);
   tCurrentWineSelection.splice(idx, 1);
   renderWineSelectionT();
   showToast('✓ Wine removed from your selection');
@@ -5996,7 +6219,7 @@ function renderWinePickerT(search) {
       /* Derived, not stored: `note` used to carry "Own-Label
          Available", which duplicated ownLabel, and "Exclusive", which
          is the BUYER's own marking on their own list. */
-      const tag = taken ? 'Already in your selection' : (w.ownLabel ? 'Own-Label Available' : 'Standard');
+      const tag = taken ? 'Already in your selection' : (isOwnLabel(dist, w.id) ? 'Own-Label Available' : 'Standard');
       return `<div class="aw-pick-item${taken ? ' taken' : ''}" ${taken ? '' : `onclick="selectWineForAddT('${w.id}')"`}>
         <div>
           <div class="aw-pick-name">${w.name} <span style="color:rgba(247,243,238,0.4)">${w.vintage}</span></div>
@@ -6029,12 +6252,16 @@ function confirmAddWineT() {
      name is the guess A14.4 records: "Müller-Thurgau — Mosel" comes
      out `m-ller-thurgau`. A reference answers it. */
   tCurrentWineSelection.push({
+    id: tAwSelectedWine.id,
     winery: tAwSelectedWine.winery,
     name: tAwSelectedWine.name,
     vintage: tAwSelectedWine.vintage,
-    exclusive: document.getElementById('t-aw-exclusive').checked,
     url: tAwSelectedWine.url
   });
+  /* The exclusivity is the BUYER's statement about their own house, so
+     it lives on their listing rather than on a copy of the wine. */
+  addListing('Weinhaus M\u00fcller', tAwSelectedWine.id,
+             { exclusive: document.getElementById('t-aw-exclusive').checked });
   renderWineSelectionT();
   closeAddWineModalT();
   showToast('✓ Wine added to your selection');
@@ -7031,19 +7258,13 @@ if (!hashRole) {
 /* Indicative per-bottle trade prices, used when an order is generated
    from an Offer/Deal/Promo request. Real build: comes from the
    distributor↔winery or distributor↔customer price list. */
-const wineUnitPrice = {
-  'PRD-1020': 14.90,   /* Sauvignon Blanc — Sancerre */
-  'PRD-1021': 21.50,   /* Chardonnay — Chablis Premier Cru */
-  'PRD-1024': 16.80,   /* Riesling Spätlese — Mosel */
-  'PRD-1022': 11.20,   /* Primitivo Sicilia IGT */
-  'PRD-1003':  9.80,   /* Nero d'Avola Sicilia DOC */
-  'PRD-1001':  8.40,   /* Catarratto Biologico */
-  'PRD-1025': 12.60,   /* Merlot — Bordeaux Supérieur */
-  'PRD-1008': 13.40,   /* Baglio Rosso */
-  'PRD-1015': 17.20,   /* Pouilly-Fumé */
-  'PRD-1009': 10.60,   /* Costa Bianca */
-  'PRD-1027': 12.10    /* Terra Rossa — the entry that had no record until A3 */
-};
+/* `wineUnitPrice` stood here — a flat map from product key to number,
+   eleven entries, NO OWNER. It is gone. A trade price is always the
+   price of ONE PARTY for a wine, never a property of the wine: Hawesko
+   buys Primitivo at 6.40 and sells it at 11.20, and a map with one slot
+   per wine can hold at most one of those two. Both live on listings
+   now, each on the row of the house that quotes it, and
+   listingPrice(holder, product) is how anybody asks. */
 /* An order line names its producer by READING the seller's book, and
    there is no computation left that could answer instead.
    `wineryOfWine()` used to: it searched three pools, had to skip the
@@ -7068,7 +7289,13 @@ function orderItem(ref, qty, seller) {
     console.warn('[orders] "' + ref + '" is not in ' + seller + "'s portfolio — no order line made");
     return null;
   }
-  return orderItemRaw(found.id, qty, wineUnitPrice[found.id] || 12.00, found.vintage, null);
+  /* The SELLER's price for this wine, off the seller's own listing.
+     The old map could only answer "the price of this wine", which is
+     not a question anybody can answer without saying whose. 12.00 is
+     the same last resort it always was, for a seller who carries the
+     wine without having quoted it. */
+  const quoted = listingPrice(seller, found.id);
+  return orderItemRaw(found.id, qty, quoted == null ? 12.00 : quoted, found.vintage, null);
 }
 
 let orderSeq = 2042;
@@ -7611,7 +7838,11 @@ function applyFreeGoods(id, dealId) {
   if (!info) return;
   const target = wineByRef(info.products[0]);
   if (!target) { showToast('✗ That deal names a wine no book carries'); return; }
-  const cost = wineUnitPrice[target.id] ? +(wineUnitPrice[target.id] * 0.62).toFixed(2) : 0;
+  /* Free goods still cost the seller what the goods cost, and the
+     seller here is the one running the deal — their listing, their
+     number. Unquoted stays 0 rather than becoming a guess. */
+  const quoted = listingPrice(o.seller, target.id);
+  const cost = quoted == null ? 0 : +(quoted * 0.62).toFixed(2);
   o.items.push({ productId:target.id, qty:info.free, unit:0, cost:cost, discount:0, free:true });
   logEvent(o, o.seller, 'Free goods applied: ' + info.free + ' × ' + target.name + ' (deal ' + info.deal.ratio + ')');
   renderOrderDetail(id);
@@ -8251,9 +8482,17 @@ function openDocPreview(id, key, no) {
      order is still a draft (A15.2b). Nothing here may ask the product
      directly — a document is a record of what was traded, and a
      vintage rollover next autumn must not be able to reach it. */
+  /* THE VINTAGE IS PRINTED, and it is the frozen one. Serge's decision
+     of 5 Aug 2026: "Riesling Spätlese — Mosel 2023" is the goods,
+     "Riesling Spätlese — Mosel" is the line (A15.2b), and a producer
+     carrying two vintages at once makes an invoice without the year
+     ambiguous about what was actually delivered. The batch prints
+     beside it where the producer works in batches. */
   const rows = o.items.map(i => {
     const d = docLine(i);
-    return '<tr><td>' + d.name + '<br><span style="color:#8a7a5f;font-size:0.68rem">' + d.producer + '</span></td>' +
+    const year = d.vintage == null ? '' : ' ' + d.vintage;
+    const lot = d.batchOrLot ? ' · Lot ' + d.batchOrLot : '';
+    return '<tr><td>' + d.name + year + '<br><span style="color:#8a7a5f;font-size:0.68rem">' + d.producer + lot + '</span></td>' +
     '<td class="num">' + d.qty + '</td>' +
     '<td class="num">' + (i.free ? '0.00' : d.unit.toFixed(2)) + '</td>' +
     '<td class="num">' + (i.discount || 0) + '%</td>' +
@@ -10215,7 +10454,7 @@ function closeShowOrderList(id) {
          partnership terms, so it is taken from the agreed list where
          one exists and left for the host to fill in where it does not
          — never invented (A1). */
-      items: lines.map(l => orderItemRaw(l.productId, l.qty, purchasePriceFor(l.productId),
+      items: lines.map(l => orderItemRaw(l.productId, l.qty, purchasePriceFor(producer, l.productId),
                                          orderedVintageOf(l.productId), null))
     };
     orders.unshift(normalizeOrder(o));
@@ -10267,7 +10506,7 @@ function releaseHeldWine(id, productName) {
     seller: producer, sellerType:'winery',
     stage:'pending', source:'wine_show_order', wineShowId: s.id,
     note:'Held back at ' + s.title + ', ordered after agreeing terms',
-    items: [ orderItemRaw((wineByRef(productName) || {}).id, qty, purchasePriceFor(productName),
+    items: [ orderItemRaw((wineByRef(productName) || {}).id, qty, purchasePriceFor(producer, productName),
                           orderedVintageOf(productName), null) ]
   };
   orders.unshift(normalizeOrder(o));
@@ -10293,12 +10532,24 @@ function withdrawInterest(id, productName) {
   showToast('Note withdrawn');
 }
 
-/* `wineUnitPrice` is keyed WITHOUT the vintage; show products carry it.
-   A14.4 is the warning about exactly this kind of join, so the trim is
-   explicit rather than hopeful. */
-function purchasePriceFor(ref) {
+/* What the HOST PAYS THE PRODUCER for a wine, off the producer's own
+   listing — which is the only place that price has ever been able to
+   live (invariant 2 for prices: whose number is it).
+
+   THIS READ THE WRONG PARTY UNTIL THIS PASS, and the comment two lines
+   above it already said what it should do: "taken from the agreed list
+   where one exists and left for the host to fill in where it does not
+   — never invented (A1)". The agreed list is the SUPPLY agreement.
+   `wineUnitPrice` was Hawesko's own sell price, so a purchase order to
+   Cantina Rossi was priced at what Hawesko charges its restaurants —
+   the flat map had no owner, so there was no way to notice. With the
+   producer named, a purchase order costs what the producer charges,
+   and 0 where the two of them have not agreed a figure, exactly as the
+   comment always promised. */
+function purchasePriceFor(producer, ref) {
   const p = wineByRef(ref);
-  return (p && typeof wineUnitPrice !== 'undefined' && wineUnitPrice[p.id]) || 0;
+  const quoted = p ? listingPrice(producer, p.id) : null;
+  return quoted == null ? 0 : quoted;
 }
 function nextOrderId() {
   const nums = orders.map(o => parseInt(String(o.id).replace(/\D/g, ''), 10)).filter(n => !isNaN(n));
@@ -11633,6 +11884,15 @@ BLStore.register({
   wineryRequests:         [function () { return wineryRequests; },         function (v) { wineryRequests = v; }],
 
   wineryOutgoingRequests: [function () { return wineryOutgoingRequests; }, function (v) { wineryOutgoingRequests = v; }],
+
+  /* Listings — one row per (holder, wine line), across ALL FOUR roles
+     rather than one role's book. It is registered once for that
+     reason: the exclusivity a restaurant marks, the volume a
+     distributor types and the price a producer quotes are the same
+     kind of fact about the same kind of row, and splitting them per
+     role is what produced three answers to "is this wine exclusive"
+     in the first place. */
+  listings:               [function () { return listings; },               function (v) { listings = v; }],
 
   /* Distributor */
   currentWinePortfolio:   [function () { return currentWinePortfolio; },   function (v) { currentWinePortfolio = v; }],

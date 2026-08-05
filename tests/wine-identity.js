@@ -389,14 +389,16 @@ console.log('\n── order lines and prices name products, not strings');
   else ok(lines.length + ' order lines across ' + J('orders').length +
       ' orders, every one naming a product that exists and none carrying a copy of it');
 
-  const prices = J('wineUnitPrice');
-  const keys = Object.keys(prices);
-  const byName = keys.filter(k => !ID_SHAPE.test(k));
-  const dangling = keys.filter(k => ID_SHAPE.test(k) && !ROWS.some(r => r.id === k));
-  if (!keys.length) bad('the price table is empty — this check examined nothing');
-  else if (byName.length) bad(byName.length + ' price entr(ies) are still keyed by name: ' + byName.join(' · '));
-  else if (dangling.length) bad(dangling.length + ' price key(s) name no product: ' + dangling.join(' · '));
-  else ok(keys.length + ' trade prices, every one keyed by a product that exists');
+  /* The prices moved onto listings, so they are read from there. The
+     flat `wineUnitPrice` map is gone: it was keyed by product with no
+     holder, which is a shape that cannot answer "whose price is this". */
+  const priced = J('listings').filter(l => l.tradePrice != null);
+  const byName = priced.filter(l => !ID_SHAPE.test(l.productId));
+  const dangling = priced.filter(l => ID_SHAPE.test(l.productId) && !ROWS.some(r => r.id === l.productId));
+  if (!priced.length) bad('no listing carries a price — this check examined nothing');
+  else if (byName.length) bad(byName.length + ' priced listing(s) are keyed by name: ' + byName.map(l => l.productId).join(' · '));
+  else if (dangling.length) bad(dangling.length + ' priced listing(s) name no product: ' + dangling.map(l => l.productId).join(' · '));
+  else ok(priced.length + ' trade prices, every one keyed by a product that exists AND owned by a named holder');
 }
 
 /* ── 6c-2. The show surface names keys (pass 3b) ─────────────────
@@ -625,10 +627,10 @@ console.log('\n── the order side\'s counter-checks');
       ask:  win => J2(win, 'orders').flatMap(o => o.items || []).every(i => !('winery' in i)),
       says: 'the copy is back, and with it the two answers to "whose wine is this"' },
 
-    { what: 'a price key goes back to a name',
-      from: "'PRD-1015': 17.20,   /* Pouilly-Fumé */",
-      to:   "'Pouilly-Fumé': 17.20,",
-      ask:  win => Object.keys(J2(win, 'wineUnitPrice')).every(k => ID_SHAPE.test(k)),
+    { what: 'a priced listing goes back to naming a wine',
+      from: "productId:'PRD-1015', legacyOwnLabel:false, exclusive:false, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:null, tradePrice:17.20 }",
+      to:   "productId:'Pouilly-Fumé', legacyOwnLabel:false, exclusive:false, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:null, tradePrice:17.20 }",
+      ask:  win => J2(win, 'listings').every(l => ID_SHAPE.test(l.productId)),
       says: 'a price nobody can reach from a line that names a key' },
 
     { what: 'a show product keeps the name beside the key',
@@ -695,11 +697,11 @@ console.log('\n── the order side\'s counter-checks');
       },
       says: 'a free-typed string reaching a resolver, which is how this class of defect arrives' },
 
-    { what: 'a price key names a product that does not exist',
-      from: "'PRD-1027': 12.10    /* Terra Rossa — the entry that had no record until A3 */",
-      to:   "'PRD-9999': 12.10",
-      ask:  win => Object.keys(J2(win, 'wineUnitPrice'))
-              .every(k => harvest(win).collections.flatMap(c => c.rows).some(r => r.id === k)),
+    { what: 'a listing names a product that does not exist',
+      from: "productId:'PRD-1027', legacyOwnLabel:false",
+      to:   "productId:'PRD-9999', legacyOwnLabel:false",
+      ask:  win => J2(win, 'listings')
+              .every(l => harvest(win).collections.flatMap(c => c.rows).some(r => r.id === l.productId)),
       says: 'the very state A3 was invoked to repair, back again' }
   ];
 
@@ -723,12 +725,14 @@ console.log('\n── the order side\'s counter-checks');
    it, render again, compare. Anything that still reaches through to the
    product shows up as a diff, including a reach nobody thought to name.
 
-   AND IT MOVES THE NAME, NOT ONLY THE VINTAGE. No document prints a
-   vintage today — the table is name over producer — so a vintage bump
-   alone would compare equal even with the defect fully in place, and
-   the check would prove nothing. The name and the producer are what a
-   document actually prints, so those are what the probe moves. The
-   vintage is asserted separately, on the frozen row. */
+   AND THE VINTAGE IS BACK IN THE PROBE. When this was written no
+   document printed a year, so a vintage bump alone compared equal even
+   with the defect fully in place — the probe would have reported green
+   without having looked at anything, and it moved the name instead.
+   Serge then decided the business question the measurement had
+   exposed: an invoice names the GOODS, so it prints the vintage
+   (5 Aug 2026, A15.2b). It moves the vintage and the name now, and the
+   vintage half of it finally tests what it was built to test. */
 console.log('\n── what was traded is frozen on the line');
 {
   const BOUND = ['accepted', 'shipped', 'delivered'];
@@ -804,8 +808,14 @@ console.log('\n── what was traded is frozen on the line');
     win.eval(move);
     const after = render(win);
 
+    /* The year has to actually be on the page, or "unchanged" is a
+       statement about a column that is not printed. */
+    const shownYears = ['2022', '2023'].filter(y => before.indexOf(y) !== -1);
     if (!before || before.indexOf('<table>') === -1)
       bad('the document probe rendered nothing — it proves neither direction');
+    else if (!shownYears.length)
+      bad('no vintage appears in the rendered documents at all — printing it was a no-op, ' +
+          'and the comparison below is blind to the rollover again');
     else if (before === after)
       ok('a vintage rollover and two renames under an accepted order changed ' +
          DOCS.length + ' documents by zero bytes — the paperwork is a record, not a view');
@@ -817,19 +827,35 @@ console.log('\n── what was traded is frozen on the line');
 
     /* The counter-check: put the reach-through back and the probe must
        go red. Without this, a renderer that prints nothing at all would
-       also compare equal and read as a pass. */
+       also compare equal and read as a pass.
+
+       IT MOVES THE VINTAGE AND NOTHING ELSE. Moving the name too would
+       let this pass on a renderer that prints the name and ignores the
+       year, which is precisely the state that made the first version of
+       this probe vacuous. If the vintage alone is enough to break it,
+       the vintage is genuinely load-bearing in the comparison. */
+    const vintageOnly = "(function(){ var p=wineByRef('PRD-1003'); p.vintage=p.vintage+1;" +
+                        " var q=wineByRef('PRD-1001'); q.vintage=q.vintage+1; return 1; })()";
+    /* The defect exactly as it stood before this chain: no snapshot,
+       and the year read off the product. Disabling the snapshot alone
+       is NOT enough and the first version of this counter-check proved
+       it by staying green — the live branch reads `i.vintage` off the
+       LINE, so the product could roll over without moving anything.
+       The reach-through has to be put back where it actually was. */
     const win2 = build({
-      from: "function docLine(i) {\n  if (i.snapshot) return i.snapshot;",
-      to:   "function docLine(i) {\n  if (0) return i.snapshot;"
+      from: "  if (i.snapshot) return i.snapshot;\n  return { name: lineName(i), producer: lineWinery(i),\n           vintage: i.vintage == null ? null : i.vintage,",
+      to:   "  return { name: lineName(i), producer: lineWinery(i),\n           vintage: (lineProduct(i) || {}).vintage,"
     });
     if (!win2) bad('the docLine counter-check never applied — the probe above proves nothing');
     else {
       const b2 = render(win2);
-      win2.eval(move);
+      win2.eval(vintageOnly);
       if (b2 === render(win2))
-        bad('NOT caught: a document reading the product straight through still compared equal — ' +
-            'the probe is not looking at what the document prints');
-      else ok('caught: a document that reads the product again moves the moment the product does');
+        bad('NOT caught: a document reading the product straight through still compared equal ' +
+            'after a vintage rollover — the document is not printing the year, so the probe ' +
+            'is back to proving nothing');
+      else ok('caught: a rollover alone moves a document that reads the product — the vintage ' +
+              'is load-bearing in the comparison, not decoration beside the name');
     }
   }
 
@@ -889,8 +915,8 @@ console.log('\n── the counter-checks');
        the real defect takes: two surfaces, one bottle, and every
        cross-feature match between them quietly finding nothing. */
     { what: 'one product carries two ids', by: 'two ids for one product',
-      from: "{ id:'PRD-1020', winery:'Henri Dubois Domaine', name:'Sauvignon Blanc — Sancerre', vintage:2023, exclusive:true",
-      to:   "{ id:'PRD-1099', winery:'Henri Dubois Domaine', name:'Sauvignon Blanc — Sancerre', vintage:2023, exclusive:true" },
+      from: "{ id:'PRD-1020', winery:'Henri Dubois Domaine', name:'Sauvignon Blanc — Sancerre', vintage:2023, url:'bottle-lobby-wine-sauvignon-blanc-sancerre.html' },\n  { id:'PRD-1021'",
+      to:   "{ id:'PRD-1099', winery:'Henri Dubois Domaine', name:'Sauvignon Blanc — Sancerre', vintage:2023, url:'bottle-lobby-wine-sauvignon-blanc-sancerre.html' },\n  { id:'PRD-1021'" },
 
     { what: 'a product row loses its id', by: 'no id',
       from: "{ id:'PRD-1008', winery:'Cantina Rossi', name:'Baglio Rosso'",
