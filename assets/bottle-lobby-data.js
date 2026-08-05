@@ -152,10 +152,25 @@ const SHOW_HERO_FALLBACK = 'images/duesseldorf-tasting-wide.jpg';
    never compared — tests/wine-identity.js holds both halves.
 
    Numbering follows partnerWinesPool first, because a product record
-   belongs to its producer (invariant 2). PRD-1020 … PRD-1026 exist
+   belongs to its producer (invariant 2). PRD-1020 … PRD-1026 existed
    only in the distributor's book: seven wines nobody's catalogue
-   knows. The numbering records that gap rather than smoothing it —
-   closing it is the "complete the catalogue" pass. */
+   knew. The numbering records that gap rather than smoothing it.
+
+   THE GAP WAS MEASURED, AND IT IS NOT ONE GAP BUT TWO. Six of the
+   seven — PRD-1020 … PRD-1025 — carry `status:'Own-Label'` in the
+   public Wine Guide and an `active`/`pending` `legacyOwnLabel` on
+   their listing. Two independent sources, the same six wines, the
+   same boundary. A17.9 says an own-label product is visible to the
+   producing winery, the exclusive distributor and Bottle Lobby and to
+   nobody else; this pool is what every buyer browses. Adding those
+   six here would not complete a catalogue, it would break A17.9 —
+   which tests/wine-shows.js already found once and said so.
+
+   PRD-1026 is the seventh and the only one with no own-label claim
+   anywhere: 'Standard' in the Guide, `legacyOwnLabel:false` on its
+   listing. It is added below. The other six stay out ON PURPOSE, and
+   HANDOFF carries why — the open question is not whether to loosen
+   A17.9 but whether all six are own labels at all. */
 const partnerWinesPool = [
   { id:'PRD-1001', winery:'Cantina Rossi', name:'Catarratto Biologico', vintage:2023, type:'White', note:'Organic', origin:'Sicilia DOC, Sicily', url:'bottle-lobby-wine-catarratto-biologico.html', at:'2025-03-14' },
   { id:'PRD-1002', winery:'Cantina Rossi', name:'Grillo Sicilia DOC', vintage:2023, type:'White', note:'Own-Label Available', origin:'Sicilia DOC, Sicily', url:'bottle-lobby-wine-grillo-sicilia-doc.html', at:'2025-04-02' },
@@ -187,7 +202,43 @@ const partnerWinesPool = [
   { id:'PRD-1016', winery:'Bodegas Ruiz', name:'Rioja Reserva', vintage:2019, type:'Red', note:'Standard', origin:'Rioja DOCa, Spain', url:'bottle-lobby-wine-rioja-reserva.html', at:'2025-09-10' },
   { id:'PRD-1017', winery:'Bodegas Ruiz', name:'Rioja Blanco', vintage:2023, type:'White', note:'Standard', origin:'Rioja DOCa, Spain', url:'bottle-lobby-wine-rioja-blanco.html', at:'2026-06-20' },
   { id:'PRD-1018', winery:'Weingut Schmitt', name:'Müller-Thurgau — Mosel', vintage:2023, type:'White', note:'Standard', origin:'Mosel QbA, Germany', url:'bottle-lobby-wine-muller-thurgau-mosel.html', at:'2026-07-25' },
-  { id:'PRD-1019', winery:'Weingut Schmitt', name:'Spätburgunder — Mosel', vintage:2022, type:'Red', note:'Standard', origin:'Mosel QbA, Germany', url:'bottle-lobby-wine-spatburgunder-mosel.html', at:'2026-01-22' }
+  { id:'PRD-1019', winery:'Weingut Schmitt', name:'Spätburgunder — Mosel', vintage:2022, type:'Red', note:'Standard', origin:'Mosel QbA, Germany', url:'bottle-lobby-wine-spatburgunder-mosel.html', at:'2026-01-22' },
+
+  /* ── Château Belrieu — the producer's first catalogue row ────────
+     Backfilled under A3, and the same shape as Terra Rossa above: the
+     wine has an article page, a public Wine Guide entry and a line in
+     three profile books, and only the producer's catalogue did not
+     carry it. A3 adds the missing record.
+
+     WHY THIS ONE AND NOT THE OTHER SIX. It is the only one of the
+     seven that claims no own label anywhere — Guide 'Standard',
+     `legacyOwnLabel:false`. The six that do are held back; see the
+     header above and HANDOFF.
+
+     `note` IS LIFTED, NOT CHOSEN. 'Standard' is what the
+     distributor-, restaurant- and retail-profile books each already
+     write on this row, and what the Guide's `status` says. Four
+     hand-written sources, one answer. The Guide's status is NOT the
+     same field as `note` (A17.0a/D36 keep those apart) — it is used
+     here as corroboration, not as the source.
+
+     `origin` follows the Appellation, Region convention, so the
+     region and not the country stands second — 'Bordeaux', which the
+     article page and the Guide both give. The distributor's book row
+     said ', France' and is aligned in the same pass, so the two books
+     do not start disagreeing about a wine they now both carry.
+
+     `at` IS FIXTURE AUTHORSHIP, and it is bounded TWICE. C7 gives the
+     ceiling: Hawesko's listing of this wine is dated 2026-06-01 and
+     nothing may depend on a record older than itself. The tighter
+     bound is notifNewWines() — Bistro Laurent has followed Château
+     Belrieu since 2026-04-27, so any `at` after that day announces
+     this wine to them as new. It has been on the public Guide all
+     along; that would be an overstatement of exactly the kind this
+     chain removes. Placed in the 2025 block for the same reason
+     Terra Rossa was: publicly listed all along. Measured after —
+     notification counts unchanged at 13 / 27 / 18 / 13. */
+  { id:'PRD-1026', winery:'Château Belrieu', name:'Château Belrieu Grand Vin', vintage:2019, type:'Red', note:'Standard', origin:'Bordeaux Supérieur AOC, Bordeaux', url:'bottle-lobby-wine-chateau-belrieu-grand-vin.html', at:'2025-10-28' }
 ];
 
 /* ══════════════════════════════════════════════════════════════════

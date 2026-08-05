@@ -127,8 +127,22 @@ window.BLStore = (function () {
   /* 2 — the wine-show date migration (03.08.2026). 59 fields moved
      from display format to ISO with every key unchanged, so the shape
      fingerprint could not see it and every returning visitor kept the
-     old values. See the note above before changing this. */
-  var VERSION   = 2;
+     old values. See the note above before changing this.
+
+     3 — the catalogue pass (05.08.2026). Same class, same blindness:
+     six `origin` values in `currentWinePortfolio` moved from a region
+     to an appellation, and one wine was renamed in THREE registered
+     collections at once — currentWinePortfolio, rCurrentWineList and
+     tCurrentWineSelection. Every key unchanged, so the fingerprint
+     sees nothing.
+
+     MEASURED, not assumed. A snapshot was seeded from a patched build
+     carrying the old values and restored over the new fixtures: the
+     page then reported `origin` "Loire Valley, France" and
+     `wineLabel("PRD-1022")` "Primitivo Sicilia IGT 2022" — the old
+     answers, permanently, on today's code. That is exactly the
+     symptom this counter exists for. */
+  var VERSION   = 3;
   var DEBOUNCE  = 200;   /* ms after the last event before a write */
   var HEARTBEAT = 2000;  /* ms between "does storage still match?" checks */
   var POLL      = 500;   /* ms between retries while the tab is busy */

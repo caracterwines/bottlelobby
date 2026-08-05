@@ -98,6 +98,28 @@ Aus diesen zwei Tagen liegt Folgendes:
   **Die sechs genauen Angaben stehen in `2df920a` in der Historie und sind der
   Pruefstein fuer die Kaskade:** kann Country → Region → Appellation
   „Sancerre AOC, Loire Valley" nicht wiedergeben, ist sie zu grob.
+  **Diese Verschlechterung ist am 05.08. behoben** — fuenf Katalogzeilen tragen
+  die praezise Angabe jetzt selbst, gehoben von Artikelseite und Guide, die bei
+  allen fuenf uebereinstimmten. Der A4-Durchgang faengt deshalb nicht mehr bei
+  „grob gegen praezise" an, sondern bei den zwei Punkten darunter:
+
+  **ERSTER MESSPUNKT DES A4-DURCHGANGS, und der schaerfste Befund des Tages:**
+  **„Terre Siciliane IGT" wird auf drei Katalogzeilen als `origin` benutzt
+  (PRD-1007, 1008, 1009) und steht selbst nicht in `wineGeoData`.** Die
+  Stammdatentabelle kennt fuer Sizilien fuenf Appellationen — Sicilia DOC,
+  Alcamo DOC, Etna DOC, Cerasuolo di Vittoria DOCG, Marsala DOC — und diese
+  nicht. **Der Katalog verletzt Invariante 4 also genau dort, wo er praezise
+  ist.** Die Kaskade muss diese Angabe wiedergeben koennen, sonst ist sie zu
+  grob; das ist der Pruefstein neben „Sancerre AOC, Loire Valley".
+
+  **Zweiter Messpunkt: die Konvention ist uneinheitlich, gemessen 05.08.**
+  Zwoelf der 21 Katalogzeilen schreiben Appellation, **Region**
+  („Sicilia DOC, Sicily", „Sancerre AOC, Loire Valley"), acht schreiben
+  Appellation, **Land** („Rioja DOCa, Spain", „Mosel QbA, Germany",
+  „Bourgogne Aligote AOC, France"). Der 05.08.-Durchgang hat die Region-Form
+  benutzt, weil sie die Mehrheit ist, und die acht Land-Zeilen **bewusst nicht
+  angefasst**: eine bereits praezise Zeile umzuschreiben ist der A4-Durchgang,
+  nicht das Nachtragen einer fehlenden.
 - **Die verbliebenen festen `profile-section-count`.** Gemessen am 05.08.:
   **19 Zaehler, nicht 20.** 14 tragen eine Id und werden zur Laufzeit gerechnet.
   „My Labels" ist mit `2df920a` dazugekommen, **also stehen noch 4 fest im
@@ -117,11 +139,63 @@ Danach in dieser Reihenfolge:
   3 → 6. **Spec D35 sagt, was zu tun ist — nicht, dass es getan sei;** die Zeile
   stand bis zum 4.8. faelschlich im Praeteritum, daher die neue Tempus-Regel in
   **C4**.
-- **Katalog vervollstaendigen** — 41 Artikelseiten, 26 von einem Datensatz
-  benannt, **15 verwaist**. Chateau Belrieu hat sechs Weine auf der Website und
-  keine Katalogzeile. Dazu ein **sechstes Buch**: `bottle-lobby-wine-guide.html`
-  fuehrt 40 Produktzeilen mit eigenen, slug-foermigen Ids. Vorbedingung fuer
-  das abgeleitete Portfolio.
+- **Katalog vervollstaendigen — nur zur Haelfte moeglich, und der Grund ist der
+  naechste Punkt.** Nachgemessen am 05.08., die aelteren Zahlen hier waren falsch:
+  **41 Artikelseiten und 41 Guide-Zeilen, deckungsgleich** (nicht 40), 27 davon
+  von einem `PRD-`Datensatz benannt, **14 verwaist** (nicht 15 — die aeltere Zahl
+  stammte von vor Terra Rossas Katalogzeile). Keine der 14 ist eine leere Huelse:
+  **alle 41 Artikelseiten tragen exakt 16 Spec-Felder**, einen Erzeugerlink und
+  eine Guide-Zeile. Cantina Rossi hat **null** Verwaiste, die anderen fuenf
+  Erzeuger tragen alle 14.
+  Von den sieben Weinen, die nur im Distributor-Buch standen, ist **PRD-1026
+  „Chateau Belrieu Grand Vin" nachgetragen** — der einzige ohne Own-Label-
+  Anspruch. **Die uebrigen sechs bleiben absichtlich draussen**, siehe unten.
+  Offen bleiben damit die 14 verwaisten Artikelseiten; sie haengen zu elf an
+  Distributor-Erzeuger-Paaren ohne Partnerschaftszeile. Vorbedingung fuer das
+  abgeleitete Portfolio.
+- **OWN-LABEL-SICHTBARKEIT GEGEN A17.9 — Geschaeftsfrage, liegt bei Serge.**
+  Sechs Weine — **PRD-1020, 1021, 1022, 1023, 1024, 1025** — stehen auf
+  oeffentlichen Artikelseiten und im oeffentlichen Wine Guide, dort ausdruecklich
+  mit `status:'Own-Label'` ausgezeichnet. A17.9 sagt, ein Own-Label-Produkt sei
+  fuer die erzeugende Winery, den exklusiven Distributor und Bottle Lobby
+  sichtbar und **fuer niemanden sonst**.
+  **Zwei unabhaengige Quellen ziehen dieselbe Grenze**, gemessen 05.08.: der
+  Guide-`status` (sechsmal `Own-Label`, PRD-1026 `Standard`) und
+  `legacyOwnLabel` auf der Listing-Zeile (fuenfmal `active`, PRD-1024 `pending`,
+  PRD-1026 `false`). Genau diese sechs fehlen im Erzeugerkatalog — **und sie
+  fehlen zu Recht.** `partnerWinesPool` ist der Pool, den jeder Kaeufer
+  durchblaettert; Nachtragen waere ein A17.9-Bruch. `tests/wine-shows.js` hat das
+  einmal gefunden und in seinem Kommentar festgehalten.
+  **Die wahrscheinlichere Aufloesung ist NICHT „A17.9 lockern",** sondern dass
+  mehrere dieser sechs gar keine Own Labels sind: `ownLabel:true` war lange ein
+  loses Haekchen ohne Vertrag dahinter — genau der Vierfach-Sinn, den **D36**
+  als geloescht fuehrt. Erst wenn feststeht, welche der sechs ein echtes,
+  gate-2-genehmigtes Projekt haben, ist entscheidbar, welche in den Katalog
+  gehoeren und welche aus dem oeffentlichen Guide verschwinden muessen.
+- **Die drei Katalogkopien auf den Profilseiten (D34) — eigener Durchgang,
+  haengt am Punkt darueber.** Gemessen 05.08.:
+  `bottle-lobby-restaurant-profile.html` und `bottle-lobby-retail-profile.html`
+  sind **Zeile fuer Zeile byte-identisch** — kein einziges abweichendes Feld. Es
+  sind nicht zwei Buecher, es ist ein Buch in zwei Dateien. Beide tragen 19
+  Zeilen, in denen **jedes `winery`-Feld „Hawesko GmbH" heisst** statt des
+  Erzeugers; `type`, `note` und `origin` stimmen dagegen ueberall mit der
+  23-Zeilen-Fassung in `bottle-lobby-distributor-profile.html` ueberein. **Der
+  Fehler steckt in genau einer Spalte.** Die 19 sind eine echte Teilmenge der 23;
+  es fehlen vier, alle von Cantina Rossi (Grillo Sicilia DOC, Nero d'Avola
+  Sicilia DOC, Primitivo Riserva, Rosato di Sicilia).
+- **Zwei Datierungsluecken bei den Partnerschaften**, beide 05.08. gemessen,
+  beide **nicht** repariert — Invariante 6, nur frueher:
+  `LISTED_AT` ist pauschal `2026-06-01`, und **drei Hawesko-Listings liegen damit
+  vor der Partnerschaft, die sie erst erlaubt**: Bodegas Ruiz (1 Tag),
+  Chateau Belrieu (29 Tage), Weingut Schmitt (35 Tage). Der Kommentar an
+  `LISTED_AT` begruendet das Datum gegen ORD-2029 als fruehestes abhaengiges
+  Ereignis — die Partnerschaftsdaten wurden dabei nicht mitgeprueft.
+  Dazu nennt der Wine Guide **acht Distributor-Erzeuger-Paare, fuer die es keine
+  Partnerschaftszeile gibt** (Aktiv Getraenke → Domaine Lefevre / Weingut
+  Schmitt · Hamberger → dieselben zwei · Enoteca Milano → Domaine Lefevre /
+  Chateau Belrieu · La Maison du Vin → Henri Dubois · Iberian Wine Partners →
+  Bodegas Ruiz). **Elf der 14 verwaisten Artikelseiten haengen an genau diesen
+  Paaren** — deshalb gehoert dieser Punkt vor das Nachtragen der 14.
 - **Ereignis-Identitaet** — `notifId()` baut Schluessel aus Anzeigetext, die 26
   `events[]`-Eintraege tragen `{at, actor, text}` und keine Id. Dieselbe
   Krankheit wie der Weinname, eine Ebene hoeher.
@@ -197,6 +271,15 @@ Ausgesprochene Grenze, kein Versehen — Begruendung und Beleg stehen jetzt in
 **Spec C8**. Ein mechanischer Riegel existiert nicht; eine „Format-Generation"
 neben `VERSION` ist **bewusst nicht gebaut**, weil sie die Disziplin nur
 verschiebt.
+*Am 05.08. ist die Grenze zum zweiten Mal erreicht und diesmal getroffen worden:
+`VERSION` steht auf **3**. Der Katalog-Durchgang hat sechs `origin`-Werte und
+einen Weinnamen in drei registrierten Sammlungen geaendert, alle Schluessel
+unverandert — fuer den Fingerprint unsichtbar. **Nachgewiesen statt vermutet:**
+ein Snapshot aus einem zurueckgepatchten Build, ueber die neuen Fixtures
+wiederhergestellt, lieferte auf heutigem Code weiterhin „Loire Valley, France"
+und „Primitivo Sicilia IGT 2022". Der Nachweis ist reproduzierbar mit
+`openTab(area, {patch})` aus `tests/persistence.js` — **die Bauart, die dafuer
+da ist, und der bisher einzige Weg, diesen Fall ehrlich zu zeigen.***
 
 **3. `SHOW_TODAY` ist eine feste Konstante (`'2026-07-31'`).** Faellt nicht auf,
 weil die Demo-Daten darum herum gebaut sind. Bis echte Zeit ins Spiel kommt ist

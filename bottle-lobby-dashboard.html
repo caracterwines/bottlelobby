@@ -1767,7 +1767,7 @@ With an annual production capacity of over 1.2 million bottles, Cantina Rossi is
             <div class="wine-edit-list" id="wportfolio-list">
           <div class="wine-edit-entry">
             <div class="wine-edit-dot"></div>
-            <div class="wine-edit-name">Primitivo — Sicilia IGT 2022<div style="font-size:0.68rem;color:var(--dim);margin-top:0.2rem">92 pts · €4.80 ex-cellar · Single Variety</div></div>
+            <div class="wine-edit-name">Primitivo — Alcamo DOC 2022<div style="font-size:0.68rem;color:var(--dim);margin-top:0.2rem">92 pts · €4.80 ex-cellar · Single Variety</div></div>
             <div class="wine-edit-origin">Alcamo DOC</div>
             <div class="wine-edit-status"><span class="profile-badge badge-own-label" style="font-size:0.55rem">Own-Label</span></div>
             <div class="wine-edit-actions">
@@ -2295,7 +2295,7 @@ With an annual production capacity of over 1.2 million bottles, Cantina Rossi is
       </div>
       <div class="list-entry">
         <div class="entry-dot" style="background:var(--gold)"></div>
-        <div class="entry-name">Primitivo Sicilia IGT 2022<div style="font-size:0.68rem;color:var(--dim);margin-top:0.2rem">Cantina Rossi</div></div>
+        <div class="entry-name">Primitivo — Alcamo DOC 2022<div style="font-size:0.68rem;color:var(--dim);margin-top:0.2rem">Cantina Rossi</div></div>
         <div class="entry-detail"><a class="icon-btn" href="bottle-lobby-wine-primitivo-sicilia-igt.html" target="_blank" title="View public wine page">View</a></div>
         <div class="entry-tag"><span class="badge badge-gold" style="font-size:0.55rem">Own-Label</span></div>
         <div class="entry-actions">
@@ -2769,7 +2769,7 @@ With an annual production capacity of over 1.2 million bottles, Cantina Rossi is
       </div>
       <div class="list-entry">
         <div class="entry-dot" style="background:var(--gold)"></div>
-        <div class="entry-name">Primitivo Sicilia IGT 2022<div style="font-size:0.68rem;color:var(--dim);margin-top:0.2rem">Hawesko GmbH</div></div>
+        <div class="entry-name">Primitivo — Alcamo DOC 2022<div style="font-size:0.68rem;color:var(--dim);margin-top:0.2rem">Hawesko GmbH</div></div>
         <div class="entry-detail"><a class="icon-btn" href="bottle-lobby-wine-primitivo-sicilia-igt.html" target="_blank">View</a></div>
         <div class="entry-tag"><span class="badge badge-gold" style="font-size:0.55rem">Exclusive</span></div>
         <div class="entry-actions">
@@ -3175,7 +3175,7 @@ With an annual production capacity of over 1.2 million bottles, Cantina Rossi is
       </div>
       <div class="list-entry">
         <div class="entry-dot" style="background:var(--gold)"></div>
-        <div class="entry-name">Primitivo Sicilia IGT 2022<div style="font-size:0.68rem;color:var(--dim);margin-top:0.2rem">Hawesko GmbH</div></div>
+        <div class="entry-name">Primitivo — Alcamo DOC 2022<div style="font-size:0.68rem;color:var(--dim);margin-top:0.2rem">Hawesko GmbH</div></div>
         <div class="entry-detail"><a class="icon-btn" href="bottle-lobby-wine-primitivo-sicilia-igt.html" target="_blank">View</a></div>
         <div class="entry-tag"><span class="badge badge-gold" style="font-size:0.55rem">Exclusive</span></div>
         <div class="entry-actions">
@@ -3286,7 +3286,7 @@ With an annual production capacity of over 1.2 million bottles, Cantina Rossi is
 
       <div class="form-block-title">Basics</div>
       <div class="form-row">
-        <div class="form-field"><div class="field-label">Wine Name</div><input class="field-input" id="wf-name" type="text" placeholder="e.g. Primitivo Sicilia IGT"></div>
+        <div class="form-field"><div class="field-label">Wine Name</div><input class="field-input" id="wf-name" type="text" placeholder="e.g. Primitivo — Alcamo DOC"></div>
         <div class="form-field"><div class="field-label">Vintage</div>
           <div class="select-wrap"><select class="field-select" id="wf-vintage"></select></div>
         </div>
@@ -3979,8 +3979,8 @@ With an annual production capacity of over 1.2 million bottles, Cantina Rossi is
      fails the run if any asset is missing or empty. That same file
      also switches persistence off for every harness. See tests/README.
 -->
-<script src="assets/bottle-lobby-store.js?v=f837af35"></script>
-<script src="assets/bottle-lobby-data.js?v=e2ff5572"></script>
+<script src="assets/bottle-lobby-store.js?v=ed1510c7"></script>
+<script src="assets/bottle-lobby-data.js?v=656a9719"></script>
 <script src="assets/bottle-lobby-public-shows.js?v=66e44128"></script>
 
 <script>
@@ -4477,7 +4477,7 @@ function initWineFormMasterData() {
 initWineFormMasterData();
 
 const wineExampleData = {
-  name: "Primitivo Sicilia IGT", vintage: "2022", color: "Red", price: "€4.80", score: "92",
+  name: "Primitivo — Alcamo DOC", vintage: "2022", color: "Red", price: "€4.80", score: "92",
   grape: ["Primitivo (Zinfandel)"], desc: "Deep ruby with violet hues. Rich aromas of ripe blackberry, plum and subtle spice. Full-bodied, velvety tannins with a long, warm finish.",
   style: "Dry, full-bodied, velvety, warm, spiced", aromas: "Blackberry, plum, violet, sweet spice, ripe dark fruit",
   country: "Italy", region: "Sicily", appellation: "Sicilia DOC", viticulture: "Sandy-clay soils, 400-550m altitude, 40-year-old bush vines (alberello)",
@@ -4786,22 +4786,53 @@ function openDistributorPublicPreview() {
    belongs (A1). The picker tag is derived instead.
 
    `type` and `origin` did come across: the buyer's picker shows them,
-   and they describe the wine rather than the relation. The origin
-   strings are still inconsistent in style ("Loire Valley, France" next
-   to "Pouilly-Fumé AOC, Loire Valley") — that is the appellation
-   master-data question (A4) and is not this pass.
+   and they describe the wine rather than the relation.
+
+   THE FIVE COARSE ORIGINS ARE LIFTED, NOT INVENTED. "Loire Valley,
+   France" stood next to "Pouilly-Fumé AOC, Loire Valley" — a region
+   where the rest of the book names an appellation. Measured: on all
+   five the article page and the public Wine Guide give the same
+   precise answer, and neither disagrees with the other on any of the
+   seven wines in this book that no producer catalogue carries. So the
+   precise string already existed twice over and was simply not here.
+   Nothing was chosen; each value is the article page's `Appellation`
+   plus its `Region`.
+
+     PRD-1020  Loire Valley, France  →  Sancerre AOC, Loire Valley
+     PRD-1021  Chablis, Burgundy     →  Chablis Premier Cru AOC, Burgundy
+     PRD-1023  Rioja Alta, Spain     →  Rioja DOCa (Crianza), Rioja Alta
+     PRD-1024  Mosel, Germany        →  Mosel Spätlese (Prädikatswein), Mosel
+     PRD-1025  Bordeaux, France      →  Bordeaux Supérieur AOC, Bordeaux
+
+   The convention is Appellation, REGION — twelve of the twenty
+   catalogue rows already read that way, eight name the country
+   instead. Those eight are not touched here: rewriting a row that is
+   already precise is the A4 pass, not this one.
+
+   PRD-1026 is the one exception and it is caused by this pass: its
+   row said "Bordeaux Supérieur AOC, France", correct but country-
+   second, and the wine now also has a producer-catalogue row. Leaving
+   it would have made two books disagree about one wine — a
+   contradiction this commit would itself have created. Aligned.
+
+   WHAT REMAINS FOR A4, and it is the sharper finding: "Terre Siciliane
+   IGT" is used as an origin on three catalogue rows and is not in
+   `wineGeoData` at all, which knows five Sicilian appellations and not
+   that one. The catalogue breaks invariant 4 exactly where it is
+   precise, and a cascade that cannot reproduce this string is too
+   coarse to replace it.
 ══════════════════════════════════════════════════════════════════ */
 let currentWinePortfolio = [
   { id:'PRD-1020', winery:'Henri Dubois Domaine', name:'Sauvignon Blanc — Sancerre', vintage:2023,
-    type:'White', origin:'Loire Valley, France', url:'bottle-lobby-wine-sauvignon-blanc-sancerre.html' },
+    type:'White', origin:'Sancerre AOC, Loire Valley', url:'bottle-lobby-wine-sauvignon-blanc-sancerre.html' },
   { id:'PRD-1021', winery:'Domaine Lefèvre', name:'Chardonnay — Chablis Premier Cru', vintage:2022,
-    type:'White', origin:'Chablis, Burgundy', url:'bottle-lobby-wine-chardonnay-chablis-premier-cru.html' },
-  { id:'PRD-1022', winery:'Cantina Rossi', name:'Primitivo Sicilia IGT', vintage:2022,
+    type:'White', origin:'Chablis Premier Cru AOC, Burgundy', url:'bottle-lobby-wine-chardonnay-chablis-premier-cru.html' },
+  { id:'PRD-1022', winery:'Cantina Rossi', name:'Primitivo — Alcamo DOC', vintage:2022,
     type:'Red', origin:'Alcamo DOC, Sicily', url:'bottle-lobby-wine-primitivo-sicilia-igt.html' },
   { id:'PRD-1023', winery:'Bodegas Ruiz', name:'Tempranillo — Rioja Crianza', vintage:2021,
-    type:'Red', origin:'Rioja Alta, Spain', url:'bottle-lobby-wine-tempranillo-rioja-crianza.html' },
+    type:'Red', origin:'Rioja DOCa (Crianza), Rioja Alta', url:'bottle-lobby-wine-tempranillo-rioja-crianza.html' },
   { id:'PRD-1024', winery:'Weingut Schmitt', name:'Riesling Spätlese — Mosel', vintage:2023,
-    type:'White', origin:'Mosel, Germany', url:'bottle-lobby-wine-riesling-spatlese-mosel.html' },
+    type:'White', origin:'Mosel Spätlese (Prädikatswein), Mosel', url:'bottle-lobby-wine-riesling-spatlese-mosel.html' },
   /* Listed on purpose: it is one of the two wines on the released show
      WS-2603, so that show carries BOTH columns of A16.12 side by side —
      this one sells from stock, the Sancerre next to it is a pre-order.
@@ -4817,9 +4848,9 @@ let currentWinePortfolio = [
   { id:'PRD-1006', winery:'Cantina Rossi', name:'Rosso di Contrada', vintage:2023,
     type:'Red', origin:'Sicilia DOC, Sicily', url:'bottle-lobby-wine-rosso-di-contrada.html' },
   { id:'PRD-1025', winery:'Château Belrieu', name:'Merlot — Bordeaux Supérieur', vintage:2021,
-    type:'Red', origin:'Bordeaux, France', url:'bottle-lobby-wine-merlot-bordeaux-superieur.html' },
+    type:'Red', origin:'Bordeaux Supérieur AOC, Bordeaux', url:'bottle-lobby-wine-merlot-bordeaux-superieur.html' },
   { id:'PRD-1026', winery:'Château Belrieu', name:'Château Belrieu Grand Vin', vintage:2019,
-    type:'Red', origin:'Bordeaux Supérieur AOC, France', url:'bottle-lobby-wine-chateau-belrieu-grand-vin.html' },
+    type:'Red', origin:'Bordeaux Supérieur AOC, Bordeaux', url:'bottle-lobby-wine-chateau-belrieu-grand-vin.html' },
   { id:'PRD-1011', winery:'Domaine Lefèvre', name:'Crémant de Bourgogne', vintage:2022,
     type:'White', origin:'Crémant de Bourgogne AOC, France', url:'bottle-lobby-wine-cremant-de-bourgogne.html' },
 
@@ -5810,7 +5841,7 @@ function openRestaurantPublicPreview() {
 let rCurrentWineList = [
   { id:'PRD-1020', winery:'Henri Dubois Domaine', name:'Sauvignon Blanc — Sancerre', vintage:2023, url:'bottle-lobby-wine-sauvignon-blanc-sancerre.html' },
   { id:'PRD-1021', winery:'Domaine Lefèvre', name:'Chardonnay — Chablis Premier Cru', vintage:2022, url:'bottle-lobby-wine-chardonnay-chablis-premier-cru.html' },
-  { id:'PRD-1022', winery:'Cantina Rossi', name:'Primitivo Sicilia IGT', vintage:2022, url:'bottle-lobby-wine-primitivo-sicilia-igt.html' }
+  { id:'PRD-1022', winery:'Cantina Rossi', name:'Primitivo — Alcamo DOC', vintage:2022, url:'bottle-lobby-wine-primitivo-sicilia-igt.html' }
 ];
 
 let rAwSelectedWine = null;
@@ -6211,7 +6242,7 @@ function openRetailPublicPreview() {
 let tCurrentWineSelection = [
   { id:'PRD-1020', winery:'Henri Dubois Domaine', name:'Sauvignon Blanc — Sancerre', vintage:2023, url:'bottle-lobby-wine-sauvignon-blanc-sancerre.html' },
   { id:'PRD-1021', winery:'Domaine Lefèvre', name:'Chardonnay — Chablis Premier Cru', vintage:2022, url:'bottle-lobby-wine-chardonnay-chablis-premier-cru.html' },
-  { id:'PRD-1022', winery:'Cantina Rossi', name:'Primitivo Sicilia IGT', vintage:2022, url:'bottle-lobby-wine-primitivo-sicilia-igt.html' }
+  { id:'PRD-1022', winery:'Cantina Rossi', name:'Primitivo — Alcamo DOC', vintage:2022, url:'bottle-lobby-wine-primitivo-sicilia-igt.html' }
 ];
 
 let tAwSelectedWine = null;

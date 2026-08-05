@@ -293,7 +293,7 @@ console.log('\n── counter-check: the old mistakes must not be able to return
            mutation was real and invisible — a check certified against
            a defect it could no longer see. Third time in a day. */
         g.eval("currentWinePortfolio = currentWinePortfolio.filter(function (x) { return x.winery !== 'Cantina Rossi'; })" +
-               ".concat([{ winery:'Cantina Rossi', name:'Primitivo Sicilia IGT', vintage:2022, ownLabel:true," +
+               ".concat([{ winery:'Cantina Rossi', name:'Primitivo — Alcamo DOC', vintage:2022, ownLabel:true," +
                " type:'Red', origin:'Alcamo DOC, Sicily', url:'bottle-lobby-wine-primitivo-sicilia-igt.html' }])");
         g.eval('renderWineryNetwork()');
         const c = cardFor(g, 'wn-partners-list', 'Hawesko GmbH');

@@ -240,7 +240,7 @@ console.log('\n── product references');
 
    RESOLVED THROUGH wineByRef(), NOT AGAINST partnerWinesPool. The
    first repair asserted the pool and went red on PRD-1022 — which is
-   correct data, not a defect: "Primitivo Sicilia IGT" is an own-label
+   correct data, not a defect: "Primitivo — Alcamo DOC" is an own-label
    wine, and A17.9 says no distributor but the exclusive one may even
    see it in a picker, so it has no business in the pool everybody
    browses. The question a show product has to answer is "does this
