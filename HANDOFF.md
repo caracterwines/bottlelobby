@@ -33,7 +33,7 @@ Tag, 22 Commits; alles unter „Zuletzt abgeschlossen" ist im Browser abgenommen
 ### Womit eine Sitzung anfaengt
 
 ```
-node tests/run-all.js        →  19 Harnesses, muss gruen sein, bevor irgendetwas beginnt
+node tests/run-all.js        →  20 Harnesses, muss gruen sein, bevor irgendetwas beginnt
 node tests/serve.js          →  http://localhost:8765   (no-store — NIE python http.server)
 node tests/stamp-assets.js   →  nach jeder Aenderung an assets/, sonst wird check-static rot
 ```
@@ -69,31 +69,47 @@ von Stammdaten ist das **frueheste abhaengige Ereignis die Obergrenze**.
 
 **Die Produktschluessel-Kette (04.08.) ist abgeschlossen und abgenommen** — Repo,
 Daten und Sichtpruefung ueber alle Flaechen und Rollen. Der letzte Fund der
-Sichtpruefung, ein totes „+ Add line", ist mit `74be029` repariert (echtes
-Fenster, Mehrfachauswahl, Schluessel als Wert) und am Bildschirm bestaetigt.
-Aus dem Tag liegen zwei Dinge:
+Sichtpruefung, ein totes „+ Add line", ist mit `74be029` repariert.
 
-- **Die Zaehler in den Profil-Abschnitten (`profile-section-count`).** Gemessen:
-  **19 Stueck, nicht 20.** 14 davon tragen eine Id und werden zur Laufzeit
-  gerechnet — die koennen nicht veralten. Die uebrigen **5 stehen fest im
-  Markup**, und **2 davon sind nachweislich falsch**: der Winzer-Abschnitt
-  behauptet `My Wine Portfolio (11)` bei **10** Cantina-Rossi-Produkten im Buch,
-  der Distributor `My Wine Portfolio (5)` bei **14** Zeilen in
-  `currentWinePortfolio`. Die anderen drei — `My Labels (6)`, `My Wine List (3)`,
-  `My Wine Selection (3)` — stimmen heute zufaellig mit ihrer Liste ueberein und
-  gehen beim naechsten Hinzufuegen kaputt. Fix ist derselbe wie bei den 14: aus
-  der Liste rechnen, nicht schreiben.
-- **HANDOFF.md abspecken.** Die Datei ist **~102 KB** und soll laut ihrer eigenen
-  ersten Zeile nur Offenes tragen. Der Grossteil ist „Zuletzt abgeschlossen" —
-  also Historie, die Git bereits fuehrt.
+**Die Listings-Kette (05.08.) ist abgeschlossen und abgenommen**, Repo und
+Browser, in vier einzeln gepushten Schritten:
+
+| | |
+|---|---|
+| `4b738a5` | Die Order-Zeile haelt fest, was tatsaechlich geliefert wurde: `vintage` und `batchOrLot`, eingefroren bei `accepted`. Dokumente lesen nur den Snapshot. |
+| `339a881` | Sieben leere Zusicherungen in vier Harnesses repariert — siehe die Regel in **C7**. |
+| `7e9606c` | `listings` als Beziehungszeile je (Halter, Linie). `wineUnitPrice` ist weg; jeder Preis hat einen Besitzer. |
+| `2df920a` | „My Labels" aus den Daten, Zaehler gerechnet, `dnav-labels`. |
+
+Aus diesen zwei Tagen liegt Folgendes:
+
+- **A4 HERKUNFTSANGABEN — hochgestuft, und der Grund ist neu.** Fuenf der sechs
+  handgetippten Herkunftsangaben in „My Labels" waren **praeziser als der
+  Katalog**: „Sancerre AOC, Loire Valley" gegen „Loire Valley, France",
+  „Bordeaux Superieur AOC, France" gegen „Bordeaux, France", „Rioja DOCa
+  (Crianza), Rioja Alta" gegen „Rioja Alta, Spain". Seit `2df920a` rendert die
+  Seite die groebere Angabe, weil der Katalog der Besitzer ist.
+  **Das ist die erste sichtbare Verschlechterung der Woche** — und dieselbe
+  Mechanik wie dreimal zuvor: die Unschaerfe war unsichtbar, solange dieselbe
+  Angabe an zwei Orten lag.
+  **Die sechs genauen Angaben stehen in `2df920a` in der Historie und sind der
+  Pruefstein fuer die Kaskade:** kann Country → Region → Appellation
+  „Sancerre AOC, Loire Valley" nicht wiedergeben, ist sie zu grob.
+- **Die verbliebenen festen `profile-section-count`.** Gemessen am 05.08.:
+  **19 Zaehler, nicht 20.** 14 tragen eine Id und werden zur Laufzeit gerechnet.
+  „My Labels" ist mit `2df920a` dazugekommen, **also stehen noch 4 fest im
+  Markup**, davon **2 nachweislich falsch**: der Winzer-Abschnitt behauptet
+  `My Wine Portfolio (11)` bei **10** Cantina-Rossi-Produkten im Buch, der
+  Distributor `My Wine Portfolio (5)` bei **14** Zeilen in
+  `currentWinePortfolio`. Die anderen zwei — `My Wine List (3)`,
+  `My Wine Selection (3)` — stimmen heute **zufaellig** und gehen beim naechsten
+  Hinzufuegen kaputt. Fix ist derselbe wie bei den 14: aus der Liste rechnen.
+- **HANDOFF.md abspecken.** Die Datei soll laut ihrer eigenen ersten Zeile nur
+  Offenes tragen. Der Grossteil ist „Zuletzt abgeschlossen" — also Historie, die
+  Git bereits fuehrt.
 
 Danach in dieser Reihenfolge:
 
-- **`listings`** — ein Beziehungsdatensatz je (Halter, Produkt), ohne
-  Weininhalt. Traegt `ownLabel` (Distributor), `exclusive` (Kaeufer), den
-  **Handelspreis** (heute eine flache Karte ohne Besitzer: Hawesko kauft
-  Primitivo zu 6,40 und verkauft ihn zu 11,20, die Karte kennt nur eine Zahl)
-  und `monthlyVolume`, das heute abgefragt und weggeworfen wird.
 - **A3 Retail-Bedingung** — Weinhaus Muellers Auswahl und seine Einkaeufe sind
   **disjunkt**, und seine Auswahl ist zeilengleich mit Bistro Laurents
   Weinkarte. Nach A3 per Ergaenzung: drei Einkaeufe nachtragen (Datum nach der
@@ -123,12 +139,11 @@ Danach in dieser Reihenfolge:
 2. **Die KPI-Kacheln** — alle 16 vermessen: 12 ableitbar, 4 reine Erfindung, kein
    einziges der 16 Deltas hat eine Zeitreihe. Die Entscheidung ist
    **geschaeftlich**, nicht technisch: Plattformzustand oder Unternehmensgroesse.
-3. **Herkunftsangaben vereinheitlichen (A4).** Der bemerkenswerteste Nebenbefund
-   des letzten Durchgangs, in Serges Worten: **die Uneinheitlichkeit war vorher
-   gar nicht sichtbar, weil dieselben Strings an drei Orten lagen. Erst ein Buch
-   macht eine Stammdatenfrage stellbar.** Das ist der Grund, warum A4 jetzt
-   naeher ist als heute frueh — nicht, dass jemand die Strings schoener finden
-   wuerde.
+3. ~~**Herkunftsangaben vereinheitlichen (A4)**~~ — *hochgestuft, siehe oben.*
+   Stand hier, solange es nur um Einheitlichkeit ging: **die Uneinheitlichkeit
+   war nicht sichtbar, weil dieselben Strings an drei Orten lagen. Erst ein Buch
+   macht eine Stammdatenfrage stellbar.** Seit `2df920a` ist es mehr als das —
+   eine Fläche zeigt weniger als vorher.
 4. **Messages (b), Korrespondenz** — wartet weiter auf die Geschaeftsfrage: wer
    darf wem schreiben, und laeuft das an A6 und A3 vorbei?
 

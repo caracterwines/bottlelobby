@@ -3876,6 +3876,39 @@ So: **an acceptance drives the input paths one at a time** — open the modal, p
 the thing, press the button, read what came back. And a check that claims to
 cover a change has to say which of the two it did.
 
+### The write-path blind spot — a named class, not three accidents
+
+**Three defects in three days, all on a click path, all invisible to every
+renderer sweep and every assertion over fixtures.** Named here on 5 August 2026,
+because the third one made it a pattern rather than a run of bad luck.
+
+| | What was wrong | Why nothing saw it |
+|---|---|---|
+| **04.08** `addLine()` | did nothing at all on OK | the path exists only once somebody types |
+| **05.08** `placePreparedOrder()` | built every guest order line with **no product key**, from `l.name` — a field `preparedOrderFor()` has never returned | the order list is open in the fixture, so placing it is one click past where anybody got |
+| **05.08** `confirmAddWine()` ×3 | a wine pulled into any of the three books carried **no `id`** | the fixtures were seeded with keys; only a wine added *at runtime* lacked one |
+
+**The rule: a path that only comes into existence through an INPUT is reached by
+no render pass and by no assertion over fixture data.** A renderer draws what is
+already there. An assertion over fixtures reads what was written by hand. Neither
+of them ever runs the code that turns a click into a record — and that code is
+where a reference is *created*, which is exactly where a wrong one gets in.
+
+Two obligations follow, and they are cheap:
+
+- **The acceptance drives the write paths**, not only the surfaces. Add the wine,
+  place the order, save the line — then read back what was stored, not what was
+  drawn. The three above were all found by doing this, twice by Serge and once by
+  looking because the first two had been.
+- **A pass that introduces or removes a field counts its WRITE paths one by one,
+  not only its readers.** The listings pass widened five readers and found three
+  writers that had never carried the key at all. Readers are easy to find because
+  something on screen goes wrong when you miss one; a writer that omits a field
+  fails silently and only in data nobody has looked at yet.
+
+It is the same shape as the deleted-field rule further down — *a search, not an
+intention* — with the search running over writers instead of over harnesses.
+
 ### Native `prompt()`, `confirm()` and `alert()` are foreign bodies
 
 A native dialog cannot be styled and cannot be translated. Its buttons come from
