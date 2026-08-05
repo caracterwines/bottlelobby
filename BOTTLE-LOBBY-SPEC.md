@@ -3909,6 +3909,72 @@ Two obligations follow, and they are cheap:
 It is the same shape as the deleted-field rule further down — *a search, not an
 intention* — with the search running over writers instead of over harnesses.
 
+### Widen the reader before you move the data
+
+**The order is the rule, and reversing it breaks things silently.** Move the
+readers first so they accept both the old shape and the new one; only then move
+the data; only then delete the old branch.
+
+From the ISO conversion of the show subsystem, 3 August 2026. `showDateValue()`
+read **only** the display format and answered `MAX_SAFE_INTEGER` for anything
+else. An ISO date would not have thrown there — it would have sorted every show
+to the end and quietly inverted "What's Coming". Data moved first, into a reader
+that cannot read it, produces no error and no blank page: it produces a *wrong
+order*, which nobody looks at twice.
+
+The same order carried the product-key chain (widen `wineByRef()`, move 91
+references, then delete the name branch) and the listings pass (create the row,
+widen the readers, then remove the old fields). It is the reason a migration can
+be checked at every step instead of only at the end.
+
+**And the guard that comes with it: a widened reader must not name a format.**
+The new check in `public-shows-page.js` rewrites every show date into the *other*
+format and demands the same order — so it still holds after the migration, rather
+than becoming a test of the state it was written in.
+
+### Never hand an event-driven mechanism the event it is meant to notice
+
+`tests/persistence.js` checked the store's round-trip by calling the action **and
+dispatching the click itself**. It proved the store can serialise, and called
+that "the trigger works". The trigger was in fact broken for any change with no
+event after it — which is what Serge measured in the browser while the harness
+was green.
+
+**A test that supplies the signal is testing the half after the signal.** Press
+the real button and then touch nothing; and include one case where no event
+follows at all.
+
+### Check the call sites before judging the body
+
+**For dead code, "this function does X wrong" is always a statement about
+nothing.** `acceptOrder()` was reported as an audit-trail hole on 2 August 2026
+— it set `stage = 'accepted'` and never logged. The finding was derived from the
+body without asking whether anything reached it: the function had **no call site
+in the repo**, and its only caller was the harness written for the report. The
+real accept path, `confirmOrder()`, had been logging correctly with an actor all
+along.
+
+The cost of skipping this is not a wasted hour, it is a repair: a fix would have
+turned dead code into a **second accept path** beside the live one. Serge's
+instruction was to repair it; the measurement said delete it, and deleting it was
+right — *"dein Befund schlägt meinen Auftrag."*
+
+### A test may derive a second time; only the product needs one answer
+
+Invariant 1 governs the product, not the harness. Where a check exists to catch
+"the wrong source was consulted", asking the product for the answer is
+**circular** — green and wrong at the same time.
+
+So `tests/partner-counts.js` counts `currentWinePortfolio` itself rather than
+calling `portfolioCount()`; `tests/notifications.js` computes the permitted set
+from `wineFollowGraph` and the partnerships rather than calling
+`notifWineryEdge()`; `tests/supply-chain.js` has its `chainReader` derive the
+chain instead of asking `portfolioOf()` — those helpers are exactly what the
+mutations patch.
+
+The second derivation is not duplication; it is the independent witness. What is
+compared is the **rendered surface**, because that is where the drift shows.
+
 ### Native `prompt()`, `confirm()` and `alert()` are foreign bodies
 
 A native dialog cannot be styled and cannot be translated. Its buttons come from
@@ -4354,15 +4420,38 @@ The forms keep their own existing save buttons ("Save prices & lead time"); thos
 sit at the right level and are unaffected.
 
 **A stale snapshot must never read like a code bug.** After a push the browser
-holds yesterday's data, possibly without fields today's code expects. Two guards,
-neither relying on anyone remembering anything: a `VERSION` constant for
-deliberate invalidation, and a **shape fingerprint per collection computed from
-the pristine fixtures** — add a field to `bottle-lobby-data.js` and the
-fingerprint changes by itself, because the fixture is always the shape the new
-code expects. A mismatch discards **everything, all or nothing**, and says so in
-the toast. A partial restore would leave a half-migrated demo, which is worse
-than starting clean. A snapshot that breaks rendering is thrown away and the page
-reloads once.
+holds yesterday's data, possibly without fields today's code expects. Two guards:
+a `VERSION` constant for deliberate invalidation, and a **shape fingerprint per
+collection computed from the pristine fixtures** — add a field to
+`bottle-lobby-data.js` and the fingerprint changes by itself, because the fixture
+is always the shape the new code expects. A mismatch discards **everything, all
+or nothing**, and says so in the toast. A partial restore would leave a
+half-migrated demo, which is worse than starting clean. A snapshot that breaks
+rendering is thrown away and the page reloads once.
+
+> **Correction, 3 August 2026 — this passage used to claim the two guards rely on
+> nobody remembering anything. That is false for one case, and the case
+> occurred.** The fingerprint sees STRUCTURE, never VALUES, and that is right:
+> extending it to values would discard everything on every data change, and the
+> changed values are precisely what a user wants kept.
+>
+> **A format migration is therefore invisible to it.** 59 show dates went from
+> `'14 Mar 2027'` to ISO; not one key moved; the snapshot stayed formally valid
+> and won against the fresh fixtures. The page loaded new code over old data and
+> the symptom was a renderer producing nothing — which reads exactly like a
+> regression in the code just written.
+>
+> **The only lever is `VERSION`, bumped by hand in the same commit that changes
+> the format.** That does rely on memory, there is no mechanical bolt for it, and
+> saying so is the point: an unstated limit gets trusted. A "format generation"
+> beside `VERSION` was considered and deliberately not built — it moves the same
+> discipline one level up rather than removing it. Held by
+> `tests/persistence.js` for the case that actually happened.
+>
+> **The measurement rule that came with it:** a snapshot restored from storage is
+> not checked by anything that runs against the fixtures. `assertISO` and its
+> kind run with persistence off and said "all ISO" while the browser held a
+> non-ISO snapshot — both statements true, about different data.
 
 **Cross-tab, without a reload.** `localStorage` is shared across tabs of one
 origin, so F5 would do — but redrawing without the F5 is what makes two tabs side
