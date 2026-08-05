@@ -232,13 +232,35 @@ else ok('decline marks exhibitor and its products declined');
 
 // ── 10. products are references, never copies
 console.log('\n── product references');
-const pool = w.eval('partnerWinesPool').map(x => x.name + ' ' + x.vintage);
-const orphans = [];
+/* Compared by KEY, and a miss is a FAILURE rather than a note.
+   This built "name vintage" on both sides and read `p.name` off the
+   show product — a field pass 3b removed. Every product therefore
+   compared as `undefined`, all thirteen landed in `orphans`, and the
+   result was printed as a friendly note that could never fail.
+
+   RESOLVED THROUGH wineByRef(), NOT AGAINST partnerWinesPool. The
+   first repair asserted the pool and went red on PRD-1022 — which is
+   correct data, not a defect: "Primitivo Sicilia IGT" is an own-label
+   wine, and A17.9 says no distributor but the exclusive one may even
+   see it in a picker, so it has no business in the pool everybody
+   browses. The question a show product has to answer is "does this
+   name a product the platform knows, and is it the exhibitor's own",
+   and those are the two asked below. */
+const orphans = [], misattributed = [];
+let checked = 0;
 shows().forEach(s => s.exhibitors.forEach(e => e.products.forEach(p => {
-  if (!pool.includes(p.name)) orphans.push(s.id + ': ' + p.name);
+  checked++;
+  const rec = w.eval('wineByRef(' + JSON.stringify(p.productId) + ')');
+  if (!rec) orphans.push(s.id + ': ' + JSON.stringify(p.productId));
+  else if (rec.winery !== e.producer)
+    misattributed.push(s.id + ': ' + rec.name + ' is ' + rec.winery + "'s, exhibited by " + e.producer);
 })));
-if (orphans.length) console.log('  note — demo product strings not in the pool: ' + orphans.join(', '));
-else ok('every show product resolves to a wine in partnerWinesPool');
+if (!checked) bad('no show products at all — this check examined nothing');
+else if (orphans.length) bad(orphans.length + ' of ' + checked +
+  ' show product(s) name a key no book carries: ' + orphans.join(', '));
+else if (misattributed.length) bad(misattributed.length +
+  ' show product(s) are exhibited by somebody other than their producer: ' + misattributed.join(', '));
+else ok('all ' + checked + ' show products resolve by key, every one to a wine of the exhibitor who shows it');
 
 console.log(fail ? `\n✗ ${fail} failure(s)` : '\n✓ all checks passed');
 process.exit(fail ? 1 : 0);

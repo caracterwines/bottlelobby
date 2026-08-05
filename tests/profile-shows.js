@@ -36,6 +36,10 @@ else ok(PAGES.length + ' winery and distributor profiles found');
 const probe = new JSDOM(loadDashboard(path.join(ROOT, PAGES[0])).html,
   { runScripts: 'dangerously' });
 const SHOWS = probe.window.eval('wineShows');
+/* A product key → the name a page would print. Read through the shared
+   asset's own resolver, so a leak check looks for the same string the
+   renderer would emit rather than a second spelling of it. */
+const wineNameOf = ref => probe.window.eval('wineName(' + JSON.stringify(ref) + ')');
 
 /* What SHOULD be on each page, derived here independently of the
    renderer — a test that reuses the implementation proves nothing. */
@@ -140,9 +144,15 @@ for (const f of PAGES) {
     for (const e of s.exhibitors) {
       if (scoped.includes(e.producer))
         bad(f + ': "' + s.title + '" names its exhibitor ' + e.producer + ' while anonymised');
-      for (const p of e.products)
-        if (scoped.includes(p.name))
-          bad(f + ': "' + s.title + '" names the wine ' + p.name + ' while anonymised');
+      /* Resolved from the KEY. `p.name` was removed by pass 3b, so this
+         compared against `undefined` and the wine-leak guard had been
+         silently vacuous ever since. */
+      for (const p of e.products) {
+        const label = wineNameOf(p.productId);
+        if (!label) bad('a show product resolves to no name — the leak check cannot look for anything');
+        else if (scoped.includes(label))
+          bad(f + ': "' + s.title + '" names the wine ' + label + ' while anonymised');
+      }
     }
     if (scoped.includes(s.venueName))
       bad(f + ': "' + s.title + '" discloses its venue while anonymised');

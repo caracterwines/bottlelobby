@@ -4035,6 +4035,46 @@ a test stays green: a green test and data nobody can believe.
 > and fail loudly when the data no longer offers one, instead of naming a
 > producer that had one when the check was written.
 
+### A removed field must be swept out of every harness — a search, not an intention
+
+**A test that reads a deleted field does not go red. It goes quietly useless and
+keeps reporting success.** `undefined` compares, concatenates and passes a regex
+without complaint, so the assertion still runs, still prints its ✓, and no longer
+looks at anything.
+
+Decided 5 August 2026, after `tests/order-list.js` was found asserting
+`/Catarratto/.test(i.wine)` — `wine` had been removed from order lines by pass 4
+of the product-key chain. The regex ran against `undefined`, never matched, and
+the guard against a held-back wine reaching a purchase order had been reporting
+success ever since. It was passing while `placePreparedOrder()` built every guest
+order line with no product key at all.
+
+**The rule: when a field is removed, the source of every harness is searched for
+it before the pass is called finished, and each hit is either rewritten against
+the replacement or deleted.** A search run, not a good intention — the whole
+point is that nothing else will tell you.
+
+The sweep on the day the rule was written found **seven vacuous assertions across
+four harnesses**, all from the same two removals (`products[].name` in pass 3b,
+`items[].wine` in pass 4):
+
+| Harness | What it claimed to prove | What it actually did |
+|---|---|---|
+| `follow-feed.js` | an anonymised show's wines never reach the feed | `html.includes(undefined)` |
+| `profile-shows.js` | the same, on 15 profile pages | `scoped.includes(undefined)` |
+| `public-shows-page.js` | the same, on the public page | filtered an array of `undefined` to empty |
+| `order-list.js` ×4 | the producer's record is untouched; a wine changes column; a held-back wine is not ordered; no stocked wine is re-ordered | matched nothing, and one of them spliced a deep copy at index −1 |
+
+Three of those were the **disclosure** guards for A16.6. Nothing had been checking
+that an anonymised show does not name its wines, on any surface, since pass 3b.
+
+Two lessons beyond the rule itself. **Repairing a vacuous check is finding work,
+not tidying** — the repaired show-product check immediately went red on a real
+question (an own-label wine is legitimately absent from `partnerWinesPool`, so
+the assertion had to be the resolver and the exhibitor, not the pool). And **a
+vacuous read hides a second defect underneath it**: the column check was mutating
+a JSON round-trip of the portfolio, which no correct key would have fixed.
+
 ### Do not grow the fixtures until every message type reaches every role
 
 Demo data is not a coverage matrix. **An empty case with a legible reason is

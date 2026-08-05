@@ -211,17 +211,23 @@ w.openShowDetail('WS-2603');
   const wine = w.eval('orderListProducts')(S('WS-2603'))[0];
   if (wine.product.indicativePrice !== 15.5) bad('price not written to the show product');
   else ok('the price lives on the show product — the host\'s number, not the producer\'s');
-  const prod = w.eval('partnerWinesPool').find(x => (x.name + ' ' + x.vintage) === wine.product.name);
-  if (prod && prod.indicativePrice !== undefined)
+  /* By KEY. This matched "name vintage" against `wine.product.name`,
+     which pass 3b deleted — so `prod` was always undefined and the
+     check reported that the producer's record was untouched without
+     ever finding the record. */
+  const prod = w.eval('wineByRef(' + JSON.stringify(wine.product.productId) + ')');
+  if (!prod) bad('the show product resolves to no wine record — A2 was not tested at all');
+  else if (prod.indicativePrice !== undefined)
     bad('the price was written onto the producer\'s own wine record (A2)');
-  else ok('the producer\'s own record was not touched');
+  else ok('the producer\'s own record (' + prod.name + ') was not touched');
 }
 
 /* ── 8. TWO KINDS OF WINE ON THE SAME TABLE (A16.12) ───────────── */
 console.log('\n── stock and pre-order, side by side on one show');
 {
   const wines = w.eval('orderListProducts')(S('WS-2603'));
-  const kinds = wines.map(x => x.product.name + '=' + x.kind);
+  const label = ref => w.eval('wineName(' + JSON.stringify(ref) + ')') || String(ref);
+  const kinds = wines.map(x => label(x.product.productId) + '=' + x.kind);
   const pre = wines.filter(x => x.kind === 'preorder');
   const stk = wines.filter(x => x.kind === 'stock');
   /* The fixture has to DEMONSTRATE the distinction, not merely contain
@@ -243,13 +249,30 @@ console.log('\n── stock and pre-order, side by side on one show');
   if (!listed) bad('a wine called "in stock" is not in the portfolio at all');
   else ok('the in-stock wine really is in the host\u2019s portfolio (A3)');
 
-  /* take it out again and the wine changes column by itself */
-  const idx = portfolio.findIndex(x => (x.name + ' ' + x.vintage) === stk[0].product.name);
-  const removed = portfolio.splice(idx, 1)[0];
-  if (w.eval('lineKind')(S('WS-2603'), stk[0].product.name) !== 'preorder')
-    bad('removing the wine from the portfolio did not move it to the pre-order column');
+  /* Take it out again and the wine changes column by itself.
+
+     TWO DEFECTS SAT HERE, and each hid the other. It matched
+     "name vintage" against `stk[0].product.name`, a field pass 3b
+     deleted, so findIndex answered -1 and splice(-1,1) removed the
+     LAST wine rather than the intended one; then it asked lineKind()
+     about `undefined`. And `portfolio` above is a JSON round-trip — a
+     DEEP COPY — so even a correct splice would have changed nothing
+     the page can see. The check reported that a wine changes column
+     while removing a different wine, from a copy, and asking about no
+     wine at all. It is done inside the page now, on the live book. */
+  const stockKey = stk[0].product.productId;
+  const moved = w.eval('(function(){' +
+    ' var k = ' + JSON.stringify(stockKey) + ';' +
+    ' var i = currentWinePortfolio.findIndex(function (x) { return x.id === k; });' +
+    ' if (i === -1) return "not in the book";' +
+    ' var row = currentWinePortfolio.splice(i, 1)[0];' +
+    ' var kind = lineKind(wineShows.find(function (s) { return s.id === "WS-2603"; }), k);' +
+    ' currentWinePortfolio.splice(i, 0, row);' +
+    ' return kind; })()');
+  if (moved === 'not in the book') bad('the in-stock wine is not in the portfolio by key — nothing to remove');
+  else if (moved !== 'preorder')
+    bad('removing the wine from the live portfolio left it in the "' + moved + '" column');
   else ok('a wine leaving the portfolio changes column with nothing else touched');
-  portfolio.splice(idx, 0, removed);
 }
 
 console.log('\n── the instrument counts only what is not listed yet');
@@ -395,9 +418,15 @@ console.log('\n── closing decides per wine: place, or hold back with a reaso
   const bought = made.filter(o => o.buyer === 'Hawesko GmbH');
   if (bought.length !== 1) bad('expected one purchase order (one producer), got ' + bought.length);
   else ok('one consolidated order per producer: ' + bought[0].id + ' to ' + bought[0].seller);
-  if (bought[0].items.some(i => /Catarratto/.test(i.wine)))
-    bad('a held-back wine was ordered anyway');
-  else ok('the held-back wine is not on the purchase order');
+  /* By KEY, against the note that was actually held back. `i.wine` was
+     removed by pass 4, so this ran a regex over `undefined` and could
+     never match — the guard against a held-back wine reaching a
+     purchase order had been reporting success without looking. */
+  const heldKey = interests('WS-2599').filter(i => i.status === 'held_back').map(i => i.productId)[0];
+  if (!heldKey) bad('nothing is held back — the guard would examine nothing');
+  else if (bought[0].items.some(i => i.productId === heldKey))
+    bad('a held-back wine was ordered anyway: ' + heldKey);
+  else ok('the held-back wine (' + heldKey + ') is not on the purchase order');
   const heldRows = interests('WS-2599').filter(i => i.status === 'held_back');
   if (heldRows.length !== 1 || !heldRows[0].holdReason) bad('the hold-back was not recorded with its reason');
   else ok('held_back with the reason kept on the row — a resting state, not a tombstone');
@@ -410,9 +439,13 @@ console.log('\n── closing decides per wine: place, or hold back with a reaso
   if (qty === all) bad('THE TRAP SPRUNG: the purchase order bought everything asked for, including stock');
   else if (qty !== pre) bad('purchase quantity ' + qty + ' matches neither figure (pre-order is ' + pre + ')');
   else ok('bought exactly the pre-order column: ' + qty + ' bottles, not ' + all);
-  if (bought[0].items.some(i => w.eval('lineKind')(S('WS-2599'), i.wine) === 'stock'))
-    bad('a wine already in the portfolio was ordered again');
-  else ok('no stocked wine on the purchase order');
+  /* Same defect, same repair: `i.wine` is gone, so lineKind() was
+     asked about `undefined` on every line and answered the same thing
+     every time, whatever the portfolio said. */
+  const stocked = bought[0].items.filter(i => w.eval('lineKind')(S('WS-2599'), i.productId) === 'stock');
+  if (stocked.length) bad(stocked.length + ' wine(s) already in the portfolio were ordered again: ' +
+    stocked.map(i => i.productId).join(' · '));
+  else ok('none of the ' + bought[0].items.length + ' purchased lines is a wine already in stock');
   /* the guests' orders are NOT created by closing */
   if (made.some(o => o.seller === 'Hawesko GmbH'))
     bad('closing placed an order in a guest\u2019s name — A14.2 gives placing to the buyer');

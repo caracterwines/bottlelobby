@@ -89,9 +89,15 @@ console.log('\n── A16.6 on a real page');
     if (named.length) bad(s.title + ': exhibitors named while anonymised — ' + named.join(', '));
     else ok(s.title + ': none of its ' + s.exhibitors.length + ' exhibitors named');
 
-    const wines = s.exhibitors.flatMap(e => e.products.map(p => p.name)).filter(n => html.includes(n));
+    /* Resolved from the KEY. This mapped `p.name`, which pass 3b took
+       off show products, so `wines` was an array of `undefined` and the
+       filter dropped every one of them — the check reported "no wines
+       named" for a page that could have printed all of them. */
+    const labels = s.exhibitors.flatMap(e => e.products.map(p => w.eval('wineName(' + JSON.stringify(p.productId) + ')')));
+    if (labels.some(n => !n)) bad(s.title + ': a show product resolves to no name — the leak check looked for nothing');
+    const wines = labels.filter(n => n && html.includes(n));
     if (wines.length) bad(s.title + ': wines named while anonymised — ' + wines.join(', '));
-    else ok(s.title + ': no wines named');
+    else ok(s.title + ': none of its ' + labels.length + ' wines named');
 
     if (html.includes(s.venueName)) bad(s.title + ': exact venue disclosed while anonymised');
     else ok(s.title + ': venue withheld');

@@ -88,9 +88,16 @@ for (const r of ROLES) {
       const rowWithExhibitor = rows.find(t => t.includes(e.producer) && t.includes(s.title));
       if (rowWithExhibitor)
         bad(r.entity + ': feed announces ' + e.producer + ' at the anonymised "' + s.title + '"');
-      for (const p of e.products)
-        if (html.includes(p.name))
-          bad(r.entity + ': feed names the wine ' + p.name + ' from an anonymised show');
+      /* Resolved from the KEY. This read `p.name` until 5 Aug 2026 —
+         a field pass 3b removed — so it tested `html.includes(undefined)`,
+         which is false for every page ever rendered. The leak guard had
+         been reporting success without looking. */
+      for (const p of e.products) {
+        const label = w.eval('wineName(' + JSON.stringify(p.productId) + ')');
+        if (!label) bad('a show product resolves to no name — the leak check cannot look for anything');
+        else if (html.includes(label))
+          bad(r.entity + ': feed names the wine ' + label + ' from an anonymised show');
+      }
     }
   }
 
