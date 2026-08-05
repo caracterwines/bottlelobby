@@ -614,14 +614,14 @@ console.log('\n── the order side\'s counter-checks');
 {
   const orderCases = [
     { what: 'an order line goes back to naming a string',
-      from: "items:[ orderItemRaw('PRD-1025',120,12.60) ] },",
+      from: "items:[ orderItemRaw('PRD-1025',120,12.60,2021) ] },",
       to:   "items:[ { wine:'Merlot — Bordeaux Supérieur', winery:'Château Belrieu', qty:120, unit:12.60 } ] },",
       ask:  win => J2(win, 'orders').flatMap(o => o.items || []).every(i => i.productId && !('wine' in i)),
       says: 'a line with no key and a copied producer' },
 
     { what: 'a line keeps the producer as a string beside the key',
-      from: "function orderItemRaw(productId, qty, unit) { return { productId, qty, unit }; }",
-      to:   "function orderItemRaw(productId, qty, unit) { return { productId, qty, unit, winery:(wineByRef(productId)||{}).winery }; }",
+      from: "  return { productId, qty, unit, vintage,",
+      to:   "  return { productId, qty, unit, vintage, winery:(wineByRef(productId)||{}).winery,",
       ask:  win => J2(win, 'orders').flatMap(o => o.items || []).every(i => !('winery' in i)),
       says: 'the copy is back, and with it the two answers to "whose wine is this"' },
 
@@ -709,6 +709,169 @@ console.log('\n── the order side\'s counter-checks');
     if (c.ask(win)) bad('NOT caught: ' + c.what + ' — ' + c.says + ', and nothing said so');
     else ok('caught: ' + c.what);
   });
+}
+
+/* ── 6e. The execution lives on the line, not on the product ─────
+   A15.2b: `productId` names the WINE ACROSS VINTAGES, so the vintage
+   and the batch that actually shipped can only live on the order line.
+   Before this pass a document read the vintage off the product, which
+   means the first rollover would have rewritten every historic invoice
+   for that wine — silently, and in a direction nobody could audit.
+
+   THE MEASUREMENT IS A BYTE COMPARISON, not an assertion about fields:
+   render every document of a bound order, move the product underneath
+   it, render again, compare. Anything that still reaches through to the
+   product shows up as a diff, including a reach nobody thought to name.
+
+   AND IT MOVES THE NAME, NOT ONLY THE VINTAGE. No document prints a
+   vintage today — the table is name over producer — so a vintage bump
+   alone would compare equal even with the defect fully in place, and
+   the check would prove nothing. The name and the producer are what a
+   document actually prints, so those are what the probe moves. The
+   vintage is asserted separately, on the frozen row. */
+console.log('\n── what was traded is frozen on the line');
+{
+  const BOUND = ['accepted', 'shipped', 'delivered'];
+  const lines = J('orders').flatMap(o => (o.items || []).map(i => ({ o: o.id, st: o.stage, i })));
+
+  /* 1. Every line records its own execution. */
+  const noVintage = lines.filter(x => x.i.vintage == null);
+  const noBatch   = lines.filter(x => !('batchOrLot' in x.i));
+  if (!lines.length) bad('no order lines at all — this section examined nothing');
+  else if (noVintage.length) bad(noVintage.length + ' of ' + lines.length +
+      ' order line(s) name no vintage: ' + noVintage.map(x => x.o).join(' · ') +
+      ' — the document would have to ask the product, which is the defect');
+  else if (noBatch.length) bad(noBatch.length + ' order line(s) have no batchOrLot field at all — ' +
+      'null is the answer for a producer who does not work in batches, absent is not an answer');
+  else {
+    const withLot = lines.filter(x => x.i.batchOrLot != null).length;
+    ok(lines.length + ' order lines, every one naming the vintage it was ordered in; ' +
+       withLot + ' carry a lot and ' + (lines.length - withLot) +
+       ' are explicitly null — both shapes occur, so neither is untested');
+  }
+
+  /* 2. The vintage on the line agrees with the product TODAY. Not
+     because it must — that is the whole point — but because it is the
+     precondition for the byte comparison below meaning anything. If
+     the fixtures already disagreed, an unchanged render would prove
+     the renderer was ignoring both. */
+  const drift = lines.filter(x => {
+    const p = ROWS.find(r => r.id === x.i.productId);
+    return p && p.vintage !== x.i.vintage;
+  });
+  if (drift.length) bad(drift.length + ' fixture line(s) already name a vintage the product does not: ' +
+      drift.map(x => x.o + ' → ' + x.i.vintage).join(' · ') +
+      ' — the before/after comparison would be measuring the wrong thing');
+  else ok('every fixture vintage equals its product\'s, so an unchanged document is evidence and not a coincidence');
+
+  /* 3. The snapshot exists exactly where an agreement was made. */
+  const shouldHave = lines.filter(x => BOUND.indexOf(x.st) !== -1);
+  const missing = shouldHave.filter(x => !x.i.snapshot);
+  const early   = lines.filter(x => BOUND.indexOf(x.st) === -1 && x.i.snapshot);
+  if (!shouldHave.length) bad('no order is past `accepted` — the freeze was never exercised');
+  else if (missing.length) bad(missing.length + ' bound order line(s) carry no snapshot: ' +
+      missing.map(x => x.o).join(' · '));
+  else if (early.length) bad(early.length + ' line(s) are frozen before anybody agreed: ' +
+      early.map(x => x.o + ' (' + x.st + ')').join(' · ') +
+      ' — a draft that cannot move is not a draft');
+  else ok(shouldHave.length + ' bound lines frozen and ' + (lines.length - shouldHave.length) +
+      ' draft lines deliberately not, the stage deciding rather than a flag');
+
+  /* 4. THE PROBE. Move the product; the documents must not notice. */
+  {
+    const DOCS = ['quote', 'proforma', 'prepay', 'invoice', 'delivery', 'credit'];
+    const ORD = 'ORD-2040';           /* accepted, two lines, two producers */
+    const render = win => {
+      win.eval("(function(){ var o=_o('" + ORD + "'); DOC_TYPES.forEach(function(t){" +
+               " if(!o.documents.some(function(d){return d.key===t.key;}))" +
+               " o.documents.push({key:t.key,no:t.prefix+'-TEST',date:'2026-07-25'}); }); })()");
+      return DOCS.map(k => {
+        win.eval("openDocPreview('" + ORD + "','" + k + "','" +
+                 k.toUpperCase().slice(0, 2) + "-TEST')");
+        return win.document.getElementById('doc-sheet').innerHTML;
+      }).join('\n \n');
+    };
+    /* One product under each of the order's two lines, moved in the
+       two ways a line could reach through: the vintage rolls over and
+       the wine is renamed by the A4 master-data pass. */
+    const move = "(function(){ var p=wineByRef('PRD-1003'); p.vintage=p.vintage+1;" +
+                 " p.name='RENAMED BY THE PROBE'; p.winery='SOMEBODY ELSE';" +
+                 " var q=wineByRef('PRD-1001'); q.vintage=q.vintage+1;" +
+                 " q.name='ALSO RENAMED'; return 1; })()";
+
+    const win = build();
+    const before = render(win);
+    win.eval(move);
+    const after = render(win);
+
+    if (!before || before.indexOf('<table>') === -1)
+      bad('the document probe rendered nothing — it proves neither direction');
+    else if (before === after)
+      ok('a vintage rollover and two renames under an accepted order changed ' +
+         DOCS.length + ' documents by zero bytes — the paperwork is a record, not a view');
+    else {
+      const at = [...before].findIndex((c, n) => c !== after[n]);
+      bad('a document moved when the product did, at byte ' + at + ': "' +
+          before.slice(at, at + 60) + '" became "' + after.slice(at, at + 60) + '"');
+    }
+
+    /* The counter-check: put the reach-through back and the probe must
+       go red. Without this, a renderer that prints nothing at all would
+       also compare equal and read as a pass. */
+    const win2 = build({
+      from: "function docLine(i) {\n  if (i.snapshot) return i.snapshot;",
+      to:   "function docLine(i) {\n  if (0) return i.snapshot;"
+    });
+    if (!win2) bad('the docLine counter-check never applied — the probe above proves nothing');
+    else {
+      const b2 = render(win2);
+      win2.eval(move);
+      if (b2 === render(win2))
+        bad('NOT caught: a document reading the product straight through still compared equal — ' +
+            'the probe is not looking at what the document prints');
+      else ok('caught: a document that reads the product again moves the moment the product does');
+    }
+  }
+
+  /* 4b. Measured over the SOURCE, because the probe above can only
+     see what today's fixtures happen to exercise. A document renderer
+     that never names a product reader cannot reach one by accident,
+     and that is a stronger statement than any single render. */
+  {
+    const src = fs.readFileSync(path.join(__dirname, '..', 'bottle-lobby-dashboard.html'), 'utf8');
+    const start = src.indexOf('function openDocPreview(');
+    const body  = src.slice(start, src.indexOf('\nfunction closeDocPreview(', start));
+    const reach = ['lineName(', 'lineWinery(', 'lineProduct(', 'wineByRef(', 'wineLabel(', 'wineName(']
+      .filter(fn => body.indexOf(fn) !== -1);
+    if (start === -1 || body.length < 500) bad('openDocPreview() was not found in the source — nothing was measured');
+    else if (reach.length) bad('the document renderer still reads the product directly: ' + reach.join(' · ') +
+        ' — one rollover away from rewriting a historic invoice');
+    else ok('openDocPreview() names no product reader at all across ' + body.length +
+        ' bytes; every field comes off docLine()');
+  }
+
+  /* 5. Nothing assumes a line has exactly one relevant vintage
+     (A15.2b). Two lines, one wine, two years — both must survive as
+     themselves, and both must print. A model that collapses them is
+     the assumption this rules out, and it is cheaper to catch here
+     than after a producer carries two vintages at once. */
+  {
+    const win = build();
+    const out = win.eval("(function(){" +
+      " var o=_o('ORD-2033'); var base=o.items[0];" +
+      " o.items.push({productId:base.productId,qty:6,unit:base.unit,vintage:base.vintage-1," +
+      "               batchOrLot:'L-OLD',cost:base.cost,discount:0,free:false});" +
+      " freezeOrderLines(o);" +
+      " return JSON.stringify(o.items.map(function(i){" +
+      "   return [i.vintage, i.batchOrLot, i.snapshot.vintage, i.snapshot.batchOrLot]; })); })()");
+    const rows = JSON.parse(out);
+    const years = new Set(rows.map(r => r[2]));
+    if (rows.length !== 2) bad('the two-vintage case did not build — it examined nothing');
+    else if (years.size !== 2) bad('two lines of the same wine in different years collapsed to one vintage (' +
+        [...years].join(' · ') + ') — something takes the vintage from the product, not the line');
+    else if (rows[1][3] !== 'L-OLD') bad('the second line lost its lot on freezing — the batch is not travelling with the line');
+    else ok('one wine on one order in two vintages stays two lines, each frozen with its own year and lot');
+  }
 }
 
 /* ── 7. Counter-checks ──────────────────────────────────────────

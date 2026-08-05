@@ -476,9 +476,32 @@ w.openShowDetail('WS-2599');
     ok('guest placed ' + mine[0].id + ' — the buyer\u2019s own act (A14.2)');
     if (mine[0].items.length !== 2) bad('expected the two deliverable lines, got ' + mine[0].items.length);
     else ok('one sales order carrying the stocked line and the pre-ordered one that was bought');
-    if (mine[0].items.some(i => /Catarratto/.test(i.wine)))
+
+    /* THE LINES HAVE TO NAME SOMETHING. This is the check the one
+       below used to be: it read `i.wine`, a field pass 4 deleted, so
+       the regex ran against `undefined`, never matched, and reported
+       success for years' worth of shapes. It was passing while
+       placePreparedOrder() built every line with `productId:
+       undefined` — a guest order that named no wine at all, on the
+       one path the acceptance could not reach because WS-2599's list
+       is open in the fixture. A guard that reads a field nobody
+       writes is not a guard. */
+    const nameless = mine[0].items.filter(i => !i.productId);
+    if (nameless.length) bad('THE PLACED ORDER NAMES NOTHING: ' + nameless.length + ' of ' +
+      mine[0].items.length + ' line(s) carry no productId — every surface renders them blank');
+    else ok('every placed line names a product key, so the order is readable at all');
+
+    const heldId = interests('WS-2599')
+      .filter(i => i.attendee === 'Bistro Laurent' && i.status === 'held_back')
+      .map(i => i.productId)[0];
+    if (!heldId) bad('no held-back note to test against — the race check would examine nothing');
+    else if (mine[0].items.some(i => i.productId === heldId))
       bad('THE RACE: a held-back wine reached a placed order');
-    else ok('the held-back line was never placeable, so it cannot strike the order');
+    else ok('the held-back line (' + heldId + ') was never placeable, so it cannot strike the order');
+
+    const noVintage = mine[0].items.filter(i => i.vintage == null);
+    if (noVintage.length) bad(noVintage.length + ' placed line(s) record no vintage — A15.2b');
+    else ok('each placed line records the vintage it was ordered in');
     if (mine[0].payment.prepayment) bad('prepayment was set for an established customer');
     else ok('prepayment left off, per the computed default');
     if (mine[0].stage !== 'pending') bad('a placed order should be pending, is ' + mine[0].stage);
