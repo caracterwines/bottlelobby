@@ -313,7 +313,140 @@ console.log('\n── the pickers offer nothing the distributor does not carry')
   else ok(n + ' picker rows across both roles, all inside the book');
 }
 
-/* ── 6. What this run actually covered ───────────────────────────
+/* ── 6. Distributor → distributor (A3 "Where a distributor sources") ─
+   The route A8 has named since it was written and A17.9b describes in
+   full: A sells on an ordinary wine he lawfully carries, B lists it
+   himself. Four things have to be true at once, and the fourth is the
+   one that decides whether the chain rule survived the addition:
+
+     (a) it is ADMISSIBLE — partnership and listing are all it needs,
+         and chainFaults() says "no partnership" about nothing
+     (b) it needs NO A17 MARKET GRANT — ownLabelOrderRight() answers
+         null for an ordinary product, and null is silence, not consent
+     (c) B carries the SAME PRODUCT RECORD — one productId, two
+         listings, two prices, and no wine content on either row
+     (d) the PRODUCER is still the winery and B's SELLER is A — five
+         facts that must not collapse into one (A17.9b, invariant 2)
+
+   Every one of them is asked of the data rather than of a sentence,
+   and the two mutations in section 7 put the removed guard back in its
+   shipped shape to prove that (a) and the deal exclusion can fail. */
+console.log('\n── the distributor→distributor route: ordinary trade, ordinary listing');
+{
+  const askIn = (win, expr) => JSON.parse(win.eval('JSON.stringify(' + expr + ')') || 'null');
+  const ask = expr => askIn(w, expr);
+  const S = v => JSON.stringify(v);
+
+  const dd = J('orders').filter(o => o.sellerType === 'distributor' && o.buyerType === 'distributor');
+  if (!dd.length) {
+    bad('no distributor→distributor order in the data — A3\'s second sourcing route is described and never shown');
+  } else {
+    const o = dd[0];
+    const A = o.seller, B = o.buyer;
+    const REF = (o.items[0] || {}).productId;
+    checked += (o.items || []).length; surfaces.push('D→D order lines:' + (o.items || []).length);
+
+    /* (a) ADMISSIBLE. The same reader every other section uses, so
+       this route is judged by the chain rule itself and not by a
+       second one written for it. */
+    const faults = (o.items || []).reduce((all, i) => all.concat(chainFaults(R, A, i.productId, B)), []);
+    if (faults.length) bad(o.id + ' (' + A + ' → ' + B + ') has no chain behind it: ' + faults.join(' · '));
+    else if (!R.partnered(A, B)) bad('the two distributors are not partners, so the green above says nothing');
+    else ok(o.id + ': ' + A + ' → ' + B + ' is intact — an active partnership, the wine in the seller\'s book, no "no partnership" anywhere');
+
+    /* (b) NO GRANT REQUIRED. Two halves, because either alone would
+       pass for the wrong reason: with the shipped fixtures there is no
+       project at all, so a null answer proves only that the function
+       ran. The second window gives A17 a live project and three grants
+       on ANOTHER product — the machinery answers there, and still says
+       nothing about this one. */
+    const right = ask('ownLabelOrderRight(' + S(B) + ', ' + S(A) + ', ' + S(REF) + ', ' +
+      S({ country:'Italy', city:'Milano', channel:'wholesale', intermediary:B }) + ')');
+    const grants = J('marketGrants');
+    if (right !== null) bad('ownLabelOrderRight() has an opinion about an ordinary wine: ' + JSON.stringify(right));
+    else if (grants.length) bad('marketGrants is no longer empty — this half has to be re-measured, not assumed');
+    else ok('ownLabelOrderRight() answers null for the ordinary wine, and the chain is green with zero market grants');
+
+    {
+      const g = build();
+      g.eval('ownLabelProjects.push(' + S({ id:'OLP-T1', distributor:A, producer:'Cantina Rossi',
+        creationType:'bespoke_new_wine', sourceWineId:null, developmentReferenceWineId:null,
+        productId:'PRD-1022', stage:'gate2_approved', brandOwner:A,
+        requestedAt:'2026-04-06', requestedBy:A }) + ')');
+      g.eval('marketGrants.push(' + S({ id:'OLG-T1', projectId:'OLP-T1', countries:['Italy'],
+        channels:['sub-distribution'], intermediaries:[B] }) + ')');
+      const ctx = S({ country:'Italy', city:'Milano', channel:'sub-distribution', intermediary:B });
+      const live = askIn(g, 'ownLabelOrderRight(' + S(B) + ', ' + S(A) + ', "PRD-1022", ' + ctx + ')');
+      const ordinary = askIn(g, 'ownLabelOrderRight(' + S(B) + ', ' + S(A) + ', ' + S(REF) + ', ' + ctx + ')');
+      const rDD = chainReader(g);
+      const stillGreen = !(o.items || []).some(i => chainFaults(rDD, A, i.productId, B).length);
+      if (!live) bad('A17 answered null for an own-label product too — the null below proves nothing');
+      else if (ordinary !== null) bad('with grants in the page the ordinary wine is judged after all: ' + JSON.stringify(ordinary));
+      else if (!stillGreen) bad('the ordinary D→D order broke as soon as A17 had a project — the two must not touch');
+      else ok('with a live project and a grant beside it, A17 answers for the own label (allowed=' + live.allowed +
+              (live.rule ? ', ' + live.rule : '') + ') and still null for the ordinary wine');
+    }
+
+    /* (c) ONE PRODUCT, TWO LISTINGS. The key is (holder, productId),
+       so the second holder is a row and never a second wine. */
+    const la = ask('listingOf(' + S(A) + ', ' + S(REF) + ')');
+    const lb = ask('listingOf(' + S(B) + ', ' + S(REF) + ')');
+    if (!la || !lb) bad('the wine is not listed by both houses: ' + A + '=' + !!la + ', ' + B + '=' + !!lb);
+    else if (la.productId !== lb.productId) bad('two productIds for one wine — that is a copy, not a listing');
+    else if (la.tradePrice == null || lb.tradePrice == null || la.tradePrice === lb.tradePrice)
+      bad('the two holders do not each carry their own price: ' + la.tradePrice + ' / ' + lb.tradePrice);
+    else ok('one productId (' + REF + '), two listings, two prices — ' + A + ' ' + la.tradePrice + ' · ' + B + ' ' + lb.tradePrice);
+
+    /* No wine content anywhere on a listing row. Asserted over ALL of
+       them rather than over the two above: the defect this forbids
+       arrives by somebody copying a name onto the row they are adding,
+       and that row is by definition the new one. */
+    const CONTENT = ['name', 'wine', 'winery', 'producer', 'vintage', 'url', 'type', 'origin'];
+    const copies = [];
+    J('listings').forEach(l => CONTENT.forEach(k => { if (k in l) copies.push(l.holder + '.' + k); }));
+    if (copies.length) bad(copies.length + ' listing field(s) copy wine content onto the row: ' + copies.slice(0, 4).join(' · '));
+    else ok(J('listings').length + ' listing rows, not one naming a wine, a producer or a vintage');
+
+    /* (d) THE FIVE FACTS STAY APART. The producer is the winery, the
+       seller is A, and the frozen line says the same — an accepted
+       order carries its snapshot (A15.2b), and that snapshot is what a
+       document prints. */
+    const prod = (R.product(REF) || {}).winery;
+    const snap = ask('normalizeOrder(orders.find(function (x) { return x.id === ' + S(o.id) + '; })).items[0].snapshot');
+    if (!prod) bad('the ordered wine names no producer in any book');
+    else if (R.types[prod] !== 'winery') bad('"' + R.label(REF) + '" is credited to ' + prod + ', which is not a producer');
+    else if (!snap) bad(o.id + ' is ' + o.stage + ' and carries no frozen line — the document would read the product instead');
+    else if (snap.producer !== prod) bad('the frozen line names ' + snap.producer + ' where the catalogue names ' + prod);
+    else if (o.seller !== A || o.sellerType !== 'distributor') bad('the seller of the A→B order is not a distributor');
+    else if (R.partnered(B, prod)) bad(B + ' and ' + prod + ' are partners — the A→B order must create no relation with the winery (A3 point 6)');
+    else ok('producer ' + prod + ' (catalogue and frozen line), seller ' + A + ', and no relation whatever between ' + B + ' and the winery');
+
+    /* THE DEAL EXCLUSION, on the line itself and then on state this
+       check builds (A9, A17.9a). Free goods and deal discounts are a
+       customer incentive; between two distributors they have no
+       meaning. The shipped fixture's own answer is empty for a second
+       reason — no deal names that wine — so the second window makes
+       the line a deal line and asks the same question twice, changing
+       nothing but the buyer's type. */
+    const onTheRow = ask('dealFreeGoodsFor(normalizeOrder(orders.find(function (x) { return x.id === ' + S(o.id) + '; })))');
+    if (onTheRow.length) bad(o.id + ' offers ' + onTheRow.length + ' deal entitlement(s) to a distributor');
+    else ok(o.id + ': no deal free goods and no deal discount on a distributor→distributor line');
+
+    {
+      const g = build();
+      const DEAL_LINE = "(function () { var o = orders.find(function (x) { return x.id === " + S(o.id) + "; });" +
+        " o.items = [orderItemRaw('PRD-1008', 240, 13.40, 2021)]; normalizeOrder(o); return o; })()";
+      const asDistributor = askIn(g, 'dealFreeGoodsFor(' + DEAL_LINE + ').length');
+      g.eval("orders.find(function (x) { return x.id === " + S(o.id) + "; }).buyerType = 'retail'");
+      const asCustomer = askIn(g, 'dealFreeGoodsFor(orders.find(function (x) { return x.id === ' + S(o.id) + '; })).length');
+      if (!asCustomer) bad('the deal did not fire for a customer either — the state this check built is wrong, so it proves nothing');
+      else if (asDistributor) bad('the same line offers ' + asDistributor + ' entitlement(s) to a distributor buyer');
+      else ok('one line, one deal, two buyers: ' + asCustomer + ' entitlement(s) for a customer, none for a distributor');
+    }
+  }
+}
+
+/* ── 7. What this run actually covered ───────────────────────────
    Same rule as assertISO and the stamp check: a check that cannot say
    what it examined is indistinguishable from one that examined
    nothing. Zero is a failure. */
@@ -321,7 +454,7 @@ console.log('\n── scope');
 if (!checked) bad('the chain check examined NOTHING — every surface came back empty');
 else ok(checked + ' wine references checked across ' + surfaces.length + ' surfaces — ' + surfaces.join(' · '));
 
-/* ── 7. Counter-check: each break must turn this file red ────────── */
+/* ── 8. Counter-check: each break must turn this file red ────────── */
 console.log('\n── counter-check: the breaks this file was written for');
 {
   const cases = [
@@ -380,7 +513,31 @@ console.log('\n── counter-check: the breaks this file was written for');
         const names = [...box.querySelectorAll('.aw-pick-name')].map(e => e.childNodes[0].textContent.trim());
         return names.some(n => !r.carries('Hawesko GmbH', n));
       },
-      says: 'section 5 catches a buyer being offered what the PRODUCERS have, not what the distributor carries' }
+      says: 'section 5 catches a buyer being offered what the PRODUCERS have, not what the distributor carries' },
+
+    /* The D→D route's own two. Both put a removed guard back in its
+       SHIPPED shape rather than approximating it (C7): a milder
+       symptom would certify the file against a defect it cannot see. */
+    { name: 'the two distributors lose their partnership',
+      from: "  { distributor:'Hawesko GmbH', partner:'Enoteca Milano Import Srl', at:'2026-05-19', activatedBy:'Bottle Lobby' }\n];",
+      to:   "\n];",
+      check: g => {
+        const r = chainReader(g);
+        return JSON.parse(g.eval('JSON.stringify(orders)'))
+          .filter(o => o.sellerType === 'distributor' && o.buyerType === 'distributor')
+          .some(o => (o.items || []).some(i => chainFaults(r, o.seller, i.productId, o.buyer)
+            .some(f => /no partnership/.test(f))));
+      },
+      says: 'section 6(a) catches a distributor→distributor sale with no relation behind it' },
+
+    { name: 'dealFreeGoodsFor() asks only about the seller again',
+      from: "  if (o.sellerType !== 'distributor' || o.buyerType === 'distributor' ||\n      typeof exclusiveDeals === 'undefined') return [];",
+      to:   "  if (o.sellerType !== 'distributor' ||\n      typeof exclusiveDeals === 'undefined') return [];",
+      check: g => JSON.parse(g.eval(
+        "JSON.stringify(dealFreeGoodsFor((function () {" +
+        "  var o = orders.filter(function (x) { return x.sellerType === 'distributor' && x.buyerType === 'distributor'; })[0];" +
+        "  o.items = [orderItemRaw('PRD-1008', 240, 13.40, 2021)]; normalizeOrder(o); return o; })()).length)")) > 0,
+      says: 'section 6 catches deal free goods being offered between two distributors' }
   ];
 
   cases.forEach(c => {

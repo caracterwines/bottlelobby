@@ -93,10 +93,16 @@ const GRANTS = [
 ];
 
 /* The downstream chain A17.14 says is missing. B is a real distributor
-   in the demo with a real profile page; what does not exist yet is the
-   partnership with A and the two orders under it. */
+   in the demo with a real profile page.
+
+   THE PARTNERSHIP IS NO LONGER SEEDED HERE. This file used to push its
+   own Hawesko ↔ Enoteca row, dated 15 Jun 2026; the D2D pass put the
+   real one in the page, dated 19 May 2026, and a harness that kept
+   pushing its copy would have run against TWO rows for one relation —
+   the exact duplication `partnerships` was consolidated to end. It is
+   asserted below instead of created: if the page ever loses the row,
+   this file says so rather than quietly supplying it. */
 const B = 'Enoteca Milano Import Srl';
-const DD_PARTNERSHIP = { distributor:'Hawesko GmbH', partner:B, at:'2026-06-15', activatedBy:'Bottle Lobby' };
 const DOWNSTREAM_ORDERS = [
   { id:'ORD-9001', placed:'2026-06-20', buyer:B, buyerType:'distributor',
     seller:'Hawesko GmbH', sellerType:'distributor', stage:'delivered',
@@ -116,7 +122,6 @@ const DOWNSTREAM_ORDERS = [
 function seed(win) {
   win.eval('ownLabelProjects.push.apply(ownLabelProjects, ' + JSON.stringify(PROJECTS) + ')');
   win.eval('marketGrants.push.apply(marketGrants, ' + JSON.stringify(GRANTS) + ')');
-  win.eval('partnerships.push(' + JSON.stringify(DD_PARTNERSHIP) + ')');
   win.eval('orders.push.apply(orders, ' + JSON.stringify(DOWNSTREAM_ORDERS) + ')');
   win.eval("addListing(" + JSON.stringify(B) + ", 'PRD-1008', { tradePrice: 9.90, holderArticleNo: 'EM-114' })");
   return win;
@@ -157,6 +162,21 @@ function bodyOf(src, name) {
 const w = fresh();
 const ask = (win, expr) => JSON.parse(win.eval('JSON.stringify(' + expr + ')') || 'null');
 const S = v => JSON.stringify(v);
+
+/* ── 0. The precondition this file used to create for itself ─────
+   Every downstream check below assumes an active A ↔ B partnership.
+   It is now the page's row, so it is read rather than pushed — and a
+   single row, because two would be the drift `partnerships` exists to
+   prevent. */
+console.log('\n── the A ↔ B partnership comes from the page, exactly once');
+{
+  const rows = ask(w, 'partnerships').filter(p =>
+    (p.distributor === 'Hawesko GmbH' && p.partner === B) ||
+    (p.distributor === B && p.partner === 'Hawesko GmbH'));
+  if (!rows.length) bad('the page carries no Hawesko ↔ ' + B + ' partnership — every downstream check below is unfounded');
+  else if (rows.length > 1) bad(rows.length + ' rows for one relation: ' + rows.map(r => r.at).join(' · '));
+  else ok('one Hawesko ↔ ' + B + ' row, active since ' + rows[0].at + ', activated by ' + rows[0].activatedBy);
+}
 
 /* ── 1. A GRANT IS A COMBINABLE RECORD (A17.9a) ─────────────────── */
 console.log('\n── every dimension is optional, and they combine');
