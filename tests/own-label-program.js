@@ -694,5 +694,137 @@ console.log('\n── a downstream holder carries the product and not the badge'
   });
 }
 
+/* ── 12. NO SURFACE CALLS AN ORDINARY WINE A FINISHED OWN LABEL ──── */
+console.log('\n── the three statements stay three statements, on every surface');
+{
+  const ROOT = path.join(__dirname, '..');
+  /* The three levels A17.0a keeps apart, and the exact words each surface
+     is allowed to use for them. What this section forbids is the FOURTH
+     level's word appearing over a wine that has not reached it. */
+  const finished = new Set(J('ownLabelProducts.map(function (p) { return p.id; })'));
+  const openTo   = new Set(J(`allProducts().filter(function (p) {
+    return ownLabelOnRequest(p.id); }).map(function (p) { return p.id; })`));
+  const byName   = J(`allProducts().reduce(function (a, p) { a[p.name] = p.id; return a; }, {})`);
+  const byFile   = J(`allProducts().filter(function (p) { return p.url; })
+    .reduce(function (a, p) { a[p.url] = p.id; return a; }, {})`);
+
+  if (!finished.size) return bad('no finished own-label product exists — this section examined nothing');
+
+  /* (a) THE WINE GUIDE. `status:'Own-Label'` is the finished product;
+     'Available' is the capability. Neither may sit on the other's row. */
+  {
+    const guide = fs.readFileSync(path.join(ROOT, 'bottle-lobby-wine-guide.html'), 'utf8');
+    const rows = [...guide.matchAll(/\{ id:'[a-z0-9-]+', file:'([^']+)'[^\n]*?status:'([A-Za-z-]+)'/g)]
+      .map(m => ({ file: m[1], status: m[2], id: byFile[m[1]] }));
+    if (rows.length < 40) bad('only ' + rows.length + ' Wine Guide rows parsed — the scan is broken, not the data');
+    const wrongOwn = rows.filter(r => r.status === 'Own-Label' && !finished.has(r.id));
+    const wrongAvail = rows.filter(r => r.status === 'Available' && r.id && !openTo.has(r.id));
+    const missedOwn = [...finished].filter(id =>
+      !rows.some(r => r.id === id && r.status === 'Own-Label') &&
+      J('wineByRef(' + S(id) + ').url') !== null);
+    if (wrongOwn.length) bad(wrongOwn.length + " Wine Guide row(s) read 'Own-Label' for a wine that is not a " +
+      'finished own-label product: ' + wrongOwn.map(r => r.file).join(' · '));
+    else if (wrongAvail.length) bad(wrongAvail.length + " Wine Guide row(s) read 'Available' where the producer's " +
+      'record does not: ' + wrongAvail.map(r => r.file).join(' · '));
+    else if (missedOwn.length) bad(missedOwn.length + ' finished own label(s) with a public page are missing ' +
+      "their 'Own-Label' Guide row: " + missedOwn.join(' · '));
+    else ok(rows.length + " Guide rows: 'Own-Label' only where a gate-2 product exists, 'Available' only where " +
+      "its producer's record says so");
+  }
+
+  /* (b) THE ARTICLE PAGES. The ribbon and the gold tag are the finished
+     product's; "Own-Label Available" is the capability's, and the words
+     differ on purpose. */
+  {
+    const pages = fs.readdirSync(ROOT)
+      .filter(f => /^bottle-lobby-wine-/.test(f) && f.endsWith('.html') &&
+                   !/^bottle-lobby-wine-(guide|shows)\.html$/.test(f));
+    const claims = [], capability = [];
+    pages.forEach(f => {
+      const html = fs.readFileSync(path.join(ROOT, f), 'utf8');
+      const mk = html.replace(/<!--[\s\S]*?-->/g, '');
+      const id = byFile[f];
+      /* SCOPED TO THE TWO CONTROLS THAT MAKE THE CLAIM. A bare
+         `>Own Label<` also matches the nav item every one of these pages
+         carries, which is a link to the programme and not a claim about
+         the wine — measured on the way in, when this section reported all
+         41 ordinary pages. */
+      const ribbon = /<div class="ownlabel-ribbon">/.test(mk);
+      const tag = /class="wine-tag wine-tag-ownlabel">Own Label</.test(mk);
+      const avail = /wine-tag-(ownlabel|exclusive)">✓? ?Own-Label Available</.test(mk);
+      if ((ribbon || tag) && !finished.has(id)) claims.push(f + (id ? ' (' + id + ')' : ' (in no book)'));
+      if (avail && id && !openTo.has(id)) capability.push(f + ' (' + id + ')');
+    });
+    if (claims.length) bad(claims.length + ' article page(s) claim a finished own label for a wine that is not ' +
+      'one: ' + claims.join(' · ') + ' — A17.0b, D41');
+    else if (capability.length) bad(capability.length + " article page(s) say 'Own-Label Available' where the " +
+      "producer's record does not: " + capability.join(' · '));
+    else ok(pages.length + ' article pages: the ribbon and the gold tag appear only on a finished own label, ' +
+      'and the availability wording only where the record supports it');
+  }
+
+  /* (c) THE DASHBOARD, AND THE CLAIM IT MUST NOT TYPE. Not every typed
+     wine name is a defect — ten rows of the winery's portfolio are still
+     typed, because their score, ex-cellar price and varietal note have no
+     home in the producer catalogue yet, and that render is a named later
+     pass. What must not be typed is the CLAIM: an own-label badge
+     anywhere, or a wine name inside a section that makes one. */
+  {
+    const mk = SRC.replace(/<script>[\s\S]*?<\/script>/g, '').replace(/<!--[\s\S]*?-->/g, '');
+    const typedBadge = mk.match(/badge-own-label|>Own-Label<|tag-gold">Own/g);
+    /* The three own-label surfaces, by container. A name typed in any of
+       them is a second copy of a fact the records own. */
+    /* THE BOUNDS ARE LIVE MARKUP, NOT COMMENTS. The first version bounded
+       My Labels with `<!-- ACTIVE PARTNERSHIPS`, which this scan has
+       already stripped — so it reported "not found" for a section that is
+       right there. An anchor has to survive the reader that uses it. */
+    const SECTIONS = [
+      ['My Labels',            'id="dsection-labels"',           'id="dsection-active-partnerships"'],
+      ['the portfolio panel',  'id="dsection-wines"',            'id="dsection-labels"'],
+      ['the Own-Label widget', '>Own-Label Portfolio<',          '>Monthly Volume by Wine<']
+    ];
+    const leaks = [];
+    SECTIONS.forEach(([what, from, to]) => {
+      const a = mk.indexOf(from), b = mk.indexOf(to, a);
+      if (a === -1 || b === -1) return leaks.push(what + ' was not found in the markup');
+      const seg = mk.slice(a, b);
+      Object.keys(byName).filter(n => n && seg.indexOf(n) !== -1)
+        .forEach(n => leaks.push(what + ': "' + n + '"'));
+    });
+    if (typedBadge) bad('the dashboard markup types ' + typedBadge.length +
+      ' own-label badge(s) — every one of them is derived now: ' + [...new Set(typedBadge)].join(' · '));
+    else if (leaks.length) bad(leaks.length + ' typed claim(s) in an own-label section: ' + leaks.join(' · '));
+    else ok('no own-label badge anywhere in the dashboard markup, and no wine name in the three ' +
+      'sections that make an own-label claim');
+  }
+
+  /* (d) AND THE OWN-LABEL SALES PAGE. Its argument is the superseded
+     model and it is rewritten in its own pass, so this checks only what
+     was corrected: no named product is called own-labelled unless it is
+     one. */
+  {
+    const page = fs.readFileSync(path.join(ROOT, 'bottle-lobby-own-label.html'), 'utf8')
+      .replace(/<!--[\s\S]*?-->/g, '');
+    /* A NAME THAT IS PART OF A LONGER ONE IS NOT AN OCCURRENCE OF IT.
+       "Mâcon-Villages" is a substring of "Hanseatischer Weisser —
+       Mâcon-Villages", which IS a finished own label — so a naive scan
+       reported the source wine as falsely claimed by the very sentence
+       describing it correctly. Measured on the way in. */
+    const covered = [...finished].map(id => J('wineByRef(' + S(id) + ').name'));
+    const wrong = Object.keys(byName).filter(n => {
+      if (finished.has(byName[n]) || !n) return false;
+      for (let i = page.indexOf(n); i !== -1; i = page.indexOf(n, i + 1)) {
+        if (covered.some(long => long.indexOf(n) !== -1 &&
+            page.slice(Math.max(0, i - long.length), i + long.length).indexOf(long) !== -1)) continue;
+        if (/own[- ]label/i.test(page.slice(i, i + 120))) return true;
+      }
+      return false;
+    });
+    if (wrong.length) bad(wrong.length + ' wine(s) are called own-labelled on the own-label page without being ' +
+      'one: ' + wrong.join(' · '));
+    else ok('the own-label page names no ordinary wine as an own label');
+  }
+}
+
 console.log(fail ? '\n' + fail + ' check(s) failed' : '\nown-label programme: all checks passed');
 process.exit(fail ? 1 : 0);

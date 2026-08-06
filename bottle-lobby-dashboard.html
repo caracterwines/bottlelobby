@@ -1503,9 +1503,16 @@ body {
               <div class="profile-avatar">CR</div>
               <div class="profile-name">Cantina Rossi</div>
               <div class="profile-sub">Primitivo · Sicily, Italy · Est. 1987</div>
+              <!-- The gold pill read a typed "Own-Label" and meant the
+                   A17.3 PUBLIC BADGE — whether this house may take part in
+                   the programme at all, which is A17.0a's FIRST level and
+                   the one thing on this screen the word had not yet been
+                   used for. It is derived from the membership now
+                   (ownLabelPublicBadge), so it disappears the same day a
+                   suspension lands, with no field to remember to clear. -->
               <div class="profile-badges">
                 <span class="tag tag-green">Verified</span>
-                <span class="tag tag-gold">Own-Label</span>
+                <span class="tag tag-gold" id="wbadge-ownlabel"></span>
                 <span class="tag tag-dim">Wine Show ✦</span>
               </div>
               <div class="profile-completion">
@@ -1763,124 +1770,137 @@ With an annual production capacity of over 1.2 million bottles, Cantina Rossi is
             <div class="profile-section-header">
               <div class="profile-section-title">My Wine Portfolio <span class="profile-section-count">(11)</span></div>
             </div>
-            <div class="edit-section-sub" style="margin-top:-0.8rem">Add and manage your wines. Own-Label wines appear in distributor searches and the Bottle Lobby wine guide.</div>
+            <!-- THE BADGES ARE DERIVED (A17.0a). Five rows carried a typed
+                 "Own-Label" until 7 Aug 2026, and the word meant the second
+                 of A17.0a's four levels — whether the wine may be ASKED
+                 about — on a screen where every other surface used it for
+                 the fourth. Two of the five had no producer record behind
+                 them at all (PRD-1001, PRD-1004) and one row that does was
+                 not badged (PRD-1005), so the typed set and the data set
+                 overlapped in three of six.
+                 `data-product` is what makes the derivation possible without
+                 rendering the whole row: the score, the ex-cellar price and
+                 "Single Variety" have no home in the producer catalogue yet,
+                 so the full render waits for the typed-surfaces pass. The one
+                 CLAIM on the row is derived now; the decoration is not. -->
+            <div class="edit-section-sub" style="margin-top:-0.8rem">Add and manage your wines. Mark a wine <em>Own-Label Available</em> and distributors admitted to the programme can ask you about an own-label project — the wine itself stays yours and stays ordinarily tradeable.</div>
             <div class="wine-edit-list" id="wportfolio-list">
-          <div class="wine-edit-entry">
+          <div class="wine-edit-entry" data-product="PRD-1022">
             <div class="wine-edit-dot"></div>
             <div class="wine-edit-name">Primitivo — Alcamo DOC 2022<div style="font-size:0.68rem;color:var(--dim);margin-top:0.2rem">92 pts · €4.80 ex-cellar · Single Variety</div></div>
             <div class="wine-edit-origin">Alcamo DOC</div>
-            <div class="wine-edit-status"><span class="profile-badge badge-own-label" style="font-size:0.55rem">Own-Label</span></div>
-            <div class="wine-edit-actions">
+            <div class="wine-edit-status"></div>
+                        <div class="wine-edit-actions">
               <a class="icon-btn" href="bottle-lobby-wine-primitivo-sicilia-igt.html" target="_blank" title="View public wine page">View</a>
               <button class="icon-btn" onclick="openWineModal('edit', true)">Edit</button>
               <button class="icon-btn" onclick="deleteWineRow(this)" title="Remove from portfolio">✕</button>
             </div>
           </div>
-          <div class="wine-edit-entry">
+          <div class="wine-edit-entry" data-product="PRD-1004">
             <div class="wine-edit-dot"></div>
             <div class="wine-edit-name">Primitivo Riserva 2020<div style="font-size:0.68rem;color:var(--dim);margin-top:0.2rem">94 pts · €8.50 ex-cellar · Single Variety</div></div>
             <div class="wine-edit-origin">Alcamo DOC</div>
-            <div class="wine-edit-status"><span class="profile-badge badge-own-label" style="font-size:0.55rem">Own-Label</span></div>
-            <div class="wine-edit-actions">
+            <div class="wine-edit-status"></div>
+                        <div class="wine-edit-actions">
               <a class="icon-btn" href="bottle-lobby-wine-primitivo-riserva.html" target="_blank" title="View public wine page">View</a>
               <button class="icon-btn" onclick="openWineModal('edit', false)">Edit</button>
               <button class="icon-btn" onclick="deleteWineRow(this)" title="Remove from portfolio">✕</button>
             </div>
           </div>
-          <div class="wine-edit-entry">
+          <div class="wine-edit-entry" data-product="PRD-1003">
             <div class="wine-edit-dot"></div>
             <div class="wine-edit-name">Nero d'Avola Sicilia DOC 2022<div style="font-size:0.68rem;color:var(--dim);margin-top:0.2rem">90 pts · €4.20 ex-cellar · Single Variety</div></div>
             <div class="wine-edit-origin">Sicilia DOC</div>
-            <div class="wine-edit-status"><span class="profile-badge badge-own-label" style="font-size:0.55rem">Own-Label</span></div>
-            <div class="wine-edit-actions">
+            <div class="wine-edit-status"></div>
+                        <div class="wine-edit-actions">
               <a class="icon-btn" href="bottle-lobby-wine-nero-davola-sicilia-doc.html" target="_blank" title="View public wine page">View</a>
               <button class="icon-btn" onclick="openWineModal('edit', false)">Edit</button>
               <button class="icon-btn" onclick="deleteWineRow(this)" title="Remove from portfolio">✕</button>
             </div>
           </div>
-          <div class="wine-edit-entry">
+          <div class="wine-edit-entry" data-product="PRD-1001">
             <div class="wine-edit-dot"></div>
             <div class="wine-edit-name">Catarratto Biologico 2023<div style="font-size:0.68rem;color:var(--dim);margin-top:0.2rem">€3.40 ex-cellar · Single Variety</div></div>
             <div class="wine-edit-origin">Sicilia DOC</div>
-            <div class="wine-edit-status"><span class="profile-badge badge-own-label" style="font-size:0.55rem">Own-Label</span></div>
-            <div class="wine-edit-actions">
+            <div class="wine-edit-status"></div>
+                        <div class="wine-edit-actions">
               <a class="icon-btn" href="bottle-lobby-wine-catarratto-biologico.html" target="_blank" title="View public wine page">View</a>
               <button class="icon-btn" onclick="openWineModal('edit', false)">Edit</button>
               <button class="icon-btn" onclick="deleteWineRow(this)" title="Remove from portfolio">✕</button>
             </div>
           </div>
-          <div class="wine-edit-entry">
+          <div class="wine-edit-entry" data-product="PRD-1002">
             <div class="wine-edit-dot"></div>
             <div class="wine-edit-name">Grillo Sicilia DOC 2023<div style="font-size:0.68rem;color:var(--dim);margin-top:0.2rem">88 pts · €3.90 ex-cellar · Single Variety</div></div>
             <div class="wine-edit-origin">Sicilia DOC</div>
-            <div class="wine-edit-status"><span class="profile-badge badge-own-label" style="font-size:0.55rem">Own-Label</span></div>
-            <div class="wine-edit-actions">
+            <div class="wine-edit-status"></div>
+                        <div class="wine-edit-actions">
               <a class="icon-btn" href="bottle-lobby-wine-grillo-sicilia-doc.html" target="_blank" title="View public wine page">View</a>
               <button class="icon-btn" onclick="openWineModal('edit', false)">Edit</button>
               <button class="icon-btn" onclick="deleteWineRow(this)" title="Remove from portfolio">✕</button>
             </div>
           </div>
-          <div class="wine-edit-entry">
+          <div class="wine-edit-entry" data-product="PRD-1005">
             <div class="wine-edit-dot" style="background:var(--dim)"></div>
             <div class="wine-edit-name">Rosato di Sicilia 2023<div style="font-size:0.68rem;color:var(--dim);margin-top:0.2rem">€3.60 ex-cellar · Blend</div></div>
             <div class="wine-edit-origin">Sicilia DOC</div>
-            <div class="wine-edit-status"><span class="profile-badge" style="font-size:0.55rem;background:rgba(184,151,90,0.1);color:var(--gold)">Available</span></div>
-            <div class="wine-edit-actions">
+            <div class="wine-edit-status"></div>
+                        <div class="wine-edit-actions">
               <a class="icon-btn" href="bottle-lobby-wine-rosato-di-sicilia.html" target="_blank" title="View public wine page">View</a>
               <button class="icon-btn" onclick="openWineModal('edit', false)">Edit</button>
               <button class="icon-btn" onclick="deleteWineRow(this)" title="Remove from portfolio">✕</button>
             </div>
           </div>
-          <div class="wine-edit-entry">
+          <div class="wine-edit-entry" data-product="PRD-1006">
             <div class="wine-edit-dot" style="background:var(--dim)"></div>
             <div class="wine-edit-name">Rosso di Contrada 2023<div style="font-size:0.68rem;color:var(--dim);margin-top:0.2rem">88 pts · €4.60 ex-cellar · Blend</div></div>
             <div class="wine-edit-origin">Sicilia DOC</div>
-            <div class="wine-edit-status"><span class="profile-badge" style="font-size:0.55rem;background:rgba(247,243,238,0.05);color:var(--dim)">Standard</span></div>
-            <div class="wine-edit-actions">
+            <div class="wine-edit-status"></div>
+                        <div class="wine-edit-actions">
               <a class="icon-btn" href="bottle-lobby-wine-rosso-di-contrada.html" target="_blank" title="View public wine page">View</a>
               <button class="icon-btn" onclick="openWineModal('edit', false)">Edit</button>
               <button class="icon-btn" onclick="deleteWineRow(this)" title="Remove from portfolio">✕</button>
             </div>
           </div>
-          <div class="wine-edit-entry">
+          <div class="wine-edit-entry" data-product="PRD-1007">
             <div class="wine-edit-dot" style="background:var(--dim)"></div>
             <div class="wine-edit-name">Trinacria Bianco 2023<div style="font-size:0.68rem;color:var(--dim);margin-top:0.2rem">87 pts · €3.90 ex-cellar · Blend</div></div>
             <div class="wine-edit-origin">Terre Siciliane IGT</div>
-            <div class="wine-edit-status"><span class="profile-badge" style="font-size:0.55rem;background:rgba(247,243,238,0.05);color:var(--dim)">Standard</span></div>
-            <div class="wine-edit-actions">
+            <div class="wine-edit-status"></div>
+                        <div class="wine-edit-actions">
               <a class="icon-btn" href="bottle-lobby-wine-trinacria-bianco.html" target="_blank" title="View public wine page">View</a>
               <button class="icon-btn" onclick="openWineModal('edit', false)">Edit</button>
               <button class="icon-btn" onclick="deleteWineRow(this)" title="Remove from portfolio">✕</button>
             </div>
           </div>
-          <div class="wine-edit-entry">
+          <div class="wine-edit-entry" data-product="PRD-1008">
             <div class="wine-edit-dot" style="background:var(--dim)"></div>
             <div class="wine-edit-name">Baglio Rosso 2021<div style="font-size:0.68rem;color:var(--dim);margin-top:0.2rem">91 pts · €6.80 ex-cellar · Blend</div></div>
             <div class="wine-edit-origin">Terre Siciliane IGT</div>
-            <div class="wine-edit-status"><span class="profile-badge" style="font-size:0.55rem;background:rgba(247,243,238,0.05);color:var(--dim)">Standard</span></div>
-            <div class="wine-edit-actions">
+            <div class="wine-edit-status"></div>
+                        <div class="wine-edit-actions">
               <a class="icon-btn" href="bottle-lobby-wine-baglio-rosso.html" target="_blank" title="View public wine page">View</a>
               <button class="icon-btn" onclick="openWineModal('edit', false)">Edit</button>
               <button class="icon-btn" onclick="deleteWineRow(this)" title="Remove from portfolio">✕</button>
             </div>
           </div>
-          <div class="wine-edit-entry">
+          <div class="wine-edit-entry" data-product="PRD-1027">
             <div class="wine-edit-dot" style="background:var(--dim)"></div>
             <div class="wine-edit-name">Terra Rossa 2022<div style="font-size:0.68rem;color:var(--dim);margin-top:0.2rem">88 pts · €4.40 ex-cellar · Blend</div></div>
             <div class="wine-edit-origin">Sicilia DOC</div>
-            <div class="wine-edit-status"><span class="profile-badge" style="font-size:0.55rem;background:rgba(247,243,238,0.05);color:var(--dim)">Standard</span></div>
-            <div class="wine-edit-actions">
+            <div class="wine-edit-status"></div>
+                        <div class="wine-edit-actions">
               <a class="icon-btn" href="bottle-lobby-wine-terra-rossa.html" target="_blank" title="View public wine page">View</a>
               <button class="icon-btn" onclick="openWineModal('edit', false)">Edit</button>
               <button class="icon-btn" onclick="deleteWineRow(this)" title="Remove from portfolio">✕</button>
             </div>
           </div>
-          <div class="wine-edit-entry">
+          <div class="wine-edit-entry" data-product="PRD-1009">
             <div class="wine-edit-dot" style="background:var(--dim)"></div>
             <div class="wine-edit-name">Costa Bianca 2023<div style="font-size:0.68rem;color:var(--dim);margin-top:0.2rem">88 pts · €5.20 ex-cellar · Blend</div></div>
             <div class="wine-edit-origin">Terre Siciliane IGT</div>
-            <div class="wine-edit-status"><span class="profile-badge" style="font-size:0.55rem;background:rgba(247,243,238,0.05);color:var(--dim)">Standard</span></div>
-            <div class="wine-edit-actions">
+            <div class="wine-edit-status"></div>
+                        <div class="wine-edit-actions">
               <a class="icon-btn" href="bottle-lobby-wine-costa-bianca.html" target="_blank" title="View public wine page">View</a>
               <button class="icon-btn" onclick="openWineModal('edit', false)">Edit</button>
               <button class="icon-btn" onclick="deleteWineRow(this)" title="Remove from portfolio">✕</button>
@@ -2275,61 +2295,23 @@ With an annual production capacity of over 1.2 million bottles, Cantina Rossi is
           <!-- WINE PORTFOLIO -->
           <div class="profile-section" id="dsection-wines">
             <div class="profile-section-header">
-              <div class="profile-section-title">My Wine Portfolio <span class="profile-section-count">(5)</span></div>
+              <div class="profile-section-title">My Wine Portfolio <span class="profile-section-count" id="dportfolio-count"></span></div>
             </div>
-            <div class="edit-sub" style="margin-top:-0.8rem">Wines pulled from your partner wineries' own Wine Portfolios. When a winery updates a wine, it updates here automatically. Mark a wine as Own-Label once you've licensed it exclusively.</div>
-            <div class="list-edit" id="dportfolio-list">
-      <div class="list-entry">
-        <div class="entry-dot" style="background:var(--gold)"></div>
-        <div class="entry-name">Sauvignon Blanc — Sancerre 2023<div style="font-size:0.68rem;color:var(--dim);margin-top:0.2rem">Henri Dubois Domaine</div></div>
-        <div class="entry-detail"><a class="icon-btn" href="bottle-lobby-wine-sauvignon-blanc-sancerre.html" target="_blank" title="View public wine page">View</a></div>
-        <div class="entry-tag"><span class="badge badge-gold" style="font-size:0.55rem">Own-Label</span></div>
-        <div class="entry-actions">
-          <button class="icon-btn" onclick="editPortfolioWine(0)">Edit</button>
-          <button class="icon-btn" onclick="deletePortfolioWine(0)" title="Remove from portfolio">✕</button>
-        </div>
-      </div>
-      <div class="list-entry">
-        <div class="entry-dot" style="background:var(--gold)"></div>
-        <div class="entry-name">Chardonnay — Chablis Premier Cru 2022<div style="font-size:0.68rem;color:var(--dim);margin-top:0.2rem">Domaine Lefèvre</div></div>
-        <div class="entry-detail"><a class="icon-btn" href="bottle-lobby-wine-chardonnay-chablis-premier-cru.html" target="_blank" title="View public wine page">View</a></div>
-        <div class="entry-tag"><span class="badge badge-gold" style="font-size:0.55rem">Own-Label</span></div>
-        <div class="entry-actions">
-          <button class="icon-btn" onclick="editPortfolioWine(1)">Edit</button>
-          <button class="icon-btn" onclick="deletePortfolioWine(1)" title="Remove from portfolio">✕</button>
-        </div>
-      </div>
-      <div class="list-entry">
-        <div class="entry-dot" style="background:var(--gold)"></div>
-        <div class="entry-name">Primitivo — Alcamo DOC 2022<div style="font-size:0.68rem;color:var(--dim);margin-top:0.2rem">Cantina Rossi</div></div>
-        <div class="entry-detail"><a class="icon-btn" href="bottle-lobby-wine-primitivo-sicilia-igt.html" target="_blank" title="View public wine page">View</a></div>
-        <div class="entry-tag"><span class="badge badge-gold" style="font-size:0.55rem">Own-Label</span></div>
-        <div class="entry-actions">
-          <button class="icon-btn" onclick="editPortfolioWine(2)">Edit</button>
-          <button class="icon-btn" onclick="deletePortfolioWine(2)" title="Remove from portfolio">✕</button>
-        </div>
-      </div>
-      <div class="list-entry">
-        <div class="entry-dot" style="background:var(--dim)"></div>
-        <div class="entry-name">Tempranillo — Rioja Crianza 2021<div style="font-size:0.68rem;color:var(--dim);margin-top:0.2rem">Bodegas Ruiz</div></div>
-        <div class="entry-detail"><a class="icon-btn" href="bottle-lobby-wine-tempranillo-rioja-crianza.html" target="_blank" title="View public wine page">View</a></div>
-        <div class="entry-tag"><span class="badge" style="font-size:0.55rem;background:rgba(247,243,238,0.05);color:var(--dim)">Standard</span></div>
-        <div class="entry-actions">
-          <button class="icon-btn" onclick="editPortfolioWine(3)">Edit</button>
-          <button class="icon-btn" onclick="deletePortfolioWine(3)" title="Remove from portfolio">✕</button>
-        </div>
-      </div>
-      <div class="list-entry">
-        <div class="entry-dot" style="background:var(--dim)"></div>
-        <div class="entry-name">Riesling Spätlese — Mosel 2023<div style="font-size:0.68rem;color:var(--dim);margin-top:0.2rem">Weingut Schmitt</div></div>
-        <div class="entry-detail"><a class="icon-btn" href="bottle-lobby-wine-riesling-spatlese-mosel.html" target="_blank" title="View public wine page">View</a></div>
-        <div class="entry-tag"><span class="badge" style="font-size:0.55rem;background:rgba(247,243,238,0.05);color:var(--dim)">Standard</span></div>
-        <div class="entry-actions">
-          <button class="icon-btn" onclick="editPortfolioWine(4)">Edit</button>
-          <button class="icon-btn" onclick="deletePortfolioWine(4)" title="Remove from portfolio">✕</button>
-        </div>
-      </div>
-            </div>
+            <!-- A17.12: there is no own-label checkbox in this model, so
+                 "Mark a wine as Own-Label once you've licensed it
+                 exclusively" described a control that must not exist. What
+                 an own label actually comes out of is a project, and the
+                 sentence names that instead. The count read a typed (5)
+                 beside a book of 15 — one of the four hard-typed counters
+                 the 5 Aug measurement left standing. -->
+            <div class="edit-sub" style="margin-top:-0.8rem">Wines pulled from your partner wineries' own Wine Portfolios. When a winery updates a wine, it updates here automatically. An own label is not marked here — it comes out of a project under My Labels and becomes a product of its own.</div>
+            <!-- Rendered by renderWinePortfolioD(). Five rows were typed in here
+                 with their producers, their article links and a gold
+                 "Own-Label" badge on three of them; the renderer has
+                 replaced them on load since 5 Aug 2026, so they were dead
+                 markup making a live claim — which is the worst of both.
+                 Removed with the own-label fixture pass (D41). -->
+            <div class="list-edit" id="dportfolio-list"></div>
             <button class="add-btn" onclick="openPullWineModal()">+ Pull Wine from a Winery Partner</button>
           </div>
 
@@ -6719,12 +6701,61 @@ function partnerMetaFor(p, me) {
 }
 
 
+/* ── THE WINERY'S OWN-LABEL AVAILABILITY, DRAWN FROM THE RECORD ───
+   A17.0a's SECOND level and nothing else: whether this house has opened
+   a wine to own-label REQUESTS. It is not whether a finished own label
+   exists (that is a product with a gate-2 project) and not whether
+   anybody carries one (that is OL-15 on a listing). The badge says
+   "Own-Label Available" in as many words, so the three cannot be read
+   into each other again.
+
+   IT WALKS THE TYPED ROWS BY KEY rather than rendering them. The rows
+   carry `data-product`; their score, ex-cellar price and varietal note
+   have no home in the producer catalogue yet, so the full render belongs
+   to the typed-surfaces pass. What matters here is that the one row that
+   makes a CLAIM stops being typed. */
+/* A17.3 — the public badge, and it disappears on its own. Derived from
+   a currently valid membership and from nothing else, so a suspension
+   removes it the same day with no field to clear. The empty string rather
+   than a hidden element: the pill has no content when there is nothing to
+   say, which is the same discipline stakeholder() follows for a house it
+   does not know (B12). */
+function renderWineryBadge() {
+  const el = document.getElementById('wbadge-ownlabel');
+  if (!el) return;
+  const badge = ownLabelPublicBadge('Cantina Rossi');
+  el.textContent = badge ? 'Own Label ✓' : '';
+  el.style.display = badge ? '' : 'none';
+  if (badge) el.title = badge;
+}
+
+function renderWineryAvailability() {
+  const list = document.getElementById('wportfolio-list');
+  if (!list) return;
+  list.querySelectorAll('.wine-edit-entry[data-product]').forEach(function (row) {
+    const cell = row.querySelector('.wine-edit-status');
+    if (!cell) return;
+    const open = ownLabelOnRequest(row.getAttribute('data-product'));
+    cell.innerHTML = open
+      ? '<span class="profile-badge badge-own-label" style="font-size:0.55rem">Own-Label Available</span>'
+      : '';
+    /* The dot follows the same reading, so the row is legible at a
+       glance without the badge being the only signal. */
+    const dot = row.querySelector('.wine-edit-dot');
+    if (dot) dot.style.background = open ? '' : 'var(--dim)';
+  });
+}
+
 let awSelectedWine = null;
 let editingPortfolioIndex = null;
 
 function renderWinePortfolioD() {
   const el = document.getElementById('dportfolio-list');
   if (!el) return;
+  /* THE COUNTER IS COUNTED. It read a typed (5) beside a book of 15 —
+     the same defect as My Labels' (6), and the same repair. */
+  const countEl = document.getElementById('dportfolio-count');
+  if (countEl) countEl.textContent = '(' + currentWinePortfolio.length + ')';
   el.innerHTML = currentWinePortfolio.map((w, idx) => `
     <div class="list-entry">
       <div class="entry-dot" style="background:${isOwnLabel('Hawesko GmbH', w.id) ? 'var(--gold)' : 'var(--dim)'}"></div>
@@ -9652,6 +9683,8 @@ renderAllOrders();
    not exist yet contributes no products.) */
 renderWinePortfolioD();
 refreshOwnLabelSurfaces();
+renderWineryAvailability();
+renderWineryBadge();
 
 
 /* ══════════════════════════════════════════════════════════════════
@@ -13084,6 +13117,8 @@ function redrawAll() {
   renderPressList();
   renderWinePortfolioD();
   refreshOwnLabelSurfaces();
+  renderWineryAvailability();
+  renderWineryBadge();
   renderWineryNetwork();
   renderPartnerNetwork();
   renderIncomingRequests();

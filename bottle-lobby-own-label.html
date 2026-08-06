@@ -420,7 +420,12 @@ nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; display: flex; a
             <div class="calc-result-lbl">Annual Revenue</div>
           </div>
         </div>
-        <div class="calc-note">Pre-filled with Cantina Rossi's real Primitivo — Alcamo DOC own-label figures via Hawesko GmbH. Adjust the fields to model your own wine.</div>
+        <!-- CORRECTED 7 Aug 2026, same reason as the example below: the note
+             named Cantina Rossi's own Primitivo — Alcamo DOC as an
+             own-label wine, and it is not one (D41). It is a wine OPEN to
+             own-label requests. The figures now come from the platform's
+             one real own label. -->
+        <div class="calc-note">Pre-filled with the real figures of Hanseatischer Weisser — Mâcon-Villages, Hawesko's own label produced by Domaine Lefèvre. Adjust the fields to model your own wine.</div>
       </div>
     </div>
   </div>
@@ -442,19 +447,31 @@ nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; display: flex; a
         </div>
       </div>
       <div class="case-box">
-        <div class="case-avatar">CR</div>
+        <div class="case-avatar">DL</div>
         <div>
+          <!-- CORRECTED 7 Aug 2026, and only this claim. The example read
+               "Primitivo — Alcamo DOC is own-labeled exclusively for
+               Hawesko GmbH" — which is D36 in one sentence, on a public
+               page: Primitivo — Alcamo DOC is Cantina Rossi's own wine
+               under Cantina Rossi's own name, and what it actually is is
+               a wine OPEN TO own-label requests (D41).
+               The whole page still argues the superseded model in roughly
+               twenty passages and is rewritten in its own pass — that
+               rewrite is not a reason to leave one checkable falsehood
+               about a named product standing until then. The example now
+               names the real own label the platform has, with the figures
+               its own records carry. -->
           <p class="eyebrow" style="margin-bottom:0.6rem">Real Example</p>
-          <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:400;color:var(--paper);margin-bottom:0.6rem">Cantina Rossi × Hawesko GmbH</h3>
-          <p style="font-size:0.82rem;color:var(--dim);line-height:1.75">Primitivo — Alcamo DOC is own-labeled exclusively for Hawesko GmbH. No other German distributor can offer this exact bottle.</p>
+          <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:400;color:var(--paper);margin-bottom:0.6rem">Domaine Lefèvre × Hawesko GmbH</h3>
+          <p style="font-size:0.82rem;color:var(--dim);line-height:1.75"><em>Hanseatischer Weisser — Mâcon-Villages</em> is Hawesko's own product: its brand, its label, produced for it by Domaine Lefèvre out of the estate's Mâcon-Villages. The estate supplies it to Hawesko and to nobody else, and its own Mâcon-Villages continues under its own name.</p>
           <div class="case-stats">
-            <div><div class="case-stat-val">2,900</div><div class="case-stat-lbl">Bottles / Month</div></div>
-            <div><div class="case-stat-val">€4.80</div><div class="case-stat-lbl">Ex-Cellar Price</div></div>
-            <div><div class="case-stat-val">92 pts</div><div class="case-stat-lbl">Gold Medal, Vinitaly</div></div>
+            <div><div class="case-stat-val">1,900</div><div class="case-stat-lbl">Bottles / Month</div></div>
+            <div><div class="case-stat-val">€5.25</div><div class="case-stat-lbl">Agreed Bottle Price</div></div>
+            <div><div class="case-stat-val">1,200</div><div class="case-stat-lbl">First Order, Jun 2026</div></div>
           </div>
           <div class="case-links">
-            <a href="bottle-lobby-wine-primitivo-sicilia-igt.html">View the Wine →</a>
-            <a href="bottle-lobby-profile-demo.html#distributor">View Hawesko's Profile →</a>
+            <a href="bottle-lobby-wine-hanseatischer-weisser-macon-villages.html">View the Wine →</a>
+            <a href="bottle-lobby-distributor-hawesko-gmbh.html">View Hawesko's Profile →</a>
           </div>
         </div>
       </div>

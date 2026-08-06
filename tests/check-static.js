@@ -200,6 +200,21 @@ console.log('\n── CSS classes (markup)');
   for (const m of markup.matchAll(/class="([^"]*)"/g)) {
     m[1].split(/\s+/).filter(Boolean).forEach(c => used.add(c));
   }
+  /* AND CLASSES THE SCRIPTS EMIT AS LITERALS, which are just as real once
+     a box has rendered — the same reasoning the id check above already
+     applies to `id=\"…\"` inside a template string. It stopped being
+     hypothetical when the winery's five typed own-label badges became
+     derived: `profile-badge` and `badge-own-label` left the markup
+     entirely and moved into a renderer, and without this the file
+     reported them as classes nobody uses. Rendered is used. */
+  /* ONLY PLAIN LITERALS. A value containing `${`, a quote or a `+` is a
+     template expression, and taking it apart here would add fragments
+     like `chip-` and `orderStageCls[o.stage]` to the used set — measured
+     on the way in. Those live in the enum-driven section below, which
+     checks a whole enum's pills at once and is the right tool for them. */
+  for (const m of js.matchAll(/class=\\?"([\w -]+)\\?"/g)) {
+    m[1].split(/\s+/).filter(Boolean).forEach(c => used.add(c));
+  }
   const missing = [...used].filter(c => !defined.has(c) && !hooks.has(c)).sort();
   const unexpected = missing.filter(c => !KNOWN_UNSTYLED.includes(c));
   const stillKnown = KNOWN_UNSTYLED.filter(c => used.has(c));

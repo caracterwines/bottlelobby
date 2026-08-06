@@ -261,7 +261,14 @@ nav { position: fixed; top:0; left:0; right:0; z-index:100; display:flex; align-
 
 <div class="wine-hero">
   <div class="bottle-frame">
-    <div class="ownlabel-ribbon">Own Label</div>
+    <!-- THE OWN-LABEL RIBBON IS GONE, AND THE WINE LOST NOTHING (D41).
+         It said "Own Label" over a wine of this estate's own, under this
+         estate's own brand, and the reason the page itself gave for it is
+         two lines down: exclusive distribution through one house. A17.0b's
+         last paragraph names that arrangement and puts it OUTSIDE own
+         label — it is an ordinary product plus a distribution
+         exclusivity. The exclusivity tag stays, because that part was
+         true. -->
     <svg class="bottle-svg" width="120" height="340" viewBox="0 0 120 340" xmlns="http://www.w3.org/2000/svg">
       <rect x="50" y="0" width="20" height="38" rx="3" fill="#2a1010"/>
       <path d="M46 38 L74 38 L82 78 L82 110 Q82 118 74 118 L46 118 Q38 118 38 110 L38 78 Z" fill="#5a5a1a"/>
@@ -277,7 +284,7 @@ nav { position: fixed; top:0; left:0; right:0; z-index:100; display:flex; align-
     <p class="wine-eyebrow">CHABLIS PREMIER CRU · BURGUNDY</p>
     <h1 class="wine-title">Chardonnay — Chablis Premier Cru<br><em>2022</em></h1>
     <p class="wine-origin-line">🇫🇷 Chablis, Burgundy, France · <a href="bottle-lobby-winery-domaine-lefevre.html">Domaine Lefèvre</a> · 2022 Vintage</p>
-    <div class="wine-tags-row"><span class="wine-tag wine-tag-white">White</span><span class="wine-tag wine-tag-exclusive">✓ Exclusive</span><span class="wine-tag wine-tag-ownlabel">Own Label</span></div>
+    <div class="wine-tags-row"><span class="wine-tag wine-tag-white">White</span><span class="wine-tag wine-tag-exclusive">✓ Exclusive</span></div>
     <div class="score-row" id="score-row"></div>
     <p class="wine-desc-text" id="short-desc"></p>
     <div class="hero-actions">
@@ -475,7 +482,7 @@ renderWineServing();
    of them in its dashboard, the change flows automatically into every
    distributor, restaurant and retail page that lists this wine.
 ──────────────────────────────────────────────────────────────────── */
-wineData.shortDescription = 'Elegant and precise. Green apple, white flowers and characteristic Chablis minerality. Protected label — not available to competing distributors in the region.';
+wineData.shortDescription = 'Elegant and precise. Green apple, white flowers and characteristic Chablis minerality. Distributed exclusively by Hawesko in northern Germany — the estate's own label, under an exclusivity agreement.';
 wineData.longDescription = 'Domaine Lefèvre\'s Premier Cru comes from a single classified vineyard on Chablis\' famous Kimmeridgian limestone — ancient seabed soil laced with fossilised oyster shells that gives the wine its trademark flinty, saline minerality. The grapes are hand-harvested, pressed gently, and fermented mostly in stainless steel with a small portion in older, neutral oak to add texture without masking the fruit. Ten months of ageing on lees builds depth before bottling. The result is a precise, elegant Chardonnay — green apple, white flowers and that unmistakable Chablis minerality — built for oyster bars, seafood-forward menus and Burgundy-focused wine lists that want a Premier Cru name at a defensible price point.';
 wineData.awards = [
     {medal:'🏅', text:'93 Points', year:'Wine Enthusiast, 2023'},
