@@ -5256,6 +5256,57 @@ function ownLabelOrderRight(buyer, seller, ref, ctx) {
     : { allowed: false, rule: 'MG-1', reason: 'no market grant of ' + project.id + ' covers this supply' };
 }
 
+/* ── OL-15 — THE PRIMARY OWN-LABEL LISTING (A17.12) ─────────────
+   `ownLabel` on a listing derives from TWO conditions and no others:
+   the first commercial delivery is confirmed (A17.9) AND the listing
+   holder is the project's primary distributor.
+
+   THE SECOND CONDITION IS THE WHOLE REASON THE FIRST IS NOT ENOUGH.
+   A downstream distributor B carries the same product legitimately
+   (A17.9b) and takes his own first delivery of it. On the first
+   condition alone his row would badge itself an own label, and B never
+   becomes the primary own-label holder — his listing is an ordinary
+   listing that shows the sourcing via A, and it never appears in his
+   My Labels.
+
+   IT IS NOT WIRED INTO listingOwnLabelStatus() AND MUST NOT BE. That
+   function REPLACES the bridge in the pass that gives these wines
+   projects and a delivered first order; a fallback under which a
+   listing counts as own-label either through the bridge or through
+   this reading is two roads to one answer, which is D33 in one
+   sentence. Until that pass this is exercised by the harness and read
+   by nothing on screen — deliberately visible as unfinished rather
+   than half-connected. */
+
+/* The delivered first commercial order, or null. Read from the orders
+   themselves (invariant 7): a confirmed delivery is an act with a
+   record, and a flag beside it would go stale the moment an order
+   moved.
+
+   SAMPLES ARE NOT COMMERCIAL ORDERS and never activate a product
+   (A17.9). No order fixture carries `isSample` today, so the clause is
+   inert — it is written down anyway, because the day a sample order
+   exists is the day somebody would otherwise have to rediscover why
+   the product went live too early. */
+function firstCommercialDeliveryOf(ref) {
+  const id = (ref && typeof ref === 'object') ? ref.id : ref;
+  const project = ownLabelProjectOf(id);
+  if (!project) return null;
+  return orders
+    .filter(o => o.stage === 'delivered' && o.isSample !== true &&
+                 o.seller === project.producer && o.buyer === project.distributor &&
+                 (o.items || []).some(i => i.productId === id))
+    .sort((a, b) => (a.placed || '').localeCompare(b.placed || ''))[0] || null;
+}
+
+function ownLabelListingDerived(listing) {
+  if (!listing) return false;
+  const project = ownLabelProjectOf(listing.productId);
+  if (!project) return false;
+  if (listing.holder !== project.distributor) return false;
+  return !!firstCommercialDeliveryOf(listing.productId);
+}
+
 /* ══════════════════════════════════════════════════════════════════
    PORTFOLIO COUNTS — counted, never stored (invariant 7)
    ------------------------------------------------------------------
