@@ -7841,7 +7841,39 @@ let orders = [
 
   { id:'ORD-2039', placed:'2026-07-23', buyer:'Hawesko GmbH', buyerType:'distributor',
     seller:'Weingut Schmitt', sellerType:'winery', stage:'accepted',
-    items:[ orderItemRaw('PRD-1024',240,7.90,2023) ] }
+    items:[ orderItemRaw('PRD-1024',240,7.90,2023) ] },
+
+  /* ── Distributor  →  Distributor  (A3, A17.9b) ────────────────
+     The third leg of the chain, and it needed no architecture: buyer
+     and seller are both distributors, ORDER_ROLES names roles and
+     never pairings, and placeOrder() refuses only an order with no
+     line left. Hawesko sells on a wine it lawfully carries; Enoteca
+     lists it in Milan at its own price. The producer is still Henri
+     Dubois Domaine and nothing on this order says otherwise — the line
+     names PRD-1015 and reads the rest through the catalogue.
+
+     THE UNIT PRICE IS MEASURED, not chosen: 17.20 is what Hawesko's
+     own listing quotes, exactly as ORD-2041 pays Bistro Laurent's
+     14.90. Of the ordinary wines in Hawesko's book that Enoteca cannot
+     reach through Cantina Rossi, this is the only one with a quoted
+     price at all — the other three are null, and an invented number
+     would have been the one fact in this fixture nobody could check.
+
+     Dated 16 Jun 2026: after the partnership (19 May) and after the
+     listing (1 Jun), before Enoteca's 19 Jul claim to carry French
+     wine. `accepted` rather than delivered, so the order is live on
+     both sides — Hawesko reads it under My Sales, and the fee model
+     stays untouched: OL-14 accrues only where the seller is the
+     producing winery, and here it is a distributor (no fee, no
+     project, no grant — an ordinary trade, A3 point 7).
+
+     WHAT IT DOES NOT CREATE: no relation between Enoteca and Henri
+     Dubois Domaine, no exclusivity, no purchase right. An order is a
+     purchase (A3 point 6). */
+  { id:'ORD-2043', placed:'2026-06-16', buyer:'Enoteca Milano Import Srl', buyerType:'distributor',
+    seller:'Hawesko GmbH', sellerType:'distributor', stage:'accepted', source:'manual',
+    note:'Portfolio supplementation — Loire whites for the Lombardy trade',
+    items:[ orderItemRaw('PRD-1015',180,17.20,2023) ] }
 ];
 /* A line names a PRODUCT and adds this order's terms. `wine` and
    `winery` used to sit here as strings — the copy invariant 2 forbids
@@ -8164,7 +8196,15 @@ const addressBook = {
   'Weinhaus Müller': { ship:'Reichenbachstr. 30<br>80469 München<br>Germany',
                        bill:'Weinhaus Müller e.K.<br>Reichenbachstr. 30<br>80469 München<br>VAT DE119338204' },
   'Hawesko GmbH':    { ship:'Zentrallager Tor 4<br>Hamburger Str. 14<br>25436 Tornesch<br>Germany',
-                       bill:'Hawesko GmbH<br>Hamburger Str. 14<br>25436 Tornesch<br>VAT DE118801093' }
+                       bill:'Hawesko GmbH<br>Hamburger Str. 14<br>25436 Tornesch<br>VAT DE118801093' },
+  /* Read off Enoteca's own public profile, which carries the address
+     and no VAT number. The line stays out rather than being invented
+     (A1) — the same discipline SELLER_PROFILES keeps for a winery's
+     bank details. It arrives with ORD-2043, the first order whose
+     buyer is not one of the three houses above. */
+  'Enoteca Milano Import Srl':
+                     { ship:'Via Solari 12<br>20144 Milano<br>Italy',
+                       bill:'Enoteca Milano Import Srl<br>Via Solari 12<br>20144 Milano<br>Italy' }
 };
 
 /* Letterhead of whoever issues the document — the seller on that order,
