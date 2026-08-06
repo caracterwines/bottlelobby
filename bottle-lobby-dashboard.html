@@ -4194,7 +4194,33 @@ let partnerships = [
      in this table came out of a book that already held an ISO date,
      so nothing was invented there — this row is the exception and
      says so. */
-  { distributor:'Enoteca Milano Import Srl', partner:'Cantina Rossi', at:'2026-05-11', activatedBy:'Bottle Lobby' }
+  { distributor:'Enoteca Milano Import Srl', partner:'Cantina Rossi', at:'2026-05-11', activatedBy:'Bottle Lobby' },
+
+  /* The first DISTRIBUTOR ↔ DISTRIBUTOR row, and the reason it is
+     ordinary rather than exotic: A3 "Where a distributor sources" and
+     A8, which has named portfolio supplementation between two
+     distributors since it was written. Enoteca buys French wine from
+     Hawesko that no relation of its own reaches — its only producer
+     partner is Cantina Rossi, in its own country.
+
+     BOTH ENDS ARE DISTRIBUTORS AND THE ROW DOES NOT CARE. `distributor`
+     and `partner` are the two ends of one relation, not two roles: the
+     shape came from A6's "the other three roles partner only with
+     distributors", and a pair of distributors satisfies that reading
+     from whichever end you take it. Nothing here needed changing —
+     partnershipsOf(), partnerSide() and arePartners() are typeblind
+     already, which is why this row is data and not a pass.
+
+     The day is fixture authorship again, pinned rather than chosen
+     (C7 — the earliest dependent fact is the ceiling): Enoteca's
+     listing of the Pouilly-Fumé carries LISTED_AT, 1 Jun 2026, and the
+     A→B order ORD-2043 follows on 16 Jun. 19 May is an unremarkable
+     Tuesday under both, and after Enoteca's own Cantina Rossi
+     partnership above. It also has to sit before 19 Jul 2026, the day
+     Enoteca tells Bistro Laurent it carries "a strong Northern Italian
+     and French portfolio" — until this row there was no French wine
+     behind that sentence at all. */
+  { distributor:'Hawesko GmbH', partner:'Enoteca Milano Import Srl', at:'2026-05-19', activatedBy:'Bottle Lobby' }
 ];
 
 /* Both ends ask the same list. Whoever I am, my partnerships are the
