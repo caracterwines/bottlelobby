@@ -31,12 +31,12 @@ Kein Build-Command, Publish-Directory = Repo-Root.
 > Dauerhafte Regeln gehoeren in `BOTTLE-LOBBY-SPEC.md`, kurze Invarianten in
 > `CLAUDE.md`. Findet sich hier eine Regel, ist sie am falschen Ort.
 
-**Baum sauber, `main` gepusht, 20 Harnesses gruen.**
+**Baum sauber, `main` gepusht, 21 Harnesses gruen** (nachgezaehlt 06.08. — `own-label-grants.js` kam mit Durchgang 3 dazu).
 
 ### Womit eine Sitzung anfaengt
 
 ```
-node tests/run-all.js        →  20 Harnesses, muss gruen sein, bevor irgendetwas beginnt
+node tests/run-all.js        →  21 Harnesses, muss gruen sein, bevor irgendetwas beginnt
 node tests/serve.js          →  http://localhost:8765   (no-store — NIE python http.server)
 node tests/stamp-assets.js   →  nach jeder Aenderung an assets/, sonst wird check-static rot
 ```
@@ -50,7 +50,7 @@ Fehlmessungen an einem Tag kamen genau daher** (Spec C7, „Browser acceptance")
 `BOTTLE-LOBBY-SPEC.md` ist die Autoritaet und waechst. **Niemand liest sie ganz —
 also je Durchgang die geltenden Abschnitte benennen**, sonst wird nach
 Plausibilitaet statt nach Spec gebaut. `CLAUDE.md` hat die acht Invarianten,
-Anhang D die abgeloesten Entscheidungen (**D1–D39** — nie ohne Blick dorthin
+Anhang D die abgeloesten Entscheidungen (**D1–D40** — nie ohne Blick dorthin
 etwas wiedervorschlagen).
 
 Arbeitsregeln, die diesen Tag ueberdauern und in **C3/C7** stehen: jeden Commit
@@ -62,7 +62,7 @@ von Stammdaten ist das **frueheste abhaengige Ereignis die Obergrenze**.
 
 ---
 
-### Die Konsolidierung A16/A17 — Durchgang 1 liegt, 2–11 stehen aus
+### Die Konsolidierung A16/A17 — 1, 3 und 4 liegen; 2 und 5–11 stehen aus
 
 Der Spec-Durchgang (Durchgang 1) ist am **6. August 2026** gelaufen: §5.1–§5.9
 der freigegebenen Vorlage sind in `BOTTLE-LOBBY-SPEC.md` uebertragen, **D37–D39**
@@ -71,10 +71,14 @@ neu, **B8** und **C6** nachgezogen. **Kein Code, keine Fixtures, kein HTML** —
 das war die Auftragsgrenze.
 
 **Was Git nicht weiss und hier stehen muss:** die Vorlage
-`KONSOLIDIERUNG-A16-A17-EVENTS-COMMUNITY-DRAFT.md` liegt **untracked** im
-Repo-Root und ist bewusst nicht committet. Sie ist die Messgrundlage der
-Prompts 66–68; ihre normativen Teile stehen jetzt in der Spec, ihre Messungen
-nicht. **Wird sie geloescht, ist die Herleitung weg, die Regeln aber nicht.**
+`KONSOLIDIERUNG-A16-A17-EVENTS-COMMUNITY-DRAFT.md` liegt **nicht mehr im
+Repo** — sie ist ausserhalb archiviert; im Repo-Root ist sie am 06.08.
+nachgemessen nicht vorhanden. Ihre **normativen Teile stehen vollstaendig in
+der Spec** (§5.1–§5.9, D37–D39, A16.14, A16.15, A17.9a/9b, A17.13a); nichts
+Geltendes haengt noch an ihr. Was mit ihr aus dem Repo verschwunden ist, sind
+die **Messungen** der Prompts 66–68 — die Herleitung, nicht die Regel. Diese
+Zeile stand bis zum 06.08. im Praesens („liegt untracked im Repo-Root") und
+war damit falsch; wer die Datei dort sucht, sucht vergeblich.
 
 Reihenfolge der restlichen Durchgaenge, je einzeln gepusht — die Begruendung
 steht in der Vorlage §11 und ist Serges Ordnungsregel: erst Woerter und
@@ -84,7 +88,7 @@ Wahrheiten stabilisieren, dann nach aussen bauen.
 |---|---|---|
 | 2 | **Taxonomie + Rename** | Reach-Konstanten; Network→Community / My Partners→Network ueber alle vier Navs, `*_GROUPS`, `*_TITLES`, plus NAV-1 im Harness. ⚠ **Nach Map-Position und Id umbenennen, nie per String** — `network` heisst im Code zweierlei (D39) |
 | 3 | **Own-Label-Datenkern** | `marketGrants` an den Projektbedingungen; OL-15-Ableitung; OL-14 + Betrag/Waehrung-Snapshot am Gebuehrenereignis; neues `tests/own-label-grants.js` |
-| 4 | **Saparavi-Fixtures** | D2D-Partnerschaftszeile, Enoteca-Listing mit eigenem `tradePrice`, A→B-Order, `dealFreeGoodsFor()`-Ausschluss fuer D→D, Fall in `tests/supply-chain.js` |
+| 4 | ~~**Saparavi-Fixtures**~~ | **Gebaut am 06.08. als D2D-Grundlage** — siehe den Block unter der Tabelle |
 | 5 | **Shows: Reichweite + Recruiting** | `reach[]`, `applications_open`, Deadline, Bewerbungsablauf ueber die vorhandenen A16.9-Status, Discover-Unteransicht, Mitgliederstufe |
 | 6 | **Shows: Final Review + Freigabe** | Veroeffentlichungs-Checkliste inkl. Contributions, gespeicherter Review, Reset bei materieller Aenderung, WS-6/WS-7 |
 | 7 | **Member Events, Basis + Cockpit (Distributor)** | `events`-Erweiterung, `event_participants`, Lebenszyklus, Sichtbarkeit, Cockpit, Nav *Client Events → My Events*, Minimalmodell externe Messen, Retails getippte Event-Flaechen aus Daten gerendert. **Der groesste Durchgang** |
@@ -108,6 +112,23 @@ Funktionen aufrufen, `transferSize` vorher lesen (C7).
 > `legacyOwnLabel`-Bruecke im selben Commit verlangt, und „My Labels" waere leer
 > — reparabel nur durch eine **erfundene** Erstlieferung, die A17.14 im selben
 > Atemzug verbietet.
+>
+> **Durchgang 4 ist gebaut, und er ist die GRUNDLAGE, nicht der Saparavi-Fall.**
+> Was liegt: die Spec-Korrektur zuerst (A3 traegt die Bezugsregel in neun
+> Punkten, A14.1 geweitet, Invariante 3 nachgezogen, **D40**), dann die
+> D2D-Partnerschaftszeile Hawesko ↔ Enoteca (19.05.2026), Enotecas Listing auf
+> **PRD-1015** mit eigenem `tradePrice` 21.90 gegen Haweskos 17.20, die
+> A→B-Order **ORD-2043** (180 Fl., 16.06.2026, `accepted`) und der
+> `dealFreeGoodsFor()`-Ausschluss fuer D→D. `tests/supply-chain.js` traegt den
+> Fall mit vier Beweisen und zwei Mutationen.
+>
+> **Bewusst ein GEWOEHNLICHER Wein.** Own Label, Grants und der Saparavi-Fall
+> selbst gehoeren in den A17-Fixture-Durchgang; hier war der Punkt, dass die
+> Plattform den Weg **ohne** A17 zulaesst — ein normaler Wein wird nie
+> abgewiesen, weil kein Projekt existiert (A3 Punkt 7). Die Produktwahl ist
+> begruendet: PRD-1015 ist der einzige gewoehnliche Wein in Haweskos Buch, den
+> Enoteca nicht ueber seine eigene Cantina-Rossi-Partnerschaft erreicht **und**
+> der einen quotierten Preis traegt.
 >
 > **Zieldurchgang fuer den Rest: A17-Fixtures** (nach 4, vor 11) — Programm-
 > Mitgliedschaften, Projekte ueber den ganzen Bogen, die erste gelieferte
