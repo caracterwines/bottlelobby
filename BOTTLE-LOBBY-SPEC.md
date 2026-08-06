@@ -302,8 +302,10 @@ Both include: no channels outside the platform; no passing on contact details or
 
 **2. `accepted`**
 The receiving side accepts in their own dashboard and confirms the mirrored clause with its own checkbox (same hard-disabled-until-ticked rule).
-- Winery side: Network → Requests
-- Stakeholder side: Network → Incoming Requests
+- Winery side: **Network → My Requests**
+- Stakeholder side: **Network → My Requests**
+
+Both sides reach the same record under the same path. The two directions are stacked inside that one section — Incoming Requests first, Outgoing Requests below (B8). The older wording here named *Network → Requests* and *Network → Incoming Requests*, two paths that predate the section merge (D21) and the section rename (D39) and no longer exist.
 
 **3. `contract_pending`**
 Bottle Lobby sends **two contracts**, one to each side. Both must be completed, signed and returned. Every partnership therefore always involves two signed contracts.
@@ -334,7 +336,7 @@ Bottle Lobby sends **two contracts**, one to each side. Both must be completed, 
 | Distributor | **My Partnerships** (grouped by region) · **My Requests** (incoming + outgoing stacked in one section, incoming first) |
 | Restaurant / Retail | **My Distributors** · **My Requests** (incoming + outgoing stacked in one section, incoming first) |
 
-All four roles use the same two-item **My Partners** sidebar section (B8). The distributor's first item is called *My Partnerships* because it partners with three role types; the other three partner only with distributors, so the more specific *My Distributors* is kept.
+All four roles use the same two-item **Network** sidebar section (B8, D39). The distributor's first item is called *My Partnerships* because it partners with three role types; the other three partner only with distributors, so the more specific *My Distributors* is kept.
 
 Each of these carries the same four-stage progress indicator, so both sides always see the identical stage of the identical request record.
 
@@ -437,6 +439,21 @@ Both directions carry the same label in every role — the follow graph is one s
 
 Every role shows **both** directions. The earlier per-role labels ("Wine Stars", "Wine Fans") and the hidden cells are gone — see Appendix D (D20).
 
+### Network and Community are two different lists
+
+**Network** is the business side: confirmed partnerships, requests, contracts, trade relations — everything A6 governs. **Community** is the follow side: My Stars (whom I follow), My Fans (who follows me), the signals arising from them, opportunities, and later matchmaking results. `Save & Follow` stays the entry to Community; the partnership workflow stays the entry to Network. Both are sidebar sections in all four roles (B8), and the rename that gave them these names is Appendix D (D39).
+
+**A follow is not a partnership, and it is not marketing consent.** It is a directed edge and a signal, nothing more. It creates no commercial right, obliges nobody, and does not license anyone to address the follower. Every commercial gate in this model reads the partnership (A6), never the follow graph.
+
+**Privacy rules on the community side**, and each of them is the reason the graph can carry announcements at all (A16.7):
+
+- **No foreign follow graph is exported.** A house reads its own two lists. Nobody downloads somebody else's community, and no feature resolves one into a recipient list for a third party (A16.14e).
+- **Only the explanation signals a suggestion actually needs are shown**, never the underlying graph in full (A8).
+- **Blocks, unsubscribes and notification preferences are respected everywhere**, including on announcements the host is entitled to send.
+- **A community is never used automatically by anyone else.** A winery exhibiting at a distributor's show does not thereby address the distributor's fans.
+
+**Community notifications derive from real data changes and relations only** — the three conditions of C9, applied to this graph: a followed winery publishes a wine · a star exhibits at a show (the existing *From Your Stars* feed, A16.7) · a followed restaurant or retailer publishes a member event (A16.8) · a new explainable opportunity exists (A8) · an offer matches a stated seek (A8). Never a stored feed, never a message table.
+
 **An edge is only the edge:** who follows whom, and since when. Everything about either house — its type, badge, region and public page — comes from that house's own record (A2), and the edge stores none of it. It used to store all four, describing the *follower*, which meant a house carried its own profile once per follow: Hawesko GmbH four times over.
 
 **Prototype blueprint:** shared `wineFollowGraph` array in `bottle-lobby-dashboard.html`, three fields per row — `follower` / `winery` / `at`; generic renderers `renderFansFor(entityName, listId, countId, emptyMsg)` and `renderWineStarsFor(followerName, listId, countId)` — **all four roles now call both**, with only the entity name differing; shared `roleAv` / `roleTag` / `roleLabel` maps covering all 4 types, plus a `wn-av-winery` / `rt-winery` CSS pair for the winery role.
@@ -480,7 +497,37 @@ Note that *"a winery I follow is exhibiting at a show"* is **not** part of this 
 
 **A8 needs a surface where matches arrive, not only a list to visit.** Matchmaking is specified as something a stakeholder goes and looks at. The notification list (C9) is the first place a match can arrive unbidden, and the regional notification is the first real application of A8 rather than an exception to C9 — see C9 for why that reframing matters and what it does *not* change.
 
+### The seek/offer model, stated in full
+
+Every stakeholder maintains two lists, and both are theirs alone:
+
+| | Holds |
+|---|---|
+| **I seek** | wines, styles, origins, varieties, own-label opportunities, distributors, wineries, locations, wine shows, member events, services |
+| **I offer** | wines, own-label production, distribution, market grants (A17.9a), locations, events, catering, promotional material, services |
+
+Each entry carries criteria: category · tags · geography · channel · validity · volume or capacity · visibility · audience. This is the specification of the model, not a build order — the cockpit that edits these lists is its own pass (below).
+
+### An opportunity is explained, or it is noise
+
+**Every opportunity names the concrete reason it exists.** A percentage is not a reason, and a suggestion nobody can check is a suggestion nobody acts on. The reasons this model can already produce, all from data that exists:
+
+- several of my partners follow the same winery
+- a restaurant partner of mine follows a winery in my portfolio
+- a stakeholder seeks what I offer, or offers what I seek
+- a member event fits my profile (A16.8)
+- a location fits an event I am planning
+- a wine-show demand fits my wines (A16.4 open calls)
+- several of my customers share an origin interest
+- a distributor holds a market grant that fits (A17.9a)
+
+**An opportunity creates nothing.** No partnership, no order, no invitation, no participation, no market grant, no contract arises from one being shown. What it offers are deliberate next steps the reader takes: view profile · follow · send an inquiry · request a partnership · request a tasting · invite · apply. This is the same line A17.13a draws between reach and agreement, and A16.14b draws between finding a show and acting on it — visibility never creates an action right.
+
 **Prototype state:** Matchmaking is not implemented. All four dashboards carry a non-functional "Matchmaking" nav item with a match-count badge, purely so the concept is visible in demos. The two widgets that *do* render ("New Distributor Matches" on the winery dashboard, "New Winery Matches" on the distributor dashboard) use hardcoded fit percentages. Nothing here is a blueprint — build it from this section, not from the mockup.
+
+> **A known defect, recorded rather than patched.** "My Opportunities" on the distributor dashboard offers **Hawesko GmbH to Hawesko GmbH** as *"New winery for you"* — a role and self-reference error at once: the suggested house is neither a winery nor a different house. It is hardcoded, and it dies with the widget when this section is built. Recorded so the finding is not measured a third time.
+
+**The matchmaking cockpit is not part of the A16/A17 work.** It gets its own measured pass after the shows, own-label and member-event passes have landed, for the reason C2 gives: this section is the query layer over four relations, and the relations are still moving. Until that pass runs, `matchmaking` is deliberately **not** a value in the reach taxonomy (A16.14b) — it is shown in the interface, locked, with its reason on screen, so a reader sees why the feature is worth building rather than finding an option that quietly does nothing.
 
 **Where the real matching data comes from:** the follow/fan graph (A7), the wine portfolio relations (A3), the master-data fields (A4) and stated seek/offer preferences. All four already exist as tables; Matchmaking is a query layer over them, not a new data silo.
 
@@ -542,6 +589,9 @@ The Wine Guide must be a **pure query/aggregation layer** over the relational da
 | Distributors | Same aggregate pattern |
 | Restaurants | Aggregate view — **membership-gated** |
 | Retailers | Aggregate view — **membership-gated** |
+| **Events** | Live query over `wine_shows` and `events`, joined into one derived directory — **role- and reach-dependent** (A16.14d) |
+
+**Events is the last tab, after Retailers**, and it is a projection, not a sixth store: a show is never copied into `events` and an event is never copied into `wine_shows` (ME-1). What the tab renders is the same authoritative record the dashboards and the public Wine Shows page render, through the same visibility functions (A16.6, A16.14a).
 
 **All filter facets and counts computed live from the current filtered result set** (classic faceted search pattern), so a new wine/winery/distributor appears and is instantly filterable the moment it's entered — with zero separate action.
 
@@ -1233,7 +1283,7 @@ the business decides otherwise.
 | Examples | "Grande Rioja", Düsseldorf, 5 Dec | In-store tasting, winemaker dinner, winery anniversary |
 
 The nav items stay separate in every dashboard: **Wine Shows** for fairs,
-**Client Events** / **My Events** for a role's own occasions (B8).
+**My Events** for a role's own occasions (B8, A16.8).
 
 ### A16.0 Why a Wine Show exists
 
@@ -1299,7 +1349,7 @@ venue, exhibitors and products are settled. Same control point as
 partnership activation (A6), same reason: what carries the platform's name
 is checked by the platform.
 
-Own events carry no such promise and need no release.
+Member events carry no such promise and need no release (A16.8).
 
 ### A16.2 Lifecycle
 
@@ -1317,13 +1367,41 @@ published ──► rescheduled    new date, every confirmation must be renewed
 | Stage | Trigger | Meaning |
 |---|---|---|
 | `draft` | Distributor creates the show | Visible to the host only |
-| `planning` | **Venue + at least one exhibitor + at least one product confirmed** | Publicly listed, but anonymised — see A16.6 |
-| `pending_approval` | Distributor submits | Bottle Lobby staff review |
+| `planning` | **The host's basics stand: title, date, city, focus** | Listed at whatever reach the host set, and anonymised — see A16.6 and A16.14a. This is where recruiting happens |
+| `pending_approval` | Distributor submits — UI label **Final Review** | Bottle Lobby staff review. The **publish preconditions** (A16.14c) are what the submit button waits for, and the release is a stored `reviews` row, not a computed state |
 | `changes_requested` | Staff decline **with a written reason** | Back to the distributor, who amends and resubmits. Not terminal |
 | `published` | Staff release | Full details public, invitations can go out |
 | `completed` | After the event date | Moves to history on every participant's profile |
 | `cancelled` | Host | All confirmed parties notified |
 | `rescheduled` | Host sets a new date | **All exhibitor, venue and attendee confirmations reset to pending** |
+
+**`planning` begins with the host's basics, and the old trigger's checks moved
+to publish.** Venue, confirmed exhibitors and confirmed products used to be the
+condition for entering `planning`. They are now **publish preconditions**,
+checked before `pending_approval` (A16.14c). See Appendix D (D38).
+
+> **Why:** recruiting happens *inside* `planning` (A16.4, A16.14c). A show that
+> may only enter `planning` once it has a confirmed exhibitor can never recruit
+> its first one — the stage that exists to find participants was gated on
+> already having them. The fixture WS-2604, sitting at zero wines, is that rule
+> being observed rather than an accident.
+>
+> Listing early is safe because A16.6 makes it safe: an anonymised show names
+> nobody. And nothing is given away by moving the checks, because the platform's
+> guarantee has never attached at `planning` — it attaches at `published`
+> (A16.1), which is exactly where the checks now sit.
+
+**`pending_approval` carries the UI label "Final Review".** The stored stage
+keeps its name; the label is what the host and the staff screen read. There is
+no separate Final Review stage, and adding one would duplicate
+`pending_approval` exactly. `changes_requested` stays its return path.
+
+**A material change is answered differently in each stage**, and the rule is the
+`rescheduled` mechanism generalised: `draft` and `planning` — ordinary editing.
+`pending_approval` — affected consents reset. `published` — affected parties are
+notified, those affected renew their consent, and the show needs a **new Bottle
+Lobby release**. `completed` — read-only; a later correction is a traceable
+correction event, never an edit (WS-7).
 
 > `rescheduled` deliberately invalidates every confirmation. A producer who
 > agreed to 5 December did not agree to 12 February, and a venue may not be
@@ -1515,7 +1593,7 @@ it protects anything stops being a protection and becomes a habit.
 
 Once published, a venue restaurant may upload the **menu**.
 
-### A16.6 Two levels of visibility
+### A16.6 Visibility — three public levels, two surface classes
 
 This is the rule that protects everyone involved.
 
@@ -1525,6 +1603,55 @@ producers, nor products, nor the exact venue are named.
 
 **From `published` — full.** Exhibitors, their products, the venue and the
 programme are public.
+
+**Between a stranger and a participant sits a third level: the member.** A show
+that is meant to recruit has to show a member enough to want in, and a stranger
+less than that. The anonymisation is unchanged in both cases — what differs is
+how much of the *shape* of the show is legible:
+
+| Viewer | before `published` | from `published` |
+|---|---|---|
+| not a member | title, date, city, focus + *"Join to see who's exhibiting"* | everything released |
+| **member** (any role), reach allows | the same **plus**: venue *status* (not the venue itself before `venue_accepted`), capacity, host, confirmed-exhibitor **count**, places left, `applications_open` and its deadline | everything released |
+| member, reach excludes | **the show does not exist for them** — no card, no title, no count | everything released |
+
+A member sees counts, never identities. Which members a show reaches at all is
+the host's reach setting (A16.14b).
+
+**Two surface classes, and they answer different questions.** Every surface
+belongs to exactly one, and every renderer states which one it serves:
+
+**Class 1 — public and directory surfaces.** The Wine Shows page,
+`/wine-show/{slug}`, Wine Guide → Events, public profiles, the follow feed, the
+dashboards' Discover lists and the marketing pages. The table above is the whole
+rule here, and **no exhibitor, applicant or invitee is named before `published`**
+— confirmed or not.
+
+**Class 2 — working surfaces.** The host's cockpit, a participant's own view of
+the show, the venue's detail section. Access here follows **role in the show**,
+never reach, and it is not anonymisation's job:
+
+- **The host sees everything of his show, always** — every application,
+  invitation, confirmed exhibitor, wine, attendee, cost and consent. A16.4's
+  handshake presupposes exactly this.
+- **A confirmed exhibitor** sees the show data relevant to him and the
+  information released for internal collaboration: the line-up he is part of,
+  the programme, his own costs and agreements. Never another exhibitor's
+  contracts or costs (A16.11).
+- **The confirmed venue** sees the confirmed exhibitors, the programme and the
+  **head count** — never attendee identities, guest profiles, contact data,
+  interests or messages. Count and identity are two different permissions
+  (A16.5 rule 4).
+- **An unconfirmed applicant is named in exactly two views: his own and the
+  host's.** Nowhere else, including other exhibitors' working views.
+
+> **The two classes must never be merged.** The day class-2 access is granted by
+> reach, or class-1 anonymisation is "relaxed" because the viewer happens to be
+> confirmed somewhere else, the protection is gone. **Reach decides who may find
+> the show (class 1); role decides who works inside it (class 2); acceptance and
+> release decide whose names class 1 shows.** The single-answer rule below
+> extends to this distinction: a renderer that cannot say which class it serves
+> is a renderer that will eventually answer as the other one.
 
 > **Why:** an invited producer must not appear publicly before accepting —
 > a later decline would read as a withdrawal. A restaurant must not be
@@ -1632,16 +1759,154 @@ a second, more generous surface.
 > Wine Shows page itself. Same data, same renderer, no URL — the one thing
 > the real build must add back.
 
-### A16.8 Own events
+### A16.8 Member events — "My Events"
 
 Any of the four roles creates and manages these freely — no approval.
-Invitations go to partnered stakeholders; the follow graph carries the
-announcement further.
+Invitations go to partnered stakeholders, to fans and to selected community
+contacts; the follow graph carries the announcement further (A7). An event owner
+may additionally ask a producer or distributor to **sponsor** the event or
+**join as an exhibitor**, which the invitee confirms or declines. A retailer's
+vintage presentation with the winemaker present, or a restaurant's winemaker
+dinner, are the typical shapes.
 
-An event owner may additionally ask a producer or distributor to **sponsor**
-the event or **join as an exhibitor**, which the invitee confirms or
-declines. A retailer's vintage presentation with the winemaker present, or a
-restaurant's winemaker dinner, are the typical shapes.
+**What separates the two event kinds, and it is not a matter of size.** A Wine
+Show is a **Bottle Lobby format**: show pipeline, contracts, cost releases, a
+stored Bottle Lobby review and the platform's guarantee (A16.1). A member event
+is created independently by a member: no contractual Bottle Lobby release, no
+automatic guarantee, no gates — but subject to the platform rules and to
+moderation. Bottle Lobby may block or delist a member event on moderation
+grounds; **that is not a release act and must never look like one.**
+
+> **A member-event publication may never look like a Bottle Lobby release.** The
+> guarantee is what a Wine Show sells (A16.0, A16.1), and a self-published event
+> wearing the same marker would spend it. This is a rule about the card as much
+> as about the record: the two kinds may share a directory (A16.14d) and may not
+> share a promise.
+
+**One model for all four roles.** Distributor, winery, restaurant and retailer
+share one event model. There is no per-role event data model — the first full
+cockpit is built on the distributor dashboard, and the same components are then
+reused role-dependently. Four dashboards behaving differently taught the user
+four navigations for one product once already (D21); this is that lesson applied
+before the fact rather than after.
+
+**Lifecycle.** `draft → published → completed`, with optional `cancelled` and
+`postponed`. **The host publishes himself.** No gate 1, no gate 2, no Final
+Review — those belong to the format that carries the platform's name.
+
+**Location.** Own premises · a restaurant · a retail location · a winery · a
+distributor location · a fairground · a free-text address, optionally with a
+linked Bottle Lobby entity. **A plain address is enough**; no partner-location
+request is required. Where another member is later to be formally involved as
+venue, an invitation and confirmation process may grow out of A16.11's shapes —
+it is not required for the first pass and must not be built speculatively.
+
+**Wines and participants.** Presented wines are **only** real `productId`
+references (invariant 2, A15.2a) — a wine name never becomes an independent copy
+(ME-6). Participants may be wineries, distributors, restaurants, retailers,
+exhibitors, sponsors and special guests, in these roles:
+
+    host · co-host · exhibitor · sponsor · guest · speaker · winemaker · participant
+
+Sponsor, exhibitor, guest and participant are **different relations**, not four
+words for attendance. They live in `event_participants` (A16.9), which extends
+`event_invitations` rather than standing beside it.
+
+**Invitations, applications, RSVP — five separate facts.** The host may invite
+network partners, fans, stars, selected community contacts, customers,
+wineries, distributors, restaurants and retailers. Per event the host may also
+**allow applications** — a restaurant's Rioja evening where wineries apply as
+participants. The five facts are: invitation · application · acceptance as
+participant · RSVP as guest · actual attendance. Status values, only as many as
+are needed:
+
+    draft · sent · viewed · applied · accepted · declined · withdrawn ·
+    waitlisted* · confirmed · attended · no-show
+
+\* **Seats and waitlist places are computed** from request order against
+capacity, exactly as for a Wine Show (A16.5 rule 1, A16.10, D28).
+`waitlisted` may exist as a computed display state and never as a stored one.
+
+**None of these creates an order.** An application is not a participation, and
+an invitation, application, RSVP, attendance confirmation, community
+announcement or sponsor commitment creates no order and no partnership (ME-2).
+A pre-order or order stays its own transaction and may carry the event or show
+id as provenance — which is what A16.12 already does for shows.
+
+**Visibility.** Reach per the taxonomy in A16.14b, plus geographic narrowing
+(country · region · city) and `invited-only`. Only members in Frankfurt · only
+restaurants · only partners · only my own community · all members. **Geographic
+reach, Market Grants (A17.9a), visibility and actual admission are four
+different things**, and visibility creates no confirmed participation. `members`
+reach does not mean public internet visibility: public, members, partners and
+community are distinct levels, and each means what A16.14b says it means.
+
+> **A restaurant's or retailer's member event follows the event's stored reach,
+> not the profile's gate.** If the host explicitly selects `public`, the event
+> may appear publicly in the Events directory — the card is the host announcing
+> himself, which is A16.7's host rule. This does **not** make the otherwise
+> membership-gated restaurant or retail profile public (A10): the card links
+> only what that gate allows, and the profile keeps its own rule. Two rules, two
+> subjects; neither one relaxes the other.
+
+**Publishing and notifications.** On publish the event becomes visible to the
+chosen reach. The host's own fans and selected community segments may receive an
+in-app notification, under C9's conditions and with preferences, blocks and
+unsubscribes respected (A7). No participation, invitation or partnership arises
+from a notification.
+
+**Paid end-customer events.** Restaurants and retailers may announce paid
+consumer events. **Bottle Lobby stays B2B:** the first pass carries a paid/free
+flag, a price note, an external booking or contact link, and the host
+information — and nothing else. **No consumer ticketing, no consumer accounts,
+no checkout** without a separate decision (ME-7).
+
+**External fairs — a minimal model, and deliberately minimal.** ProWein,
+Vinitaly and the rest exist in this repo today only as marketing prose and as
+*award* strings; no structured fair data exists anywhere, so the model starts
+clean. One **canonical record per fair** (`events.event_kind = 'external_fair'`,
+no host) and separate **participation** records per member: booth number and
+information, presented wines as product-key references, optional meeting slots
+and invitations. If a fair exists canonically, a winery records a
+**participation**, never a copy of the fair. Explicitly out of scope: running a
+fair, ticketing, or organiser management. The existing Vinitaly award strings
+stay what they are — recognition (A5), not participation — and nothing is
+migrated into fair records.
+
+**The cockpit.** The list splits into Drafts · Published · Upcoming ·
+Invitations & Applications · Past. The detail level carries Overview · Event
+Details · Location · Wines & Program · Exhibitors/Participants · Sponsors ·
+Invitations & Applications · Guests/RSVP · Communications · Visibility &
+Publishing · Activity/History. It may reuse Wine-Show UI parts and **never
+inherits their gate, cost or review logic** — that is the demarcation above,
+expressed in components.
+
+**Role examples**, for fixtures and category seeds. Structured but extensible;
+not every marketing name becomes a technical type:
+
+| Role | Typical events |
+|---|---|
+| Distributor | house fair · portfolio presentation · own-label presentation · summer-white event · themed tasting · client event · wine presentation |
+| Winery | harvest event · harvest festival · anniversary · cellar event · wine presentation · fair participation · estate event |
+| Restaurant | winemaker dinner · themed menu · Rioja evening · white-wine evening · food-and-wine event · end-customer event |
+| Retail | after hours · seasonal presentation · summer-wine event · Halloween wines · red-wine night · promotion event |
+
+**Navigation, all four roles: Events → Wine Shows · My Events** (B8). The
+distributor's former *Client Events* is replaced by **My Events**; nothing
+migrates, because there is nothing behind it — it is a dead `<div>` with no map
+entry, no container and no renderer. Retail's *My Events* nav is equally dead,
+but its dashboard already carries **hand-written** event content: a stat card
+claiming three planned events, an "Upcoming Events" widget with three typed
+rows, and matching prose. Card and widget agree only because both were typed —
+the D36 shape. **They are rendered from `events` data and the typed versions
+retired**, including the duplicate *"Cantina Rossi Tasting"*, which exists twice
+with two different dates on two hardcoded surfaces and no shared record; the
+fixture decides what that event actually is.
+
+**Storage: two truths, one derived directory.** `wine_shows` and `events` stay
+separate records of different kinds, joined by a **derived** directory
+projection (A16.14d). No shared base record, no show copied into `events`, no
+event copied into `wine_shows`, and no per-surface copy of either (ME-1).
 
 ### A16.9 Tables
 
@@ -1662,6 +1927,11 @@ wine_shows (
                      'host_covers','free'),
   catering_rate_per_product,       -- the host's number, fixed_per_product only
   capacity, menu_url,
+  reach[],                         -- multi-select, A16.14b taxonomy. Decides who
+                                   -- may FIND the show; meaningless from
+                                   -- `published` (WS-3)
+  applications_open  bool,         -- may producers apply during `planning`?
+  application_deadline,
   staff_note                       -- reason on changes_requested
 )
 
@@ -1688,16 +1958,65 @@ wine_show_attendees  ( show_id FK, stakeholder_id FK,
                        requested_at )    -- the order seats are handed out in
 wine_show_events     ( show_id FK, at, actor, text )    -- append-only trail
 
-events            ( id, owner_id, owner_type, title, description,
-                    event_date, location, hero_image_url, status )
+events            ( id, owner_id, owner_type,      -- = host, hostRole (A16.8)
+                    event_kind enum('member_event','external_fair'),
+                    title, description, theme,
+                    event_date, event_time, timezone,
+                    location,                      -- free-text address …
+                    location_entity_id FK → stakeholders (nullable),  -- … or a linked house
+                    hero_image_url, status,
+                    capacity,
+                    reach[],                       -- A16.14b taxonomy
+                    reach_country, reach_region, reach_city,   -- geographic narrowing
+                    registration_mode enum('none','rsvp','application'),
+                    is_paid bool, price_note,      -- B2B only — no checkout (ME-7)
+                    external_link )                -- booking or info, off-platform
+                                                   -- history: `event_log`, same shape
+                                                   -- as wine_show_events
+
 event_invitations ( event_id FK, stakeholder_id FK,
                     role enum('guest','sponsor','exhibitor'),
                     status enum('invited','confirmed','declined') )
+
+event_participants ( event_id FK, stakeholder_id FK,
+                     role enum('host','co_host','exhibitor','sponsor','guest',
+                               'speaker','winemaker','participant'),
+                     status enum('draft','sent','viewed','applied','accepted',
+                                 'declined','withdrawn','confirmed',
+                                 'attended','no_show'),
+                     requested_at )   -- the order seats are handed out in.
+                                      -- `waitlisted` is NOT here: it is computed
+                                      -- from requested_at against capacity (D28)
+
+event_products    ( event_id FK, product_id FK → products )   -- references only
+
+event_campaigns   ( id, subject_type enum('show','event'), subject_id,
+                    kind enum('announcement','reminder'),
+                    audience_query, sent_at, sent_by, preview_seen_at )
+event_campaign_recipients ( campaign_id FK, stakeholder_id FK )
+                                      -- the resolved audience, SNAPSHOT at send
 ```
 
 **Products are referenced, never copied** — `wine_show_products.product_id`
 is a foreign key into `products`, owned by the producer (A1, A2). A show
 lists which products are presented; it never holds product content.
+`event_products` is the same rule for the second event kind (ME-6).
+
+**`event_participants` extends `event_invitations`, it does not stand beside
+it.** The invitation table answers *who was asked, in what role, and what did
+they say*; the participants table answers *who is actually in this event, in what
+role, and where does that stand* — including the applications the invitation
+table has no direction for. Two tables holding the same pair with two status
+chains would be D32 again, one level down; the invitation row is the origin of a
+participant row and never a second copy of it.
+
+**A show's release is a stored act, and `reviews` is where it lives.**
+`reviews.subjectType` (A17.8) gains **`show`** alongside `membership · contract ·
+project`. A `published` show without an approved review row is a harness failure
+(WS-6) — `published` is never derived from the publish preconditions alone,
+because a computed checklist reaching green is not the same fact as Bottle Lobby
+having said yes (A16.1, invariant 6). It is the same table, the same shape and
+the same authority as the own-label gates; nothing new is built for it.
 
 `wine_show_events` is append-only, like `order_events` (A14.3): every
 invitation, confirmation, decline, staff decision and reschedule writes one
@@ -1719,8 +2038,15 @@ answered.
 
 ### A16.10 Computed, never stored
 
-- **Whether a show may enter `planning`** — derived live from venue,
-  exhibitor and product confirmations, not a flag someone sets.
+- **Whether a show may be published** — derived live from venue, exhibitor,
+  product, cost and consent state, not a flag someone sets. This is the old
+  `planning` trigger, moved to where it belongs (A16.2, A16.14c, D38). Entering
+  `planning` needs only the host's basics and is not a computation.
+- **Whether a member event is visible to a given viewer** — computed from its
+  `reach[]`, its geographic narrowing and the viewer's relations (A16.8,
+  A16.14b). Never a stored per-viewer list.
+- **A seat or waitlist place at a member event** — the same arithmetic as a Wine
+  Show, over `event_participants.requested_at` against `capacity` (D28).
 - **Which side has to act next** — derived from `proposed_by` and
   `status` on the product together with the exhibitor's own status. A
   product proposed by the host waits on the producer, one proposed by
@@ -1914,8 +2240,9 @@ it links to the order rather than re-rendering it.
 #### Not this: attendance fees
 
 **Restaurants and retailers attend a Wine Show free of charge.** The paid-
-entry model belongs to own events (A16.8), where an owner may charge for
-their own occasion. It must not migrate here: A16.5's waitlist exists because
+entry model belongs to member events (A16.8), where a host may charge for
+their own occasion — and even there only as a flag, a price note and an
+external link, never as a checkout (ME-7). It must not migrate here: A16.5's waitlist exists because
 a Wine Show is an entry point into the network, and a fair that charges its
 buyers to walk in is a different product. The only money in a Wine Show flows
 producer → host → venue.
@@ -2488,7 +2815,7 @@ invoicing, must come after A16.12**, because both share `orders.source` and
 the guard that hangs off it (D27).
 
 Loose ends, independent of both: open calls with master-data filters
-(A16.4) and own events (A16.8).
+(A16.4) and member events (A16.8).
 
 **A16.7 was built in three passes, all done.** The shared assets above were
 the first. The public Wine Shows page is the second — an Upcoming Shows
@@ -2531,6 +2858,217 @@ shown exactly what a visitor will get.
 > mockup. Do not let that button imply the gate is optional — A16.1 is the
 > control point, and in the real build the host can never release their own
 > show. Delete the button the moment an admin surface exists.
+
+### A16.14 The show as a marketplace
+
+A16.1–A16.13 specify a show as an **instrument**: who may host it, who exhibits,
+what it costs, what it produces. This section specifies it as a **listing** —
+who may find it, how they get in, and where it is found. Without those three the
+format works only between houses that already know each other, which is the one
+thing A16.0 says a Wine Show exists to change.
+
+#### A16.14a Visibility on the marketplace
+
+**A16.6 is the rule and is not restated here.** What belongs in this section is
+which surfaces it governs, because a marketplace adds surfaces faster than
+anything else in this model:
+
+| Class | Surfaces | Access decided by |
+|---|---|---|
+| **1 — public and directory** | Wine Shows page · `/wine-show/{slug}` · Wine Guide → Events · public profiles · the follow feed · the dashboards' Discover lists · marketing pages | **reach** (A16.14b), then the three-level table in A16.6 |
+| **2 — working** | the host's cockpit · a participant's own view of the show · the venue's detail section | **role in the show**, never reach |
+
+Every new surface declares its class before it declares anything else. A surface
+that cannot say which class it belongs to is the surface that will one day
+answer as the other one — which is A16.6's own argument about renderers, applied
+to the thing being rendered.
+
+#### A16.14b Reach — the host decides, and it is a multi-select
+
+    reach: [ 'public', 'members', 'wineries', 'distributors', 'restaurants',
+             'retail', 'partners', 'community' ]
+
+**This is the platform's reach taxonomy and it is defined once, here.** Wine
+Shows, member events (A16.8), own-label visibility (A17.13a), campaigns
+(A16.14e) and any later community feature **reference this list**. None of them
+redefines the levels, and none of them adds a private one.
+
+- **Every entry permits; none forbids.** A house in two selected groups sees the
+  show once, deduplicated. There is no precedence and no self-contradicting
+  combination — which is precisely why it is a multi-select and not a ladder.
+- **`partners`** = active business relations (Network, A6, B8). **`community`** =
+  follow and community segments (My Stars / My Fans, A7). **The generic value
+  `network` does not exist** — the word names a nav section and must not also
+  name a reach level (D39).
+- **`matchmaking` is deliberately absent as a value**, and deliberately **named
+  in the interface, shown locked, with its reason on screen**. The reader sees
+  why A8 is worth building instead of finding an option that quietly does
+  nothing. It unlocks when the real matchmaking model exists, not before.
+- **Host and confirmed participants always see their show.** They are not an
+  audience, they are the show, and no setting can lock a host out of his own
+  event (WS-2).
+- **Excluded means invisible, not anonymised.** No greyed card, no count, no
+  placeholder. An anonymised tile reads *"something is happening here, and not
+  with you"*, which in a competitive trade is information in itself (WS-4).
+- **From `published` the reach falls away** for the published page (WS-3). A
+  released show stands on the open website, and filtering a public URL for
+  members is a promise the URL cannot keep. Role or geographic reach chosen for
+  *discovery placement* may still order a directory — it never gates the route.
+
+> **Reach decides who may FIND the show. Acceptance and release decide WHICH
+> NAMES it shows. Neither ever creates an action right** — no order, no
+> participation, no partnership follows from being able to see something. This
+> is the same sentence A17.13a makes about an own-label product and MG-1 makes
+> about a market grant; it is one rule with three applications, and it is the
+> one most often eroded by a helpful button.
+
+#### A16.14c Recruiting, Final Review, and the stored release
+
+**Recruiting is an activity inside `planning`** — not a new show and not a new
+stage (D38). Two fields carry it: `applications_open` and `application_deadline`
+(A16.9), on top of the `wine_show_open_calls` filters that already exist (A16.4)
+and the free-places arithmetic that is already computed (A16.10).
+
+A planning listing may show: title, date, city, theme, description, wanted wines
+and exhibitors, the deadline, free places, the hero image and the planning
+status. It may **never** show: unconfirmed applicants, unconfirmed invitations,
+confidential contracts or costs, private messages, or attendee identities.
+
+**A producer applies — A16.4 mirrored, not doubled.** An application is a
+`wine_show_exhibitors` row with `status:'applied'` and
+`source:'producer_request'` (or `open_call`), naming a wine by **product key**
+(never a typed name, A15.2a; and the wine must be the applicant's own,
+invariant 2) — or asking to be considered without naming one. From there:
+
+| Transition | Meaning |
+|---|---|
+| `applied → accepted` | the host confirms; from here it is an ordinary exhibitor entry and A16.4 is unchanged |
+| `applied → declined` | with a reason, kept on the row — a resting state like `held_back` (D29), not a deletion |
+
+**An application creates nothing** — no exhibitor confirmation, no
+participation, no order (WS-5). On the host's side it is a task; on the
+applicant's side it reads *"applied, waiting for the host"*. Invitation and
+application states, only as many as are needed:
+
+    draft · sent · invited · viewed · applied · accepted · declined ·
+    withdrawn · expired
+
+**Publish preconditions — the old planning trigger, arriving where it belongs.**
+All of these before **Submit to Bottle Lobby** becomes active:
+
+- the host's final confirmation
+- the venue's date, services and terms accepted
+- the required exhibitors and wines confirmed (A16.4)
+- total costs fixed
+- the per-bearer cost split fixed (A16.11 contributions)
+- every affected bearer has consented to their share
+- the required documents present
+
+And **Bottle Lobby still decides manually** (A16.1). The checklist is what makes
+the submit button legitimate; it is not what makes the show public.
+
+**The release is a stored act, never a computed one.** `reviews` gains
+`subjectType:'show'` (A16.9, A17.8), and a `published` show without an approved
+review row is a harness failure (WS-6). `pending_approval` carries the UI label
+**Final Review**; `changes_requested` stays its return path. Material changes
+after that point follow the rule in A16.2 — reset in `pending_approval`, notify
+and re-release in `published`, correction events in `completed` (WS-7) — and the
+A16.11 commitment bar is untouched by all of it.
+
+#### A16.14d Discovery — one directory, several surfaces
+
+**A Discover list beside the cockpit tabs:** every upcoming show the viewer is
+allowed to see (A16.6, A16.14b), sorted by date, filterable by city, region and
+focus. This is the piece the growth argument rests on — **a reach setting
+without a directory changes nothing**, because it only decides who *would* see a
+show nobody can browse for.
+
+The three public surfaces read the **same** records through the **same**
+renderers — the A16.6 single-answer rule, already implemented as
+`publicShows()` / `publicShowCard()` / `publicParticipation()` (A16.13):
+
+1. **`/bottle-lobby#shows`** — explains and markets the format. Not a directory.
+2. **The standalone Wine Shows page** — a curated landing: format, background,
+   case studies, selected upcoming and past shows.
+3. **Wine Guide → Events** (A10) — the full filterable directory over Wine
+   Shows, member events and, where they exist, external fairs and
+   participations. Role- and reach-dependent; for a non-member it is today's
+   public page plus the join prompt.
+
+**Filters only where real data covers them** — no invented counts, no empty
+categories: kind (Wine Show / Member Event / external fair) · stage (Planning /
+Published / Upcoming / Completed) · date · country, region, city · event category
+· wine colour, origin, variety, style · theme · host role · relation (Hosted by
+Me / Participating / Invited / Applied / My Events / Other Events).
+
+**Cards are reused, never copied.** Wine Shows keep their card; member events get
+a matching one that **must not assert the Bottle Lobby guarantee** (ME-3). A
+reviewed, platform-released show and a self-published event may sit in one list
+and may not make the same promise (A16.8).
+
+#### A16.14e Communication — three kinds, kept apart
+
+| Kind | Goes to | Changes |
+|---|---|---|
+| **Direct Invitation** | a concrete recipient, for a concrete role or action | the invitation status — it is acceptable and declinable |
+| **Community Announcement** | a reach segment (A16.14b) | **nothing.** No invitation, application, participation, partnership or order arises from one |
+| **Reminder / Operational Update** | those already involved or invited | **nothing on its own** — a date change or venue note is information, not a renewed consent (that is A16.2's material-change rule) |
+
+Collapsing the second into the first is how a marketing mail becomes an
+obligation somebody never entered.
+
+**Campaigns**, for both event kinds, one mechanism (`event_campaigns`, A16.9):
+
+- resolve the audience **before** sending, and store the recipients as a
+  **snapshot** — a campaign is answerable for who it actually reached, not for
+  who a query would return today
+- deduplicate; respect blocks, unsubscribes and preferences (A7, C9)
+- preview before send, then an explicit send confirmation
+- an auditable send log, and volume limits
+- **never disclose the recipient list**
+
+**The host may address his own community, and nobody else's.** A participating
+winery does not thereby reach the host's fans, and a **venue never exports or
+reuses attendee data** — A16.5 rule 4 is not suspended by a campaign tool
+(ME-4).
+
+### A16.15 Invariants
+
+Wine Shows:
+
+- **WS-1 — reach never names an unconfirmed producer or applicant.** Measured on
+  the rendered surfaces, at every reach level, not on the data behind them.
+- **WS-2 — reach never excludes the host or a confirmed participant.**
+- **WS-3 — reach is meaningless from `published`.** Asserted so that nobody
+  later filters a public page.
+- **WS-4 — an excluded show is absent.** No card, no title, no count.
+- **WS-5 — an application creates no exhibitor confirmation, no participation
+  and no order.**
+- **WS-6 — no `published` show without an approved `reviews` row**
+  (`subjectType: 'show'`).
+- **WS-7 — a material change in `pending_approval` or `published` resets or
+  renews the affected consents.**
+
+Member events:
+
+- **ME-1 — no `wine_shows` row inside `events`, and no event copied per
+  surface.** The directory is derived.
+- **ME-2 — publish, announcement, RSVP, application and sponsoring create no
+  order and no partnership.**
+- **ME-3 — no Bottle Lobby guarantee marker on a member event**; a moderation
+  block is not a release act.
+- **ME-4 — campaigns carry a recipient snapshot**, deduplicated, and resolve no
+  foreign community.
+- **ME-5 — venue and participant surfaces show head counts, never identities**,
+  until `completed`.
+- **ME-6 — event wines resolve to product keys.** A typed wine name is a harness
+  failure (A15.2a).
+- **ME-7 — no consumer checkout or ticketing structures exist.**
+
+**Harness homes:** a new `tests/shows-reach.js` for WS-1..WS-7 — **with guards
+that actually look**, which is the A16.6 lesson (C7) — and a new
+`tests/member-events.js` for ME-1..ME-7. Each derives independently and compares
+against the rendered surfaces rather than the arrays behind them.
 
 ---
 
@@ -2599,7 +3137,7 @@ at four different levels:
 | A company **may take part** in the programme | nothing | an active `ownLabelProgramMemberships` row |
 | A wine **may be asked about** | `note:'Own-Label Available'` — free text on 3 rows, all Cantina Rossi | `products.ownLabelAvailability` |
 | A **finished own-label product** exists | nothing | the winery created it from a **gate-2-approved** project |
-| A distributor **carries** an own label | `ownLabel:true` on 3 portfolio rows | derived — and **only once the first commercial order has been delivered** |
+| A distributor **carries** an own label — the **Primary Own-Label Listing** | `ownLabel:true` on 3 portfolio rows | derived — first commercial order delivered **and** the listing holder is the project's **primary** distributor |
 
 One phrase, four facts, no way to tell them apart in code — the same shape as the
 three wine books (D34) and the four partner lists (D32). **Capability, project,
@@ -2611,6 +3149,14 @@ what would put a wine on a restaurant's list before a bottle exists:
 
     project passed gate 2, winery created the product  →  a finished own label
     first commercial order delivered                   →  active in the book
+
+**The fourth fact is the Primary Own-Label Listing, and "primary" is load-bearing.**
+The listing that reads as own label is the **project's primary distributor's**
+listing — the one this product was created for. A product may reach further down
+the trade (A17.9b), and a downstream holder's listing is an ordinary listing: own
+price, own article number, and no own-label status. Saying "one distributor
+carries it" without naming which one is how the fourth fact quietly becomes a
+fifth (A17.12, OL-15).
 
 **A finished own-label product is created from a gate-2-approved project; its
 active distributor listing and its `ownLabel` status are derived only after the
@@ -2700,6 +3246,52 @@ wanted, and the responsible contact.
 **Suspension keeps the history.** A suspended or expired membership blocks **new**
 projects. Existing projects, orders, contracts and documents stay visible and
 readable. Nothing is deleted, ever — the record of what was agreed is the point.
+
+#### What each role confirms on admission
+
+The framework contract is where the general obligations live, and the admission
+records these confirmations. **They belong to the programme, per company — a
+project contract carries only project-specific terms and never repeats them**
+(A17.7, OL-13).
+
+**The winery confirms:**
+
+- to sell, supply or export own-label products **only via Bottle Lobby**, or
+  with the prior documented knowledge and consent of Bottle Lobby
+- no circumvention by side agreement
+- to accept the fixed per-bottle fee (A17.10)
+- to report correct quantities and order data
+- to honour the concrete project agreements
+
+**The distributor confirms:**
+
+- to order own-label products from the winery **only via Bottle Lobby**, or with
+  prior documented consent
+- no circumvention
+- to honour the agreed source and platform binding (A17.9)
+- **downstream sales only within the agreed Market Grants** (A17.9a)
+
+**The platform binding holds for both parties, and an informal exception does
+not suffice.** Bottle Lobby stands as guarantor for the agreement, the
+exclusivity and the trade route; A17.9's variation rule — the agreement varied or
+ended, with a Bottle Lobby approval — is the only exit from any of it.
+
+#### The contract order is serial, and each step waits on a Bottle Lobby check
+
+The two framework contracts are separate documents, and the project request does
+not travel until the right one has been checked (A5, A17.6):
+
+    distributor's signed contract checked by Bottle Lobby
+      → the request reaches the winery as an EFFECTIVE project request
+    winery's signed contract checked, GATE 1 released
+      → the winery's acceptance reaches the distributor as an EFFECTIVE commitment
+
+A request that arrives before the check is not a request the other side can act
+on, and this is why: the whole point of admitting companies before projects
+exist is that neither side is ever negotiating with an unvetted counterparty.
+Checkbox consent, signed contract and Bottle Lobby review remain **three separate
+stored facts** (OL-4); gates 1 and 2 remain **two separate stored manual
+reviews**; and only the winery ever creates the product (invariant 2, A17.9).
 
 ### A17.2 The Own Label tab before admission
 
@@ -2950,10 +3542,18 @@ next: the copy survives, the source moves, two surfaces disagree, and nothing ca
 say which is right.
 
 Consequences, all read from that one pointer: only the producing winery edits the
-technical data; only the agreed distributor may order it; no other distributor
-sees it in a picker, may select it, order it or take it into a book; the winery
-may not offer it elsewhere. An exception requires the agreement to be varied or
-ended **and** a Bottle Lobby approval.
+technical data; **the winery may supply nobody but the project's primary
+distributor, and no other distributor may order the product from the winery**;
+the winery may not offer it elsewhere. An exception requires the agreement to be
+varied or ended **and** a Bottle Lobby approval.
+
+**The exclusivity locks the source, not the customer** (D37). What the agreement
+protects is the winery's channel: one primary distributor buys this product from
+the house that makes it, and nobody else does. What it never claimed to protect
+is who that distributor may then sell to — that is the distributor's own trade,
+bounded by the **Market Grants** agreed in the project (A17.9a). The earlier
+wording read the lock one step too far down the chain and would have made a
+perfectly ordinary onward sale look like a breach.
 
 **Visible ≠ in the book.** After creation the product is visible to the winery,
 the exclusive distributor and Bottle Lobby — on the distributor's side **inside
@@ -2976,9 +3576,10 @@ restaurant can find it, and it is sold. **A product nobody may see is a product
 nobody can buy.**
 
 What survives that moment is not visibility but **the action rights**, and those
-are permanent: no other distributor sees it **in a picker**, may select it, order
-it or take it into a book, and the winery may not offer it elsewhere. A17.13
-states it in exactly those terms — *an exclusive product, in any picker.*
+are permanent: **the winery supplies only the primary distributor, and no other
+distributor may order the product from the winery**; the winery may not offer it
+elsewhere. A17.13 states it in exactly those terms, and A17.9a says what the
+primary distributor may do downstream with what he has bought.
 
 > **Why this is spelled out.** The paragraph above was read once as a permanent
 > three-party visibility, which made the demo fixtures look like a breach: six
@@ -2987,9 +3588,81 @@ states it in exactly those terms — *an exclusive product, in any picker.*
 > *created is not carried* — one level further on. **Display right and action
 > right are two different questions, and only the second one is forever.**
 
+### A17.9a Market Grants — what the primary distributor may do downstream
+
+Source exclusivity (A17.9, D37) says the winery supplies only distributor A and
+that no other distributor orders from the winery. It says nothing about **A's own
+trade**, and A's own trade is the reason he took the project on. What governs it
+is a set of **Market Grants** agreed in the project.
+
+**A single "resale allowed" boolean and one territory string cannot carry the
+real shapes** — a supermarket grant for one country, a sub-distribution grant for
+one region, a named key account — and a field that cannot carry the shape gets
+used for all of them until it means four things. That is D36, and this is the
+pass that refuses to repeat it; the pair is recorded as superseded in **D37** so
+it is not proposed a second time.
+
+`marketGrants` are **combinable records on the project's terms**. Every dimension
+is optional and they combine freely:
+
+| Dimension | Examples |
+|---|---|
+| Geography | country · region or state · city · a narrower named territory |
+| Channel | gastronomy · retail · supermarket · discount supermarket · e-commerce · wholesale · sub-distribution |
+| Named key accounts | a specific chain, named on the grant |
+| Intermediaries | which agencies or intermediaries are admitted |
+| Validity | a period |
+| Volume | a quantity or volume ceiling |
+| Further conditions | free text on the grant, part of the agreement |
+
+**A grant is an agreement fact, and reach is a display setting.** They are not two
+views of one thing:
+
+| | decides | who sets it | varied by |
+|---|---|---|---|
+| **Market Grant** | **who A may SUPPLY, where and through which channel** | the project's terms, both parties | varying the agreement (A17.9's rule) |
+| **Reach** | **who SEES the product** | the primary distributor, freely | changing a setting |
+
+**Visibility never creates an order or distribution right (MG-1).** There is no
+order button without an active partnership *and* a covering grant, at any reach
+level. This is the same sentence A16.14b makes about a Wine Show, and it fails
+in the same way: by somebody adding a button to a card that was only ever meant
+to be readable.
+
+### A17.9b The downstream distributor or agency
+
+A second distributor or agency **B** may end up carrying the product. What
+changes and what does not:
+
+- **B orders from A, never from the winery (MG-2).** The source stays A. An order
+  line for an own-label product whose seller is the winery and whose buyer is not
+  the primary distributor does not exist.
+- **B does not become the primary own-label holder**, and does not become brand
+  owner. The product stays an own-label product **at product level** — its
+  `ownLabelProjectId` is unchanged, and so is everything derived from it.
+- **B needs three things:** an active partnership with A (A6, and A8 already
+  names Distributor↔Distributor portfolio supplementation as a case), a **Market
+  Grant that covers him**, and a listing of his own.
+- **B's listing is an ordinary listing.** It shows the sourcing via A and the
+  downstream right; it carries **B's own `tradePrice` and `holderArticleNo`**,
+  both of which are already per holder; and it **never appears in B's My Labels**
+  (A17.12, OL-15).
+
+**Five separate facts, and collapsing any two of them is the defect this section
+exists to prevent:** brand owner · producing winery · primary distributor ·
+source · distribution right.
+
+**The A→B order is an ordinary order.** Nothing in the order model forbids a
+distributor-to-distributor sale — `ORDER_ROLES` names roles, never pairings, and
+`placeOrder()` refuses only an order with no line left. What is missing is
+fixtures, not architecture. One exclusion is required and is a real finding:
+`dealFreeGoodsFor()` exits only on `sellerType !== 'distributor'`, so on a
+distributor-to-distributor line it would fire — deal free goods are a customer
+incentive (A9) and have no meaning between two distributors.
+
 ### A17.10 The fee
 
-**A configurable fixed amount per bindingly ordered own-label bottle, paid by the
+**A centrally set fixed amount per bindingly ordered own-label bottle, paid by the
 winery.**
 
     { feeType:'per_bottle', feePerBottle, feeCurrency,
@@ -2997,6 +3670,19 @@ winery.**
 
 `feeType` exists so a later percentage or tiered model needs no migration; only
 `per_bottle` is offered in the interface.
+
+**The amount is central and non-negotiable.** It is not per project, not editable
+by either party, and neither the winery nor the distributor negotiates it — the
+winery simply prices it into its offer. **A tariff change happens only as a new
+central contract and tariff version, for contracts concluded afterwards.**
+Existing fee events and contract states are never changed retroactively; there is
+no path that reprices history.
+
+> **Why "central" is written into the model rather than into a policy
+> document.** A per-project fee would make the fee a term, a term is negotiated,
+> and a negotiated platform fee is a different business from the one A17
+> describes. The tariff version is the only place the number can move, and it
+> moves forward only.
 
 **Why the distributor does not see it.** The winery prices its offer with the fee
 inside: wanting €5.00 net at a €0.25 fee, it offers €5.25. The distributor is
@@ -3024,6 +3710,28 @@ developer tools open.
       feePerBottle, feeCurrency, feeTermsVersion, at, note, invoiceId }
 
 `type` ∈ `accrued · adjusted · reversed · waived`.
+
+**The historically valid amount and currency are stored on every fee event as an
+immutable snapshot**, beside `feeTermsVersion` — that is what `feePerBottle` and
+`feeCurrency` are doing on the row above, and they are not a convenience copy.
+The version alone would only name a document; the amount has to be readable from
+the event itself, because that is what a ledger line means.
+
+**The fee accrues once, at the top of the chain**, on the producing winery's
+accepted order line to the primary distributor:
+
+| Order | Fee |
+|---|---|
+| winery → primary distributor A | **accrues** |
+| A → downstream distributor B (A17.9b) | none |
+| B → restaurant or retail | none |
+| A → restaurant or retail | none |
+
+**OL-14** states this as an invariant: an own-label fee event may exist only
+where the seller is the **producing winery** of the product. Anything further
+down the chain is ordinary trade in a product that has already been paid for
+once, and charging it again would make the fee a turnover tax on the chain rather
+than a fee on production.
 
 > **A historic fee is never recomputed from the current terms.** The rate and its
 > version are written into the event at accrual and read back from there forever.
@@ -3090,7 +3798,8 @@ carries the two consequences specific to this section.
 | gate 1 is *permitted* | **derived**: both parties hold an approved project contract | a precondition is a reading, not a flag |
 | **exclusive distributor of a product** | **derived** from `ownLabelProjectId` | a stored copy drifts — D33 |
 | **`commercialStatus`** (ordinary / own-label exclusive) | **derived**: the product carries an `ownLabelProjectId` whose project passed gate 2 | one pointer, one reading — it says the product **is** an own label, not that anyone carries it yet |
-| **`ownLabel` on a listing** | **derived**: first order delivered (A17.9) | replaces today's stored flag |
+| **`ownLabel` on a listing** — the Primary Own-Label Listing | **derived**, from **two** conditions: the first commercial delivery is confirmed (A17.9) **and** the listing holder is the project's **primary distributor** | replaces today's stored flag. Without the second condition a downstream holder's first delivery would mark his row as own label too (A17.9b) |
+| **`marketGrants`** | **stored** on the project's terms | an agreement fact, varied only with the agreement (A17.9a) |
 | **fee owed on an order** | **derived** from the ledger | invariant 7 |
 | what changed since the first contract | **derived** from the spec history | a diff is never a field |
 | technical data of a relabel | **referenced** from the source | same liquid, one record |
@@ -3114,7 +3823,8 @@ disagrees with the facts is a finding rather than an authority.
 | the other side's contract *contents* | ✗ | ✗ | ✓ |
 | application content of the other side | ✗ | ✗ | ✓ |
 | review notes | ✗ | ✗ | ✓ |
-| an exclusive product, in any picker | only its distributor | its producer | ✓ |
+| an exclusive product — **orderable from the winery** | only its primary distributor | its producer | ✓ |
+| an exclusive product — **visible** | per its reach (A17.13a) | its producer | ✓ |
 
 **The prototype cannot enforce any of this.** There is no login and no server;
 every array is readable from the console. These are **display rules today and
@@ -3127,39 +3837,35 @@ Lobby"** and approvals advance through controlled fixture actions. The `reviews`
 row still names Bottle Lobby as the actor — the model does not pretend the acts
 are the parties' own.
 
-#### Still open — the reach of a live own-label product
+### A17.13a The reach of a live own-label product
 
-**Serge's idea, undecided.** Once an own-label product is live, its distributor
-may want to say **who gets to see it** — the same kind of setting a Wine Show
-already carries in **A16.6**, anonymised before `published` and full after it.
-Candidate levels, none of them settled:
+**Decided.** The primary distributor prepares the reach **during the pipeline**,
+in the own-label cockpit, per product. It takes effect when the product enters
+his book — the confirmed delivery of the first commercial order (A17.9). The
+levels and their rules are **the taxonomy of A16.14b, by reference**; this
+section defines no levels of its own, and the generic value `network` is not one
+of them (D39).
 
-    everyone · platform members only · certain roles only ·
-    active partnerships only · this distributor's own network only
-
-**The line that must not fall, and it is the whole point of the question:**
+**The line that must not fall:**
 
 | | decides | who sets it |
 |---|---|---|
-| **Reach** | **who SEES it** | the distributor, freely, changeable |
-| **Agreement** | **who may ACT on it** | the project (A17.9), fixed for the term |
+| **Reach** | **who SEES it** | the primary distributor, freely, changeable |
+| **Agreement** | **who may ACT on it** | the project (A17.9, A17.9a), fixed for the term |
 
-**Reach can never widen an action right.** Even at reach *everyone*, another
-distributor may not order the product or take it into a book — it would see a
-card with no order button. That is the setting doing its job, not a limitation
-of it: A17.9's exclusivity is an agreement between two parties, and a display
-control cannot vary it. Only the agreement can, and only by being varied or
-ended with a Bottle Lobby approval. The last row of the table above is already
-written in those terms.
+**Reach can never widen an action right.** Even at reach `public`, ordering the
+product **from the winery** stays with the primary distributor, and buying it
+onward follows partnerships and Market Grants (A17.9a), not visibility. A viewer
+outside those rights sees a card with no order button — that is the setting doing
+its job, not a limitation of it. A17.9's exclusivity is an agreement between two
+parties, and a display control cannot vary it; only the agreement can, by being
+varied or ended with a Bottle Lobby approval.
 
-> **Why this is open rather than assumed.** The obvious default — reach
-> *everyone*, exactly as today — is also the one that makes the platform work:
-> Hawesko sells these wines and a restaurant has to be able to find them
-> (A17.9). A narrower reach is a **commercial** wish (a distributor who does not
-> want competitors reading their own-label range), not a model requirement, and
-> nothing in A17 needs it today. **Decide it before building it**: a reach
-> setting added later is a field; a reach setting assumed now would silently
-> become a fifth meaning of a word that already had four (A17.0a, D36).
+> **Showing an unfinished own label to selected houses is a different feature.**
+> A "forthcoming" listing with a waiting list is a good idea and is **out of
+> scope here** — it gets its own pass. Folding it into this setting is exactly
+> the overloading pattern D36 records: one control quietly acquiring a second
+> meaning because the second meaning had nowhere else to go.
 
 ### A17.14 Fixtures and migration
 
@@ -3184,6 +3890,26 @@ from one house. Ordinary wines stay clearly in the majority (A17.0).
 
 **No contradictory orders, no invented history.** The build measures before
 placing anything; nothing here is a licence to create an order.
+
+**The downstream chain needs fixtures, not architecture.** A17.9b describes a
+route the model already permits and the demo has never shown: a
+Distributor↔Distributor partnership row, a listing held by the second
+distributor with its **own** `tradePrice` (the key is `(holder, productId)`, so
+this needs no schema change), and the A→B order itself. The one code change that
+belongs with it is the `dealFreeGoodsFor()` exclusion for
+distributor-to-distributor lines (A17.9a). `promoDueFor()` needs nothing: a
+`buyerType` of `distributor` reaches no progress table and is already silently
+correct.
+
+**Known demo contradictions, recorded rather than quietly fixed.** They belong to
+the later UI pass, and they are listed so that nobody measures them a third time:
+My Labels and My Wine Portfolio show different counts · the Riesling's own-label
+status is contradictory across surfaces · "Start a New Own-Label" starts no real
+project · the distributor appears able to set an own-label checkbox · programme
+admission is absent from the interface entirely · the Wine Guide mixes
+availability, product and primary listing into one column. **There is no freely
+editable own-label checkbox in this model** (A17.12) — the one on screen is a
+mockup artefact and is removed with the panel it sits on.
 
 ### A17.15 Invariants
 
@@ -3219,6 +3945,32 @@ placing anything; nothing here is a licence to create an order.
 - **OL-13 — programme text is not restated in a project text.** No clause sentence
   appears in both, and a project consent references the programme terms version
   the company accepted.
+- **OL-14 — a fee event exists only where the seller is the producing winery of
+  the product** (A17.10), and it carries its amount and currency as a snapshot.
+  No fee accrues anywhere further down the chain.
+- **OL-15 — `ownLabel` on a listing derives from two conditions and no others:**
+  the first commercial delivery is confirmed **and** the holder is the project's
+  primary distributor. No legacy field feeds a fee or a right; the
+  `legacyOwnLabel` / `listingOwnLabelStatus()` bridge is removed with this pass
+  rather than extended toward the new rule.
+- **MG-1 — visibility never yields an order or distribution right.** No order
+  button without an active partnership **and** a covering Market Grant, at any
+  reach level (A17.9a, A17.13a).
+- **MG-2 — no own-label order line whose seller is the winery and whose buyer is
+  not the primary distributor** (A17.9b).
+
+> **OL-14 and OL-15 arrived as "OL-5" and "OL-6" in the consolidation draft,
+> where those numbers were free.** They are not free here — OL-5 and OL-6 have
+> named other rules since A17 was written, and renumbering nine invariants to
+> make room would break every reference to them. The rules are the approved ones;
+> only the identifiers are new. Noted so the draft and the spec can be read
+> against each other.
+
+**Harness homes:** `tests/listings.js` gains OL-15 (it already enforces that the
+`legacyOwnLabel` bridge is not extended); a new `tests/own-label-grants.js`
+carries MG-1, MG-2 and OL-14; `tests/supply-chain.js` gains the
+distributor-to-distributor case — partnership present, so the order is green, and
+deal free goods absent from the line.
 
 ### A17.16 Tests — `tests/own-label.js`
 
@@ -3470,7 +4222,21 @@ A wine's `distributor` field in `bottle-lobby-wine-guide.html` is **always an ar
 
 **All four dashboards share one sidebar structure.** The distributor is the reference implementation and is specified in full below; Winery, Restaurant and Retail follow the same section order and the same sub-page mechanics, and simply omit the sections they have nothing for — the order of the remaining ones never changes:
 
-`Overview → Commerce → My Portfolio → My Partners → Network → [role-specific] → Events / Tools → Account`
+`Overview → Commerce → My Portfolio → Network → Community → [role-specific] → Events / Tools → Account`
+
+> **Two sections were renamed, and the pair has to be read together (D39).**
+> **Network** is what used to be called *My Partners* — the business relations.
+> **Community** is what used to be called *Network* — the follow side. The words
+> did not shift by one; they swapped meanings, which is why the rename is one
+> commit across all four roles and this spec table, and never two.
+>
+> ⏳ **The prototype rename is its own pass**, and it renames **by map position
+> and by id, never by string.** The string `network` names two different things
+> in the dashboard code: the *section key* `network` — the partnerships list, a
+> member of the group `partners`, with nav ids `wnav-` / `dnav-` / `rnav-` /
+> `tnav-network` — and the *group key* `'network'`, which is Matchmaking · Stars
+> · Fans. A find-and-replace would rename the wrong one, silently. The
+> acceptance for that pass greps for the absence of cross-hits.
 
 ### The distributor sidebar
 
@@ -3479,11 +4245,17 @@ The distributor sidebar is split into **eight labelled nav-sections** in this or
 **1. Overview** — Dashboard · My Profile · Messages
 **2. Commerce** — My Sales · My Purchases · Order History → all three open the **Orders sub-view** (A14.8) via `showDistributorOrders('incoming'|'outgoing'|'history')`, never a profile section
 **3. My Portfolio** — My Wine Portfolio · My Labels · My Promo Materials · My Offers · My Deals
-**4. My Partners** — My Partnerships (→ `dsection-active-partnerships`, grouped by region) · My Requests (→ `dsection-requests`)
-**5. Network** — Matchmaking · My Opportunities · My Stars · My Fans
+**4. Network** — My Partnerships (→ `dsection-active-partnerships`, grouped by region) · My Requests (→ `dsection-requests`)
+**5. Community** — Matchmaking · My Opportunities · My Stars · My Fans
 **6. Intelligence** — Trend Analytics · Portfolio Gaps · Market Reports
-**7. Events** — Wine Shows · Client Events
+**7. Events** — Wine Shows · **My Events**
 **8. Account** — Settings
+
+> **"Client Events" is gone and nothing migrated with it.** The item was a dead
+> `<div>` — no id, no handler, no entry in `D_SECTION_EL` / `D_NAV_EL` /
+> `D_TITLES` / `D_GROUPS`, no container and no renderer. It is **replaced** by
+> **My Events** (A16.8), which is the name Retail already used, so the same
+> feature carries the same name in every role — the D20 direction of travel.
 
 > **Commerce** is the renamed, promoted former "Orders" section: it now sits directly below Overview (previously fourth), and its two order-list items were renamed — **Incoming Orders → My Sales**, **My Orders → My Purchases** (Order History unchanged). Routing into the Orders sub-view (A14.8) is unchanged. See Appendix D (D16). Promo Materials, Offers and Deals no longer form a standalone "Promotion" section; they now sit under **My Portfolio** next to Wine Portfolio and Labels (D17).
 
@@ -3505,7 +4277,7 @@ The one deliberate near-collision: the Restaurant's **My Wine List** and the Ret
 
 Since the sidebar rebuild, every profile nav item opens its **own discrete sub-page**; there is no long scrolling profile page anywhere. `showDistributorView(view, section)` swaps the profile view in, hides the Dashboard and Orders views, then shows exactly the one section matching `section` and hides all others (`D_SECTION_EL` map), and scrolls to top (D18). `showWineryView` / `showRestaurantView` / `showRetailView` are the same function over the role's own maps (D21).
 
-**Grouped sub-views render a tab bar; single-member ones don't.** Each role has its own `*_GROUPS` array. `D_GROUPS` defines the distributor's three grouped views — **My Portfolio** (Wine Portfolio · Labels · Promo Materials · Offers · Deals), **My Partners** (Partnerships · Requests) and **Network** (Opportunities · Stars · Fans). When the active section belongs to a group (`dGroupOf()`), a tab strip renders above the content in `#dprofile-tabs` using the **same `.ord-tab` styling as the Commerce (Orders) view**, with the current member marked active. Single-member sections (My Profile) render no tab bar. Matchmaking is not a group member — it is a non-functional demo nav item (A8), not a real section.
+**Grouped sub-views render a tab bar; single-member ones don't.** Each role has its own `*_GROUPS` array. `D_GROUPS` defines the distributor's three grouped views — **My Portfolio** (Wine Portfolio · Labels · Promo Materials · Offers · Deals), **Network** (Partnerships · Requests) and **Community** (Opportunities · Stars · Fans). When the active section belongs to a group (`dGroupOf()`), a tab strip renders above the content in `#dprofile-tabs` using the **same `.ord-tab` styling as the Commerce (Orders) view**, with the current member marked active. Single-member sections (My Profile) render no tab bar. Matchmaking is not a group member — it is a non-functional demo nav item (A8), not a real section.
 
 **"Preview Public Profile" appears on the My-Profile sub-page only** (`section === 'basics'`): the role's `*-topbar-actions-profile` group is shown there and hidden on every other sub-page. This holds for all four roles.
 
@@ -3520,10 +4292,10 @@ Since the sidebar rebuild, every profile nav item opens its **own discrete sub-p
 | 1 | Overview | Dashboard · My Profile · Messages |
 | 2 | Commerce | My Sales · Order History |
 | 3 | My Portfolio | My Wine Portfolio · My Press & Recognition |
-| 4 | My Partners | My Distributors · My Requests |
-| 5 | Network | Matchmaking · My Stars · My Fans |
+| 4 | Network | My Distributors · My Requests |
+| 5 | Community | Matchmaking · My Stars · My Fans |
 | 6 | Market | Trend Reports · Consumer Data |
-| 7 | Events | Wine Shows |
+| 7 | Events | Wine Shows · **My Events** |
 | 8 | Account | Settings |
 
 **No "My Purchases"** — in this model a winery buys nothing on the platform (A3), so Commerce has two items, not three. **No Promo Materials / Offers / Deals** — those are distributor instruments aimed at restaurants and retailers (A9), not producer content. Branding & PR and Import Support keep their own **Services** section between Events and Account.
@@ -3535,19 +4307,24 @@ Since the sidebar rebuild, every profile nav item opens its **own discrete sub-p
 | 1 | Overview | Dashboard · My Profile · Messages |
 | 2 | Commerce | My Purchases · Order History |
 | 3 | My Portfolio | My Wine List |
-| 4 | My Partners | My Distributors · My Requests |
-| 5 | Network | Matchmaking · My Stars · My Fans |
+| 4 | Network | My Distributors · My Requests |
+| 5 | Community | Matchmaking · My Stars · My Fans |
 | 6 | Discover | Browse Wines · Exclusive Offers · Exclusive Deals · Promo Materials |
-| 7 | Tools | Wine List Builder · Food Pairing |
-| 8 | Account | Settings |
+| 7 | Events | Wine Shows · **My Events** |
+| 8 | Tools | Wine List Builder · Food Pairing |
+| 9 | Account | Settings |
 
-**No "My Sales"** — a restaurant sells to guests, not on the platform. My Portfolio holds a single item and therefore renders no tab bar.
+**No "My Sales"** — a restaurant sells to guests, not on the platform. My Portfolio holds a single item and therefore renders no tab bar. **The Events section is new**: a restaurant hosts winemaker dinners and themed evenings, which is A16.8's own example, and it was the only role with nowhere to put them.
 
 ### The Retail sidebar
 
-Identical to Restaurant, with three differences: **My Wine Selection** instead of My Wine List; **no Tools section**; and an own **Events** section holding **My Events** in position 7, ahead of Account.
+Identical to Restaurant, with two differences: **My Wine Selection** instead of My Wine List, and **no Tools section** — so Events sits at position 7 and Account at 8.
 
-> **"My Events" and "Wine Shows" are different things and must stay separate nav items.** Wine Shows are trade fairs; My Events are the retailer's own in-store occasions (an in-store tasting, a wine dinner with a restaurant, an oenologist evening). The distributor already draws this line with *Wine Shows* vs *Client Events*. **A16 is the section this docks into** — it specifies both and keeps them apart for the same reason: a Wine Show is released by Bottle Lobby staff, an own event never is.
+> **"My Events" and "Wine Shows" are different things and must stay separate nav items.** Wine Shows are trade fairs; My Events are the role's own occasions — an in-store tasting, a winemaker dinner, an oenologist evening, a distributor's house fair. **A16 is the section this docks into** — A16.1 for the show, A16.8 for the event — and it keeps them apart for the reason that governs everything else about the pair: a Wine Show is released by Bottle Lobby staff and carries the platform's guarantee; a member event never is and never does.
+
+> **All four roles now carry Events → Wine Shows · My Events** (A16.8). One event model, four navigations — the correction of an asymmetry that was accidental rather than decided: Retail had My Events, the distributor had a dead "Client Events", and Winery and Restaurant had nowhere at all.
+
+**NAV-1 — the visible sidebar group labels per role match the tables above.** No harness checks them today, which is why the rename can go wrong without anything turning red; the rename pass closes that gap (`tests/sidebar-routing.js`).
 
 ---
 
@@ -3793,6 +4570,13 @@ heading of exactly this form — bold title, `·`, italic dispatch note, one lin
 
 **PROMPT 46 V2 (Weinbuch) — Portfolio wird ableitbar** · *jetzt senden · ersetzt V1*
 
+- **Without exception, every prompt carries this heading.** Not only the long
+  ones, not only the ones that start a pass: a measurement, a question, an
+  acceptance and a one-line correction all get one. The convention is referential
+  (below), and a reference only works if there is nothing to except.
+- **The heading always sits outside the copy block.** What Serge pastes is the
+  prompt; the heading is how the message is addressed, and pasting it into the
+  terminal puts a title where an instruction belongs.
 - **The number runs across the whole project, not per chat.** This is the part
   that has already gone wrong: read as "per conversation", a new chat restarts
   at 1 and one and the same pass ends up carrying two numbers. At the start of a
@@ -3801,6 +4585,18 @@ heading of exactly this form — bold title, `·`, italic dispatch note, one lin
 - **A revision keeps its number and gains a version suffix** — `V2`, `V3`. A
   superseded prompt is never renumbered. The pair `46` / `46 V2` is what makes
   "V1 was never in the terminal" a statement anybody can check.
+- **A revision is always delivered as a complete copy block**, never as a diff
+  and never as "in prompt 46, replace paragraph three". The whole point of the
+  version suffix is that exactly one text carries that number; a patch against a
+  superseded text leaves two half-prompts and no way to say which was pasted.
+- **Format follows the content, and the content is never shortened to fit it.**
+  A multi-part build order whose context, task, business rules, constraints,
+  acceptance and verification benefit from hard separation is written as **XML**;
+  a short measurement, question or acceptance is written as **Markdown**, where
+  the XML overhead buys nothing.
+- **A prompt references spec sections by ID rather than restating them.** The
+  spec is the authority and it is in the repo; a restated rule in a prompt is a
+  second copy that can disagree with it (A1, one level up from the data).
 - **The dispatch note is mandatory**, never omitted: *jetzt senden* · *direkt
   nach 46, keine Antwort abwarten* · *erst wenn 46 beantwortet ist* · *als
   eigener Durchgang, nicht heute*.
@@ -4372,7 +5168,7 @@ directory is the repo root, so everything committed is served unless blocked.
 ## C7b. How the Supabase build starts
 
 **The precondition first: this pass does not start yet.** Three areas of the
-prototype still move the data model — own events for all four roles (A16.8),
+prototype still move the data model — member events for all four roles (A16.8),
 Matchmaking (A8), and Messages, where the business question of *who may write to
 whom* is unanswered and decides whether a message table exists at all. While
 tables are still being created there, a model change in Supabase is a
@@ -4812,6 +5608,9 @@ Without it the badge cannot be honest.
 | D34 | A distributor's wines lived in **three lists**: `currentWinePortfolio` (6 wines, owned and written), and two byte-identical picker pools of 10 whose `winery` field held the **supplier** — so `wineryOfWine()` existed to guess the producer, defaulting to *Cantina Rossi* | **A3 / A6 / invariant 2** — one book per distributor, every row naming its real producer; both buyer pickers read it through `portfolioOf()`, and the pools are gone | The pools could not answer "who made this", which is invariant 2, and nothing checked a partnership when a wine went onto a buyer's list. That is how a distributor came to offer — and twice sell — wines of a producer it had no partnership with. Merging them forced the question nobody had answered: **which of the three lists is the portfolio**. Only one was owned by anybody. The attribution was sourced rather than invented: 6 rows were already correct, 3 came from the producers' own book, 1 from an order line, and exactly **1** by hand, with **zero contradictions** where two lists named the same wine. The book grew 6 → 14, because three further wines were being advertised or discounted without being carried at all — an offer over a wine outside your book is the same gap as a sale, only delayed (A3). Deleted with it: `wineryOfWine()`, which was measurably wrong twice; three `fileGuess` slug derivations that rebuilt a URL the record already carried (A14.4); and `note`, which duplicated `ownLabel` and carried the buyer's own *Exclusive* marking into the distributor's book (A1). |
 | D35 | Restaurant and Retail were treated **alike**: a wine could go on either list as long as an active distributor partnership existed and the wine sat in that distributor's portfolio — no purchase of their own required | **A3** — the restaurant condition stands; Retail additionally needs **an order of its own**, a sample order or trial bottles being enough | The two lists are not the same kind of object. A wine list is an **offer**: the guest orders, the bottle is delivered just in time, and naming a wine that arrives tomorrow is normal trade. A retail selection is a **shelf**: the customer carries the bottle out of the shop, and a retailer cannot sell what they do not have. Measured when the rule was written (4 Aug 2026), the prototype showed exactly why it had gone unnoticed — Weinhaus Müller's selection held Sauvignon Blanc, Chardonnay and Primitivo, **the same three wines as Bistro Laurent's list, line for line**, while its actual purchases were Merlot (156 bottles across two orders), Nero d'Avola and Catarratto. The two sets were **disjoint**: nothing on the shelf had been bought, nothing bought was on the shelf. Serge's decision. **The repair is NOT done — the data still stands as measured above, and this row said otherwise until 4 Aug 2026.** It is its own pass, *A3 retail condition*, queued behind `listings`, and it goes by extension rather than removal (A3): backfill three purchases for the three wines already on the shelf, add the three bought wines to the selection, 3 → 6, at which point the retail selection differs from the restaurant's list for the first time. The backfilled orders take their dates from C7 — the earliest dependent event is the ceiling — and there is already a dependent fact to reconcile with: `tPromoProgress.bottleCounts` asserts **60 bottles of Sauvignon Blanc and 48 of Primitivo that no order carries**, so the backfill has to agree with quantities the promo progress has been claiming all along. That second home for the same fact is itself what `listings` absorbs, which is why the two passes run in that order. |
 | D36 | "Own label" named **four different facts with one phrase**: whether a company may take part in the programme (nothing at all), whether a wine may be asked about (`note:'Own-Label Available'` — free text beside other free text, on 3 rows, all Cantina Rossi), whether a **finished own-label product** exists (nothing at all), and whether a distributor actually **carries** one (`ownLabel:true`, stored on 3 portfolio rows) | **A17.0a** — four homes: an active `ownLabelProgramMemberships` row · `products.ownLabelAvailability` (`unavailable · on_request · available`) · the finished product, created by the winery from a **gate-2-approved** project · and a portfolio flag **derived only once the first commercial order has been delivered** | The same shape as the three wine books (D34) and the four partner lists (D32), one level further down, and it had already produced its first visible defect: the hand-written "My Labels" panel claimed **six** wines where the data carried **three**, because no script ever wrote into it. A capability is a property of the producer's wine; a project is a working relationship with a lifecycle; a finished own label is **its own product** with its own key, brand, article page and article number, produced by the winery (invariant 2 does not bend) and branded by the distributor. Marking the producer's wine with `ownLabel:true` was recording a fact about somebody else's business on a record that does not belong to them. The flag does not survive beside its replacement: it is removed in the pass that gives those three wines real projects. The last two levels are the pair most easily collapsed — a product created is **not** a product carried, and *product created ≠ active in the portfolio* is the rule that keeps a wine off a restaurant's list before a bottle of it exists (A17.9). |
+| D37 | Own-label exclusivity was read as a lock on the **customer**: no other distributor sees the product, may select it, order it or take it into a book. Measured at **five spec locations** — A17.9 *Consequences* · A17.9 *Visible ≠ in the book* · the A17.13 table row *an exclusive product, in any picker* · A17.13 *Reach can never widen an action right* · the A17.12 row *`ownLabel` on a listing* | **A17.9 / A17.9a / A17.9b / A17.12 / A17.13a** — exclusivity locks the **source**: the winery may supply nobody but the primary distributor A, and no other distributor may order the product **from the winery**. A sells onward within his agreed **Market Grants** (A17.9a). A downstream holder B gets an ordinary listing — no own-label status, his own `tradePrice`, which the listing key already carries per holder — while the product stays an own-label product at product level. Only A's listing derives `ownLabel`, and now from **two** conditions: first commercial delivery confirmed **and** holder = the project's primary distributor. The fee accrues once, winery → A (OL-14, OL-15) | The lock was written one step too far down the chain, and at that distance it forbids ordinary trade: a distributor who has bought the goods may resell them, and every real own-label arrangement says where and through which channel. Read as written, the fifth location would additionally have marked **B's** listing as own label on B's own first delivery — the same collapse A17.0a exists to prevent, arriving through a different door. The draft that produced this correction first proposed a `resaleAllowed` boolean and a single `resaleTerritory` string; **that pair is superseded here before it ever entered the spec**, because a country grant, a channel grant, a sub-distribution grant and a named key account cannot share one field without becoming D36 a second time. |
+| D38 | A16.2's `planning` entry trigger: **venue + at least one exhibitor + at least one product confirmed** before a show is publicly listed | **A16.2 / A16.14c** — `planning` begins with the host's basics (title, date, city, focus). Venue, exhibitors, products, fixed costs, the per-bearer split and every affected consent become **publish preconditions**, checked before `pending_approval` | Recruiting happens *inside* `planning` (A16.4, A16.14c), so a show that may only enter `planning` with a confirmed exhibitor can never recruit its first one — the stage that exists to find participants was gated on already having them. The fixture WS-2604 sitting at zero wines is that contradiction observed, not an accident. Nothing is given away by moving the checks: A16.6's anonymisation makes an early listing safe, and the platform's guarantee has never attached at `planning` — it attaches at `published` (A16.1), which is exactly where the old trigger's checks now sit. |
+| D39 | The sidebar sections **My Partners** and **Network** (B8, all four roles); and, from the withdrawn A16.14 draft, `'network'` as a **reach value** | **B8 / A16.14b** — **Network** = the business relations (former My Partners: My Partnerships / My Distributors · My Requests). **Community** = the follow side (former Network: Matchmaking · My Opportunities · My Stars · My Fans). The reach taxonomy names those two levels `partners` and `community`; the generic value `network` does not exist | Two sections did not shift by one, they **swapped meanings**, so any split delivery leaves a window in which the word "Network" means the old section on one screen and the new one on another — which is why the rename is one commit across all four navs and this spec table. The reach value went for the same reason one level down: a nav section and a reach level may not be the same word, or a reader has to know which of the two a filter is talking about. Note the hazard the rename pass inherits: in the dashboard code the string `network` **already** names two different things — the partnerships *section key* (with its `*nav-network` ids) and the Matchmaking/Stars/Fans *group key* — so the rename goes by map position and id, never by string replacement. |
 
 ---
 

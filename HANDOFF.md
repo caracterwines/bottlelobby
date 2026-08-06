@@ -4,7 +4,7 @@
 > Dateiliste, Dateianzahl und Aenderungshistorie stehen in der Git-Historie — nicht hier.
 > Dauerhafte Regeln stehen in `BOTTLE-LOBBY-SPEC.md`, kurze Invarianten in `CLAUDE.md` — nicht hier.
 
-**Letzte Aktualisierung:** 5. August 2026
+**Letzte Aktualisierung:** 6. August 2026
 
 ---
 
@@ -21,7 +21,7 @@ Kein Build-Command, Publish-Directory = Repo-Root.
 
 ---
 
-## ▶ EINSTIEG — Stand 5. August 2026
+## ▶ EINSTIEG — Stand 6. August 2026
 
 > **Was Git nicht weiss, steht hier. Alles andere nicht.** Diese Datei fuehrt
 > keine Chronik: was gebaut wurde, wann und von wem, beantwortet `git log`
@@ -50,7 +50,7 @@ Fehlmessungen an einem Tag kamen genau daher** (Spec C7, „Browser acceptance")
 `BOTTLE-LOBBY-SPEC.md` ist die Autoritaet und waechst. **Niemand liest sie ganz —
 also je Durchgang die geltenden Abschnitte benennen**, sonst wird nach
 Plausibilitaet statt nach Spec gebaut. `CLAUDE.md` hat die acht Invarianten,
-Anhang D die abgeloesten Entscheidungen (**D1–D36** — nie ohne Blick dorthin
+Anhang D die abgeloesten Entscheidungen (**D1–D39** — nie ohne Blick dorthin
 etwas wiedervorschlagen).
 
 Arbeitsregeln, die diesen Tag ueberdauern und in **C3/C7** stehen: jeden Commit
@@ -59,6 +59,46 @@ nicht wachsen lassen, damit jede Meldungsart vorkommt; eine Zusicherung ueber
 einen Leerfall nennt den **Grund**, nicht den Zustand; eine Mutation, die sich auf
 eine Fixture verlaesst, gilt nur, solange die zufaellig passt; und beim Nachtragen
 von Stammdaten ist das **frueheste abhaengige Ereignis die Obergrenze**.
+
+---
+
+### Die Konsolidierung A16/A17 — Durchgang 1 liegt, 2–11 stehen aus
+
+Der Spec-Durchgang (Durchgang 1) ist am **6. August 2026** gelaufen: §5.1–§5.9
+der freigegebenen Vorlage sind in `BOTTLE-LOBBY-SPEC.md` uebertragen, **D37–D39**
+stehen in Anhang D, **A16.14 (a–e)**, **A16.15**, **A17.9a/9b**, **A17.13a** sind
+neu, **B8** und **C6** nachgezogen. **Kein Code, keine Fixtures, kein HTML** —
+das war die Auftragsgrenze.
+
+**Was Git nicht weiss und hier stehen muss:** die Vorlage
+`KONSOLIDIERUNG-A16-A17-EVENTS-COMMUNITY-DRAFT.md` liegt **untracked** im
+Repo-Root und ist bewusst nicht committet. Sie ist die Messgrundlage der
+Prompts 66–68; ihre normativen Teile stehen jetzt in der Spec, ihre Messungen
+nicht. **Wird sie geloescht, ist die Herleitung weg, die Regeln aber nicht.**
+
+Reihenfolge der restlichen Durchgaenge, je einzeln gepusht — die Begruendung
+steht in der Vorlage §11 und ist Serges Ordnungsregel: erst Woerter und
+Wahrheiten stabilisieren, dann nach aussen bauen.
+
+| # | Durchgang | Inhalt |
+|---|---|---|
+| 2 | **Taxonomie + Rename** | Reach-Konstanten; Network→Community / My Partners→Network ueber alle vier Navs, `*_GROUPS`, `*_TITLES`, plus NAV-1 im Harness. ⚠ **Nach Map-Position und Id umbenennen, nie per String** — `network` heisst im Code zweierlei (D39) |
+| 3 | **Own-Label-Datenkern** | `marketGrants` an den Projektbedingungen; OL-15-Ableitung; OL-14 + Betrag/Waehrung-Snapshot am Gebuehrenereignis; neues `tests/own-label-grants.js` |
+| 4 | **Saparavi-Fixtures** | D2D-Partnerschaftszeile, Enoteca-Listing mit eigenem `tradePrice`, A→B-Order, `dealFreeGoodsFor()`-Ausschluss fuer D→D, Fall in `tests/supply-chain.js` |
+| 5 | **Shows: Reichweite + Recruiting** | `reach[]`, `applications_open`, Deadline, Bewerbungsablauf ueber die vorhandenen A16.9-Status, Discover-Unteransicht, Mitgliederstufe |
+| 6 | **Shows: Final Review + Freigabe** | Veroeffentlichungs-Checkliste inkl. Contributions, gespeicherter Review, Reset bei materieller Aenderung, WS-6/WS-7 |
+| 7 | **Member Events, Basis + Cockpit (Distributor)** | `events`-Erweiterung, `event_participants`, Lebenszyklus, Sichtbarkeit, Cockpit, Nav *Client Events → My Events*, Minimalmodell externe Messen, Retails getippte Event-Flaechen aus Daten gerendert. **Der groesste Durchgang** |
+| 8 | **Member Events, Ausrollen** | Cockpits Winery/Restaurant/Retail + deren Events-Sektionen |
+| 9 | **Wine Guide → Events** | Verzeichnis-Tab, Filter nur ueber echte Daten, Karten wiederverwendet, die drei oeffentlichen Flaechen gleichgezogen |
+| 10 | **Kampagnen + Benachrichtigungen** | Ankuendigung/Erinnerung getrennt, Empfaenger-Snapshot, C9-Bedingungen |
+| 11 | **`bottle-lobby-own-label.html` neu** | Die Seite behauptet das alte Modell in ~20 Passagen (Zeilen 206–453) — **das alte Modell IST ihr Argument**, also Neuschrift, nicht Korrektur. Zeile 449 nennt einen Basiswein des Erzeugers „own-labeled exclusively for Hawesko" — D36 woertlich, oeffentlich. **Muss nach Durchgang 3**, sonst wird die Seite zweimal geschrieben |
+
+**Zwischen den Durchgaengen jeweils eine Browser-Abnahme** — klicken statt
+Funktionen aufrufen, `transferSize` vorher lesen (C7).
+
+**Nicht Teil dieser Konsolidierung:** das **Matchmaking-Cockpit** (A8, Seek/Offer).
+Eigener vermessener Durchgang danach; bis dahin bleibt `matchmaking` als
+Reichweitenoption sichtbar gesperrt, mit Begruendung auf dem Schirm.
 
 ---
 
@@ -179,10 +219,10 @@ Danach in dieser Reihenfolge:
     niemand sehen darf, kann niemand kaufen.**
   A17.9 traegt seit dem 05.08. einen Satz, der die zwei Ebenen ausdruecklich
   trennt, damit die Fehllesart nicht noch einmal moeglich ist.
-  **Offen bleibt nur eine echte Frage, und sie ist neu:** die Reichweite eines
-  fertigen Own-Label-Produkts — wer es SIEHT, einstellbar durch den Distributor,
-  gegen wer HANDELN darf, festgelegt durch das Projekt. Steht als „Still open"
-  in **A17.13 Visibility**.
+  **Die Reichweitenfrage ist am 06.08. entschieden** und steht als **A17.13a**
+  in der Spec — der primaere Distributor stellt sie waehrend der Pipeline je
+  Produkt ein, sie greift mit der Erstlieferung, und die Stufen sind die
+  Taxonomie aus **A16.14b**. Der „Still open"-Block ist ersatzlos weg.
 - **Die drei Katalogkopien auf den Profilseiten (D34) — eigener Durchgang,
   haengt am Punkt darueber.** Gemessen 05.08.:
   `bottle-lobby-restaurant-profile.html` und `bottle-lobby-retail-profile.html`
@@ -404,7 +444,8 @@ loeschen. Ein `readOnly`-Schalter im Store waere der saubere Weg davor.
 vollstaendig spezifiziert, keine offene Entscheidung, und das einzige
 angefangene Stueck) · Catering 7–9 (`wine_show_catering` fehlt noch als
 `orders.source`) · oeffentliche Profile von Restaurant und Retail · Open Call mit
-Master-Data-Filtern (A16.4) · eigene Events (A16.8).
+Master-Data-Filtern (A16.4). **Member Events (A16.8) haengen jetzt an den
+Durchgaengen 7 und 8 der Konsolidierung** und stehen nicht mehr einzeln hier.
 
 ---
 
