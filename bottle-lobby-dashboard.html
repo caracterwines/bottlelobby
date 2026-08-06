@@ -4921,7 +4921,7 @@ let currentWinePortfolio = [
      the product, which is where it lives (`ownLabelProducts`). One fact,
      one home; the row references the rest (invariant 1). */
   { id:'PRD-1028', winery:'Domaine Lefèvre', name:'Hanseatischer Weisser — Mâcon-Villages', vintage:2023,
-    type:'White', origin:'Mâcon-Villages AOC, Burgundy', url:null }
+    type:'White', origin:'Mâcon-Villages AOC, Burgundy', url:'bottle-lobby-wine-hanseatischer-weisser-macon-villages.html' }
 ];
 
 /* ══════════════════════════════════════════════════════════════════
@@ -5942,12 +5942,14 @@ function approvedForFirstOrder(projectId) { return gateApproved(projectId, 2); }
    PRD-1028 gets both. Two products, one shape, and the boundary between
    them is a delivery rather than a setting.
 
-   PRD-1028's `url` IS ALSO NULL IN THIS COMMIT, and for a different
-   reason worth telling apart: its page does not exist yet. It arrives
-   two commits on, with the Wine Guide row, in one step — and until then
-   an address pointing at nothing would be exactly the broken claim
-   tests/wine-identity.js exists to catch. A url is an ADDRESS and is
-   never a promise that something is there.
+   PRD-1028 HAS BOTH, and its page was written from the SOURCE WINE'S
+   page rather than from a blank file — same structure, same seventeen
+   fields, same header and footer, and every technical value referenced
+   from Domaine Lefèvre's Mâcon-Villages because it is the same liquid
+   (A17.5 route A). What differs is what the project owns: the brand, the
+   name, the label and the agreed price. The two parties are named apart
+   on it, in the breadcrumb, the origin line, the sidebar and an Own Label
+   block — A17.0a on a public page.
 ══════════════════════════════════════════════════════════════════ */
 const ownLabelProducts = [
   /* ── PRD-1028 — active: delivered, in the book, publicly visible ──
@@ -5959,7 +5961,7 @@ const ownLabelProducts = [
     name:'Hanseatischer Weisser — Mâcon-Villages', vintage:2023, type:'White',
     note:'Own Label', ownLabelAvailability:'unavailable',
     origin:'Mâcon-Villages AOC, Burgundy',
-    url:null,
+    url:'bottle-lobby-wine-hanseatischer-weisser-macon-villages.html',
     ownLabelProjectId:'OLP-104', at:'2026-06-10' },
 
   /* ── PRD-1029 — created after gate 2, first order not delivered ───

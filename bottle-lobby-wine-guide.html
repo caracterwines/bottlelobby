@@ -406,6 +406,34 @@ const wines = [
   { id:'cremant-de-bourgogne', file:'bottle-lobby-wine-cremant-de-bourgogne.html', name:'Crémant de Bourgogne', vintage:2022, color:'White', grape:'Chardonnay, Pinot Noir', country:'France', region:'Burgundy', appellation:'Crémant de Bourgogne AOC', aging:'Traditional Method', winery:'Domaine Lefèvre', distributor:['Hawesko GmbH'], status:'Standard', score:90, award:'Silver Medal — Effervescents du Monde', price:9.80, recognition:['90+ Points','Medal Winner'] },
   { id:'bourgogne-aligote', file:'bottle-lobby-wine-bourgogne-aligote.html', name:'Bourgogne Aligoté', vintage:2023, color:'White', grape:'Aligoté', country:'France', region:'Burgundy', appellation:'Bourgogne Aligoté AOC', aging:'Stainless Steel', winery:'Domaine Lefèvre', distributor:['Hawesko GmbH'], status:'Standard', score:85, award:null, price:5.40, recognition:[] },
   { id:'macon-villages', file:'bottle-lobby-wine-macon-villages.html', name:'Mâcon-Villages', vintage:2023, color:'White', grape:'Chardonnay', country:'France', region:'Burgundy', appellation:'Mâcon-Villages AOC', aging:'Stainless Steel', winery:'Domaine Lefèvre', distributor:['Hawesko GmbH'], status:'Standard', score:87, award:null, price:6.90, recognition:[] },
+
+  /* ── THE FIRST FINISHED OWN LABEL IN THIS GUIDE (A17.9, A17.0b) ───
+     It is here because its first commercial delivery is confirmed. A17.9
+     is explicit that the three-party visibility before that moment is a
+     PHASE and not a permanent state: after the delivery the product is as
+     visible as anything else in its distributor's book — article page,
+     Wine Guide, findable by a restaurant. A product nobody may see is a
+     product nobody can buy.
+
+     PRD-1029, the other own label past gate 2, is deliberately NOT in
+     this guide: its first order is accepted and not delivered, so there
+     is nothing to promise on yet. Two products, one rule, and the
+     boundary between them is a delivery.
+
+     `winery` IS THE PRODUCER AND `status` IS THE BRAND FACT, and they are
+     two columns because they are two facts (A17.0a). The estate makes it;
+     Hawesko's name is on it. Every other 'Own-Label' row in this file was
+     a producer's own appellation wine wearing this word for a
+     distribution exclusivity it never recorded — those are corrected in
+     the same pass (D41), and this is the first row where the word is
+     true.
+
+     `score` IS NULL AND THAT IS MEASURED, not missing: the source wine
+     carries 87 points, a score belongs to the bottling that was tasted,
+     and this label has not been. `price` is the agreed bottle price the
+     project settled, 5.25, which A17.13 lists as visible to both
+     parties. */
+  { id:'hanseatischer-weisser-macon-villages', file:'bottle-lobby-wine-hanseatischer-weisser-macon-villages.html', name:'Hanseatischer Weisser — Mâcon-Villages', vintage:2023, color:'White', grape:'Chardonnay', country:'France', region:'Burgundy', appellation:'Mâcon-Villages AOC', aging:'Stainless Steel', winery:'Domaine Lefèvre', distributor:['Hawesko GmbH'], status:'Own-Label', score:null, award:null, price:5.25, recognition:[] },
   { id:'bourgogne-rouge-pinot-noir', file:'bottle-lobby-wine-bourgogne-rouge-pinot-noir.html', name:'Domaine Lefèvre Bourgogne Rouge', vintage:2022, color:'Red', grape:'Pinot Noir', country:'France', region:'Burgundy', appellation:'Bourgogne AOC', aging:'French Oak', winery:'Domaine Lefèvre', distributor:['Enoteca Milano Import Srl'], status:'Standard', score:89, award:null, price:9.20, recognition:[] },
   { id:'merlot-bordeaux-superieur', file:'bottle-lobby-wine-merlot-bordeaux-superieur.html', name:'Merlot — Bordeaux Supérieur', vintage:2021, color:'Red', grape:'Merlot', country:'France', region:'Bordeaux', appellation:'Bordeaux Supérieur AOC', aging:'French Oak', winery:'Château Belrieu', distributor:['Hawesko GmbH'], status:'Own-Label', score:90, award:null, price:6.20, recognition:['90+ Points'] },
   { id:'chateau-belrieu-grand-vin', file:'bottle-lobby-wine-chateau-belrieu-grand-vin.html', name:'Château Belrieu Grand Vin', vintage:2019, color:'Red', grape:'Cabernet Sauvignon, Merlot, Cabernet Franc', country:'France', region:'Bordeaux', appellation:'Bordeaux Supérieur AOC', aging:'French Oak Barrique', winery:'Château Belrieu', distributor:['Hawesko GmbH'], status:'Standard', score:93, award:'Gold Medal — Concours de Bordeaux', price:11.50, recognition:['90+ Points','Medal Winner'] },

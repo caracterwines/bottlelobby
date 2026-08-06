@@ -308,6 +308,130 @@ console.log('\n── shared renderer classes');
    Runs over EVERY html file in the repo, not just FILE: the dashboard
    is one of seventeen pages loading these assets, and a stamp is only
    worth anything if none of them is missing it. */
+/* ── 8. THE WINE ARTICLE PAGES, ALL OF THEM ──────────────────────
+   42 pages that had no structural coverage at all until an own-label
+   product needed one written from scratch. A page written by copying
+   another is right by construction on the day it is written and wrong
+   the first time somebody edits it — so this sweeps every one of them
+   rather than the new one, and reports the count so a page that stops
+   matching the glob cannot pass by disappearing.
+
+   WHAT IS CHECKED IS WHAT A COPY GETS WRONG: the canonical nav and
+   footer, div balance, unique ids, a breadcrumb of the shape
+   Country / Region / Winery (linked) / wine name, the `wineData` record
+   with its full attribute list, and grape links pointing into the Wine
+   Guide with the variety url-encoded. Content is nobody's business here;
+   structure is.
+══════════════════════════════════════════════════════════════════════ */
+console.log('\n── the wine article pages');
+{
+  const ROOT2 = path.join(__dirname, '..');
+  const VARIETY = /^bottle-lobby-wine-(guide|shows)\.html$/;
+  const pages = fs.readdirSync(ROOT2)
+    .filter(f => /^bottle-lobby-wine-/.test(f) && f.endsWith('.html') && !VARIETY.test(f));
+  if (pages.length < 40) bad('only ' + pages.length + ' wine article page(s) found — the glob has stopped ' +
+    'matching, and a sweep that examines nothing reports success');
+  else ok(pages.length + ' article pages found');
+
+  const faults = { nav:[], footer:[], depth:[], ids:[], crumb:[], data:[], attrs:[], grape:[], title:[] };
+  pages.forEach(name => {
+    const html = fs.readFileSync(path.join(ROOT2, name), 'utf8');
+    const mk = html.replace(/<script>[\s\S]*?<\/script>/g, '');
+
+    if (mk.indexOf('<a href="bottle-lobby.html" class="nav-logo">') === -1 ||
+        mk.indexOf('bottle-lobby-wine-guide.html#wines" class="btn btn-outline">← Wine Guide') === -1)
+      faults.nav.push(name);
+    if (mk.indexOf('© 2026 Caracter Media GmbH') === -1 || mk.indexOf('<footer>') === -1)
+      faults.footer.push(name);
+    /* TWO CONVENTIONS ARE IN USE AND BOTH ARE FINE — 11 of the 42 read
+       "<wine> <vintage> — <producer> · Bottle Lobby" and the rest
+       "<wine> <vintage> — Bottle Lobby". Measured rather than assumed,
+       and NOT normalised here: rewriting 11 titles is a copy-editing pass
+       and not this one. What must hold is that the page ends in the
+       platform's name, which is what a browser tab and a search result
+       show. */
+    if (!/<title>[^<]*Bottle Lobby<\/title>/.test(html)) faults.title.push(name);
+
+    let depth = 0, lowest = 0;
+    for (const m of mk.matchAll(/<div\b|<\/div>/g)) {
+      depth += m[0].startsWith('</') ? -1 : 1;
+      if (depth < lowest) lowest = depth;
+    }
+    if (depth !== 0 || lowest < 0) faults.depth.push(name + ' (ends ' + depth + ', lowest ' + lowest + ')');
+
+    const ids = [...mk.matchAll(/\bid="([^"]+)"/g)].map(m => m[1]);
+    if (ids.filter((x, i) => ids.indexOf(x) !== i).length) faults.ids.push(name);
+
+    /* THE BREADCRUMB IS FOUR PARTS AND THE THIRD ONE LINKS TO THE
+       PRODUCER. On an own label that is the one place a reader could be
+       told the wrong house made the wine, so it is checked on all 42
+       rather than trusted on one. */
+    const crumb = mk.match(/<div class="crumb">([\s\S]*?)<\/div>/);
+    if (!crumb) faults.crumb.push(name + ' (no breadcrumb)');
+    else {
+      const parts = crumb[1].split('<span class="sep">/</span>');
+      if (parts.length !== 4) faults.crumb.push(name + ' (' + parts.length + ' parts, expected 4)');
+      else if (!/<a href="bottle-lobby-winery-[a-z0-9-]+\.html">/.test(parts[2]))
+        faults.crumb.push(name + ' (the winery part links nowhere)');
+      else if (!/<span class="current">/.test(parts[3]))
+        faults.crumb.push(name + ' (the last part is not the current page)');
+    }
+
+    if (!/const wineData = \{/.test(html)) faults.data.push(name);
+    else {
+      const attrs = [...html.matchAll(/\{key:'([^']+)'/g)].map(m => m[1]);
+      /* The spec field list, and it is the floor rather than the shape:
+         an own label adds Brand Owner, so the check asks that the
+         sixteen are all there and does not forbid a seventeenth. */
+      const NEEDED = ['Grape Variety', 'Colour', 'Vintage', 'Alcohol', 'Style', 'Aromas',
+                      'Country', 'Region', 'Appellation', 'Viticulture', 'Aging Duration',
+                      'Aging Method', 'Yield', 'Bottle Size', 'Serving Recommendation', 'General Note'];
+      const gone = NEEDED.filter(k => attrs.indexOf(k) === -1);
+      if (gone.length) faults.attrs.push(name + ' (missing: ' + gone.join(', ') + ')');
+    }
+
+    /* Every grape variety links into the Wine Guide, url-encoded. A bare
+       apostrophe or an accent in a query string is the silent-404 class
+       tests/wine-identity.js records for slugs. */
+    const links = [...html.matchAll(/bottle-lobby-wine-guide\.html\?grape=([^"#]*)#wines/g)].map(m => m[1]);
+    if (!links.length) faults.grape.push(name + ' (no grape link at all)');
+    else {
+      /* ENCODED, NOT CANONICALLY ENCODED. `encodeURIComponent` leaves an
+         apostrophe alone and five pages encode it as %27, which is
+         stricter and equally valid — comparing against one canonical
+         form would fail the safer spelling. What actually breaks a query
+         string is a RAW character, so that is what is looked for. */
+      const raw = links.filter(v => /[ "#&?<>]/.test(v));
+      if (raw.length) faults.grape.push(name + ' (raw characters in the query: ' + raw.join(', ') + ')');
+    }
+  });
+
+  const report = (key, wrong, right) => {
+    const f = faults[key];
+    if (f.length) bad(f.length + ' of ' + pages.length + ' page(s) ' + wrong + ': ' +
+      f.slice(0, 3).join(' · ') + (f.length > 3 ? ' …' : ''));
+    else ok(right);
+  };
+  report('nav',    'are missing the canonical nav',
+                   'all ' + pages.length + ' carry the canonical nav, logo and Wine Guide link');
+  report('footer', 'are missing the canonical footer',
+                   'all ' + pages.length + ' carry the canonical footer and the Caracter Media line');
+  report('title',  'do not end in the platform name',
+                   'every title ends in Bottle Lobby');
+  report('depth',  'have unbalanced or badly nested divs',
+                   'every page closes every div it opens, and never goes negative (B10)');
+  report('ids',    'carry duplicate ids',
+                   'no page carries a duplicate id');
+  report('crumb',  'have a breadcrumb that is not Country / Region / Winery / wine',
+                   'every breadcrumb is four parts, with the producer linked and the wine current');
+  report('data',   'carry no wineData record',
+                   'every page renders from a wineData record rather than typed markup');
+  report('attrs',  'are missing one of the 16 spec fields',
+                   'every page carries all 16 spec fields');
+  report('grape',  'have a grape link that is missing or carries raw characters',
+                   'every grape variety links into the Wine Guide, encoded');
+}
+
 console.log('\n── cache-busting stamps on asset references');
 {
   const crypto = require('crypto');
