@@ -5003,6 +5003,34 @@ let listings = [
   { holder:'Cantina Rossi',   productId:'PRD-1008', legacyOwnLabel:false, exclusive:false, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:null, tradePrice:7.10 },
   { holder:'Weingut Schmitt', productId:'PRD-1024', legacyOwnLabel:false, exclusive:false, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:null, tradePrice:7.90 },
 
+  /* ── Enoteca Milano Import Srl — taken on FROM Hawesko (A3) ─────
+     The downstream half of the sourcing rule, and the whole of what B
+     gets: the SAME productId, his own tradePrice, his own article
+     number. No second product record, no copy of a name, a producer or
+     a vintage — the key is (holder, productId) and it carried this
+     case before anybody wrote it down (A15.2a, A17.9b).
+
+     WHY THIS WINE. It had to be an ordinary one — own label is A17's
+     case and its fixtures are the A17 pass, not this one — so the five
+     bridge rows above are out. Of what is left in Hawesko's book,
+     Pouilly-Fumé is the one Enoteca cannot reach any other way: its
+     own producer partner is Cantina Rossi, an Italian house, and Henri
+     Dubois Domaine sits in the Loire behind a partnership that is
+     Hawesko's (17 Feb 2026). A Cantina Rossi wine bought through
+     Hamburg would have been a fixture contradicting itself — Enoteca
+     already sources that house direct.
+
+     THE PRICE IS THE SECOND ONE ON THIS LINE, not a new fact about the
+     wine. Hawesko quotes 17.20; Enoteca quotes 21.90 in Milan, and
+     both live on their own holder's row. That is exactly the question
+     the flat wineUnitPrice map could not answer, one level further
+     down the chain than the ex-cellar prices above.
+
+     `legacyOwnLabel:false` and no bridge value is deliberate and is
+     the rule, not an omission: even where the product IS an own label,
+     a downstream holder's listing is an ordinary listing (OL-15). */
+  { holder:'Enoteca Milano Import Srl', productId:'PRD-1015', legacyOwnLabel:false, exclusive:false, listedAt:LISTED_AT, holderArticleNo:'EMI-0447', monthlyVolume:null, tradePrice:21.90 },
+
   /* ── Bistro Laurent — the restaurant's wine list ───────────────── */
   { holder:'Bistro Laurent', productId:'PRD-1020', legacyOwnLabel:false, exclusive:true, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:null, tradePrice:null },
   { holder:'Bistro Laurent', productId:'PRD-1021', legacyOwnLabel:false, exclusive:true, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:null, tradePrice:null },
