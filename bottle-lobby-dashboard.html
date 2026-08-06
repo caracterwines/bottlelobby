@@ -5074,6 +5074,189 @@ function removeListing(holder, ref) {
 }
 
 /* ══════════════════════════════════════════════════════════════════
+   A17 OWN LABEL — THE PROJECT AND ITS MARKET GRANTS
+   ------------------------------------------------------------------
+   WHY THE ARRAYS ARE EMPTY, AND WHY THAT IS THE HONEST STATE.
+   A17.14 says the legacy `ownLabel` flag "does not survive as a
+   parallel truth: it is removed in the same pass that gives those
+   wines real projects". Measured before this pass: not one of the six
+   bridged listings has a delivered order from its producing winery to
+   Hawesko. ORD-2029 is the only delivered winery→distributor order in
+   the fixtures and it carries PRD-1008, which is not bridged. So a
+   project row here would answer `false` for all six, the bridge would
+   have to go, and "My Labels" would render nothing — repairable only
+   by inventing a delivered first order, which A17.14 forbids in the
+   same breath ("nothing here is a licence to create an order").
+
+   The records and the readings are therefore built and the FIXTURES
+   ARE NOT. They belong with the first delivery, in the A17 fixture
+   pass, where the bridge is torn out in the same commit. Until then
+   `tests/own-label-grants.js` supplies the examples and drives these
+   functions against them; `tests/listings.js` §6d stays green and
+   keeps the debt visible, which is the whole point of it.
+
+   THE RECORD (A17.8), for the reader who has to fill it:
+
+     { id, distributor, producer, creationType, sourceWineId,
+       developmentReferenceWineId, productId, stage, brandOwner,
+       requestedAt, requestedBy }
+
+   `distributor` is the PRIMARY distributor — the one party the winery
+   may supply (A17.9). `productId` stays null until the winery creates
+   the product after gate 2. `creationType` is `relabel_existing_wine`
+   or `bespoke_new_wine`, and a bespoke row has a null `sourceWineId`
+   (OL-9). No stage enum is declared here: nothing renders a stage yet,
+   and a list of names nobody reads is a second answer waiting to
+   disagree with A17.6.
+══════════════════════════════════════════════════════════════════ */
+const ownLabelProjects = [];
+
+function ownLabelProjectById(id) {
+  if (typeof id !== 'string') return null;
+  return ownLabelProjects.find(p => p.id === id) || null;
+}
+
+/* The project a PRODUCT belongs to, and the one direction that is
+   asked. A17.9 stores the pointer on the product (`ownLabelProjectId`)
+   and A17.8 stores `productId` on the project — the spec names both,
+   and two pointers for one relation is D33 in miniature. The project's
+   own field wins here for a measured reason: no own-label product
+   record exists in this prototype yet, so a product-side pointer would
+   mean editing product fixtures this pass does not touch. When the
+   winery creates the product (A17.9), the pointer moves to the product
+   and this function changes — one function, not a hunt for callers. */
+function ownLabelProjectOf(ref) {
+  const id = (ref && typeof ref === 'object') ? ref.id : ref;
+  if (typeof id !== 'string') return null;
+  return ownLabelProjects.find(p => p.productId === id) || null;
+}
+
+/* The two parties every rule below asks about. The primary
+   distributor is read from the project (A17.12: a stored copy drifts);
+   the producing winery is read from the catalogue, where invariant 2
+   already keeps it. */
+function primaryDistributorOf(ref) { const p = ownLabelProjectOf(ref); return p ? p.distributor : null; }
+function producingWineryOf(ref)    { const p = wineByRef(ref); return p ? p.winery : null; }
+
+/* ── MARKET GRANTS (A17.9a) ─────────────────────────────────────
+   Combinable records on the project's terms. EVERY DIMENSION IS
+   OPTIONAL and they combine freely — a grant names only what it
+   restricts, and what it does not name it does not restrict.
+
+     { id, projectId,
+       countries, regions, cities, territories,   // geography
+       channels,                                  // gastronomy · retail ·
+                                                  // supermarket · discount
+                                                  // supermarket · e-commerce ·
+                                                  // wholesale · sub-distribution
+       keyAccounts,                               // named chains
+       intermediaries,                            // admitted agencies
+       validFrom, validUntil,                     // a period
+       maxBottles,                                // a ceiling
+       conditions }                               // free text, part of the
+                                                  // agreement
+
+   A SINGLE BOOLEAN AND ONE TERRITORY STRING CANNOT CARRY THESE
+   SHAPES, and a field that cannot carry the shape gets used for all of
+   them until it means four things. That is D36, and D37 records the
+   pair as superseded so it is not proposed again.
+
+   `conditions` NEVER RESTRICTS MECHANICALLY, and that is deliberate.
+   It is free text agreed between two parties; a machine cannot read it
+   and pretending otherwise would put a made-up answer where a person
+   has to look. A grant carrying nothing but conditions therefore
+   covers everything the other dimensions leave open — which is what
+   "every dimension is optional" means. */
+const marketGrants = [];
+
+function marketGrantsOf(projectId) {
+  if (typeof projectId !== 'string') return [];
+  return marketGrants.filter(g => g.projectId === projectId);
+}
+
+/* Does this grant admit this supply?
+
+   The context names the supply being asked about:
+
+     { country, region, city, territory, channel,
+       keyAccount, intermediary, at, bottles }
+
+   A NAMED DIMENSION WITH NOTHING TO MATCH IS A NO, not a yes. A grant
+   that names three channels has not admitted a supply that names no
+   channel at all: the question "is this covered" cannot be answered
+   yes on missing information, and answering it yes is exactly how a
+   permission spreads past what was agreed.
+
+   `bottles` is the figure the caller has already totalled — what this
+   supply would take the grant to, not this one order's quantity. A
+   ceiling is cumulative, and the ledger that could total it lives with
+   the orders, not here. */
+function marketGrantCovers(grant, ctx) {
+  if (!grant || !ctx) return false;
+  const admits = (named, value) =>
+    !Array.isArray(named) || !named.length || (value != null && named.indexOf(value) !== -1);
+  if (!admits(grant.countries,      ctx.country))      return false;
+  if (!admits(grant.regions,        ctx.region))       return false;
+  if (!admits(grant.cities,         ctx.city))         return false;
+  if (!admits(grant.territories,    ctx.territory))    return false;
+  if (!admits(grant.channels,       ctx.channel))      return false;
+  if (!admits(grant.keyAccounts,    ctx.keyAccount))   return false;
+  if (!admits(grant.intermediaries, ctx.intermediary)) return false;
+  /* ISO dates compare as strings, which is why every date in this
+     prototype is one (C9). A period with no date to place inside it is
+     the same no as a channel with nothing to match. */
+  if (grant.validFrom  != null && !(ctx.at != null && ctx.at >= grant.validFrom))  return false;
+  if (grant.validUntil != null && !(ctx.at != null && ctx.at <= grant.validUntil)) return false;
+  if (grant.maxBottles != null &&
+      !(typeof ctx.bottles === 'number' && ctx.bottles <= grant.maxBottles)) return false;
+  return true;
+}
+
+/* The first grant of this project that admits the supply, or null.
+   Grants COMBINE: a supermarket grant for one country and a
+   sub-distribution grant for one region are two rows, and a supply
+   needs only one of them to admit it. */
+function marketGrantCovering(projectId, ctx) {
+  return marketGrantsOf(projectId).find(g => marketGrantCovers(g, ctx)) || null;
+}
+
+/* ── MG-1 AND MG-2 — WHO MAY BUY THIS BOTTLE FROM WHOM ──────────
+   MG-1: visibility never yields an order or distribution right. There
+   is no order button without an active partnership AND a covering
+   grant, at any reach level (A17.9a, A17.13a). Reach decides who SEES;
+   the agreement decides who may ACT, and a display control cannot vary
+   an agreement. Nothing in this function reads a reach, a visibility
+   or a public flag, and the harness measures that over the source
+   rather than trusting the sentence.
+
+   MG-2: an order line for an own-label product whose seller is the
+   winery and whose buyer is not the primary distributor does not
+   exist (A17.9b).
+
+   Answers null for a product that is not an own label — A17 has
+   nothing to say about it, and a `false` there would read as a refusal
+   of an ordinary trade. */
+function ownLabelOrderRight(buyer, seller, ref, ctx) {
+  const project = ownLabelProjectOf(ref);
+  if (!project) return null;
+  if (!arePartners(buyer, seller))
+    return { allowed: false, rule: 'MG-1', reason: 'no active partnership between ' + buyer + ' and ' + seller };
+  if (seller === project.producer)
+    return buyer === project.distributor
+      ? { allowed: true,  rule: null,   reason: 'the primary distributor buying from the producing winery' }
+      : { allowed: false, rule: 'MG-2', reason: 'only ' + project.distributor + ' orders this product from ' + project.producer };
+  /* Any other seller is trading a bottle already bought once, and what
+     bounds it is the grant. Where the seller is not the primary
+     distributor the caller names them as `ctx.intermediary`: the
+     Intermediaries dimension is the one that admits an agency or a
+     second distributor (A17.9a, A17.9b). */
+  const grant = marketGrantCovering(project.id, ctx);
+  return grant
+    ? { allowed: true,  rule: null,   reason: 'covered by ' + grant.id }
+    : { allowed: false, rule: 'MG-1', reason: 'no market grant of ' + project.id + ' covers this supply' };
+}
+
+/* ══════════════════════════════════════════════════════════════════
    PORTFOLIO COUNTS — counted, never stored (invariant 7)
    ------------------------------------------------------------------
    Every partner card used to carry its figure as a field on the

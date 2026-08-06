@@ -289,7 +289,7 @@ console.log('\n── own label has exactly one reading');
     ok('A17 projects exist and no listing carries the bridge any more — the migration is done');
   else
     ok('1 open migration bridge: legacyOwnLabel — A17 pass (' + bridged.length +
-       ' legacy row(s), no ownLabelProjects yet)');
+       ' legacy row(s), no ownLabelProjects rows yet)');
 }
 
 /* ── 7. The books read listings, and the counter-checks ─────────── */
@@ -452,9 +452,16 @@ console.log('\n── the counter-checks');
       },
       says: 'exactly the lasting fallback A17 forbids — a listing counting as own-label either way' },
 
+    /* The mutation used to DECLARE the array, because there was none.
+       There is one now — empty, with the records and readings built and
+       the fixtures deliberately withheld until the first delivery
+       exists (A17.14). Declaring it a second time is a SyntaxError, and
+       a mutation that crashes the page certifies nothing. The faithful
+       shape of the fault today is a project ROW beside a live bridge,
+       which is what this puts in. */
     { what: 'the bridge survives beside an A17 project',
-      from: "const LISTED_AT = '2026-06-01';",
-      to:   "const LISTED_AT = '2026-06-01';\nlet ownLabelProjects = [{ id:'OLP-1', distributor:'Hawesko GmbH', producer:'Cantina Rossi', stage:'gate2_approved' }];",
+      from: "const ownLabelProjects = [];",
+      to:   "const ownLabelProjects = [{ id:'OLP-1', distributor:'Hawesko GmbH', producer:'Cantina Rossi', productId:'PRD-1022', stage:'gate2_approved' }];",
       ask:  win => {
         const projects = win.eval('typeof ownLabelProjects === "undefined" ? null : ownLabelProjects');
         const bridged = J2(win, 'listings').filter(l => l.legacyOwnLabel);
