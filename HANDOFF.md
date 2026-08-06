@@ -96,6 +96,26 @@ Wahrheiten stabilisieren, dann nach aussen bauen.
 **Zwischen den Durchgaengen jeweils eine Browser-Abnahme** — klicken statt
 Funktionen aufrufen, `transferSize` vorher lesen (C7).
 
+> **Durchgang 3 ist gebaut, mit einem benannten Rest.** Datensaetze und
+> Lesungen stehen in der Seite (`ownLabelProjects`, `marketGrants`,
+> `ownLabelFeeEvents`, `ownLabelListingDerived()`, `ownLabelOrderRight()`,
+> `ownLabelFeeEvent()`); die **Arrays sind leer**, die Fixtures liegen in
+> `tests/own-label-grants.js`. Grund, gemessen: keine der sechs ueberbrueckten
+> Listing-Zeilen hat eine gelieferte Bestellung ihres erzeugenden Weinguts an
+> Hawesko — ORD-2029 ist die einzige gelieferte Weingut→Distributor-Order und
+> traegt PRD-1008, das nicht ueberbrueckt ist. Eine Projektzeile in der Seite
+> haette die Ableitung fuer alle sechs auf `false` gestellt, A17.14 haette die
+> `legacyOwnLabel`-Bruecke im selben Commit verlangt, und „My Labels" waere leer
+> — reparabel nur durch eine **erfundene** Erstlieferung, die A17.14 im selben
+> Atemzug verbietet.
+>
+> **Zieldurchgang fuer den Rest: A17-Fixtures** (nach 4, vor 11) — Programm-
+> Mitgliedschaften, Projekte ueber den ganzen Bogen, die erste gelieferte
+> Bestellung, Grants und Gebuehrenereignisse an echten Zeilen, und im selben
+> Commit der Abbau von `legacyOwnLabel` / `listingOwnLabelStatus()`.
+> `tests/listings.js` §6d haelt die Schuld sichtbar: sie wird rot, sobald eine
+> Projektzeile neben der Bruecke steht.
+
 **Nicht Teil dieser Konsolidierung:** das **Matchmaking-Cockpit** (A8, Seek/Offer).
 Eigener vermessener Durchgang danach; bis dahin bleibt `matchmaking` als
 Reichweitenoption sichtbar gesperrt, mit Begruendung auf dem Schirm.
