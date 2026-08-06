@@ -5307,6 +5307,115 @@ function ownLabelListingDerived(listing) {
   return !!firstCommercialDeliveryOf(listing.productId);
 }
 
+/* ── THE FEE (A17.10) ───────────────────────────────────────────
+   A centrally set fixed amount per bindingly ordered own-label bottle,
+   paid by the winery.
+
+   CENTRAL MEANS CENTRAL. It is not per project, not editable by either
+   party, and neither side negotiates it — the winery prices it into
+   its offer. A per-project fee would make the fee a term, a term is
+   negotiated, and a negotiated platform fee is a different business
+   from the one A17 describes. The tariff version is the only place the
+   number can move, and it moves forward only: a change is a new
+   central contract and a new version, for contracts concluded
+   afterwards, and nothing reprices history.
+
+   THE AMOUNT IS LIFTED, NOT CHOSEN. €0.25 is the figure A17.10 uses
+   to explain the pricing ("wanting €5.00 net at a €0.25 fee, it offers
+   €5.25"). The version string is fixture authorship and says only that
+   there has been one tariff so far.
+
+   OL-2 IS NOT BROKEN BY THIS CONSTANT. What OL-2 forbids is the fee
+   living in a structure the distributor's side reads — his
+   `ownLabelTerms` row has no fee field at all, which is an omission
+   rather than a secret and is the only form that survives a browser
+   with developer tools open. This is Bottle Lobby's central tariff,
+   which is nobody's terms row. */
+const OWN_LABEL_FEE_TARIFF = {
+  feeType: 'per_bottle', feePerBottle: 0.25, feeCurrency: 'EUR',
+  feePayer: 'winery', feeTrigger: 'accepted_order_line', feeTermsVersion: 'OLF-2026-01'
+};
+
+/* The append-only ledger (A17.10). Empty for the same reason the
+   projects are: a fee event needs an own-label order line from a
+   producing winery to its primary distributor, and there is none.
+   `tests/own-label-grants.js` builds them and drives the rules. */
+const OWN_LABEL_FEE_EVENT_TYPES = ['accrued', 'adjusted', 'reversed', 'waived'];
+const ownLabelFeeEvents = [];
+
+function ownLabelFeeEventsOf(projectId) {
+  if (typeof projectId !== 'string') return [];
+  return ownLabelFeeEvents.filter(e => e.projectId === projectId);
+}
+
+/* OL-14 — A FEE EVENT EXISTS ONLY WHERE THE SELLER IS THE PRODUCING
+   WINERY OF THE PRODUCT. The fee accrues once, at the top of the
+   chain, on the winery's accepted order line to the primary
+   distributor. A → B, B → restaurant and A → restaurant carry none:
+   that is ordinary trade in a bottle that has already been paid for
+   once, and charging it again would make the fee a turnover tax on the
+   chain rather than a fee on production. */
+function ownLabelFeeMayAccrue(order, ref) {
+  const id = (ref && typeof ref === 'object') ? ref.id : ref;
+  const project = ownLabelProjectOf(id);
+  if (!project) return { allowed: false, rule: 'OL-14', reason: 'not an own-label product' };
+  if (!order) return { allowed: false, rule: 'OL-14', reason: 'no order' };
+  if (order.seller !== producingWineryOf(id))
+    return { allowed: false, rule: 'OL-14', reason: order.seller + ' is not the producing winery of ' + id };
+  if (order.buyer !== project.distributor)
+    return { allowed: false, rule: 'MG-2', reason: order.buyer + ' is not the primary distributor of ' + project.id };
+  return { allowed: true, rule: null, reason: 'the producing winery selling to its primary distributor' };
+}
+
+/* THE RATE TRAVELS WITH THE EVENT. `feePerBottle` and `feeCurrency`
+   are written onto the row beside `feeTermsVersion` and are not a
+   convenience copy: the version alone would only name a document, and
+   a ledger line has to be readable as money from itself. A historic
+   fee is never recomputed from the current terms — the correction for
+   a wrong one is a NEW event, never an edit of an old one (OL-12).
+
+   THE LINE KEY IS (ORDER, PRODUCT), AND THAT IS A FINDING. A17.10
+   names an `orderLineId`; order lines in this prototype carry no key
+   of their own. (order, product) identifies one uniquely in every
+   fixture order, so it is what the ledger names until lines get a key.
+
+   Builds and returns the event; it does not append. Nothing in this
+   pass writes the ledger, and a builder that quietly pushed would be a
+   write path nobody asked for. */
+function ownLabelFeeEvent(fields) {
+  const f = fields || {};
+  const id = (f.productId && typeof f.productId === 'object') ? f.productId.id : f.productId;
+  const project = ownLabelProjectOf(id);
+  const may = ownLabelFeeMayAccrue(f.order, id);
+  if (!may.allowed) {
+    console.warn('[own label] no fee event: ' + may.reason + ' (' + may.rule + ')');
+    return null;
+  }
+  if (OWN_LABEL_FEE_EVENT_TYPES.indexOf(f.type) === -1) {
+    console.warn('[own label] no fee event: "' + f.type + '" is not a fee event type');
+    return null;
+  }
+  return {
+    id: f.id, type: f.type, projectId: project.id,
+    orderId: f.order.id, orderLineId: f.order.id + '#' + id,
+    bottles: f.bottles,
+    feePerBottle:    OWN_LABEL_FEE_TARIFF.feePerBottle,
+    feeCurrency:     OWN_LABEL_FEE_TARIFF.feeCurrency,
+    feeTermsVersion: OWN_LABEL_FEE_TARIFF.feeTermsVersion,
+    at: f.at, note: f.note == null ? null : f.note,
+    invoiceId: f.invoiceId == null ? null : f.invoiceId
+  };
+}
+
+/* Can this row still be read as money on its own, years after the
+   tariff moved? That is what the snapshot is for, and it is the
+   question an audit asks of a ledger line. */
+function feeEventHasSnapshot(ev) {
+  return !!ev && typeof ev.feePerBottle === 'number' && ev.feePerBottle > 0 &&
+         typeof ev.feeCurrency === 'string' && !!ev.feeCurrency &&
+         typeof ev.feeTermsVersion === 'string' && !!ev.feeTermsVersion;
+}
+
 /* ══════════════════════════════════════════════════════════════════
    PORTFOLIO COUNTS — counted, never stored (invariant 7)
    ------------------------------------------------------------------
