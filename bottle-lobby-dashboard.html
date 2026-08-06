@@ -1172,12 +1172,12 @@ body {
       <div class="nav-item" id="wnav-press" onclick="showWineryView('profile','press')" style="cursor:pointer"><span class="nav-icon">❖</span> My Press & Recognition</div>
     </div>
     <div class="nav-section">
-      <div class="nav-section-label">My Partners</div>
+      <div class="nav-section-label">Network</div>
       <div class="nav-item" id="wnav-network" onclick="showWineryView('profile','network')" style="cursor:pointer"><span class="nav-icon">◉</span> My Distributors</div>
       <div class="nav-item" id="wnav-requests" onclick="showWineryView('profile','requests')" style="cursor:pointer"><span class="nav-icon">✉</span> My Requests</div>
     </div>
     <div class="nav-section">
-      <div class="nav-section-label">Network</div>
+      <div class="nav-section-label">Community</div>
       <div class="nav-item"><span class="nav-icon">◇</span> Matchmaking <span class="nav-badge">4</span></div>
       <div class="nav-item" id="wnav-winestars" onclick="showWineryView('profile','winestars')" style="cursor:pointer"><span class="nav-icon">♥</span> My Stars</div>
       <div class="nav-item" id="wnav-fans" onclick="showWineryView('profile','fans')" style="cursor:pointer"><span class="nav-icon">♥</span> My Fans</div>
@@ -1238,12 +1238,12 @@ body {
       <div class="nav-item" id="dnav-deals" onclick="showDistributorView('profile','deals')" style="cursor:pointer"><span class="nav-icon">%</span> My Deals</div>
     </div>
     <div class="nav-section">
-      <div class="nav-section-label">My Partners</div>
+      <div class="nav-section-label">Network</div>
       <div class="nav-item" id="dnav-network" onclick="showDistributorView('profile','network')" style="cursor:pointer"><span class="nav-icon">◉</span> My Partnerships</div>
       <div class="nav-item" id="dnav-requests" onclick="showDistributorView('profile','requests')" style="cursor:pointer"><span class="nav-icon">✉</span> My Requests</div>
     </div>
     <div class="nav-section">
-      <div class="nav-section-label">Network</div>
+      <div class="nav-section-label">Community</div>
       <div class="nav-item"><span class="nav-icon">◇</span> Matchmaking <span class="nav-badge">6</span></div>
       <div class="nav-item" id="dnav-opportunities" onclick="showDistributorView('profile','opportunities')" style="cursor:pointer"><span class="nav-icon">✦</span> My Opportunities</div>
       <div class="nav-item" id="dnav-winestars" onclick="showDistributorView('profile','winestars')" style="cursor:pointer"><span class="nav-icon">♥</span> My Stars</div>
@@ -1297,12 +1297,12 @@ body {
       <div class="nav-item" id="rnav-wines" onclick="showRestaurantView('profile','wines')" style="cursor:pointer"><span class="nav-icon">◈</span> My Wine List</div>
     </div>
     <div class="nav-section">
-      <div class="nav-section-label">My Partners</div>
+      <div class="nav-section-label">Network</div>
       <div class="nav-item" id="rnav-network" onclick="showRestaurantView('profile','network')" style="cursor:pointer"><span class="nav-icon">◉</span> My Distributors</div>
       <div class="nav-item" id="rnav-requests" onclick="showRestaurantView('profile','requests')" style="cursor:pointer"><span class="nav-icon">✉</span> My Requests</div>
     </div>
     <div class="nav-section">
-      <div class="nav-section-label">Network</div>
+      <div class="nav-section-label">Community</div>
       <div class="nav-item"><span class="nav-icon">◇</span> Matchmaking <span class="nav-badge">3</span></div>
       <div class="nav-item" id="rnav-winestars" onclick="showRestaurantView('profile','winestars')" style="cursor:pointer"><span class="nav-icon">♥</span> My Stars</div>
       <div class="nav-item" id="rnav-fans" onclick="showRestaurantView('profile','fans')" style="cursor:pointer"><span class="nav-icon">♥</span> My Fans</div>
@@ -1357,12 +1357,12 @@ body {
       <div class="nav-item" id="tnav-wines" onclick="showRetailView('profile','wines')" style="cursor:pointer"><span class="nav-icon">◈</span> My Wine Selection</div>
     </div>
     <div class="nav-section">
-      <div class="nav-section-label">My Partners</div>
+      <div class="nav-section-label">Network</div>
       <div class="nav-item" id="tnav-network" onclick="showRetailView('profile','network')" style="cursor:pointer"><span class="nav-icon">◉</span> My Distributors</div>
       <div class="nav-item" id="tnav-requests" onclick="showRetailView('profile','requests')" style="cursor:pointer"><span class="nav-icon">✉</span> My Requests</div>
     </div>
     <div class="nav-section">
-      <div class="nav-section-label">Network</div>
+      <div class="nav-section-label">Community</div>
       <div class="nav-item"><span class="nav-icon">◇</span> Matchmaking <span class="nav-badge">2</span></div>
       <div class="nav-item" id="tnav-winestars" onclick="showRetailView('profile','winestars')" style="cursor:pointer"><span class="nav-icon">♥</span> My Stars</div>
       <div class="nav-item" id="tnav-fans" onclick="showRetailView('profile','fans')" style="cursor:pointer"><span class="nav-icon">♥</span> My Fans</div>
@@ -4247,7 +4247,7 @@ const W_GROUPS = [
   { key:'partners', members:[
       { s:'network',  label:'My Distributors' },
       { s:'requests', label:'My Requests' } ] },
-  { key:'network', members:[
+  { key:'community', members:[
       { s:'winestars', label:'My Stars' },
       { s:'fans',      label:'My Fans' } ] }
 ];
@@ -4656,7 +4656,7 @@ const D_GROUPS = [
   { key:'partners', members:[
       { s:'network',  label:'My Partnerships' },
       { s:'requests', label:'My Requests' } ] },
-  { key:'network', members:[
+  { key:'community', members:[
       { s:'opportunities', label:'My Opportunities' },
       { s:'winestars',     label:'My Stars' },
       { s:'fans',          label:'My Fans' } ] }
@@ -5752,7 +5752,7 @@ const R_GROUPS = [
   { key:'partners', members:[
       { s:'network',  label:'My Distributors' },
       { s:'requests', label:'My Requests' } ] },
-  { key:'network', members:[
+  { key:'community', members:[
       { s:'winestars', label:'My Stars' },
       { s:'fans',      label:'My Fans' } ] },
   { key:'discover', members:[
@@ -6153,7 +6153,7 @@ const T_GROUPS = [
   { key:'partners', members:[
       { s:'network',  label:'My Distributors' },
       { s:'requests', label:'My Requests' } ] },
-  { key:'network', members:[
+  { key:'community', members:[
       { s:'winestars', label:'My Stars' },
       { s:'fans',      label:'My Fans' } ] },
   { key:'discover', members:[
@@ -8716,6 +8716,25 @@ const SHOW_STAGE_LABEL = {
 };
 /* Which stages count as "still running" vs history, per role tab. */
 const SHOW_PAST_STAGES = ['completed','cancelled'];
+
+/* The platform's reach taxonomy (A16.14b), defined exactly once.
+   Wine Shows, member events (A16.8), own-label visibility (A17.13a)
+   and campaigns (A16.14e) all REFERENCE this list — none of them
+   redefines the levels and none adds a private one.
+
+   Every entry permits; none forbids. A house in two selected groups
+   sees the thing once — it is a multi-select, not a ladder.
+
+   'partners' = active business relations (the Network nav section).
+   'community' = the follow side (My Stars / My Fans). The generic
+   value 'network' deliberately does not exist: that word names a nav
+   section and a section key, and may not also name a reach level (D39).
+   'matchmaking' is deliberately absent too — shown locked in the
+   interface with its reason on screen, until A8 exists (C2).
+
+   Not yet read by any UI; the reach selector is its own later pass. */
+const REACH_LEVELS = ['public','members','wineries','distributors',
+                      'restaurants','retail','partners','community'];
 
 /* `wineShows` now lives in assets/bottle-lobby-data.js, loaded ahead
    of this block. It is shared with the public pages: one record,

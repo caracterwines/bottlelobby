@@ -14,13 +14,49 @@ if (errors.length) { console.log('SCRIPT ERRORS:\n' + errors.join('\n')); proces
 console.log('script evaluated cleanly\n');
 
 const ROLES = {
-  winery:     { fn:'showWineryView',     maps:['W_SECTION_EL','W_NAV_EL','W_TITLES','W_GROUPS'], tabs:'wprofile-tabs', dashNav:'wnav-dashboard' },
-  distributor:{ fn:'showDistributorView',maps:['D_SECTION_EL','D_NAV_EL','D_TITLES','D_GROUPS'], tabs:'dprofile-tabs', dashNav:'dnav-dashboard' },
-  restaurant: { fn:'showRestaurantView', maps:['R_SECTION_EL','R_NAV_EL','R_TITLES','R_GROUPS'], tabs:'rprofile-tabs', dashNav:'rnav-dashboard' },
-  retail:     { fn:'showRetailView',     maps:['T_SECTION_EL','T_NAV_EL','T_TITLES','T_GROUPS'], tabs:'tprofile-tabs', dashNav:'tnav-dashboard' },
+  winery:     { fn:'showWineryView',     maps:['W_SECTION_EL','W_NAV_EL','W_TITLES','W_GROUPS'], tabs:'wprofile-tabs', dashNav:'wnav-dashboard', sidebar:'sidebar-winery' },
+  distributor:{ fn:'showDistributorView',maps:['D_SECTION_EL','D_NAV_EL','D_TITLES','D_GROUPS'], tabs:'dprofile-tabs', dashNav:'dnav-dashboard', sidebar:'sidebar-distributor' },
+  restaurant: { fn:'showRestaurantView', maps:['R_SECTION_EL','R_NAV_EL','R_TITLES','R_GROUPS'], tabs:'rprofile-tabs', dashNav:'rnav-dashboard', sidebar:'sidebar-restaurant' },
+  retail:     { fn:'showRetailView',     maps:['T_SECTION_EL','T_NAV_EL','T_TITLES','T_GROUPS'], tabs:'tprofile-tabs', dashNav:'tnav-dashboard', sidebar:'sidebar-retail' },
 };
 let fail = 0;
 const bad = m => { console.log('  FAIL ' + m); fail++; };
+
+/* ── NAV-1: the visible sidebar section labels per role (B8) ──────────
+   Order matters — B8 fixes it as
+   Overview → Commerce → My Portfolio → Network → Community →
+   [role-specific] → Events / Tools → Account.
+
+   "My Partners" became **Network** and the old "Network" became
+   **Community** (D39). The two did not shift by one, they swapped
+   meanings, which is why this list is the guard: a find-and-replace
+   rename would have left one of the two right and the other wrong,
+   and nothing would have turned red.
+
+   This is the state after the rename pass. The Events *sections* all
+   exist already; what B8 still expects and the prototype does not yet
+   have is the **My Events** nav ITEM in Winery / Distributor /
+   Restaurant — that is a later pass and adds items, not section
+   labels, so this list is complete as it stands. */
+const NAV_SECTIONS = {
+  winery:     ['Overview','Commerce','My Portfolio','Network','Community','Market','Events','Services','Account'],
+  distributor:['Overview','Commerce','My Portfolio','Network','Community','Intelligence','Events','Account'],
+  restaurant: ['Overview','Commerce','My Portfolio','Network','Community','Discover','Events','Tools','Account'],
+  retail:     ['Overview','Commerce','My Portfolio','Network','Community','Discover','Events','Account'],
+};
+
+console.log('── NAV-1: visible sidebar section labels (B8)');
+for (const [role, cfg] of Object.entries(ROLES)) {
+  const aside = d.getElementById(cfg.sidebar);
+  if (!aside) { bad(`${role}: no #${cfg.sidebar}`); continue; }
+  const got = [...aside.querySelectorAll('.nav-section-label')].map(e => e.textContent.trim());
+  const want = NAV_SECTIONS[role];
+  if (got.join(' · ') !== want.join(' · ')) bad(`${role}: sections [${got.join(' · ')}]\n         expected [${want.join(' · ')}]`);
+  else console.log(`  ${role.padEnd(12)} ${got.join(' · ')}`);
+  // The swap must not have left the retired label anywhere.
+  if (got.includes('My Partners')) bad(`${role}: "My Partners" survives — D39 renamed it to Network`);
+}
+console.log('');
 
 for (const [role, cfg] of Object.entries(ROLES)) {
   const [SEC, NAV, TIT, GRP] = cfg.maps.map(n => w.eval(n));
