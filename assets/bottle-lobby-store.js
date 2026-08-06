@@ -94,8 +94,15 @@
    like the asset cache serving a stale file, and it was mistaken for
    one twice.
 
-   So: change the format of stored data, bump VERSION in the same
-   commit.
+   The same blindness has a second face, and it was learned later
+   (06.08.2026): an array folds to the UNION of its element shapes, so
+   ADDING A ROW of a shape already present changes nothing either. New
+   fixture rows are therefore as invisible as a changed value format —
+   the returning visitor keeps a collection that is simply shorter than
+   the one the build ships.
+
+   So: change the FORMAT of stored data, or ADD FIXTURE ROWS to a
+   registered collection, and bump VERSION in the same commit.
 
    A mismatch discards EVERYTHING, all or nothing. A partial restore
    would leave a half-migrated demo — shows from today, orders from
@@ -141,8 +148,28 @@ window.BLStore = (function () {
      page then reported `origin` "Loire Valley, France" and
      `wineLabel("PRD-1022")` "Primitivo Sicilia IGT 2022" — the old
      answers, permanently, on today's code. That is exactly the
-     symptom this counter exists for. */
-  var VERSION   = 3;
+     symptom this counter exists for.
+
+     4 — the D2D pass (06.08.2026), and it is a THIRD class of
+     blindness rather than a repeat of the second. Nothing changed
+     shape and nothing changed format: three ROWS were ADDED to
+     existing collections — ORD-2043 to `orders`, the Hawesko ↔
+     Enoteca row to `partnerships`, Enoteca's Pouilly-Fumé listing to
+     `listings` — each one the same shape as the rows beside it. The
+     fingerprint folds an array to the UNION of its element shapes, so
+     rows are invisible to it BY CONSTRUCTION: a collection with one
+     more row of a known shape hashes identically.
+
+     OBSERVED LIVE, not deduced: an older snapshot restored over the
+     new fixtures and ORD-2043 and the Enoteca partner card were gone
+     from the running page — the fixture rows were there, the snapshot
+     overwrote the collections that held them.
+
+     The rule to carry forward: VERSION is the lever whenever a
+     returning visitor's snapshot would be WRONG, and that is broader
+     than "the format changed". Added fixture rows are wrong in the
+     same way — the demo shows less than the build ships. */
+  var VERSION   = 4;
   var DEBOUNCE  = 200;   /* ms after the last event before a write */
   var HEARTBEAT = 2000;  /* ms between "does storage still match?" checks */
   var POLL      = 500;   /* ms between retries while the tab is busy */

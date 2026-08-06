@@ -79,9 +79,16 @@ function openTab(area, opts) {
      caller asked. */
   let html = loadDashboard(null, { persist: opts.persist === true }).html;
   if (opts.patch) {
-    const before = html;
-    html = html.replace(opts.patch.from, opts.patch.to);
-    if (html === before) throw new Error('openTab: patch never applied — ' + opts.patch.from);
+    /* One patch or several: an older build sometimes differs in more
+       than one place — the D2D pass added three rows AND moved
+       VERSION — and applying them one call at a time would mean
+       building the page twice. Each is checked separately, so a miss
+       still names the patch that missed. */
+    (Array.isArray(opts.patch) ? opts.patch : [opts.patch]).forEach(p => {
+      const before = html;
+      html = html.replace(p.from, p.to);
+      if (html === before) throw new Error('openTab: patch never applied — ' + p.from);
+    });
   }
   const dom = new JSDOM(html, {
     runScripts: 'dangerously', pretendToBeVisual: true,
@@ -868,6 +875,114 @@ console.log('\n── a snapshot from before the show products named keys');
     else
       bad('with the comparison removed only ' + returned + ' of ' + oldShape + ' came back — ' +
           'something else is doing this work and the check above does not prove what it says');
+  }
+}
+
+/* ── A snapshot from before an ADDED ROW cannot hide it ───────────
+   The third class, and the two above are why it needs its own check:
+   guard 2 sees a new KEY, VERSION was bumped for a changed VALUE
+   FORMAT — and neither of them describes a row simply being ADDED.
+
+   THE FINGERPRINT IS BLIND TO IT BY CONSTRUCTION. An array folds to
+   the UNION of its element shapes, so a collection with one more row
+   of a shape it already holds hashes identically. That is not a bug in
+   the fold; it is what makes optional fields work at all. The section
+   below asserts the blindness rather than asserting around it: the old
+   build's fingerprints for the three collections must come out EQUAL
+   to today's, and only then does the version number mean anything.
+
+   OBSERVED, not constructed. The D2D pass (06.08.2026) added three
+   rows of existing shape — ORD-2043 to `orders`, the Hawesko ↔ Enoteca
+   row to `partnerships`, Enoteca's listing to `listings` — and shipped
+   without a bump. A returning visitor's snapshot restored over the new
+   fixtures and the order and the partner card were gone from the
+   running page. VERSION went 3 → 4 in the same commit as this check. */
+console.log('\n── a snapshot from before an added row does not hide the row');
+{
+  const AT = "at:'2026-05-19'";
+  /* The previous build, in three edits and one number. Anchored on the
+     rows' own text so a later edit to any of them turns this red
+     rather than quietly seeding today's page. */
+  const ROWS_GONE = [
+    { from: "  { distributor:'Hawesko GmbH', partner:'Enoteca Milano Import Srl', " + AT + ", activatedBy:'Bottle Lobby' }\n];",
+      to:   "\n];" },
+    { from: "  { holder:'Enoteca Milano Import Srl', productId:'PRD-1015', legacyOwnLabel:false, exclusive:false, listedAt:LISTED_AT, holderArticleNo:'EMI-0447', monthlyVolume:null, tradePrice:21.90 },\n",
+      to:   '' },
+    { from: "  { id:'ORD-2043', placed:'2026-06-16', buyer:'Enoteca Milano Import Srl', buyerType:'distributor',",
+      to:   "  { id:'ORD-9999', placed:'2026-06-16', buyer:'REMOVED', buyerType:'distributor'," }
+  ];
+  const OLD_VERSION = { from: '  var VERSION   = 4;', to: '  var VERSION   = 3;' };
+
+  const area = makeStorageArea();
+  const seed = openTab(area, { persist: true, patch: ROWS_GONE.concat([OLD_VERSION]) });
+  const gone = seed.w.eval(`(function () {
+    return [ orders.filter(function (o) { return o.id === 'ORD-2043'; }).length,
+             partnerships.filter(function (p) { return p.partner === 'Enoteca Milano Import Srl' && p.distributor === 'Hawesko GmbH'; }).length,
+             listings.filter(function (l) { return l.holder === 'Enoteca Milano Import Srl'; }).length ].join(',');
+  })()`);
+
+  if (gone !== '0,0,0') {
+    bad('the seed tab still holds the D2D rows (' + gone + ') — the patches did not produce the older build');
+  } else {
+    seed.w.eval('orders[0].note = orders[0].note');   /* touch, so a snapshot is written */
+    nudge(seed.w); await settle(seed.w);
+    const snap = read(area);
+    const today = openTab(null, {}).w.eval('JSON.stringify(BLStore.fingerprints())');
+
+    if (!snap) {
+      bad('the previous build wrote no snapshot — this check proves nothing');
+    } else if (snap.v !== 3) {
+      bad('the seed tab wrote version ' + snap.v + ' — the VERSION patch did not take, so the discard below would be for the wrong reason');
+    } else {
+      /* THE POINT OF THE SECTION. If these differ, the fingerprint
+         could have caught it and the version number was never the
+         thing under test. */
+      const same = ['orders', 'partnerships', 'listings']
+        .filter(k => snap.fp[k] === JSON.parse(today)[k]);
+      if (same.length !== 3)
+        bad('the shape fingerprint DID change for ' + (3 - same.length) + ' of the three collections — ' +
+            'then this is a guard-2 case and not a VERSION case, and the reasoning above is wrong');
+      else
+        ok('all three collections hash identically before and after the added rows — the fingerprint cannot see a row, only a shape');
+
+      const t = openTab(area, { persist: true });
+      const back = t.w.eval(`(function () {
+        return [ orders.filter(function (o) { return o.id === 'ORD-2043'; }).length,
+                 partnerships.filter(function (p) { return p.partner === 'Enoteca Milano Import Srl' && p.distributor === 'Hawesko GmbH'; }).length,
+                 listings.filter(function (l) { return l.holder === 'Enoteca Milano Import Srl'; }).length ].join(',');
+      })()`);
+      if (back !== '1,1,1')
+        bad('after restoring the older snapshot the page holds ' + back + ' of the three D2D rows (want 1,1,1) — ' +
+            'the snapshot was merged over the new fixtures; bump VERSION in bottle-lobby-store.js when fixture ROWS are added');
+      else
+        ok('an older snapshot written before the three rows is discarded, and the order, the partnership and the listing are all there');
+
+      /* Counter-check: the same older build, but shipped WITHOUT the
+         bump — the mistake this section exists for. Its snapshot then
+         carries today's version and today's fingerprint, nothing
+         refuses it, and the three rows must vanish. If they do not,
+         something other than VERSION is doing the work above and this
+         section proves nothing. */
+      const area2 = makeStorageArea();
+      const forgot = openTab(area2, { persist: true, patch: ROWS_GONE });
+      forgot.w.eval('orders[0].note = orders[0].note');
+      nudge(forgot.w); await settle(forgot.w);
+      const unbumped = read(area2);
+      if (!unbumped || unbumped.v !== 4) {
+        bad('the un-bumped seed wrote version ' + (unbumped && unbumped.v) + ' — the counter-check never reached its own premise');
+      } else {
+        const t2 = openTab(area2, { persist: true });
+        const hidden = t2.w.eval(`(function () {
+          return [ orders.filter(function (o) { return o.id === 'ORD-2043'; }).length,
+                   partnerships.filter(function (p) { return p.partner === 'Enoteca Milano Import Srl' && p.distributor === 'Hawesko GmbH'; }).length,
+                   listings.filter(function (l) { return l.holder === 'Enoteca Milano Import Srl'; }).length ].join(',');
+        })()`);
+        if (hidden === '0,0,0')
+          ok('caught: with the bump left out, the identical snapshot IS restored and all three rows disappear — the version number is what stops it, and nothing else could have');
+        else
+          bad('without the bump the rows still came back (' + hidden + ') — something other than VERSION is refusing that snapshot, so the check above does not prove what it says');
+      }
+    }
   }
 }
 
