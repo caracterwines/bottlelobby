@@ -156,39 +156,56 @@ const SHOW_HERO_FALLBACK = 'images/duesseldorf-tasting-wide.jpg';
    only in the distributor's book: seven wines nobody's catalogue
    knew. The numbering records that gap rather than smoothing it.
 
-   THE GAP WAS MEASURED, AND IT IS NOT ONE GAP BUT TWO. Six of the
-   seven — PRD-1020 … PRD-1025 — carry `status:'Own-Label'` in the
-   public Wine Guide and an `active`/`pending` `legacyOwnLabel` on
-   their listing. Two independent sources, the same six wines, the
-   same boundary.
+   THE GAP IS CLOSED, AND THE ANSWER WAS THE ONE THIS COMMENT ASKED
+   FOR. It used to end: "the open question is not whether to loosen
+   A17.9 but whether all six are own labels at all." Measured — none of
+   the six is one (D41). Each is the producer's own appellation wine
+   under the producer's brand; five of their article pages give the
+   own-label ribbon the reason *exclusive distribution through
+   Hawesko*, which is precisely what A17.0b's last paragraph puts
+   outside A17, and the sixth (PRD-1022) reads *Own-Label Available* on
+   its own page — the capability, not the product.
 
-   THIS POOL IS AN ORDER LIST, and that is the whole reason they stay
-   out. Any distributor may pick from it; A17.9 permanently forbids
-   any distributor but the exclusive one to see an own-label product
-   IN A PICKER, select it, order it or take it into a book. So the six
-   are absent because of an ACTION right, not a display one — they are
-   on public article pages and in the public Wine Guide at the same
-   time, and correctly: Hawesko sells them and a restaurant has to be
-   able to find them. tests/wine-shows.js says the same thing in the
-   same terms.
+   The reasoning that kept them out therefore falls with them. This
+   pool is an ORDER LIST, and A17.9 keeps an own-label product out of
+   any picker but its primary distributor's — but an ordinary wine
+   belongs in its producer's catalogue, which is A3 in one sentence:
+   answer a contradiction by adding the missing record. All six are
+   added below.
+
+   WHAT DECIDED IT, and it is the argument that refuted itself:
+   PRD-1026 sat in exactly the same gap — in the distributor's book,
+   in the Guide, on an article page, in no producer catalogue — and
+   claimed **no** own label anywhere. So the gap was never six own
+   labels; it was seven mockup rows that lived only in the
+   distributor's book, and PRD-1026 was simply the first one repaired.
+   PRD-1027 was the same case one file over.
+
+   The real own labels are PRD-1028 and PRD-1029, they are new records
+   with `brandOwner:'Hawesko GmbH'`, and they are deliberately NOT in
+   this pool — for the action right A17.9 actually names, now with a
+   product it applies to. See `ownLabelProducts` in the dashboard.
+
+   `ownLabelAvailability` REPLACES `note:'Own-Label Available'`
+   (A17.0a, D36): a capability is a field with three values, not free
+   text beside other free text. `note` keeps what it was for — the
+   producer's own remark about the wine — and the three rows that
+   carried the availability in it now read 'Standard' there and carry
+   `'on_request'` in the field. Seven wines across four producers are
+   open to requests; every other row is `'unavailable'`, which is the
+   honest default rather than a refusal.
 
    (A17.9's three-party VISIBILITY is a phase, not a permanent state —
    it ends at the first delivery. Reading it as permanent once made
    these fixtures look like a breach; A17.9 now spells the two levels
-   apart, and HANDOFF keeps the misreading on record.)
-
-   PRD-1026 is the seventh and the only one with no own-label claim
-   anywhere: 'Standard' in the Guide, `legacyOwnLabel:false` on its
-   listing. It is added below. The other six stay out ON PURPOSE, and
-   HANDOFF carries why — the open question is not whether to loosen
-   A17.9 but whether all six are own labels at all. */
+   apart, and HANDOFF keeps the misreading on record.) */
 const partnerWinesPool = [
-  { id:'PRD-1001', winery:'Cantina Rossi', name:'Catarratto Biologico', vintage:2023, type:'White', note:'Organic', origin:'Sicilia DOC, Sicily', url:'bottle-lobby-wine-catarratto-biologico.html', at:'2025-03-14' },
-  { id:'PRD-1002', winery:'Cantina Rossi', name:'Grillo Sicilia DOC', vintage:2023, type:'White', note:'Own-Label Available', origin:'Sicilia DOC, Sicily', url:'bottle-lobby-wine-grillo-sicilia-doc.html', at:'2025-04-02' },
-  { id:'PRD-1003', winery:'Cantina Rossi', name:"Nero d'Avola Sicilia DOC", vintage:2022, type:'Red', note:'Own-Label Available', origin:'Sicilia DOC, Sicily', url:'bottle-lobby-wine-nero-davola-sicilia-doc.html', at:'2025-05-20' },
-  { id:'PRD-1004', winery:'Cantina Rossi', name:'Primitivo Riserva', vintage:2020, type:'Red', note:'Riserva · Premium Tier', origin:'Alcamo DOC, Sicily', url:'bottle-lobby-wine-primitivo-riserva.html', at:'2025-02-11' },
-  { id:'PRD-1005', winery:'Cantina Rossi', name:'Rosato di Sicilia', vintage:2023, type:'Rosé', note:'Own-Label Available', origin:'Sicilia DOC, Sicily', url:'bottle-lobby-wine-rosato-di-sicilia.html', at:'2025-06-09' },
-  { id:'PRD-1006', winery:'Cantina Rossi', name:'Rosso di Contrada', vintage:2023, type:'Red', note:'Standard', origin:'Sicilia DOC, Sicily', url:'bottle-lobby-wine-rosso-di-contrada.html', at:'2025-09-16' },
+  { id:'PRD-1001', winery:'Cantina Rossi', name:'Catarratto Biologico', vintage:2023, type:'White', note:'Organic', ownLabelAvailability:'unavailable', origin:'Sicilia DOC, Sicily', url:'bottle-lobby-wine-catarratto-biologico.html', at:'2025-03-14' },
+  { id:'PRD-1002', winery:'Cantina Rossi', name:'Grillo Sicilia DOC', vintage:2023, type:'White', note:'Standard', ownLabelAvailability:'on_request', origin:'Sicilia DOC, Sicily', url:'bottle-lobby-wine-grillo-sicilia-doc.html', at:'2025-04-02' },
+  { id:'PRD-1003', winery:'Cantina Rossi', name:"Nero d'Avola Sicilia DOC", vintage:2022, type:'Red', note:'Standard', ownLabelAvailability:'on_request', origin:'Sicilia DOC, Sicily', url:'bottle-lobby-wine-nero-davola-sicilia-doc.html', at:'2025-05-20' },
+  { id:'PRD-1004', winery:'Cantina Rossi', name:'Primitivo Riserva', vintage:2020, type:'Red', note:'Riserva · Premium Tier', ownLabelAvailability:'unavailable', origin:'Alcamo DOC, Sicily', url:'bottle-lobby-wine-primitivo-riserva.html', at:'2025-02-11' },
+  { id:'PRD-1005', winery:'Cantina Rossi', name:'Rosato di Sicilia', vintage:2023, type:'Rosé', note:'Standard', ownLabelAvailability:'on_request', origin:'Sicilia DOC, Sicily', url:'bottle-lobby-wine-rosato-di-sicilia.html', at:'2025-06-09' },
+  { id:'PRD-1006', winery:'Cantina Rossi', name:'Rosso di Contrada', vintage:2023, type:'Red', note:'Standard', ownLabelAvailability:'unavailable', origin:'Sicilia DOC, Sicily', url:'bottle-lobby-wine-rosso-di-contrada.html', at:'2025-09-16' },
   /* Backfilled 4 Aug 2026 under A3: the price table carried a trade price
      for this wine, the article page and the public Wine Guide carry the
      wine, and only the producer's catalogue did not. A3 says add the
@@ -199,21 +216,21 @@ const partnerWinesPool = [
      event is the ceiling). Placed in the 2025 block because that is the
      class it belongs to: publicly listed all along, unlike the two 2026
      rows above, which are dated late on purpose to demonstrate A8. */
-  { id:'PRD-1027', winery:'Cantina Rossi', name:'Terra Rossa', vintage:2022, type:'Red', note:'Standard', origin:'Sicilia DOC, Sicily', url:'bottle-lobby-wine-terra-rossa.html', at:'2025-07-22' },
-  { id:'PRD-1007', winery:'Cantina Rossi', name:'Trinacria Bianco', vintage:2023, type:'White', note:'Standard', origin:'Terre Siciliane IGT, Sicily', url:'bottle-lobby-wine-trinacria-bianco.html', at:'2025-11-04' },
+  { id:'PRD-1027', winery:'Cantina Rossi', name:'Terra Rossa', vintage:2022, type:'Red', note:'Standard', ownLabelAvailability:'unavailable', origin:'Sicilia DOC, Sicily', url:'bottle-lobby-wine-terra-rossa.html', at:'2025-07-22' },
+  { id:'PRD-1007', winery:'Cantina Rossi', name:'Trinacria Bianco', vintage:2023, type:'White', note:'Standard', ownLabelAvailability:'unavailable', origin:'Terre Siciliane IGT, Sicily', url:'bottle-lobby-wine-trinacria-bianco.html', at:'2025-11-04' },
   /* The two deliberate ones: added AFTER somebody started following. */
-  { id:'PRD-1008', winery:'Cantina Rossi', name:'Baglio Rosso', vintage:2021, type:'Red', note:'Standard', origin:'Terre Siciliane IGT, Sicily', url:'bottle-lobby-wine-baglio-rosso.html', at:'2026-04-20' },
-  { id:'PRD-1009', winery:'Cantina Rossi', name:'Costa Bianca', vintage:2023, type:'White', note:'Standard', origin:'Terre Siciliane IGT, Sicily', url:'bottle-lobby-wine-costa-bianca.html', at:'2026-05-28' },
-  { id:'PRD-1010', winery:'Domaine Lefèvre', name:'Bourgogne Passetoutgrain', vintage:2023, type:'Red', note:'Standard', origin:'Bourgogne Passetoutgrain AOC, France', url:'bottle-lobby-wine-bourgogne-passetoutgrain.html', at:'2025-10-07' },
-  { id:'PRD-1011', winery:'Domaine Lefèvre', name:'Crémant de Bourgogne', vintage:2022, type:'White', note:'Standard', origin:'Crémant de Bourgogne AOC, France', url:'bottle-lobby-wine-cremant-de-bourgogne.html', at:'2025-08-19' },
-  { id:'PRD-1012', winery:'Domaine Lefèvre', name:'Bourgogne Aligoté', vintage:2023, type:'White', note:'Standard', origin:'Bourgogne Aligoté AOC, France', url:'bottle-lobby-wine-bourgogne-aligote.html', at:'2026-01-15' },
-  { id:'PRD-1013', winery:'Domaine Lefèvre', name:'Mâcon-Villages', vintage:2023, type:'White', note:'Standard', origin:'Mâcon-Villages AOC, France', url:'bottle-lobby-wine-macon-villages.html', at:'2026-02-26' },
-  { id:'PRD-1014', winery:'Henri Dubois Domaine', name:'Sancerre Rouge', vintage:2022, type:'Red', note:'Standard', origin:'Sancerre AOC, Loire Valley', url:'bottle-lobby-wine-sancerre-rouge.html', at:'2025-07-03' },
-  { id:'PRD-1015', winery:'Henri Dubois Domaine', name:'Pouilly-Fumé', vintage:2023, type:'White', note:'Standard', origin:'Pouilly-Fumé AOC, Loire Valley', url:'bottle-lobby-wine-pouilly-fume.html', at:'2025-12-08' },
-  { id:'PRD-1016', winery:'Bodegas Ruiz', name:'Rioja Reserva', vintage:2019, type:'Red', note:'Standard', origin:'Rioja DOCa, Spain', url:'bottle-lobby-wine-rioja-reserva.html', at:'2025-09-10' },
-  { id:'PRD-1017', winery:'Bodegas Ruiz', name:'Rioja Blanco', vintage:2023, type:'White', note:'Standard', origin:'Rioja DOCa, Spain', url:'bottle-lobby-wine-rioja-blanco.html', at:'2026-06-20' },
-  { id:'PRD-1018', winery:'Weingut Schmitt', name:'Müller-Thurgau — Mosel', vintage:2023, type:'White', note:'Standard', origin:'Mosel QbA, Germany', url:'bottle-lobby-wine-muller-thurgau-mosel.html', at:'2026-07-25' },
-  { id:'PRD-1019', winery:'Weingut Schmitt', name:'Spätburgunder — Mosel', vintage:2022, type:'Red', note:'Standard', origin:'Mosel QbA, Germany', url:'bottle-lobby-wine-spatburgunder-mosel.html', at:'2026-01-22' },
+  { id:'PRD-1008', winery:'Cantina Rossi', name:'Baglio Rosso', vintage:2021, type:'Red', note:'Standard', ownLabelAvailability:'unavailable', origin:'Terre Siciliane IGT, Sicily', url:'bottle-lobby-wine-baglio-rosso.html', at:'2026-04-20' },
+  { id:'PRD-1009', winery:'Cantina Rossi', name:'Costa Bianca', vintage:2023, type:'White', note:'Standard', ownLabelAvailability:'unavailable', origin:'Terre Siciliane IGT, Sicily', url:'bottle-lobby-wine-costa-bianca.html', at:'2026-05-28' },
+  { id:'PRD-1010', winery:'Domaine Lefèvre', name:'Bourgogne Passetoutgrain', vintage:2023, type:'Red', note:'Standard', ownLabelAvailability:'unavailable', origin:'Bourgogne Passetoutgrain AOC, France', url:'bottle-lobby-wine-bourgogne-passetoutgrain.html', at:'2025-10-07' },
+  { id:'PRD-1011', winery:'Domaine Lefèvre', name:'Crémant de Bourgogne', vintage:2022, type:'White', note:'Standard', ownLabelAvailability:'unavailable', origin:'Crémant de Bourgogne AOC, France', url:'bottle-lobby-wine-cremant-de-bourgogne.html', at:'2025-08-19' },
+  { id:'PRD-1012', winery:'Domaine Lefèvre', name:'Bourgogne Aligoté', vintage:2023, type:'White', note:'Standard', ownLabelAvailability:'unavailable', origin:'Bourgogne Aligoté AOC, France', url:'bottle-lobby-wine-bourgogne-aligote.html', at:'2026-01-15' },
+  { id:'PRD-1013', winery:'Domaine Lefèvre', name:'Mâcon-Villages', vintage:2023, type:'White', note:'Standard', ownLabelAvailability:'on_request', origin:'Mâcon-Villages AOC, France', url:'bottle-lobby-wine-macon-villages.html', at:'2026-02-26' },
+  { id:'PRD-1014', winery:'Henri Dubois Domaine', name:'Sancerre Rouge', vintage:2022, type:'Red', note:'Standard', ownLabelAvailability:'unavailable', origin:'Sancerre AOC, Loire Valley', url:'bottle-lobby-wine-sancerre-rouge.html', at:'2025-07-03' },
+  { id:'PRD-1015', winery:'Henri Dubois Domaine', name:'Pouilly-Fumé', vintage:2023, type:'White', note:'Standard', ownLabelAvailability:'unavailable', origin:'Pouilly-Fumé AOC, Loire Valley', url:'bottle-lobby-wine-pouilly-fume.html', at:'2025-12-08' },
+  { id:'PRD-1016', winery:'Bodegas Ruiz', name:'Rioja Reserva', vintage:2019, type:'Red', note:'Standard', ownLabelAvailability:'unavailable', origin:'Rioja DOCa, Spain', url:'bottle-lobby-wine-rioja-reserva.html', at:'2025-09-10' },
+  { id:'PRD-1017', winery:'Bodegas Ruiz', name:'Rioja Blanco', vintage:2023, type:'White', note:'Standard', ownLabelAvailability:'unavailable', origin:'Rioja DOCa, Spain', url:'bottle-lobby-wine-rioja-blanco.html', at:'2026-06-20' },
+  { id:'PRD-1018', winery:'Weingut Schmitt', name:'Müller-Thurgau — Mosel', vintage:2023, type:'White', note:'Standard', ownLabelAvailability:'unavailable', origin:'Mosel QbA, Germany', url:'bottle-lobby-wine-muller-thurgau-mosel.html', at:'2026-07-25' },
+  { id:'PRD-1019', winery:'Weingut Schmitt', name:'Spätburgunder — Mosel', vintage:2022, type:'Red', note:'Standard', ownLabelAvailability:'unavailable', origin:'Mosel QbA, Germany', url:'bottle-lobby-wine-spatburgunder-mosel.html', at:'2026-01-22' },
 
   /* ── Château Belrieu — the producer's first catalogue row ────────
      Backfilled under A3, and the same shape as Terra Rossa above: the
@@ -221,10 +238,13 @@ const partnerWinesPool = [
      three profile books, and only the producer's catalogue did not
      carry it. A3 adds the missing record.
 
-     WHY THIS ONE AND NOT THE OTHER SIX. It is the only one of the
-     seven that claims no own label anywhere — Guide 'Standard',
-     `legacyOwnLabel:false`. The six that do are held back; see the
-     header above and HANDOFF.
+     WHY THIS ONE FIRST, AND WHY IT DECIDED THE OTHER SIX. It was the
+     only one of the seven claiming no own label anywhere — Guide
+     'Standard', no bridge value — so it came across on 5 Aug while the
+     six were held back. That asymmetry is what made the group
+     legible a day later: a wine with no own-label claim sitting in the
+     identical gap means the gap was never about own label at all
+     (D41). The six follow below.
 
      `note` IS LIFTED, NOT CHOSEN. 'Standard' is what the
      distributor-, restaurant- and retail-profile books each already
@@ -249,7 +269,58 @@ const partnerWinesPool = [
      chain removes. Placed in the 2025 block for the same reason
      Terra Rossa was: publicly listed all along. Measured after —
      notification counts unchanged at 13 / 27 / 18 / 13. */
-  { id:'PRD-1026', winery:'Château Belrieu', name:'Château Belrieu Grand Vin', vintage:2019, type:'Red', note:'Standard', origin:'Bordeaux Supérieur AOC, Bordeaux', url:'bottle-lobby-wine-chateau-belrieu-grand-vin.html', at:'2025-10-28' }
+  { id:'PRD-1026', winery:'Château Belrieu', name:'Château Belrieu Grand Vin', vintage:2019, type:'Red', note:'Standard', ownLabelAvailability:'unavailable', origin:'Bordeaux Supérieur AOC, Bordeaux', url:'bottle-lobby-wine-chateau-belrieu-grand-vin.html', at:'2025-10-28' },
+
+  /* ── The last six of the seven — the ex-bridge wines (A3, D41) ───
+     One per producer, and the spread is the finding rather than a
+     convenience: the six were never one distributor's own-label range,
+     they were six different houses' appellation wines that had only
+     ever been written down in one book.
+
+     NOTHING IS INVENTED HERE. Every field is lifted from the
+     distributor's own row for the same wine, which has carried
+     producer, name, vintage, type, the precise `origin` and the article
+     page since the catalogue pass — and each of those was itself
+     sourced or corroborated there. This commit moves the record to its
+     owner (invariant 2); it does not author one.
+
+     `note:'Standard'` on all six, and that is now the measured answer
+     rather than the default. What the article pages actually claim is a
+     DISTRIBUTION EXCLUSIVITY ("Exclusive to Hawesko in northern Germany
+     and Scandinavia"), and an exclusivity is a relation between two
+     houses, not a remark about a wine — so it does not belong in a
+     producer's `note`. It has no record anywhere in this prototype,
+     which is a NAMED GAP and not something to fill by hand: A17.9's
+     source exclusivity covers own labels only, D40 point 8 deliberately
+     leaves the ordinary distribution agreement named and not modelled,
+     and `listings.exclusive` is the buyer's own marking on their own
+     list. HANDOFF carries it.
+
+     `ownLabelAvailability`: PRD-1020, PRD-1022 and PRD-1024 read
+     `'on_request'`, the other three `'unavailable'`. PRD-1022's own
+     article page says *Own-Label Available* in as many words. PRD-1020
+     must be open, because a relabel project (OLP-101) may only be
+     opened on a wine that is — A17.4 asks exactly that, and it is
+     A17.0b's own example. PRD-1024 is Serge's decision and the nearest
+     true reading of a screen: it carried the bridge's only `'pending'`
+     value, and a project in negotiation was never a claim that a
+     finished own label existed.
+
+     `at` IS FIXTURE AUTHORSHIP, bounded the same way PRD-1026 and
+     PRD-1027 were and for the same reason. C7's ceiling is Hawesko's
+     listing of each, 2026-06-01; the tighter bound is notifNewWines(),
+     which announces any wine dated after a follower's edge as new —
+     and all six have been on public article pages and in the public
+     Guide all along, so announcing them now would be the overstatement
+     this chain exists to remove. All six sit in the 2025 block.
+     Measured before and after: notification counts unchanged at
+     28 / 13 / 18 / 13 (distributor / winery / restaurant / retail). */
+  { id:'PRD-1020', winery:'Henri Dubois Domaine', name:'Sauvignon Blanc — Sancerre', vintage:2023, type:'White', note:'Standard', ownLabelAvailability:'on_request', origin:'Sancerre AOC, Loire Valley', url:'bottle-lobby-wine-sauvignon-blanc-sancerre.html', at:'2025-05-06' },
+  { id:'PRD-1021', winery:'Domaine Lefèvre', name:'Chardonnay — Chablis Premier Cru', vintage:2022, type:'White', note:'Standard', ownLabelAvailability:'unavailable', origin:'Chablis Premier Cru AOC, Burgundy', url:'bottle-lobby-wine-chardonnay-chablis-premier-cru.html', at:'2025-06-17' },
+  { id:'PRD-1022', winery:'Cantina Rossi', name:'Primitivo — Alcamo DOC', vintage:2022, type:'Red', note:'Standard', ownLabelAvailability:'on_request', origin:'Alcamo DOC, Sicily', url:'bottle-lobby-wine-primitivo-sicilia-igt.html', at:'2025-01-21' },
+  { id:'PRD-1023', winery:'Bodegas Ruiz', name:'Tempranillo — Rioja Crianza', vintage:2021, type:'Red', note:'Standard', ownLabelAvailability:'unavailable', origin:'Rioja DOCa (Crianza), Rioja Alta', url:'bottle-lobby-wine-tempranillo-rioja-crianza.html', at:'2025-08-05' },
+  { id:'PRD-1024', winery:'Weingut Schmitt', name:'Riesling Spätlese — Mosel', vintage:2023, type:'White', note:'Standard', ownLabelAvailability:'on_request', origin:'Mosel Spätlese (Prädikatswein), Mosel', url:'bottle-lobby-wine-riesling-spatlese-mosel.html', at:'2025-09-23' },
+  { id:'PRD-1025', winery:'Château Belrieu', name:'Merlot — Bordeaux Supérieur', vintage:2021, type:'Red', note:'Standard', ownLabelAvailability:'unavailable', origin:'Bordeaux Supérieur AOC, Bordeaux', url:'bottle-lobby-wine-merlot-bordeaux-superieur.html', at:'2025-04-15' }
 ];
 
 /* ══════════════════════════════════════════════════════════════════
@@ -294,6 +365,13 @@ function bookOrEmpty(read) {
 function allProducts() {
   return [].concat(
     bookOrEmpty(function () { return partnerWinesPool; }),
+    /* The own-label products are products, and every reader that asks
+       "does this platform know this key" has to find them — My Labels,
+       the order lines of the first orders, the derived listing. They are
+       NOT in `partnerWinesPool` and that is an action right rather than
+       a filing choice (A17.9); this is the question that does not ask
+       about rights at all. */
+    bookOrEmpty(function () { return ownLabelProducts; }),
     bookOrEmpty(function () { return currentWinePortfolio; }),
     bookOrEmpty(function () { return rCurrentWineList; }),
     bookOrEmpty(function () { return tCurrentWineSelection; })
@@ -331,6 +409,38 @@ function wineByRef(ref, book) {
 function wineLabel(ref, book) {
   const p = wineByRef(ref, book);
   return p ? p.name + ' ' + p.vintage : noProduct(ref, 'wineLabel');
+}
+
+/* ── MAY THIS WINE BE ASKED ABOUT? (A17.0a, A17.4) ───────────────
+   The SECOND of A17.0a's four levels, and the one that used to be free
+   text — `note:'Own-Label Available'`, sitting beside 'Organic' and
+   'Riserva · Premium Tier' as though a capability and a tasting remark
+   were the same kind of statement. That is D36, and the field replaces
+   the note rather than joining it.
+
+   IT SAYS ONE THING AND NOT THREE. It says only whether a PROJECT MAY
+   BE STARTED. It does not make the wine an own label, does not restrict
+   ordinary distribution, and a wine open to requests stays ordinarily
+   tradeable — PRD-1020 is open, is on two buyers' lists, carries a
+   promo and a deal, and is sold every month. Whether a finished own
+   label exists is the third level (a product with a gate-2 project);
+   whether a distributor carries one is the fourth (OL-15). Three
+   different answers, and this function may never be used for the other
+   two.
+
+   AN UNKNOWN PRODUCT IS 'unavailable', NOT null. A wine nobody's book
+   knows cannot be asked about, and the only caller that cares is a
+   picker deciding whether to offer a project — where "no" is the safe
+   and true answer. A missing field reads the same way: the honest
+   default for a house that has said nothing is that it has said no. */
+const OWN_LABEL_AVAILABILITY = ['unavailable', 'on_request', 'available'];
+function ownLabelAvailabilityOf(ref, book) {
+  const p = wineByRef(ref, book);
+  const v = p && p.ownLabelAvailability;
+  return OWN_LABEL_AVAILABILITY.indexOf(v) === -1 ? 'unavailable' : v;
+}
+function ownLabelOnRequest(ref, book) {
+  return ownLabelAvailabilityOf(ref, book) !== 'unavailable';
 }
 
 /* wineLabel() names the BOTTLING — name and vintage — because that is

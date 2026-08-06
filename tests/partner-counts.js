@@ -271,9 +271,11 @@ console.log('\n── counter-check: the old mistakes must not be able to return
 
     { name: 'the four cards are left standing after a wine is pulled in',
       /* "My Labels" was wired in between these two lines in commit 3,
-         so the mutation names the whole block it is removing from. */
-      from: '  renderWinePortfolioD();\n  renderOwnLabelsD();\n  refreshPortfolioCounts();\n  closePullWineModal();',
-      to:   '  renderWinePortfolioD();\n  renderOwnLabelsD();\n  closePullWineModal();',
+         and grew to four own-label surfaces behind one refresher in the
+         A17 fixture pass — so the mutation names the whole block it is
+         removing from. */
+      from: '  renderWinePortfolioD();\n  refreshOwnLabelSurfaces();\n  refreshPortfolioCounts();\n  closePullWineModal();',
+      to:   '  renderWinePortfolioD();\n  refreshOwnLabelSurfaces();\n  closePullWineModal();',
       check: g => {
         const before = cardFor(g, 'rpn-active-list', 'Hawesko GmbH').meta;
         g.eval('awSelectedWine = partnerWinesPool.find(function (x) { return x.name === "Grillo Sicilia DOC"; });');

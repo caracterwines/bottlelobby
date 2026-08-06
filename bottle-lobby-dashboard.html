@@ -1981,10 +1981,17 @@ With an annual production capacity of over 1.2 million bottles, Cantina Rossi is
             <div class="stat-card-value">12<span></span></div>
             <div class="stat-card-delta">↑ +3 this quarter</div>
           </div>
+          <!-- The value and the second line are both computed by
+               renderOwnLabelStatsD(). It read a typed 5 with "↑ +1 this
+               month" under it, for five wines that were never own labels
+               (D41) — and a delta nothing could have produced, since
+               nothing recorded when any of them started. The second line
+               now names the pipeline instead of a movement, because a
+               pipeline is a fact the records hold. -->
           <div class="stat-card">
             <div class="stat-card-label">Own-Label SKUs</div>
-            <div class="stat-card-value">5<span></span></div>
-            <div class="stat-card-delta">↑ +1 this month</div>
+            <div class="stat-card-value" id="dstat-ol-value">–<span></span></div>
+            <div class="stat-card-delta" id="dstat-ol-delta"></div>
           </div>
           <div class="stat-card">
             <div class="stat-card-label">Bottles Moved</div>
@@ -2040,14 +2047,13 @@ With an annual production capacity of over 1.2 million bottles, Cantina Rossi is
                     <th>Status</th>
                   </tr>
                 </thead>
-                <tbody>
-                  <tr><td>Sauvignon Blanc</td><td>Sancerre</td><td>4,200</td><td><span class="tag tag-green">Active</span></td></tr>
-                  <tr><td>Chardonnay</td><td>Chablis</td><td>3,800</td><td><span class="tag tag-green">Active</span></td></tr>
-                  <tr><td>Primitivo</td><td>Sicily</td><td>2,900</td><td><span class="tag tag-green">Active</span></td></tr>
-                  <tr><td>Tempranillo</td><td>Rioja</td><td>2,100</td><td><span class="tag tag-green">Active</span></td></tr>
-                  <tr><td>Riesling</td><td>Mosel</td><td>1,400</td><td><span class="tag tag-gold">Pending</span></td></tr>
-                  <tr><td>Merlot</td><td>Bordeaux</td><td>2,400</td><td><span class="tag tag-green">Active</span></td></tr>
-                </tbody>
+                <!-- Rendered by renderOwnLabelWidgetD(). It was six typed
+                     rows carrying 4,200 / 3,800 / 2,900 / 2,100 / 1,400 /
+                     2,400 — the figures the removed A17 migration bridge
+                     was backfilled FROM, for six wines that were never own
+                     labels (D41). Typed markup beside a derivation is two
+                     roads to one answer. -->
+                <tbody id="dlabels-widget-body"></tbody>
               </table>
             </div>
           </div>
@@ -2058,14 +2064,14 @@ With an annual production capacity of over 1.2 million bottles, Cantina Rossi is
               <span class="widget-title">Monthly Volume by Wine</span>
             </div>
             <div class="widget-body">
-              <div class="bar-chart">
-                <div class="bar-row"><span class="bar-label">Sauv. Blanc</span><div class="bar-track"><div class="bar-fill" style="width:100%"></div></div><span class="bar-value">4.2k</span></div>
-                <div class="bar-row"><span class="bar-label">Chardonnay</span><div class="bar-track"><div class="bar-fill" style="width:90%"></div></div><span class="bar-value">3.8k</span></div>
-                <div class="bar-row"><span class="bar-label">Primitivo</span><div class="bar-track"><div class="bar-fill" style="width:69%"></div></div><span class="bar-value">2.9k</span></div>
-                <div class="bar-row"><span class="bar-label">Tempranillo</span><div class="bar-track"><div class="bar-fill" style="width:50%"></div></div><span class="bar-value">2.1k</span></div>
-                <div class="bar-row"><span class="bar-label">Riesling</span><div class="bar-track"><div class="bar-fill" style="width:33%; background: var(--gold); opacity:0.5"></div></div><span class="bar-value">1.4k</span></div>
-                <div class="bar-row"><span class="bar-label">Merlot</span><div class="bar-track"><div class="bar-fill" style="width:57%"></div></div><span class="bar-value">2.4k</span></div>
-              </div>
+              <!-- Rendered by renderVolumeChartD() from
+                   listings.monthlyVolume. Same six typed figures as the
+                   widget beside it, and the same reason for going: the
+                   volume a distributor typed is a fact about his listing
+                   and has exactly one home (A1). It is no longer an
+                   own-label chart — it is his book, by volume, which is
+                   what the six figures always actually were. -->
+              <div class="bar-chart" id="dvolume-chart"></div>
             </div>
           </div>
         </div>
@@ -2190,7 +2196,7 @@ With an annual production capacity of over 1.2 million bottles, Cantina Rossi is
                 <div class="fact"><div class="fact-label">Headquarters</div><div class="fact-value">Hamburg, Germany</div></div>
                 <div class="fact"><div class="fact-label">Distribution Regions</div><div class="fact-value">Hamburg, Schleswig-Holstein, Scandinavia</div></div>
                 <div class="fact"><div class="fact-label">Restaurant Network</div><div class="fact-value">850+ clients</div></div>
-                <div class="fact"><div class="fact-label">Own-Label SKUs</div><div class="fact-value">5 active</div></div>
+                <div class="fact"><div class="fact-label">Own-Label SKUs</div><div class="fact-value" id="dfact-ol-skus">–</div></div>
                 <div class="fact"><div class="fact-label">Annual Volume</div><div class="fact-value">~180,000 bottles/month</div></div>
                 <div class="fact"><div class="fact-label">Portfolio Focus</div><div class="fact-value">French, Italian, Spanish mono-cépages</div></div>
                 <div class="fact"><div class="fact-label">Website</div><div class="fact-value"><a href="https://hawesko.de" style="color:var(--gold)" target="_blank">hawesko.de</a></div></div>
@@ -2332,16 +2338,24 @@ With an annual production capacity of over 1.2 million bottles, Cantina Rossi is
             <div class="profile-section-header">
               <div class="profile-section-title">My Labels <span class="profile-section-count" id="dlabels-count"></span></div>
             </div>
-            <div class="edit-sub" style="margin-top:-0.8rem">The wines you've co-developed and exclusively licensed with a winery partner — Bottle&nbsp;Lobby's own-label process at the heart of the platform. Purchased in volume, labeled for Hawesko, and unavailable to competing distributors.</div>
-            <!-- Rendered by renderOwnLabelsD() from `listings`. Six wines
-                 were typed in here by hand until 5 Aug 2026, each with its
-                 producer, origin and monthly volume spelled out beside it —
-                 a second copy of facts the catalogue and the listing own.
-                 Three of the six claimed an exclusive licence that stood in
-                 no record anywhere, and the counter said "(6)" the same way
-                 it said everything else: by being typed. -->
+            <div class="edit-sub" style="margin-top:-0.8rem">Your own-label projects with a winery partner — Bottle&nbsp;Lobby's own-label process at the heart of the platform. Each one ends in a product of your own: your brand, produced by the winery, and no other distributor may buy it from them. A project appears here from the moment it is requested; it goes Active when the first order has been delivered.</div>
+            <!-- Rendered by renderOwnLabelsD() from `ownLabelProjects`.
+                 Six wines were typed in here by hand until 5 Aug 2026, each
+                 with its producer, origin and monthly volume spelled out
+                 beside it — a second copy of facts the catalogue and the
+                 listing own. All six claimed an exclusive licence that stood
+                 in no record anywhere, and the counter said "(6)" the same
+                 way it said everything else: by being typed.
+                 It reads PROJECTS and not listings since 6 Aug 2026: before
+                 its first delivery an own label has no listing at all
+                 (A17.9), so a listing-shaped reader could never draw the
+                 pipeline this panel exists to show. -->
             <div class="wine-edit-list" id="dlabels-list"></div>
-            <button class="add-btn" onclick="showToast('✓ Own-Label negotiations are started from a wine in your Wine Portfolio — mark it Own-Label there.')">+ Start a New Own-Label</button>
+            <!-- A17.12: there is no own-label checkbox in this model, so the
+                 old wording ("mark it Own-Label there") described a control
+                 that must not exist. What actually starts a project is
+                 A17.4's reading, and the toast now names its conditions. -->
+            <button class="add-btn" onclick="showToast('✓ An own-label project starts from a partner winery\'s wine marked Own-Label Available — both houses must be admitted to the programme first.')">+ Start a New Own-Label</button>
           </div>
 
           <!-- ACTIVE PARTNERSHIPS (all types) -->
@@ -3980,7 +3994,7 @@ With an annual production capacity of over 1.2 million bottles, Cantina Rossi is
      also switches persistence off for every harness. See tests/README.
 -->
 <script src="assets/bottle-lobby-store.js?v=2f9996b9"></script>
-<script src="assets/bottle-lobby-data.js?v=730f5933"></script>
+<script src="assets/bottle-lobby-data.js?v=be9617ad"></script>
 <script src="assets/bottle-lobby-public-shows.js?v=66e44128"></script>
 
 <script>
@@ -4933,62 +4947,52 @@ let currentWinePortfolio = [
    about their warehouse and not about the wine.
 ══════════════════════════════════════════════════════════════════ */
 
-/* ══ TEMPORARY A17 MIGRATION BRIDGE ══════════════════════════
-   Remove in the A17 product / first-delivery migration pass.
+/* ══ THE A17 MIGRATION BRIDGE IS GONE ════════════════════════
+   The bridge field stood on these rows from 5 to 6 Aug 2026, three-
+   valued — 'active' on five, 'pending' on the Riesling, false on the
+   rest — because the screens it stood in for were never a boolean. It
+   is removed here, in the commit that gave Hawesko real projects and a
+   delivered first order, exactly as A17.14 and OL-15 require: REPLACED
+   by the derivation and not extended toward it.
 
-   `legacyOwnLabel` is NOT the domain field. A17 says an own label
-   is derived: a project past gate 2, a product the winery created,
-   and a FIRST COMMERCIAL ORDER DELIVERED. None of that exists yet.
-   Until it does, this carries what the legacy fixtures and the "My
-   Labels" markup have been saying, so that section can render from
-   data instead of from typed HTML.
+   WHAT THE MIGRATION FOUND, and it is not what the bridge assumed. The
+   plan was to give those six wines real projects. Measured instead: not
+   one of them is an own label (D41). Each is the producer's own
+   appellation wine under the producer's brand, and five of their
+   article pages give the own-label ribbon the reason *exclusive
+   distribution through Hawesko* — which A17.0b's last paragraph puts
+   outside A17 by name. So the six rows below lost a field, the six
+   wines lost a badge, and neither lost a record: every one of them is
+   an ordinary listing of an ordinary wine, and the seven orders, four
+   promos and three deals that name them did not move.
 
-   IT IS THREE-VALUED — 'active', 'pending' or false — and not a
-   boolean, because the screen was never a boolean. "My Labels" has
-   listed six wines for months, five as Active and the Riesling
-   Spätlese as PENDING. A boolean bridge would have had to call that
-   sixth wine licensed, which is a claim no record supports and
-   exactly the class of overstatement this chain exists to remove.
-   A17.6 has stages for the same reason; this is the smallest legacy
-   shadow of them.
-
-   SIX ROWS, NOT THREE (A3). Three of the six were already
-   `ownLabel:true` in the portfolio fixture; the other three said
-   Active on one screen and Standard on another. A3 answers a
-   contradiction by ADDING THE MISSING RECORD, not by deleting the
-   surface — so the three are backfilled with what they have been
-   showing, and the two screens agree for the first time.
-
-   Rules while it exists:
-     · taken ONLY from the legacy fixtures and the legacy markup
-     · never written by the interface
-     · never set for a new own label
-     · creates no request, no exclusivity, no fee, no ordering right
-     · no meaning outside the legacy fixtures
+   The bridge's own rules said it created "no exclusivity, no fee, no
+   ordering right", and that turned out to be the whole of what it ever
+   was: a description of six screens, kept in a field, one commit long.
    ════════════════════════════════════════════════════════════ */
 const LISTED_AT = '2026-06-01';
 let listings = [
   /* ── Hawesko GmbH — the distributor's book ─────────────────────── */
-  { holder:'Hawesko GmbH', productId:'PRD-1020', legacyOwnLabel:'active',  exclusive:false, listedAt:LISTED_AT, holderArticleNo:'HAW-0119', monthlyVolume:4200, tradePrice:14.90 },
-  { holder:'Hawesko GmbH', productId:'PRD-1021', legacyOwnLabel:'active',  exclusive:false, listedAt:LISTED_AT, holderArticleNo:'HAW-0120', monthlyVolume:3800, tradePrice:21.50 },
-  { holder:'Hawesko GmbH', productId:'PRD-1022', legacyOwnLabel:'active',  exclusive:false, listedAt:LISTED_AT, holderArticleNo:'HAW-0221', monthlyVolume:2900, tradePrice:11.20 },
-  { holder:'Hawesko GmbH', productId:'PRD-1023', legacyOwnLabel:'active', exclusive:false, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:2100, tradePrice:null },
-  { holder:'Hawesko GmbH', productId:'PRD-1024', legacyOwnLabel:'pending', exclusive:false, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:1400, tradePrice:16.80 },
-  { holder:'Hawesko GmbH', productId:'PRD-1018', legacyOwnLabel:false, exclusive:false, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:null, tradePrice:null },
-  { holder:'Hawesko GmbH', productId:'PRD-1001', legacyOwnLabel:false, exclusive:false, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:null, tradePrice:8.40 },
-  { holder:'Hawesko GmbH', productId:'PRD-1006', legacyOwnLabel:false, exclusive:false, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:null, tradePrice:null },
-  { holder:'Hawesko GmbH', productId:'PRD-1025', legacyOwnLabel:'active', exclusive:false, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:2400, tradePrice:12.60 },
-  { holder:'Hawesko GmbH', productId:'PRD-1026', legacyOwnLabel:false, exclusive:false, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:null, tradePrice:null },
-  { holder:'Hawesko GmbH', productId:'PRD-1011', legacyOwnLabel:false, exclusive:false, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:null, tradePrice:null },
-  { holder:'Hawesko GmbH', productId:'PRD-1003', legacyOwnLabel:false, exclusive:false, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:null, tradePrice:9.80 },
-  { holder:'Hawesko GmbH', productId:'PRD-1015', legacyOwnLabel:false, exclusive:false, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:null, tradePrice:17.20 },
-  { holder:'Hawesko GmbH', productId:'PRD-1008', legacyOwnLabel:false, exclusive:false, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:null, tradePrice:13.40 },
+  { holder:'Hawesko GmbH', productId:'PRD-1020', exclusive:false, listedAt:LISTED_AT, holderArticleNo:'HAW-0119', monthlyVolume:4200, tradePrice:14.90 },
+  { holder:'Hawesko GmbH', productId:'PRD-1021', exclusive:false, listedAt:LISTED_AT, holderArticleNo:'HAW-0120', monthlyVolume:3800, tradePrice:21.50 },
+  { holder:'Hawesko GmbH', productId:'PRD-1022', exclusive:false, listedAt:LISTED_AT, holderArticleNo:'HAW-0221', monthlyVolume:2900, tradePrice:11.20 },
+  { holder:'Hawesko GmbH', productId:'PRD-1023', exclusive:false, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:2100, tradePrice:null },
+  { holder:'Hawesko GmbH', productId:'PRD-1024', exclusive:false, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:1400, tradePrice:16.80 },
+  { holder:'Hawesko GmbH', productId:'PRD-1018', exclusive:false, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:null, tradePrice:null },
+  { holder:'Hawesko GmbH', productId:'PRD-1001', exclusive:false, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:null, tradePrice:8.40 },
+  { holder:'Hawesko GmbH', productId:'PRD-1006', exclusive:false, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:null, tradePrice:null },
+  { holder:'Hawesko GmbH', productId:'PRD-1025', exclusive:false, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:2400, tradePrice:12.60 },
+  { holder:'Hawesko GmbH', productId:'PRD-1026', exclusive:false, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:null, tradePrice:null },
+  { holder:'Hawesko GmbH', productId:'PRD-1011', exclusive:false, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:null, tradePrice:null },
+  { holder:'Hawesko GmbH', productId:'PRD-1003', exclusive:false, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:null, tradePrice:9.80 },
+  { holder:'Hawesko GmbH', productId:'PRD-1015', exclusive:false, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:null, tradePrice:17.20 },
+  { holder:'Hawesko GmbH', productId:'PRD-1008', exclusive:false, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:null, tradePrice:13.40 },
 
   /* Terra Rossa had a price and no book anywhere until A3 put the
      record in. The listing follows the same reading: Hawesko quotes it,
      so Hawesko holds it. */
-  { holder:'Hawesko GmbH', productId:'PRD-1027', legacyOwnLabel:false, exclusive:false, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:null, tradePrice:12.10 },
-  { holder:'Hawesko GmbH', productId:'PRD-1009', legacyOwnLabel:false, exclusive:false, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:null, tradePrice:10.60 },
+  { holder:'Hawesko GmbH', productId:'PRD-1027', exclusive:false, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:null, tradePrice:12.10 },
+  { holder:'Hawesko GmbH', productId:'PRD-1009', exclusive:false, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:null, tradePrice:10.60 },
 
   /* ── The producers' own lines, at ex-cellar ────────────────────
      MEASURED, not invented: every one of these five prices is the unit
@@ -4997,11 +5001,11 @@ let listings = [
      the price answerable — Primitivo is 6.40 here and 11.20 above, one
      wine, two owners, two numbers, neither of which the old flat map
      could have held beside the other. */
-  { holder:'Cantina Rossi',   productId:'PRD-1022', legacyOwnLabel:false, exclusive:false, listedAt:LISTED_AT, holderArticleNo:'CR-PRI-22', monthlyVolume:null, tradePrice:6.40 },
-  { holder:'Cantina Rossi',   productId:'PRD-1003', legacyOwnLabel:false, exclusive:false, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:null, tradePrice:5.90 },
-  { holder:'Cantina Rossi',   productId:'PRD-1009', legacyOwnLabel:false, exclusive:false, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:null, tradePrice:5.20 },
-  { holder:'Cantina Rossi',   productId:'PRD-1008', legacyOwnLabel:false, exclusive:false, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:null, tradePrice:7.10 },
-  { holder:'Weingut Schmitt', productId:'PRD-1024', legacyOwnLabel:false, exclusive:false, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:null, tradePrice:7.90 },
+  { holder:'Cantina Rossi',   productId:'PRD-1022', exclusive:false, listedAt:LISTED_AT, holderArticleNo:'CR-PRI-22', monthlyVolume:null, tradePrice:6.40 },
+  { holder:'Cantina Rossi',   productId:'PRD-1003', exclusive:false, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:null, tradePrice:5.90 },
+  { holder:'Cantina Rossi',   productId:'PRD-1009', exclusive:false, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:null, tradePrice:5.20 },
+  { holder:'Cantina Rossi',   productId:'PRD-1008', exclusive:false, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:null, tradePrice:7.10 },
+  { holder:'Weingut Schmitt', productId:'PRD-1024', exclusive:false, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:null, tradePrice:7.90 },
 
   /* ── Enoteca Milano Import Srl — taken on FROM Hawesko (A3) ─────
      The downstream half of the sourcing rule, and the whole of what B
@@ -5026,20 +5030,22 @@ let listings = [
      the flat wineUnitPrice map could not answer, one level further
      down the chain than the ex-cellar prices above.
 
-     `legacyOwnLabel:false` and no bridge value is deliberate and is
-     the rule, not an omission: even where the product IS an own label,
-     a downstream holder's listing is an ordinary listing (OL-15). */
-  { holder:'Enoteca Milano Import Srl', productId:'PRD-1015', legacyOwnLabel:false, exclusive:false, listedAt:LISTED_AT, holderArticleNo:'EMI-0447', monthlyVolume:null, tradePrice:21.90 },
+     THE ROW CARRIES NO OWN-LABEL FIELD, and that is now structural
+     rather than a choice: even where the product IS an own label, a
+     downstream holder's listing is an ordinary listing (OL-15,
+     A17.9b) — which is the case Enoteca's second row demonstrates on
+     PRD-1028 further down. */
+  { holder:'Enoteca Milano Import Srl', productId:'PRD-1015', exclusive:false, listedAt:LISTED_AT, holderArticleNo:'EMI-0447', monthlyVolume:null, tradePrice:21.90 },
 
   /* ── Bistro Laurent — the restaurant's wine list ───────────────── */
-  { holder:'Bistro Laurent', productId:'PRD-1020', legacyOwnLabel:false, exclusive:true, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:null, tradePrice:null },
-  { holder:'Bistro Laurent', productId:'PRD-1021', legacyOwnLabel:false, exclusive:true, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:null, tradePrice:null },
-  { holder:'Bistro Laurent', productId:'PRD-1022', legacyOwnLabel:false, exclusive:true, listedAt:LISTED_AT, holderArticleNo:'BL-77', monthlyVolume:null, tradePrice:null },
+  { holder:'Bistro Laurent', productId:'PRD-1020', exclusive:true, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:null, tradePrice:null },
+  { holder:'Bistro Laurent', productId:'PRD-1021', exclusive:true, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:null, tradePrice:null },
+  { holder:'Bistro Laurent', productId:'PRD-1022', exclusive:true, listedAt:LISTED_AT, holderArticleNo:'BL-77', monthlyVolume:null, tradePrice:null },
 
   /* ── Weinhaus Müller — the retailer's selection ────────────────── */
-  { holder:'Weinhaus Müller', productId:'PRD-1020', legacyOwnLabel:false, exclusive:true, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:null, tradePrice:null },
-  { holder:'Weinhaus Müller', productId:'PRD-1021', legacyOwnLabel:false, exclusive:true, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:null, tradePrice:null },
-  { holder:'Weinhaus Müller', productId:'PRD-1022', legacyOwnLabel:false, exclusive:true, listedAt:LISTED_AT, holderArticleNo:'WM-A-14', monthlyVolume:null, tradePrice:null }
+  { holder:'Weinhaus Müller', productId:'PRD-1020', exclusive:true, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:null, tradePrice:null },
+  { holder:'Weinhaus Müller', productId:'PRD-1021', exclusive:true, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:null, tradePrice:null },
+  { holder:'Weinhaus Müller', productId:'PRD-1022', exclusive:true, listedAt:LISTED_AT, holderArticleNo:'WM-A-14', monthlyVolume:null, tradePrice:null }
 ];
 
 /* ── Reading a listing ──────────────────────────────────────────
@@ -5065,33 +5071,43 @@ function listingPrice(holder, ref) {
   return l && l.tradePrice != null ? l.tradePrice : null;
 }
 
-/* THE ONE PLACE OWN-LABEL STATUS IS READ.
+/* THE ONE PLACE OWN-LABEL STATUS IS READ, AND IT IS NOW A DERIVATION.
+   ------------------------------------------------------------------
+   The one-function reader and the three-valued bridge field it read are
+   GONE, in the commit that gave Hawesko real projects and a delivered
+   first order. They were REPLACED and not extended: a
+   fallback under which a listing counts as own-label either through the
+   bridge or through the derivation is two roads to one answer, which is
+   D33 in one sentence.
 
-   Nothing anywhere reads `legacyOwnLabel` directly, and the harness
-   measures that over the source. Today this answers from the bridge
-   alone. In the A17 pass it will answer from the derivation alone —
-   a project past gate 2, a product the winery created, a first
-   commercial order delivered, and the listing belonging to that
-   project's distributor (A17.9, A17.12).
+   WHAT WENT WITH THEM, and it is the substance of the change rather
+   than a tidy-up. The bridge carried `'active'` on five listings and
+   `'pending'` on a sixth, for six wines that turned out not to be own
+   labels at all — the producer's own appellation wines, under the
+   producer's brand, with a distribution exclusivity that A17.0b's last
+   paragraph puts outside A17 by name (D41). Removing the field removed
+   the claim; the six wines lost a badge, not a record, and every order,
+   promo and deal that names them is untouched.
 
-   IT IS REPLACED, NOT EXTENDED. There is deliberately no lasting
-   fallback under which a listing counts as own-label either through
-   the bridge or through the derivation: two roads to one answer is
-   how two surfaces come to disagree, which is D33 in one sentence. */
-const OWN_LABEL_STAGES = ['pending', 'active'];
-function listingOwnLabelStatus(listing) {
-  const v = listing && listing.legacyOwnLabel;
-  return OWN_LABEL_STAGES.indexOf(v) === -1 ? null : v;
-}
-/* The BADGE question, which is narrower than the status. Only an
-   active licence is an own label; a project still in negotiation is
-   not one yet, and saying so on a portfolio row would claim an
-   exclusivity nobody has signed. */
-function isOwnLabel(holder, ref) { return listingOwnLabelStatus(listingOf(holder, ref)) === 'active'; }
-/* Every listing this holder holds an own-label relation on, in the
-   order they were listed. Counted, never stored (invariant 7). */
+   THE THREE-VALUEDNESS DID NOT SURVIVE EITHER, AND MUST NOT. OL-15
+   gives `ownLabel` on a listing TWO conditions and no others, so it is
+   a boolean — there is no `'pending'` own-label listing, because a
+   project before its first delivery HAS NO LISTING (A17.9). The stage
+   the old bridge was standing in for belongs to the PROJECT, is read
+   through ownLabelProjectPhase() below, and shows up in My Labels where
+   A17.6 puts it.
+
+   `isOwnLabel` KEEPS ITS NAME because forty call sites is the wrong
+   reason to rename a question that has not changed: "does this holder
+   carry this wine as an own label" is what the portfolio badge asks,
+   and only the answer moved. */
+function isOwnLabel(holder, ref) { return ownLabelListingDerived(listingOf(holder, ref)); }
+/* Every listing this holder holds as a PRIMARY own label. Counted,
+   never stored (invariant 7), and it is the primary holder only — a
+   downstream distributor's listing of the same product is an ordinary
+   listing and never appears here (OL-15, A17.9b). */
 function ownLabelListingsOf(holder) {
-  return listingsOf(holder).filter(l => listingOwnLabelStatus(l) !== null);
+  return listingsOf(holder).filter(l => ownLabelListingDerived(l));
 }
 function isExclusiveFor(holder, ref) { const l = listingOf(holder, ref); return !!(l && l.exclusive); }
 
@@ -5101,17 +5117,19 @@ function isExclusiveFor(holder, ref) { const l = listingOf(holder, ref); return 
    each doing their own "is it already there" was how the buyers' lists
    came to hold three answers to the same question.
 
-   `legacyOwnLabel` IS NOT A PARAMETER. The bridge carries the three
-   fixture rows and nothing else may ever add to it — a new own label
-   comes from an A17 project, not from an interface. */
+   THERE IS NO OWN-LABEL PARAMETER, and there is nothing left for one to
+   write to. Own-label status is derived from the project and the
+   delivered first order (OL-15), so a listing created here is an
+   ordinary listing by construction rather than by default — including
+   the one a downstream distributor takes on an own-label product, which
+   is exactly what A17.9b says his row is. */
 function addListing(holder, ref, fields) {
   const id = (ref && typeof ref === 'object') ? ref.id : ref;
   if (!holder || typeof id !== 'string') return null;
   const existing = listingOf(holder, id);
   if (existing) return existing;
   const f = fields || {};
-  const row = { holder: holder, productId: id, legacyOwnLabel: false,
-                exclusive: !!f.exclusive, listedAt: todayISO(),
+  const row = { holder: holder, productId: id, exclusive: !!f.exclusive, listedAt: todayISO(),
                 holderArticleNo: f.holderArticleNo == null ? null : f.holderArticleNo,
                 monthlyVolume: f.monthlyVolume == null ? null : f.monthlyVolume,
                 tradePrice: f.tradePrice == null ? null : f.tradePrice };
@@ -5242,7 +5260,46 @@ const consents = [
     party:'Château Belrieu', role:'winery',
     termsType:'program_terms', termsVersion:OWN_LABEL_PROGRAM_TERMS_VERSION,
     textSnapshot:'I confirm on behalf of the house that we apply to the Bottle Lobby Own Label programme as a producer, that we create every own-label product ourselves and stay answerable for its technical data, that we supply an own-label product to no party other than the primary distributor named in its project, and that the per-bottle programme fee is borne by this house under the tariff in force when a project’s terms are concluded. We accept the audit and documentation duties of the programme agreement and acknowledge that membership may be suspended or terminated under it.',
-    byUser:'Château Belrieu', forCompany:'Château Belrieu', at:'2026-07-13', language:'en' }
+    byUser:'Château Belrieu', forCompany:'Château Belrieu', at:'2026-07-13', language:'en' },
+
+  /* ── Project consents — two per project, one per party (A17.7) ────
+     OL-13: not one clause sentence appears in both a programme text and
+     a project text, and the harness compares them sentence by sentence
+     rather than trusting this note. That is why the text below names
+     THIS project's particulars and points at the programme terms by
+     version instead of reprinting them — `programTermsVersion` is the
+     version the company itself accepted, which is checkable and is
+     checked.
+
+     A project consent may not be recorded while the referenced
+     membership is inactive (A17.7). Every `at` below therefore sits
+     after its company's `validFrom`, and the harness asks that of the
+     records rather than of this paragraph. */
+  { id:'CNS-2001', subjectType:'project', subjectId:'OLP-104',
+    party:'Hawesko GmbH', role:'distributor',
+    termsType:'project_terms', termsVersion:'OL-PROJ-2026-01',
+    programTermsVersion:OWN_LABEL_PROGRAM_TERMS_VERSION,
+    textSnapshot:'For this project we agree the particulars set out in the project agreement: the source wine, the brand and label we own, the territory and channels granted to us, the term, the minimum quantity and the quantity of the first order. Our obligations under the framework agreement we accepted as OL-PROG-2026-01 continue to apply and are not restated here.',
+    byUser:'Hawesko GmbH', forCompany:'Hawesko GmbH', at:'2026-04-20', language:'en' },
+  { id:'CNS-2002', subjectType:'project', subjectId:'OLP-104',
+    party:'Domaine Lefèvre', role:'winery',
+    termsType:'project_terms', termsVersion:'OL-PROJ-2026-01',
+    programTermsVersion:OWN_LABEL_PROGRAM_TERMS_VERSION,
+    textSnapshot:'For this project we agree the particulars set out in the project agreement: the wine to be relabelled, the technical execution that stays ours, the agreed bottle price, the territory, the term, the minimum quantity and the quantity of the first order. Our obligations under the framework agreement we accepted as OL-PROG-2026-01 continue to apply and are not restated here.',
+    byUser:'Domaine Lefèvre', forCompany:'Domaine Lefèvre', at:'2026-04-21', language:'en' },
+
+  { id:'CNS-2003', subjectType:'project', subjectId:'OLP-103',
+    party:'Hawesko GmbH', role:'distributor',
+    termsType:'project_terms', termsVersion:'OL-PROJ-2026-01',
+    programTermsVersion:OWN_LABEL_PROGRAM_TERMS_VERSION,
+    textSnapshot:'For this project we agree the particulars set out in the project agreement: the development brief, the brand and label we own, the territory and channels granted to us, the term, the minimum quantity and the quantity of the first order. Our obligations under the framework agreement we accepted as OL-PROG-2026-01 continue to apply and are not restated here.',
+    byUser:'Hawesko GmbH', forCompany:'Hawesko GmbH', at:'2026-06-15', language:'en' },
+  { id:'CNS-2004', subjectType:'project', subjectId:'OLP-103',
+    party:'Bodegas Ruiz', role:'winery',
+    termsType:'project_terms', termsVersion:'OL-PROJ-2026-01',
+    programTermsVersion:OWN_LABEL_PROGRAM_TERMS_VERSION,
+    textSnapshot:'For this project we agree the particulars set out in the project agreement: the cuvée to be developed, the technical execution that stays ours, the agreed bottle price, the territory, the term, the minimum quantity and the quantity of the first order. Our obligations under the framework agreement we accepted as OL-PROG-2026-01 continue to apply and are not restated here.',
+    byUser:'Bodegas Ruiz', forCompany:'Bodegas Ruiz', at:'2026-06-16', language:'en' }
 ];
 
 function consentById(id) {
@@ -5300,7 +5357,40 @@ const contracts = [
     sentAt:'2026-07-15', receivedAt:'2026-07-30', docNo:'BL-OLP-2026-0007' },
   { id:'CTR-1008', subjectType:'membership', subjectId:'OLM-1002', party:'Enoteca Milano Import Srl',
     kind:'program_agreement', status:'sent',
-    sentAt:'2026-07-29', receivedAt:null, docNo:'BL-OLP-2026-0008' }
+    sentAt:'2026-07-29', receivedAt:null, docNo:'BL-OLP-2026-0008' },
+
+  /* ── Project agreements — level B, two per project (A17.7) ────────
+     Gate 1 is PERMITTED once both parties hold an approved project
+     contract, and it is RELEASED by the review. Two facts, two records,
+     and gate1Permitted() counts PARTIES rather than rows — one house
+     signing twice is not two signatures, which the harness proves by
+     trying it. */
+  { id:'CTR-2001', subjectType:'project', subjectId:'OLP-104', party:'Hawesko GmbH',
+    kind:'project_agreement', status:'approved',
+    sentAt:'2026-04-20', receivedAt:'2026-04-24', docNo:'BL-OLJ-2026-0001' },
+  { id:'CTR-2002', subjectType:'project', subjectId:'OLP-104', party:'Domaine Lefèvre',
+    kind:'project_agreement', status:'approved',
+    sentAt:'2026-04-21', receivedAt:'2026-04-24', docNo:'BL-OLJ-2026-0002' },
+  { id:'CTR-2003', subjectType:'project', subjectId:'OLP-103', party:'Hawesko GmbH',
+    kind:'project_agreement', status:'approved',
+    sentAt:'2026-06-15', receivedAt:'2026-06-19', docNo:'BL-OLJ-2026-0003' },
+  { id:'CTR-2004', subjectType:'project', subjectId:'OLP-103', party:'Bodegas Ruiz',
+    kind:'project_agreement', status:'approved',
+    sentAt:'2026-06-16', receivedAt:'2026-06-19', docNo:'BL-OLJ-2026-0004' },
+
+  /* ── One addendum, because A17.7 says "where terms moved" ─────────
+     OLP-103's first-order quantity moved between gate 1 and gate 2 —
+     the brief asked for 900 bottles, the sample tasting settled on a
+     smaller opening run of 720. A17.7: where the terms moved, an
+     addendum; where they did not, a confirmation without a new
+     document. OLP-104's terms did not move, so it has none, and the two
+     projects show both halves of that sentence rather than one. */
+  { id:'CTR-2005', subjectType:'project', subjectId:'OLP-103', party:'Hawesko GmbH',
+    kind:'addendum', status:'approved',
+    sentAt:'2026-07-22', receivedAt:'2026-07-24', docNo:'BL-OLA-2026-0001' },
+  { id:'CTR-2006', subjectType:'project', subjectId:'OLP-103', party:'Bodegas Ruiz',
+    kind:'addendum', status:'approved',
+    sentAt:'2026-07-22', receivedAt:'2026-07-24', docNo:'BL-OLA-2026-0002' }
 ];
 
 function contractById(id) {
@@ -5368,7 +5458,35 @@ const reviews = [
     reviewNotes:null, approvalType:'program_admission' },
   { id:'RVW-1106', subjectType:'membership', subjectId:'OLM-1007', gateNumber:null,
     reviewStatus:'approved', reviewedBy:'Bottle Lobby', reviewedAt:'2026-07-10',
-    reviewNotes:null, approvalType:'program_admission' }
+    reviewNotes:null, approvalType:'program_admission' },
+
+  /* ── THE GATES — two manual reviews per project, and no third ─────
+     `gateNumber` is what makes a gate a gate; everything else about the
+     row is the same act as an admission. A17.6: only gates 1 and 2
+     belong to Bottle Lobby, and the first order is the distributor's
+     own act which is never sent automatically — so there is no third
+     review here and there must not be.
+
+     `reviewNotes` is Bottle Lobby's own and reaches neither party
+     (A17.13). It carries what the gate was decided on, which is the one
+     thing an audit of a manual approval actually needs. */
+  { id:'RVW-2001', subjectType:'project', subjectId:'OLP-104', gateNumber:1,
+    reviewStatus:'approved', reviewedBy:'Bottle Lobby', reviewedAt:'2026-04-27',
+    reviewNotes:'Both project agreements returned and approved; source wine PRD-1013 is on_request and belongs to the named producer.',
+    approvalType:'gate_1' },
+  { id:'RVW-2002', subjectType:'project', subjectId:'OLP-104', gateNumber:2,
+    reviewStatus:'approved', reviewedBy:'Bottle Lobby', reviewedAt:'2026-06-08',
+    reviewNotes:'Sample approved 25 May; final terms match both parties’ rows; no addendum required.',
+    approvalType:'gate_2' },
+
+  { id:'RVW-2003', subjectType:'project', subjectId:'OLP-103', gateNumber:1,
+    reviewStatus:'approved', reviewedBy:'Bottle Lobby', reviewedAt:'2026-06-22',
+    reviewNotes:'Both project agreements returned and approved; bespoke route, no source wine claimed.',
+    approvalType:'gate_1' },
+  { id:'RVW-2004', subjectType:'project', subjectId:'OLP-103', gateNumber:2,
+    reviewStatus:'approved', reviewedBy:'Bottle Lobby', reviewedAt:'2026-07-27',
+    reviewNotes:'Sample approved 20 Jul; first-order quantity moved 900 → 720, so the addendum was required and is approved on both sides.',
+    approvalType:'gate_2' }
 ];
 
 function reviewById(id) {
@@ -5540,6 +5658,35 @@ function ownLabelPublicBadge(company, at) {
   return OWN_LABEL_BADGE_LABELS[m.companyRole] || 'Verified Own Label Partner';
 }
 
+/* ── THE FEE (A17.10) ───────────────────────────────────────────
+   A centrally set fixed amount per bindingly ordered own-label bottle,
+   paid by the winery.
+
+   CENTRAL MEANS CENTRAL. It is not per project, not editable by either
+   party, and neither side negotiates it — the winery prices it into
+   its offer. A per-project fee would make the fee a term, a term is
+   negotiated, and a negotiated platform fee is a different business
+   from the one A17 describes. The tariff version is the only place the
+   number can move, and it moves forward only: a change is a new
+   central contract and a new version, for contracts concluded
+   afterwards, and nothing reprices history.
+
+   THE AMOUNT IS LIFTED, NOT CHOSEN. €0.25 is the figure A17.10 uses
+   to explain the pricing ("wanting €5.00 net at a €0.25 fee, it offers
+   €5.25"). The version string is fixture authorship and says only that
+   there has been one tariff so far.
+
+   OL-2 IS NOT BROKEN BY THIS CONSTANT. What OL-2 forbids is the fee
+   living in a structure the distributor's side reads — his
+   `ownLabelTerms` row has no fee field at all, which is an omission
+   rather than a secret and is the only form that survives a browser
+   with developer tools open. This is Bottle Lobby's central tariff,
+   which is nobody's terms row. */
+const OWN_LABEL_FEE_TARIFF = {
+  feeType: 'per_bottle', feePerBottle: 0.25, feeCurrency: 'EUR',
+  feePayer: 'winery', feeTrigger: 'accepted_order_line', feeTermsVersion: 'OLF-2026-01'
+};
+
 /* ══════════════════════════════════════════════════════════════════
    PROJECT TERMS (A17.8) — party-scoped, two rows per project
    ------------------------------------------------------------------
@@ -5549,14 +5696,61 @@ function ownLabelPublicBadge(company, at) {
    omission rather than a secret, which is the only form that survives
    a browser with developer tools open.
 
-   Empty here, and that is not a stopgap: terms belong to a project,
-   and the projects arrive with their own commit. A terms row naming a
-   project that does not exist yet would be the forward reference this
-   whole chain exists to avoid.
+   `agreedBottlePrice` IS ON BOTH ROWS AND IS NOT A SHARED TERM to be
+   compared — it is the same number for a different reason on each side:
+   what the winery charges and what the distributor pays are one agreed
+   figure (A17.13 lists it visible to both). The FEE is the one that is
+   not: `feePerBottle`, `feeCurrency` and `feeTermsVersion` appear on the
+   winery's row and the distributor's row has no such key at all. That is
+   OL-2, and an omission is the only form of it that survives a browser
+   with developer tools open.
+
+   THE WINERY PRICES THE FEE IN, which is A17.10's own worked example:
+   wanting €5.00 net at a €0.25 fee, it offers €5.25. Both figures are
+   on the winery's row and the arithmetic between them is visible —
+   `netToWinery` is what the house keeps, and it is stored beside the
+   agreed price rather than derived, because it is a NEGOTIATED figure
+   and not a calculation: the house decided what it wanted before the
+   fee was added.
 ══════════════════════════════════════════════════════════════════ */
 const OWN_LABEL_SHARED_TERMS = ['territory', 'termFrom', 'termUntil',
                                 'minimumQuantity', 'firstOrderQuantity', 'specVersion'];
-const ownLabelTerms = [];
+const ownLabelTerms = [
+  /* ── OLP-104 — the active own label ──────────────────────────────
+     The shared six agree on both rows, which is what makes
+     ownLabelTermsAgree() answer true rather than null. */
+  { projectId:'OLP-104', party:'Hawesko GmbH', partyRole:'distributor',
+    territory:'Germany · Denmark · Sweden', termFrom:'2026-06-08', termUntil:'2028-06-07',
+    minimumQuantity:6000, firstOrderQuantity:1200, specVersion:'OLS-104-2',
+    agreedBottlePrice:5.25, currency:'EUR' },
+  { projectId:'OLP-104', party:'Domaine Lefèvre', partyRole:'winery',
+    territory:'Germany · Denmark · Sweden', termFrom:'2026-06-08', termUntil:'2028-06-07',
+    minimumQuantity:6000, firstOrderQuantity:1200, specVersion:'OLS-104-2',
+    agreedBottlePrice:5.25, currency:'EUR',
+    netToWinery:5.00,
+    feePerBottle:OWN_LABEL_FEE_TARIFF.feePerBottle,
+    feeCurrency:OWN_LABEL_FEE_TARIFF.feeCurrency,
+    feeTermsVersion:OWN_LABEL_FEE_TARIFF.feeTermsVersion },
+
+  /* ── OLP-103 — the addendum is why specVersion reads -3 ───────────
+     `firstOrderQuantity` is 720 on both rows, not the 900 the brief
+     asked for. The move is what required the addendum (CTR-2005 /
+     CTR-2006) and what the gate-2 review notes record; the terms hold
+     the figure that was agreed, and the history of it lives in the
+     documents rather than in a second field here. */
+  { projectId:'OLP-103', party:'Hawesko GmbH', partyRole:'distributor',
+    territory:'Germany', termFrom:'2026-07-27', termUntil:'2029-07-26',
+    minimumQuantity:4000, firstOrderQuantity:720, specVersion:'OLS-103-3',
+    agreedBottlePrice:4.15, currency:'EUR' },
+  { projectId:'OLP-103', party:'Bodegas Ruiz', partyRole:'winery',
+    territory:'Germany', termFrom:'2026-07-27', termUntil:'2029-07-26',
+    minimumQuantity:4000, firstOrderQuantity:720, specVersion:'OLS-103-3',
+    agreedBottlePrice:4.15, currency:'EUR',
+    netToWinery:3.90,
+    feePerBottle:OWN_LABEL_FEE_TARIFF.feePerBottle,
+    feeCurrency:OWN_LABEL_FEE_TARIFF.feeCurrency,
+    feeTermsVersion:OWN_LABEL_FEE_TARIFF.feeTermsVersion }
+];
 
 function ownLabelTermsOf(projectId, party) {
   if (typeof projectId !== 'string') return party ? null : [];
@@ -5611,7 +5805,191 @@ function gate1Permitted(projectId) {
 function projectActive(projectId)         { return gateApproved(projectId, 1); }
 function approvedForFirstOrder(projectId) { return gateApproved(projectId, 2); }
 
-const ownLabelProjects = [];
+/* ══════════════════════════════════════════════════════════════════
+   THE OWN-LABEL PRODUCTS (A17.0b, A17.9)
+   ------------------------------------------------------------------
+   A BOOK OF ITS OWN, and the reason is an ACTION right rather than a
+   filing preference. `partnerWinesPool` is the producers' ORDER LIST:
+   any distributor may pick from it, and A17.9 permanently forbids any
+   distributor but the primary one to select or order an own-label
+   product from the winery. A row in that pool would offer PRD-1028 to
+   whoever opened the picker.
+
+   It is still the PRODUCER'S record. `winery` is the house that makes
+   it — invariant 2 does not bend, and OL-8 says no path in another
+   role writes a product row. What the distributor owns is the BRAND,
+   and that is `brandOwner`, which is a different field naming a
+   different party. Both facts are on the row, visibly apart (A17.0a);
+   the article page shows them apart too.
+
+   `ownLabelProjectId` IS THE ONLY STORED POINTER (A17.9). Exclusive
+   distributor, agreement, term, territory and commercial status are all
+   read from the project. A stored `exclusiveDistributorId` would be a
+   copy of a fact the project already holds, and D33 records what
+   happens next.
+
+   `ownLabelAvailability:'unavailable'` on both, deliberately and not as
+   a default: an own-label product is not itself open to own-label
+   requests. Somebody relabelling PRD-1028 again would be relabelling
+   Hawesko's brand, which is not a thing this model has.
+
+   `url` IS NULL ON PRD-1029 AND THAT IS THE POINT. A17.9: before the
+   first commercial delivery the product is visible to the winery, its
+   primary distributor and Bottle Lobby — it has no public page and no
+   Wine Guide row, because there is nothing to promise on yet. After the
+   delivery it is as visible as anything else in the book, which is why
+   PRD-1028 gets both. Two products, one shape, and the boundary between
+   them is a delivery rather than a setting.
+
+   PRD-1028's `url` IS ALSO NULL IN THIS COMMIT, and for a different
+   reason worth telling apart: its page does not exist yet. It arrives
+   two commits on, with the Wine Guide row, in one step — and until then
+   an address pointing at nothing would be exactly the broken claim
+   tests/wine-identity.js exists to catch. A url is an ADDRESS and is
+   never a promise that something is there.
+══════════════════════════════════════════════════════════════════ */
+const ownLabelProducts = [
+  /* ── PRD-1028 — active: delivered, in the book, publicly visible ──
+     A relabel of Domaine Lefèvre's Mâcon-Villages (PRD-1013), which is
+     `on_request`. Hawesko's brand, Domaine Lefèvre's wine and cellar,
+     Domaine Lefèvre's technical data — read through the source, never
+     copied (A17.5 route A: same liquid, one record). */
+  { id:'PRD-1028', winery:'Domaine Lefèvre', brandOwner:'Hawesko GmbH',
+    name:'Hanseatischer Weisser — Mâcon-Villages', vintage:2023, type:'White',
+    note:'Own Label', ownLabelAvailability:'unavailable',
+    origin:'Mâcon-Villages AOC, Burgundy',
+    url:null,
+    ownLabelProjectId:'OLP-104', at:'2026-06-10' },
+
+  /* ── PRD-1029 — created after gate 2, first order not delivered ───
+     A bespoke development with Bodegas Ruiz: `sourceWineId` is null and
+     the Rioja Reserva is named on the project as development history
+     only (OL-9). It feeds no technical value here and is not this
+     wine's origin — this wine's origin is its own. */
+  { id:'PRD-1029', winery:'Bodegas Ruiz', brandOwner:'Hawesko GmbH',
+    name:'Hanseatischer Roter — Rioja', vintage:2022, type:'Red',
+    note:'Own Label', ownLabelAvailability:'unavailable',
+    origin:'Rioja DOCa, Rioja Alta',
+    url:null,
+    ownLabelProjectId:'OLP-103', at:'2026-07-29' }
+];
+
+function ownLabelProductOf(ref) {
+  const id = (ref && typeof ref === 'object') ? ref.id : ref;
+  if (typeof id !== 'string') return null;
+  return ownLabelProducts.find(p => p.id === id) || null;
+}
+/* The brand a bottle carries, or null for an ordinary wine. NOT the
+   producer, and the two are never read from one field: A17.0b exists
+   because `ownLabel:true` on a base wine was recording a fact about
+   somebody else's business on a record that does not belong to them. */
+function brandOwnerOf(ref) {
+  const p = ownLabelProductOf(ref);
+  return p ? p.brandOwner : null;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   THE PROJECTS (A17.8)
+   ------------------------------------------------------------------
+   `productId` stays null until the winery creates the product after
+   gate 2 (A17.9). Both rows below are past gate 2 and both name their
+   product; the two early-stage projects that carry null arrive in the
+   next commit.
+
+   `stage` IS STORED, AND ONLY FOR WHAT CANNOT BE DERIVED. A17.12 names
+   this as the one deliberate exception: stages 2–4 and the sample chain
+   describe where a CONVERSATION stands and leave no mechanical trace.
+   Everything a gate could be checked against is stored separately —
+   consents, contracts, reviews, the product, the first order — so the
+   panel reads the PHASE from those and consults `stage` only inside the
+   conversation band. A project past gate 2 therefore holds the last
+   conversation stage it went through, `final_terms`, and nothing reads
+   it as an authority; tests/own-label-program.js asserts that
+   relationship rather than leaving it to be inferred.
+
+   `brandOwner` IS ON THE PROJECT AND ON THE PRODUCT, and that is not a
+   copy of the D33 kind: the project records what was AGREED and the
+   product records what it CARRIES. They must agree, which is checkable
+   and is checked — an own label whose project awarded the brand to one
+   house and whose bottle carries another is the defect A17.0b's five
+   separate facts exist to prevent.
+══════════════════════════════════════════════════════════════════ */
+const OWN_LABEL_PROJECT_STAGES = [
+  'requested',          /* request sent; gate 1 not released    */
+  'negotiation',        /* ─┐ A17.6 stages 2–4, in parallel and  */
+  'product_and_cuvee',  /*  │ a summary rather than gates        */
+  'design_and_brand',   /* ─┘                                    */
+  'sample_agreed',
+  'sample_prepared',
+  'sample_shipped',
+  'sample_received',
+  'sample_approved',
+  'final_terms'         /* addendum if terms moved; gate 2 next  */
+];
+const OWN_LABEL_STAGE_LABELS = {
+  requested:         'Request sent',
+  negotiation:       'In negotiation',
+  product_and_cuvee: 'Product & cuvée',
+  design_and_brand:  'Design & brand',
+  sample_agreed:     'Sample agreed',
+  sample_prepared:   'Sample in preparation',
+  sample_shipped:    'Sample shipped',
+  sample_received:   'Sample received',
+  sample_approved:   'Sample approved',
+  final_terms:       'Final terms'
+};
+
+const ownLabelProjects = [
+  /* ── OLP-104 — the active own label ──────────────────────────────
+     EVERY DATE HAS A DERIVATION, and the chain reads downward:
+
+       17 Feb  Hawesko ↔ Domaine Lefèvre?  no — 7 Apr 2026 (partnerships)
+       20 Feb  Hawesko admitted to the programme (OLM-1001)
+       20 Mar  Domaine Lefèvre admitted     (OLM-1003)
+        7 Apr  the two houses become partners
+       13 Apr  project requested            ← the first day BOTH
+                                              admissions and the
+                                              partnership are in place,
+                                              plus the intervening
+                                              weekend (13 Apr is a Monday)
+       27 Apr  both project contracts approved → gate 1 released
+       25 May  sample approved
+        8 Jun  final terms confirmed → gate 2 approved
+       10 Jun  the winery creates PRD-1028
+       15 Jun  first order placed
+       29 Jun  first order delivered → the listing derives own label
+
+     The ceiling on the whole chain is today, 6 Aug 2026, and the floor
+     is the partnership. Nothing in it is closer together than the act
+     before it plausibly allows, and no step is on a weekend. */
+  { id:'OLP-104', distributor:'Hawesko GmbH', producer:'Domaine Lefèvre',
+    creationType:'relabel_existing_wine', sourceWineId:'PRD-1013',
+    developmentReferenceWineId:null,
+    productId:'PRD-1028', stage:'final_terms', brandOwner:'Hawesko GmbH',
+    requestedAt:'2026-04-13', requestedBy:'Hawesko GmbH' },
+
+  /* ── OLP-103 — created after gate 2, first order not delivered ────
+       24 Apr  Bodegas Ruiz admitted        (OLM-1004)
+        2 Jun  Hawesko ↔ Bodegas Ruiz partnership
+        8 Jun  project requested            ← first Monday after the
+                                              partnership
+       22 Jun  both project contracts approved → gate 1 released
+       20 Jul  sample approved
+       27 Jul  final terms confirmed → gate 2 approved
+       29 Jul  the winery creates PRD-1029
+       31 Jul  first order placed, accepted the same day
+
+     THE FIRST ORDER IS NOT DELIVERED, and that is the state this
+     project exists to show: the product is real, the fee has accrued on
+     an accepted line (A17.10), and the wine is still not in anybody's
+     book (A17.9). It is the one place *created ≠ carried* is visible
+     rather than described. */
+  { id:'OLP-103', distributor:'Hawesko GmbH', producer:'Bodegas Ruiz',
+    creationType:'bespoke_new_wine', sourceWineId:null,
+    developmentReferenceWineId:'PRD-1016',
+    productId:'PRD-1029', stage:'final_terms', brandOwner:'Hawesko GmbH',
+    requestedAt:'2026-06-08', requestedBy:'Hawesko GmbH' }
+];
 
 function ownLabelProjectById(id) {
   if (typeof id !== 'string') return null;
@@ -5771,14 +6149,13 @@ function ownLabelOrderRight(buyer, seller, ref, ctx) {
    listing that shows the sourcing via A, and it never appears in his
    My Labels.
 
-   IT IS NOT WIRED INTO listingOwnLabelStatus() AND MUST NOT BE. That
-   function REPLACES the bridge in the pass that gives these wines
-   projects and a delivered first order; a fallback under which a
-   listing counts as own-label either through the bridge or through
-   this reading is two roads to one answer, which is D33 in one
-   sentence. Until that pass this is exercised by the harness and read
-   by nothing on screen — deliberately visible as unfinished rather
-   than half-connected. */
+   IT IS THE ONLY READING, AND IT REPLACED THE BRIDGE RATHER THAN
+   JOINING IT. A fallback under which a listing counts as own-label
+   either through a legacy field or through this reading is two roads to
+   one answer, which is D33 in one sentence — so the field and its
+   reader were deleted in the same commit that wired this one up.
+   `isOwnLabel()` and `ownLabelListingsOf()` are its two callers and
+   every surface goes through them. */
 
 /* The delivered first commercial order, or null. Read from the orders
    themselves (invariant 7): a confirmed delivery is an act with a
@@ -5808,35 +6185,6 @@ function ownLabelListingDerived(listing) {
   if (listing.holder !== project.distributor) return false;
   return !!firstCommercialDeliveryOf(listing.productId);
 }
-
-/* ── THE FEE (A17.10) ───────────────────────────────────────────
-   A centrally set fixed amount per bindingly ordered own-label bottle,
-   paid by the winery.
-
-   CENTRAL MEANS CENTRAL. It is not per project, not editable by either
-   party, and neither side negotiates it — the winery prices it into
-   its offer. A per-project fee would make the fee a term, a term is
-   negotiated, and a negotiated platform fee is a different business
-   from the one A17 describes. The tariff version is the only place the
-   number can move, and it moves forward only: a change is a new
-   central contract and a new version, for contracts concluded
-   afterwards, and nothing reprices history.
-
-   THE AMOUNT IS LIFTED, NOT CHOSEN. €0.25 is the figure A17.10 uses
-   to explain the pricing ("wanting €5.00 net at a €0.25 fee, it offers
-   €5.25"). The version string is fixture authorship and says only that
-   there has been one tariff so far.
-
-   OL-2 IS NOT BROKEN BY THIS CONSTANT. What OL-2 forbids is the fee
-   living in a structure the distributor's side reads — his
-   `ownLabelTerms` row has no fee field at all, which is an omission
-   rather than a secret and is the only form that survives a browser
-   with developer tools open. This is Bottle Lobby's central tariff,
-   which is nobody's terms row. */
-const OWN_LABEL_FEE_TARIFF = {
-  feeType: 'per_bottle', feePerBottle: 0.25, feeCurrency: 'EUR',
-  feePayer: 'winery', feeTrigger: 'accepted_order_line', feeTermsVersion: 'OLF-2026-01'
-};
 
 /* The append-only ledger (A17.10). Empty for the same reason the
    projects are: a fee event needs an own-label order line from a
@@ -6024,8 +6372,8 @@ function deletePortfolioWine(idx) {
   renderWinePortfolioD();
   /* D33: a derived figure obliges every surface showing it to be
      repainted by the action that moved it. Removing a wine removes its
-     listing, and "My Labels" counts listings. */
-  renderOwnLabelsD();
+     listing, and four own-label surfaces read the listings. */
+  refreshOwnLabelSurfaces();
   refreshPortfolioCounts();
   showToast('✓ Wine removed from your portfolio');
 }
@@ -6040,7 +6388,11 @@ function editPortfolioWine(idx) {
      is shown back to them. It used to be blanked on every open, which
      is what "set, cleared twice and never read" looked like from here. */
   document.getElementById('aw-volume').value = (l && l.monthlyVolume != null) ? l.monthlyVolume : '';
-  document.getElementById('aw-ownlabel').checked = listingOwnLabelStatus(l);
+  /* Shown, never settable — the control is `disabled` in the markup and
+     the harness measures that. What it shows is the derivation: a
+     project past gate 2 whose first delivery is confirmed, held by this
+     distributor (OL-15). A tick cannot produce any of those three. */
+  document.getElementById('aw-ownlabel').checked = ownLabelListingDerived(l);
   document.getElementById('aw-step-pick').style.display = 'none';
   document.getElementById('aw-step-details').style.display = 'block';
   document.getElementById('aw-modal').classList.add('active');
@@ -6085,10 +6437,26 @@ function renderWinePicker(search) {
           <div class="aw-pick-name">${w.name} <span style="color:rgba(247,243,238,0.4)">${w.vintage}</span></div>
           <div class="aw-pick-meta">${w.type} · ${w.origin}</div>
         </div>
-        <div class="aw-pick-tag">${taken ? 'Already in portfolio' : w.note}</div>
+        <div class="aw-pick-tag">${taken ? 'Already in portfolio' : pickerTagFor(w)}</div>
       </div>`;
     }).join('')}`).join('');
 }
+/* WHAT THE DISTRIBUTOR'S PICKER SAYS ABOUT A WINE, and it is the ONE
+   place "Own-Label Available" is the right sentence — this picker offers
+   the producers' wines, and a wine open to requests is the wine a
+   project may be started from (A17.4). It reads
+   `ownLabelAvailability`, the second of A17.0a's four levels, and never
+   the fourth: whether somebody CARRIES an own label says nothing about
+   whether this wine may be asked about.
+
+   It used to print `w.note`, where the availability lived as free text
+   beside 'Organic' and 'Riserva · Premium Tier' — D36, in the field
+   `ownLabelAvailability` replaced. The note keeps its own job and shows
+   where there is nothing louder to say. */
+function pickerTagFor(w) {
+  return ownLabelOnRequest(w.id) ? 'Own-Label Available' : (w.note || 'Standard');
+}
+
 /* The key travels in the onclick, so nothing here escapes an
    apostrophe or an em dash any more — the reason A14.4 exists. */
 function selectWineForAdd(id) {
@@ -6128,7 +6496,7 @@ function confirmAddWine() {
     const l = listingOf('Hawesko GmbH', w.id);
     if (l) l.monthlyVolume = typedVolume();
     renderWinePortfolioD();
-    renderOwnLabelsD();   /* the volume is printed there too */
+    refreshOwnLabelSurfaces();   /* the volume is printed on three of them */
     closePullWineModal();
     showToast('✓ Portfolio entry updated');
     editingPortfolioIndex = null;
@@ -6155,73 +6523,257 @@ function confirmAddWine() {
   });
   /* One row per (holder, line). Taking a wine on is the act; the
      listing is the record of it, and its date is today rather than a
-     figure copied from anywhere. `legacyOwnLabel` is false and stays
-     false — the bridge carries the three legacy fixtures and nothing
-     the interface does may add a fourth. */
+     figure copied from anywhere. Nothing here can make it an own
+     label: that is derived from a project and a delivered first order,
+     and pulling a wine into a book is neither (OL-15). */
   addListing('Hawesko GmbH', awSelectedWine.id, { monthlyVolume: typedVolume() });
   renderWinePortfolioD();
-  renderOwnLabelsD();
+  refreshOwnLabelSurfaces();
   refreshPortfolioCounts();
   closePullWineModal();
   showToast('✓ Wine pulled into your portfolio');
 }
 
-/* ══ MY LABELS — rendered from the listings ══════════════════════
-   MIGRATION-CAPABLE STOPGAP, NOT THE A17 MODEL. What it draws is the
-   bridge field `legacyOwnLabel`, read through listingOwnLabelStatus()
-   and never directly. When A17 arrives, the derivation replaces the
-   inside of that one function and this renderer does not change —
-   which is the whole reason there is only one reader.
+/* ══ MY LABELS — rendered from the PROJECTS ══════════════════════
+   IT LISTS PROJECTS, NOT LISTINGS, AND THAT IS THE WHOLE CHANGE.
+   The old panel drew the removed bridge field off the listings, and
+   a listing can only ever describe an own label that already arrived:
+   before the first commercial delivery an own-label product HAS NO
+   LISTING (A17.9), so the one thing this panel most needs to show — the
+   pipeline — was structurally invisible to it. A17.14 asks for the
+   whole arc on this screen; a listing-shaped reader cannot draw it.
+
+   THE PHASE IS DERIVED, THE STAGE IS STORED, AND THE SPLIT IS A17.12'S.
+   Everything a gate could be checked against exists as a record — an
+   approved gate review, a product, a delivered order — so the phase
+   comes from those and never from a field. `stage` is consulted for one
+   band only, A17.6's stages 2–4 and the sample chain, because a
+   conversation leaves no mechanical trace to read.
 
    EVERY FIELD COMES FROM ITS OWNER. The wine's name, producer, origin
    and article page belong to the producer (invariant 2) and are read
-   from the catalogue; the monthly volume and the stage belong to the
-   holder and are read from the listing. Nothing here is typed, so
-   nothing here can disagree with the portfolio two sections above it
-   — which is exactly what the typed version did, for three wines.
+   from the catalogue; the brand belongs to the distributor and is read
+   from the product; the monthly volume belongs to the holder and is
+   read from the listing, where there is one. Nothing here is typed.
 
-   THE COUNTER IS COUNTED. It read `(6)` in the markup beside six rows
-   the data agreed with three of. It was one of the five hard-typed
-   counters measured on 5 August; four are left after this one.
+   A PROJECT WITH NO PRODUCT YET STILL RENDERS, and it renders what it
+   actually has: the route, the source wine or the development
+   reference, and the stage. Printing a wine name there would be naming
+   a bottle nobody has made.
 
    An empty list says why it is empty rather than rendering nothing
-   (B12): a distributor with no own-label relations has none, and that
-   is a state worth being able to read. */
+   (B12). */
+
+/* WHERE THIS PROJECT STANDS — five phases, and not one of them stored.
+   Read downward; the first that answers wins, so the order IS the
+   pipeline:
+
+     active                    the primary listing derives own label —
+                               first delivery confirmed (OL-15)
+     awaiting_first_delivery   the product exists; the book does not
+                               have it yet (A17.9, *created ≠ carried*)
+     approved_for_first_order  gate 2 approved, the winery has not
+                               created the product
+     in_progress               gate 1 approved — refined by `stage`
+     awaiting_gate_1           requested; gate 1 not released */
+const OWN_LABEL_PHASE_LABELS = {
+  active:                   'Active',
+  awaiting_first_delivery:  'Awaiting first delivery',
+  approved_for_first_order: 'Approved for first order',
+  in_progress:              'In progress',
+  awaiting_gate_1:          'Awaiting Bottle Lobby'
+};
+function ownLabelProjectPhase(project) {
+  if (!project) return null;
+  if (project.productId) {
+    if (ownLabelListingDerived(listingOf(project.distributor, project.productId)))
+      return 'active';
+    return 'awaiting_first_delivery';
+  }
+  if (approvedForFirstOrder(project.id)) return 'approved_for_first_order';
+  if (projectActive(project.id))         return 'in_progress';
+  return 'awaiting_gate_1';
+}
+/* The line under the name. Inside the conversation band the stored
+   stage is the only thing that knows more than the phase does; outside
+   it the phase is already the finer answer and the stage is history
+   (A17.12 — "a stage that disagrees with the facts is a finding rather
+   than an authority", so it is not consulted where facts exist). */
+function ownLabelProjectDetail(project) {
+  const phase = ownLabelProjectPhase(project);
+  if (phase !== 'in_progress') return OWN_LABEL_PHASE_LABELS[phase] || '';
+  return OWN_LABEL_STAGE_LABELS[project.stage] || OWN_LABEL_PHASE_LABELS.in_progress;
+}
+/* This distributor's own-label projects, newest request first. */
+function ownLabelProjectsOf(distributor) {
+  return ownLabelProjects.filter(p => p.distributor === distributor)
+    .slice().sort((a, b) => (b.requestedAt || '').localeCompare(a.requestedAt || ''));
+}
+
 function renderOwnLabelsD() {
   const el = document.getElementById('dlabels-list');
   if (!el) return;
-  const rows = ownLabelListingsOf('Hawesko GmbH');
+  const rows = ownLabelProjectsOf('Hawesko GmbH');
   const countEl = document.getElementById('dlabels-count');
   if (countEl) countEl.textContent = '(' + rows.length + ')';
 
   if (!rows.length) {
-    el.innerHTML = '<div class="aw-empty">No own-label wines yet.<br>' +
-      'An own label starts from a wine in your Wine Portfolio.</div>';
+    el.innerHTML = '<div class="aw-empty">No own-label projects yet.<br>' +
+      'A project starts from a partner winery\'s wine that is open to own-label requests.</div>';
     return;
   }
-  el.innerHTML = rows.map(l => {
-    const p = wineByRef(l.productId);
-    /* A listing pointing at no product is a finding, not a blank row —
-       and it is already red in tests/listings.js, section 2. */
-    if (!p) return '';
-    const active = listingOwnLabelStatus(l) === 'active';
-    const vol = l.monthlyVolume == null ? '' :
-      ' · ' + l.monthlyVolume.toLocaleString('en-GB') + ' btl/mo';
+  el.innerHTML = rows.map(pr => {
+    const phase   = ownLabelProjectPhase(pr);
+    const active  = phase === 'active';
+    const product = pr.productId ? wineByRef(pr.productId) : null;
+    /* A project naming a product no book knows is a finding, not a
+       blank row — tests/own-label-program.js is red on it. Naming the
+       key is more use here than an empty line. */
+    const title = product ? product.name : (pr.productId || routeLabel(pr));
+    const l = product ? listingOf('Hawesko GmbH', pr.productId) : null;
+    const vol = (l && l.monthlyVolume != null)
+      ? ' · ' + l.monthlyVolume.toLocaleString('en-GB') + ' btl/mo' : '';
+    /* The producer always; the brand only once there is a bottle to
+       carry it. Two facts, never one field (A17.0a). */
+    const sub = pr.producer + (product && product.brandOwner ? ' · ' + product.brandOwner + ' brand' : '') + vol;
+    const origin = product ? (product.origin || '') : sourceNoteFor(pr);
     return `
               <div class="wine-edit-entry">
                 <div class="wine-edit-dot"${active ? '' : ' style="background:var(--dim)"'}></div>
-                <div class="wine-edit-name">${p.name}<div style="font-size:0.68rem;color:var(--dim);margin-top:0.2rem">${p.winery}${vol}</div></div>
-                <div class="wine-edit-origin">${p.origin || ''}</div>
+                <div class="wine-edit-name">${title}<div style="font-size:0.68rem;color:var(--dim);margin-top:0.2rem">${sub}</div></div>
+                <div class="wine-edit-origin">${origin}</div>
                 <div class="wine-edit-status">${active
                   ? '<span class="profile-badge badge-own-label" style="font-size:0.55rem">Active</span>'
-                  : '<span class="profile-badge" style="font-size:0.55rem;background:rgba(184,151,90,0.1);color:var(--gold)">Pending</span>'}</div>
-                <div class="wine-edit-actions"><a class="icon-btn" href="${p.url}" target="_blank">View</a></div>
+                  : '<span class="profile-badge" style="font-size:0.55rem;background:rgba(184,151,90,0.1);color:var(--gold)">' +
+                    ownLabelProjectDetail(pr) + '</span>'}</div>
+                <div class="wine-edit-actions">${product && product.url
+                  ? `<a class="icon-btn" href="${product.url}" target="_blank">View</a>`
+                  : '<span class="icon-btn" style="opacity:0.35;cursor:default" title="No public page until the first delivery is confirmed (A17.9)">Not public</span>'}</div>
               </div>`;
   }).join('');
 }
 
-renderWinePortfolioD();
-renderOwnLabelsD();
+/* ── THE THREE SURFACES THAT USED TO BE TYPED ────────────────────
+   All three drew the same six rows by hand, in three places, in three
+   shapes — the widget table, the bar chart and two counters. Every one
+   of them now asks the same functions My Labels asks, so the dashboard
+   and the profile can no longer disagree about a number, which is what
+   they were doing: the widget said six, the counters said five, and the
+   records said three.
+
+   THE WIDGET IS THE PIPELINE, NOT JUST THE ACTIVE ROWS, and that is a
+   deliberate widening. Its heading is "Own-Label Portfolio" and the
+   dashboard is where a distributor looks first; a table that showed only
+   what has arrived would hide the three projects he is actually working
+   on. A17.14 asks for the arc, and this is the surface it belongs on. */
+function renderOwnLabelWidgetD() {
+  const el = document.getElementById('dlabels-widget-body');
+  if (!el) return;
+  const rows = ownLabelProjectsOf('Hawesko GmbH');
+  if (!rows.length) {
+    el.innerHTML = '<tr><td colspan="4" style="color:var(--dim)">No own-label projects yet</td></tr>';
+    return;
+  }
+  el.innerHTML = rows.map(pr => {
+    const phase   = ownLabelProjectPhase(pr);
+    const active  = phase === 'active';
+    const product = pr.productId ? wineByRef(pr.productId) : null;
+    const l       = product ? listingOf('Hawesko GmbH', pr.productId) : null;
+    /* A figure nobody has typed is not zero (A1). The dash is the same
+       answer listingPrice() gives with null, in the shape a table
+       column needs. */
+    const vol = (l && l.monthlyVolume != null) ? l.monthlyVolume.toLocaleString('en-GB') : '—';
+    const name   = product ? product.name : routeLabel(pr);
+    const origin = product ? (product.origin || '—') : (sourceNoteFor(pr) || '—');
+    return '<tr><td>' + name + '</td><td>' + origin + '</td><td>' + vol + '</td><td>' +
+      '<span class="tag ' + (active ? 'tag-green' : 'tag-gold') + '">' +
+      (active ? 'Active' : ownLabelProjectDetail(pr)) + '</span></td></tr>';
+  }).join('');
+}
+
+/* THE CHART IS THE BOOK BY VOLUME, and it stopped being an own-label
+   chart because it never was one: the six figures on it were six
+   `monthlyVolume` values off six listings, which is a fact about what
+   Hawesko moves and not about who owns a brand. Every listing that
+   carries a figure is on it now, own label or not — and the ones that
+   carry none are absent rather than drawn at zero. */
+function renderVolumeChartD() {
+  const el = document.getElementById('dvolume-chart');
+  if (!el) return;
+  const rows = listingsOf('Hawesko GmbH')
+    .filter(l => l.monthlyVolume != null)
+    .map(l => ({ l: l, p: wineByRef(l.productId) }))
+    .filter(x => x.p)
+    .sort((a, b) => b.l.monthlyVolume - a.l.monthlyVolume);
+  if (!rows.length) {
+    el.innerHTML = '<div class="aw-empty">No monthly volumes recorded yet.</div>';
+    return;
+  }
+  const top = rows[0].l.monthlyVolume;
+  el.innerHTML = rows.map(x => {
+    const own = isOwnLabel('Hawesko GmbH', x.l.productId);
+    const pct = Math.round(x.l.monthlyVolume / top * 100);
+    /* The gold fill marked the Riesling as "pending" when the bridge
+       said so. It marks the own label now, which is the one distinction
+       the chart can honestly draw about a brand. */
+    const style = 'width:' + pct + '%' + (own ? ';background:var(--gold)' : '');
+    return '<div class="bar-row"><span class="bar-label">' + x.p.name +
+      '</span><div class="bar-track"><div class="bar-fill" style="' + style +
+      '"></div></div><span class="bar-value">' +
+      (x.l.monthlyVolume / 1000).toFixed(1) + 'k</span></div>';
+  }).join('');
+}
+
+/* THE TWO COUNTERS, and the second line of each is the interesting
+   half. "↑ +1 this month" was a delta over data that records no start
+   date for anything; what the records DO hold is how many projects are
+   in flight behind the active ones, which is the more useful sentence
+   and a true one. */
+function renderOwnLabelStatsD() {
+  const rows   = ownLabelProjectsOf('Hawesko GmbH');
+  const active = rows.filter(p => ownLabelProjectPhase(p) === 'active').length;
+  const flight = rows.length - active;
+  const value  = document.getElementById('dstat-ol-value');
+  const delta  = document.getElementById('dstat-ol-delta');
+  const fact   = document.getElementById('dfact-ol-skus');
+  if (value) value.innerHTML = active + '<span></span>';
+  if (delta) delta.textContent = flight
+    ? flight + (flight === 1 ? ' project' : ' projects') + ' in the pipeline'
+    : 'No projects in the pipeline';
+  if (fact) fact.textContent = active + ' active' + (flight ? ' · ' + flight + ' in progress' : '');
+}
+
+/* One call for the four surfaces that read the same records, so an
+   action that moves a project repaints all of them. Same shape and same
+   reason as refreshPortfolioCounts(). */
+function refreshOwnLabelSurfaces() {
+  renderOwnLabelsD();
+  renderOwnLabelWidgetD();
+  renderVolumeChartD();
+  renderOwnLabelStatsD();
+}
+
+/* What a project is called before it has a product. The route is the
+   honest name for it — "Relabel · Mâcon-Villages" says what is being
+   worked on without claiming a bottle exists. */
+function routeLabel(pr) {
+  return pr.creationType === 'relabel_existing_wine'
+    ? 'Relabel · ' + (wineByRef(pr.sourceWineId) ? wineByRef(pr.sourceWineId).name : pr.sourceWineId)
+    : 'New development · ' + pr.producer;
+}
+/* And what stands where the origin would. A relabel HAS an origin
+   before the product exists, because it is the source wine's — the same
+   liquid, referenced and never copied (A17.5 route A). A bespoke wine
+   does not: its origin is decided in the project, and the development
+   reference is history that may never be shown as origin (OL-9). */
+function sourceNoteFor(pr) {
+  if (pr.creationType === 'relabel_existing_wine') {
+    const src = wineByRef(pr.sourceWineId);
+    return src ? src.origin || '' : '';
+  }
+  const ref = pr.developmentReferenceWineId ? wineByRef(pr.developmentReferenceWineId) : null;
+  return ref ? 'Developed after ' + ref.name : 'In development';
+}
 
 /* ══════════════════════════════════════════════════════════════════
    WINERY NETWORK — partnership requests & active distributors
@@ -6764,10 +7316,17 @@ function renderWinePickerR(search) {
     <div class="aw-pick-group">${winery}</div>
     ${groups[winery].map(w => {
       const taken = !!wineByRef(w, rCurrentWineList);
-      /* Derived, not stored: `note` used to carry "Own-Label
-         Available", which duplicated ownLabel, and "Exclusive", which
-         is the BUYER's own marking on their own list. */
-      const tag = taken ? 'Already on your list' : (isOwnLabel(dist, w.id) ? 'Own-Label Available' : 'Standard');
+      /* IT SAYS "Own-Label", NOT "Own-Label Available", AND THAT IS A
+         CORRECTION. This tag read the availability wording while asking
+         isOwnLabel() — the fourth of A17.0a's four levels rendered as
+         the second, which is D36 surviving inside its own replacement.
+         A restaurant cannot start a project and has no use for an
+         availability; what it wants to know is whether this bottle is
+         its distributor's own label, which is what the derivation
+         answers (OL-15). `note` is not read here either: "Exclusive" is
+         the BUYER's own marking on their own list, decided one section
+         down and not in the producer's catalogue (A1). */
+      const tag = taken ? 'Already on your list' : (isOwnLabel(dist, w.id) ? 'Own-Label' : 'Standard');
       return `<div class="aw-pick-item${taken ? ' taken' : ''}" ${taken ? '' : `onclick="selectWineForAddR('${w.id}')"`}>
         <div>
           <div class="aw-pick-name">${w.name} <span style="color:rgba(247,243,238,0.4)">${w.vintage}</span></div>
@@ -7151,10 +7710,13 @@ function renderWinePickerT(search) {
     <div class="aw-pick-group">${winery}</div>
     ${groups[winery].map(w => {
       const taken = !!wineByRef(w, tCurrentWineSelection);
-      /* Derived, not stored: `note` used to carry "Own-Label
-         Available", which duplicated ownLabel, and "Exclusive", which
-         is the BUYER's own marking on their own list. */
-      const tag = taken ? 'Already in your selection' : (isOwnLabel(dist, w.id) ? 'Own-Label Available' : 'Standard');
+      /* "Own-Label", not "Own-Label Available" — same correction as the
+         restaurant picker one section up, and for the same reason: a
+         retailer cannot start an own-label project either. The
+         distributor's own picker is the only one where the availability
+         wording belongs, because it is the only one that offers the
+         producers' wines (A17.0a, A17.4). */
+      const tag = taken ? 'Already in your selection' : (isOwnLabel(dist, w.id) ? 'Own-Label' : 'Standard');
       return `<div class="aw-pick-item${taken ? ' taken' : ''}" ${taken ? '' : `onclick="selectWineForAddT('${w.id}')"`}>
         <div>
           <div class="aw-pick-name">${w.name} <span style="color:rgba(247,243,238,0.4)">${w.vintage}</span></div>
@@ -8615,6 +9177,27 @@ function reorder(id) {
 }
 
 renderAllOrders();
+
+/* ── THE DISTRIBUTOR'S TWO WINE PANELS, DRAWN HERE AND NOT ABOVE ──
+   They used to run beside their own definitions, ~2,400 lines earlier.
+   They cannot any more, and the reason is the point of this whole pass:
+   own-label status is now DERIVED, and the derivation ends at
+   firstCommercialDeliveryOf(), which reads `orders`. `orders` is a
+   `const` defined below its old call site, so the two renderers ran in
+   its temporal dead zone and threw — where the bridge field they used to
+   read needed nothing but the listing.
+
+   MOVED RATHER THAN GUARDED, deliberately. A try/catch here would have
+   drawn both panels with the derivation answering "no delivery" for
+   everything, and nothing would have repainted them — the active own
+   label would have sat there badged as pending, silently, which is
+   precisely the class of wrong-but-plausible screen this chain exists
+   to remove. The dependency is real, so it is honoured in load order
+   and written down. (`bookOrEmpty()` in the data asset takes the other
+   route for a case where empty IS the right answer: a book that does
+   not exist yet contributes no products.) */
+renderWinePortfolioD();
+refreshOwnLabelSurfaces();
 
 
 /* ══════════════════════════════════════════════════════════════════
@@ -12046,7 +12629,7 @@ renderAppearanceWidgets();
 function redrawAll() {
   renderPressList();
   renderWinePortfolioD();
-  renderOwnLabelsD();
+  refreshOwnLabelSurfaces();
   renderWineryNetwork();
   renderPartnerNetwork();
   renderIncomingRequests();

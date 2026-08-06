@@ -906,7 +906,7 @@ console.log('\n── a snapshot from before an added row does not hide the row'
   const ROWS_GONE = [
     { from: "  { distributor:'Hawesko GmbH', partner:'Enoteca Milano Import Srl', " + AT + ", activatedBy:'Bottle Lobby' }\n];",
       to:   "\n];" },
-    { from: "  { holder:'Enoteca Milano Import Srl', productId:'PRD-1015', legacyOwnLabel:false, exclusive:false, listedAt:LISTED_AT, holderArticleNo:'EMI-0447', monthlyVolume:null, tradePrice:21.90 },\n",
+    { from: "  { holder:'Enoteca Milano Import Srl', productId:'PRD-1015', exclusive:false, listedAt:LISTED_AT, holderArticleNo:'EMI-0447', monthlyVolume:null, tradePrice:21.90 },\n",
       to:   '' },
     { from: "  { id:'ORD-2043', placed:'2026-06-16', buyer:'Enoteca Milano Import Srl', buyerType:'distributor',",
       to:   "  { id:'ORD-9999', placed:'2026-06-16', buyer:'REMOVED', buyerType:'distributor'," }

@@ -3979,7 +3979,7 @@ companies were admitted afterwards is a contradiction the fixtures must not carr
 
 Own-label availability is **spread across several producers** — the three rows
 originally carrying it were all Cantina Rossi, which would make every early-stage
-project come from one house. It now sits on **5 wines across 2 producers**, and
+project come from one house. It now sits on **7 wines across 4 producers**, and
 the four projects name **four different producers** (Henri Dubois Domaine, Cantina
 Rossi, Bodegas Ruiz, Domaine Lefèvre), so no house owns the feature. Ordinary
 wines stay clearly in the majority (A17.0).
@@ -3988,13 +3988,17 @@ wines stay clearly in the majority (A17.0).
 Three come from the producer's own catalogue, where `note:'Own-Label Available'`
 already stood (PRD-1002, PRD-1003, PRD-1005 — the note is replaced by the field,
 not supplemented). One comes from its own article page, which reads *Own-Label
-Available* where every surface around it read *Own-Label* (PRD-1022). The fifth is
-**Serge's decision, and it is the nearest true reading of a screen** rather than a
-measurement: PRD-1024 carried the bridge's only `'pending'` value, and a pending
-project was never a claim that a finished own label existed — *open to requests* is
-what that row has been trying to say for months. The winery dashboard's five typed
-badges are **not** a source; they are derived from this field in the same pass, and
-two of them (PRD-1001, PRD-1004) disappear because no producer record ever said so.
+Available* where every surface around it read *Own-Label* (PRD-1022). Two are
+**required by A17.4 and are therefore not choices at all**: a relabel project may
+only be opened on a wine that is open to requests, so PRD-1020 (OLP-101) and
+PRD-1013 (OLP-104) must be — and PRD-1020 is A17.0b's own worked example. The
+seventh is **Serge's decision, and it is the nearest true reading of a screen**
+rather than a measurement: PRD-1024 carried the bridge's only `'pending'` value,
+and a pending project was never a claim that a finished own label existed — *open
+to requests* is what that row has been trying to say for months. The winery
+dashboard's five typed badges are **not** a source; they are derived from this
+field in the same pass, and two of them (PRD-1001, PRD-1004) disappear because no
+producer record ever said so.
 
 **No contradictory orders, no invented history.** The build measures before
 placing anything; nothing here is a licence to create an order.

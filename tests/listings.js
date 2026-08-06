@@ -247,49 +247,64 @@ console.log('\n── holderArticleNo is a note, never a key');
   else ok('no line in the source compares an article number; it is only ever displayed or written');
 }
 
-/* ── 6. ONE READING OF OWN-LABEL STATUS, AND THE DEBT CLOSES ────── */
-console.log('\n── own label has exactly one reading');
+/* ── 6. ONE READING OF OWN-LABEL STATUS, AND THE DEBT IS CLOSED ── */
+console.log('\n── own label has exactly one reading, and it is a derivation');
 {
-  /* 6a. Nothing reads the bridge field except the one function. */
-  const reads = CODE
-    .filter(x => /legacyOwnLabel/.test(x.line))
-    /* The fixture rows and addListing()'s default are DATA, not
-       readings. The bridge is three-valued since commit 3 — 'active',
-       'pending' or false — because "My Labels" listed a wine as Pending
-       for months and a boolean could only have called it licensed. */
-    .filter(x => !/legacyOwnLabel:\s*('active'|'pending'|true|false|!!)/.test(x.line));
-  const outside = reads.filter(x => !/const v = listing && listing\.legacyOwnLabel;/.test(x.line));
-  if (outside.length) bad(outside.length + ' place(s) read `legacyOwnLabel` outside listingOwnLabelStatus(): ' +
-    outside.map(x => 'line ' + x.n).join(' · ') + ' — the A17 pass has to change one function, not hunt for callers');
-  else ok('`legacyOwnLabel` is read in exactly one function; every surface asks listingOwnLabelStatus()');
+  /* 6a. THE BRIDGE IS GONE FROM THE SOURCE, not merely unread. It stood
+     from 5 to 6 Aug 2026, three-valued, describing six wines that turned
+     out not to be own labels at all (D41). "Unread but present" is the
+     state this section used to guard against on the way in; on the way
+     out the only acceptable count is zero. */
+  const bridge = CODE.filter(x => /legacyOwnLabel|listingOwnLabelStatus/.test(x.line));
+  if (bridge.length) bad(bridge.length + ' place(s) still carry the migration bridge: ' +
+    bridge.map(x => 'line ' + x.n).join(' · ') +
+    ' — OL-15 says it is REPLACED by the derivation, not extended toward it');
+  else ok('neither `legacyOwnLabel` nor listingOwnLabelStatus() appears anywhere in the page');
 
-  /* 6b. No write path sets or changes it. */
-  const writes = CODE.filter(x => /legacyOwnLabel\s*=[^=]/.test(x.line));
-  if (writes.length) bad(writes.length + ' write(s) to `legacyOwnLabel`: ' +
-    writes.map(x => 'line ' + x.n).join(' · ') + ' — the bridge carries the legacy fixtures and nothing else');
-  else ok('nothing assigns `legacyOwnLabel`; the interface cannot create a fourth own label through it');
+  /* 6b. And no listing row carries the field either — the source could
+     be clean while a fixture still held the data. */
+  const carriers = L.filter(l => Object.prototype.hasOwnProperty.call(l, 'legacyOwnLabel'));
+  if (carriers.length) bad(carriers.length + ' listing row(s) still carry `legacyOwnLabel`');
+  else ok('no listing row carries an own-label field; the answer lives in the project');
 
-  /* 6c. And the derivation is what the interface offers. Ticking a box
-     may not grant an own label (A17.12), so the control is read-only. */
+  /* 6c. The interface still cannot set it (A17.12). There is nothing
+     left to set, which is the strongest form of that: the control shows
+     the derivation and is disabled. */
   const box = w.document.getElementById('aw-ownlabel');
   if (!box) bad('the own-label control is gone entirely — that is not what read-only means');
   else if (!box.disabled) bad('the own-label checkbox still writes — an own label is derived from a ' +
     'project past gate 2 and a delivered first order, not from a tick');
   else ok('the own-label control shows the status and cannot set it');
 
-  /* 6d. THE DEBT THAT CLOSES ITSELF. Green while there are no A17
-     projects; red the first time one exists beside a live bridge. */
+  /* 6d. THE DEBT THAT CLOSED ITSELF. It was green while no A17 project
+     existed and red the first time one stood beside a live bridge. Both
+     halves have to be true now: projects exist AND nothing carries the
+     bridge. */
   const projects = w.eval('typeof ownLabelProjects === "undefined" ? null : ownLabelProjects');
-  const bridged = L.filter(l => Object.prototype.hasOwnProperty.call(l, 'legacyOwnLabel') && l.legacyOwnLabel);
-  if (projects && projects.length && bridged.length)
-    bad('A17 projects exist AND ' + bridged.length + ' listing(s) still carry `legacyOwnLabel` — ' +
-        'two roads to one answer. The bridge is due: listingOwnLabelStatus() is REPLACED by the ' +
-        'derivation, not extended with it');
-  else if (projects && projects.length)
-    ok('A17 projects exist and no listing carries the bridge any more — the migration is done');
-  else
-    ok('1 open migration bridge: legacyOwnLabel — A17 pass (' + bridged.length +
-       ' legacy row(s), no ownLabelProjects rows yet)');
+  if (!projects) bad('`ownLabelProjects` does not exist — the derivation has nothing to read');
+  else if (!projects.length) bad('no A17 project exists, so no listing can derive own-label status — ' +
+    'the panel would render nothing and the migration would be a deletion rather than a replacement');
+  else if (carriers.length || bridge.length) bad('the migration is half done');
+  else ok('migration complete: ' + projects.length + ' A17 project(s), no bridge anywhere, ' +
+    'own-label status derived from OL-15\'s two conditions');
+
+  /* 6e. AND THE DERIVATION IS ACTUALLY ASKED — both conditions, and
+     neither alone. This is OL-15 measured over the page's own rows
+     rather than over a fixture. */
+  const derived = J(`listings.filter(ownLabelListingDerived).map(function (l) {
+    var pr = ownLabelProjectOf(l.productId);
+    return { holder: l.holder, productId: l.productId,
+             primary: pr ? pr.distributor : null,
+             delivered: firstCommercialDeliveryOf(l.productId) ? true : false };
+  })`);
+  const wrongHolder = derived.filter(d => d.primary !== d.holder);
+  const noDelivery  = derived.filter(d => !d.delivered);
+  if (wrongHolder.length) bad(wrongHolder.length + ' listing(s) derive own label for a holder who is ' +
+    'not the project\'s primary distributor — the second OL-15 condition is not being asked (A17.9b)');
+  else if (noDelivery.length) bad(noDelivery.length + ' listing(s) derive own label with no delivered ' +
+    'first commercial order behind them');
+  else ok(derived.length + ' listing(s) derive own label, every one the primary distributor\'s ' +
+    'and every one behind a confirmed first delivery');
 }
 
 /* ── 7. The books read listings, and the counter-checks ─────────── */
@@ -298,10 +313,39 @@ console.log('\n── the surfaces read the relation');
   /* The rendered badges have to follow the ROW, not a field on a book.
      Flip the row and the screen has to move; that is the whole claim. */
   const cases = [
+    /* THE BADGE FOLLOWS THE PROJECT NOW, NOT A FIELD ON THE ROW, so
+       the flip moves the thing the derivation actually reads: the
+       project's primary distributor. Change that and Hawesko's listing
+       stops being the primary own-label listing — which is OL-15's
+       second condition, and A17.9b's whole point. */
+    /* THE BADGE FOLLOWS THE PROJECT NOW, NOT A FIELD ON THE ROW, and
+       both halves of OL-15 have to be standing before it can be flipped.
+       `seed` builds them rather than assuming a fixture supplies them —
+       an own-label product in the book, a delivered first order from its
+       producing winery, and the primary distributor holding the listing.
+       Written this way the check is true in the commit that introduces
+       the derivation and in every commit after it, including the ones
+       where the page's own chains arrive. */
     { what: 'the distributor own-label badge',
       render: 'renderWinePortfolioD',
       el: 'dportfolio-list',
-      flip: "(function(){ listingOf('Hawesko GmbH','PRD-1020').legacyOwnLabel = false; })()",
+      seed: `(function () {
+        var pr = ownLabelProjects.filter(function (p) { return p.productId; })[0];
+        var prod = wineByRef(pr.productId);
+        if (!wineByRef(pr.productId, currentWinePortfolio))
+          currentWinePortfolio.push({ id: prod.id, winery: prod.winery, name: prod.name,
+            vintage: prod.vintage, type: prod.type, origin: prod.origin, url: prod.url });
+        addListing(pr.distributor, pr.productId, { tradePrice: 7.90 });
+        if (!firstCommercialDeliveryOf(pr.productId))
+          orders.push({ id:'ORD-8001', placed:'2026-06-15', buyer:pr.distributor,
+            buyerType:'distributor', seller:pr.producer, sellerType:'winery',
+            stage:'delivered', items:[{ productId:pr.productId, qty:1200, unit:5.25,
+            vintage:prod.vintage, batchOrLot:null }] });
+      })()`,
+      /* The flip moves the second OL-15 condition: hand the project to
+         another distributor and Hawesko's listing stops being the
+         PRIMARY own-label listing, which is A17.9b's whole point. */
+      flip: "(function(){ ownLabelProjects.forEach(function (p) { p.distributor = 'Hamberger'; }); })()",
       was: 'Own-Label' },
     { what: "the restaurant's exclusivity",
       render: 'renderWineListR',
@@ -316,6 +360,7 @@ console.log('\n── the surfaces read the relation');
   ];
   cases.forEach(c => {
     const win = build();
+    if (c.seed) win.eval(c.seed);
     win.eval(c.render + '()');
     const before = win.document.getElementById(c.el).innerHTML;
     if (before.indexOf(c.was) === -1) return bad(c.what + ': "' + c.was + '" is not on the screen to begin with');
@@ -328,22 +373,23 @@ console.log('\n── the surfaces read the relation');
   });
 }
 
-/* ── 7b. "My Labels" is drawn from the data, not typed ──────────── */
+/* ── 7b. "My Labels" is drawn from the PROJECTS, not typed ─────── */
 console.log('\n── My Labels renders what the records say');
 {
   const win = build();
   win.eval('renderOwnLabelsD()');
   const el = win.document.getElementById('dlabels-list');
   const count = win.document.getElementById('dlabels-count');
-  const expected = JSON.parse(win.eval('JSON.stringify(ownLabelListingsOf("Hawesko GmbH"))'));
+  const expected = JSON.parse(win.eval('JSON.stringify(ownLabelProjectsOf("Hawesko GmbH"))'));
 
   if (!el) bad('the My Labels list has no container');
   else {
     const rendered = el.querySelectorAll('.wine-edit-entry').length;
-    if (!rendered) bad('the section rendered no rows at all');
+    if (!expected.length) bad('Hawesko has no own-label projects at all — the panel has nothing to draw ' +
+      'and every check below examines nothing');
     else if (rendered !== expected.length)
-      bad(rendered + ' rows rendered for ' + expected.length + ' own-label listings');
-    else ok(rendered + ' rows, one per own-label listing');
+      bad(rendered + ' rows rendered for ' + expected.length + ' own-label projects');
+    else ok(rendered + ' rows, one per own-label project');
 
     /* THE COUNTER IS COUNTED. It read "(6)" in the markup beside rows
        the data agreed with three of. */
@@ -352,35 +398,72 @@ console.log('\n── My Labels renders what the records say');
       bad('the counter says ' + JSON.stringify(count.textContent) + ' for ' + expected.length + ' rows');
     else ok('the counter is computed: ' + count.textContent + ', and moves with the rows');
 
-    /* The stage has to survive. A boolean bridge would have had to call
-       the Riesling licensed, and it is not. */
-    const pending = expected.filter(l => l.legacyOwnLabel === 'pending');
+    /* THE PIPELINE HAS TO BE VISIBLE, AND FROM THE PROJECT STAGE.
+       The bridge's `'pending'` value is gone and OL-15 is a boolean, so
+       a project short of its first delivery shows a PHASE here — and the
+       same wine must read Standard in the portfolio, because a project
+       in flight is not a licence anybody signed. */
+    const phases = JSON.parse(win.eval('JSON.stringify(ownLabelProjectsOf("Hawesko GmbH")' +
+      '.map(function (p) { return ownLabelProjectPhase(p); }))'));
+    const pending = expected.filter((p, i) => phases[i] !== 'active');
     const html = el.innerHTML;
-    if (!pending.length) bad('no listing is pending — the two-stage case is not demonstrated at all');
-    else if (html.indexOf('Pending') === -1) bad('a pending own label is not shown as pending');
-    else if (!win.eval('isOwnLabel("Hawesko GmbH",' + JSON.stringify(pending[0].productId) + ') === false'))
-      bad('a pending own label is badged Own-Label in the portfolio — that claims a licence nobody signed');
-    else ok(pending.length + ' pending own label(s) show as Pending here and as Standard in the portfolio');
+    if (!pending.length) bad('every project is already active — the pipeline A17.14 asks for is not ' +
+      'demonstrated at all');
+    else {
+      const labels = JSON.parse(win.eval('JSON.stringify(ownLabelProjectsOf("Hawesko GmbH")' +
+        '.map(function (p) { return ownLabelProjectDetail(p); }))'));
+      const missing = pending.filter((p, i) => html.indexOf(labels[expected.indexOf(p)]) === -1);
+      if (missing.length) bad(missing.length + ' project(s) short of their first delivery do not show ' +
+        'their stage on screen');
+      else if (pending.some(p => p.productId &&
+               win.eval('isOwnLabel("Hawesko GmbH",' + JSON.stringify(p.productId) + ')')))
+        bad('a project short of its first delivery is badged Own-Label in the portfolio — ' +
+          'that claims a licence nobody signed');
+      else ok(pending.length + ' project(s) in the pipeline, each showing its own stage here and ' +
+        'none of them badged in the portfolio');
+    }
+
+    /* AND THE STAGE COMES FROM THE PROJECT, NOT FROM THE LISTING. Move
+       the stored stage and the line under the name has to move with it —
+       otherwise the panel is drawing a label it made up. */
+    {
+      const w2 = build();
+      w2.eval('renderOwnLabelsD()');
+      const before = w2.document.getElementById('dlabels-list').innerHTML;
+      const target = JSON.parse(w2.eval('JSON.stringify(ownLabelProjectsOf("Hawesko GmbH")' +
+        '.filter(function (p) { return !p.productId && projectActive(p.id); })[0] || null)'));
+      if (!target) ok('no in-conversation project to move — the stage check waits for one');
+      else {
+        w2.eval('ownLabelProjectById(' + JSON.stringify(target.id) + ').stage = "sample_shipped"');
+        w2.eval('renderOwnLabelsD()');
+        const after = w2.document.getElementById('dlabels-list').innerHTML;
+        if (before === after) bad('the panel did not move when a project stage did — it is reading ' +
+          'something else, and the stage is decoration');
+        else if (after.indexOf('Sample shipped') === -1)
+          bad('the stage moved and the panel drew something other than the new stage');
+        else ok('the stage under the name follows the project row');
+      }
+    }
   }
 
   /* No hand-typed wine name may be left in this section's markup. */
   const start = SRC.indexOf('id="dsection-labels"');
   const section = SRC.slice(start, SRC.indexOf('<!-- ACTIVE PARTNERSHIPS', start));
-  const names = JSON.parse(win.eval('JSON.stringify(listings.map(l => wineName(l.productId)))'));
+  const names = JSON.parse(win.eval('JSON.stringify(allProducts().map(function (p) { return p.name; }))'));
   const typed = [...new Set(names)].filter(n => n && section.indexOf(n) !== -1);
   if (start === -1 || section.length < 100) bad('the My Labels section was not found in the source');
   else if (typed.length) bad(typed.length + ' wine name(s) are still typed into the section markup: ' + typed.join(' · '));
   else ok('not one wine name appears in the section markup; every row comes from a record');
 
-  /* And the renderer asks the one reader, never the bridge field. */
+  /* And the renderer asks the readings, never a field on a row. */
   const fnStart = SRC.indexOf('function renderOwnLabelsD(');
-  const body = SRC.slice(fnStart, SRC.indexOf('\nrenderWinePortfolioD();', fnStart));
+  const body = SRC.slice(fnStart, SRC.indexOf('\n}', SRC.indexOf('}).join', fnStart)));
   if (fnStart === -1 || body.length < 200) bad('renderOwnLabelsD() was not found — nothing was measured');
-  else if (/legacyOwnLabel/.test(body))
-    bad('the renderer reads `legacyOwnLabel` directly — the A17 pass would have to change it too');
-  else if (!/listingOwnLabelStatus\(/.test(body))
-    bad('the renderer does not go through listingOwnLabelStatus()');
-  else ok('renderOwnLabelsD() asks listingOwnLabelStatus() and never names the bridge field');
+  else if (!/ownLabelProjectPhase\(/.test(body))
+    bad('the renderer does not go through ownLabelProjectPhase() — the phase is being decided twice');
+  else if (!/ownLabelProjectsOf\(/.test(body))
+    bad('the renderer does not read the projects');
+  else ok('renderOwnLabelsD() asks ownLabelProjectsOf() and ownLabelProjectPhase(), and names no field');
 }
 
 /* ── 8. Taking a wine on and off carries the row with it ────────── */
@@ -399,6 +482,7 @@ console.log('\n── the relation is created and removed with the wine');
     return JSON.stringify({
       grew: afterAdd === before + 1,
       added: added,
+      addedIsOwnLabel: isOwnLabel('Hawesko GmbH', 'PRD-1004'),
       keyOnBook: row && row.id,
       goneAgain: !listingOf('Hawesko GmbH', 'PRD-1004'),
       finalCount: listings.length, before: before });
@@ -410,9 +494,14 @@ console.log('\n── the relation is created and removed with the wine');
   else if (r.added.monthlyVolume !== 250)
     bad('the monthly volume the distributor typed did not reach the row: ' + r.added.monthlyVolume +
         ' — it was being read off the form and dropped before this pass');
-  else if (r.added.legacyOwnLabel !== false)
-    bad('a newly created listing carries the migration bridge — it may only ever hold the legacy fixtures');
-  else ok('one listing created, carrying the volume that was typed (250) and no bridge flag');
+  else if (Object.prototype.hasOwnProperty.call(r.added, 'legacyOwnLabel') ||
+           Object.prototype.hasOwnProperty.call(r.added, 'ownLabel'))
+    bad('a newly created listing carries an own-label field — nothing an interface does may create one (OL-15)');
+  else if (r.addedIsOwnLabel)
+    bad('a wine pulled into the book reads as an own label — pulling a wine in is not a project past ' +
+        'gate 2 and not a delivered first order');
+  else ok('one listing created, carrying the volume that was typed (250), no own-label field and no ' +
+     'own-label status');
   if (!r.goneAgain || r.finalCount !== r.before)
     bad('removing the wine left its listing behind — a stale exclusivity and price for a wine nobody carries');
   else ok('removing the wine removes its listing; the count is back to ' + r.before);
@@ -423,14 +512,14 @@ console.log('\n── the counter-checks');
 {
   const cases = [
     { what: 'a listing grows a copy of the wine name',
-      from: "{ holder:'Bistro Laurent', productId:'PRD-1020', legacyOwnLabel:false, exclusive:true,",
-      to:   "{ holder:'Bistro Laurent', productId:'PRD-1020', name:'Sauvignon Blanc — Sancerre', legacyOwnLabel:false, exclusive:true,",
+      from: "{ holder:'Bistro Laurent', productId:'PRD-1020', exclusive:true,",
+      to:   "{ holder:'Bistro Laurent', productId:'PRD-1020', name:'Sauvignon Blanc — Sancerre', exclusive:true,",
       ask:  win => J2(win, 'listings').every(l => !('name' in l)),
       says: 'the copy invariant 2 forbids, back on the row that exists to replace it' },
 
     { what: 'two rows for one (holder, product)',
-      from: "{ holder:'Bistro Laurent', productId:'PRD-1022', legacyOwnLabel:false, exclusive:true,",
-      to:   "{ holder:'Bistro Laurent', productId:'PRD-1020', legacyOwnLabel:false, exclusive:false, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:null, tradePrice:null },\n  { holder:'Bistro Laurent', productId:'PRD-1022', legacyOwnLabel:false, exclusive:true,",
+      from: "{ holder:'Bistro Laurent', productId:'PRD-1022', exclusive:true,",
+      to:   "{ holder:'Bistro Laurent', productId:'PRD-1020', exclusive:false, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:null, tradePrice:null },\n  { holder:'Bistro Laurent', productId:'PRD-1022', exclusive:true,",
       ask:  win => {
         const seen = new Set();
         return J2(win, 'listings').every(l => {
@@ -441,50 +530,57 @@ console.log('\n── the counter-checks');
       },
       says: 'two answers to one relation, and no way to say which is right' },
 
-    { what: 'the own-label reading gains a second road',
-      from: "  const v = listing && listing.legacyOwnLabel;",
-      to:   "  const v = (listing && listing.legacyOwnLabel) || (listing && listing.ownLabelProjectId && 'active');",
+    /* THE FALLBACK THIS MODEL FORBIDS, re-aimed at the derivation now
+       that there is no bridge left to fall back FROM. OL-15 gives two
+       conditions and no others; dropping the holder test is the
+       cheapest way to get a third road, and it is the one A17.9b says
+       would mark a downstream distributor's own first delivery as an own
+       label. Section 6e is what has to catch it. */
+    { what: 'the own-label derivation drops its second condition',
+      from: "  if (listing.holder !== project.distributor) return false;",
+      to:   "  if (listing.holder !== project.distributor && !listing.tradePrice) return false;",
       ask:  win => {
-        const src = fs.readFileSync(path.join(__dirname, '..', 'bottle-lobby-dashboard.html'), 'utf8')
-          .replace("  const v = listing && listing.legacyOwnLabel;",
-                   "  const v = (listing && listing.legacyOwnLabel) || (listing && listing.ownLabelProjectId && 'active');");
-        return !/ownLabelProjectId && 'active'/.test(src);
+        win.eval(`(function () {
+          var pr = ownLabelProjects.filter(function (p) { return p.productId; })[0];
+          var prod = wineByRef(pr.productId);
+          orders.push({ id:'ORD-8002', placed:'2026-06-15', buyer:pr.distributor,
+            buyerType:'distributor', seller:pr.producer, sellerType:'winery', stage:'delivered',
+            items:[{ productId:pr.productId, qty:1200, unit:5.25, vintage:prod.vintage, batchOrLot:null }] });
+          addListing('Hamberger', pr.productId, { tradePrice: 9.10 });
+        })()`);
+        /* A downstream holder now derives own label. If nothing says so,
+           the guard is gone and nobody noticed. */
+        return !win.eval("ownLabelListingDerived(listingOf('Hamberger', " +
+          "ownLabelProjects.filter(function (p) { return p.productId; })[0].productId))");
       },
-      says: 'exactly the lasting fallback A17 forbids — a listing counting as own-label either way' },
+      says: 'a downstream holder badging himself the primary own-label holder (A17.9b, OL-15)' },
 
-    /* The mutation used to DECLARE the array, because there was none.
-       There is one now — empty, with the records and readings built and
-       the fixtures deliberately withheld until the first delivery
-       exists (A17.14). Declaring it a second time is a SyntaxError, and
-       a mutation that crashes the page certifies nothing. The faithful
-       shape of the fault today is a project ROW beside a live bridge,
-       which is what this puts in. */
-    { what: 'the bridge survives beside an A17 project',
-      from: "const ownLabelProjects = [];",
-      to:   "const ownLabelProjects = [{ id:'OLP-1', distributor:'Hawesko GmbH', producer:'Cantina Rossi', productId:'PRD-1022', stage:'gate2_approved' }];",
-      ask:  win => {
-        const projects = win.eval('typeof ownLabelProjects === "undefined" ? null : ownLabelProjects');
-        const bridged = J2(win, 'listings').filter(l => l.legacyOwnLabel);
-        return !(projects && projects.length && bridged.length);
-      },
-      says: 'the debt coming due without anybody reading a comment — this is the point of section 6d' },
+    /* The debt of section 6d closed on 6 Aug 2026. What replaces the
+       old "bridge beside a project" mutation is its mirror image: a
+       STORED own-label field coming back onto a listing row. 6a scans
+       the source and 6b scans the rows, and between them nothing of the
+       kind may pass — including under a different name. */
+    { what: 'a stored own-label flag comes back onto a listing row',
+      from: "{ holder:'Hawesko GmbH', productId:'PRD-1020', exclusive:false,",
+      to:   "{ holder:'Hawesko GmbH', productId:'PRD-1020', ownLabel:true, exclusive:false,",
+      ask:  win => J2(win, 'listings').every(l =>
+        !Object.prototype.hasOwnProperty.call(l, 'ownLabel') &&
+        !Object.prototype.hasOwnProperty.call(l, 'legacyOwnLabel')),
+      says: 'OL-6 broken on the row it was broken on before — no derived state is stored' },
 
     /* The scan in 6a blanks out comments, and a scan that blanks too
-       much would report "read in exactly one function" for a source
-       full of reads. This puts a real one in, in code. */
-    { what: 'a second place reads the bridge field directly',
-      from: "function isOwnLabel(holder, ref) { return listingOwnLabelStatus(listingOf(holder, ref)) === 'active'; }",
+       much would report a clean source for one full of reads. This puts
+       a real read in, in code, under the name the bridge used to have. */
+    { what: 'the comment-blanking scan stops seeing code',
+      from: "function isOwnLabel(holder, ref) { return ownLabelListingDerived(listingOf(holder, ref)); }",
       to:   "function isOwnLabel(holder, ref) { const l = listingOf(holder, ref); return (l && l.legacyOwnLabel) === 'active'; }",
       ask:  win => {
         const src = fs.readFileSync(path.join(__dirname, '..', 'bottle-lobby-dashboard.html'), 'utf8')
-          .replace("function isOwnLabel(holder, ref) { return listingOwnLabelStatus(listingOf(holder, ref)) === 'active'; }",
+          .replace("function isOwnLabel(holder, ref) { return ownLabelListingDerived(listingOf(holder, ref)); }",
                    "function isOwnLabel(holder, ref) { const l = listingOf(holder, ref); return (l && l.legacyOwnLabel) === 'active'; }");
-        return codeLines(src)
-          .filter(x => /legacyOwnLabel/.test(x.line))
-          .filter(x => !/legacyOwnLabel:\s*('active'|'pending'|true|false|!!)/.test(x.line))
-          .every(x => /const v = listing && listing\.legacyOwnLabel;/.test(x.line));
+        return !codeLines(src).some(x => /legacyOwnLabel/.test(x.line));
       },
-      says: 'a caller the A17 pass would have to hunt for — and proof the comment-blanking scan still sees code' },
+      says: 'a bridge read in live code that section 6a reported as absent' },
 
     { what: 'a price goes back to having no owner',
       from: "function listingPrice(holder, ref) {\n  const l = listingOf(holder, ref);",

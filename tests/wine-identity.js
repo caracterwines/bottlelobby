@@ -628,7 +628,7 @@ console.log('\n── the order side\'s counter-checks');
       says: 'the copy is back, and with it the two answers to "whose wine is this"' },
 
     { what: 'a priced listing goes back to naming a wine',
-      from: "productId:'PRD-1015', legacyOwnLabel:false, exclusive:false, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:null, tradePrice:17.20 }",
+      from: "productId:'PRD-1015', exclusive:false, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:null, tradePrice:17.20 }",
       to:   "productId:'Pouilly-Fumé', legacyOwnLabel:false, exclusive:false, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:null, tradePrice:17.20 }",
       ask:  win => J2(win, 'listings').every(l => ID_SHAPE.test(l.productId)),
       says: 'a price nobody can reach from a line that names a key' },
@@ -698,8 +698,8 @@ console.log('\n── the order side\'s counter-checks');
       says: 'a free-typed string reaching a resolver, which is how this class of defect arrives' },
 
     { what: 'a listing names a product that does not exist',
-      from: "productId:'PRD-1027', legacyOwnLabel:false",
-      to:   "productId:'PRD-9999', legacyOwnLabel:false",
+      from: "productId:'PRD-1027', exclusive:false",
+      to:   "productId:'PRD-9999', exclusive:false",
       ask:  win => J2(win, 'listings')
               .every(l => harvest(win).collections.flatMap(c => c.rows).some(r => r.id === l.productId)),
       says: 'the very state A3 was invoked to repair, back again' }
