@@ -5364,6 +5364,12 @@ function ownLabelFeeMayAccrue(order, ref) {
     return { allowed: false, rule: 'OL-14', reason: order.seller + ' is not the producing winery of ' + id };
   if (order.buyer !== project.distributor)
     return { allowed: false, rule: 'MG-2', reason: order.buyer + ' is not the primary distributor of ' + project.id };
+  /* A fee event names an order LINE, and a line that is not on the
+     order is a ledger row for goods that never moved. Found by the
+     harness: the first version took an order and a product and never
+     asked whether the two had anything to do with each other. */
+  if (!(order.items || []).some(i => i.productId === id))
+    return { allowed: false, rule: 'OL-14', reason: order.id + ' carries no line for ' + id };
   return { allowed: true, rule: null, reason: 'the producing winery selling to its primary distributor' };
 }
 
