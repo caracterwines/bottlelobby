@@ -5163,6 +5163,454 @@ function removeListing(holder, ref) {
    and a list of names nobody reads is a second answer waiting to
    disagree with A17.6.
 ══════════════════════════════════════════════════════════════════ */
+
+/* ══════════════════════════════════════════════════════════════════
+   THE THREE ACTS — consents · contracts · reviews  (A17.8)
+   ------------------------------------------------------------------
+   OL-4: a checkbox acceptance, a signed contract and a Bottle Lobby
+   approval are THREE records at every level, and none of them may be
+   created, implied or advanced by the presence of another. Three
+   arrays, therefore, and not one status field that would have to mean
+   all three by turns.
+
+   ONE SHAPE PER ACT, `subjectType` AS A FIELD. Programme consent and
+   project consent are the same act on different subjects; programme
+   admission, contract approval and both gates are the same act on
+   different subjects. Two tables per level would be one state machine
+   written two, four and six times, and a copy drifts — D33.
+
+   NOTHING HERE IS A STATE. Membership active, gate 1 released, gate 2
+   approved, `project_active`, `approved_for_first_order` and the
+   Own Label tab's seven screens are all READINGS of these three arrays
+   (A17.12, OL-6). Every one of them is a function below; not one of
+   them is a field.
+
+   `byUser` IS A COMPANY NAME, and that is an honest stand-in rather
+   than an omission. A17.8 names a user, and this prototype has no user
+   records at all — every actor in it is a house or the literal string
+   'Bottle Lobby' (order logs, `activatedBy`, show events). Inventing
+   seven person names would put the one fact in these fixtures that
+   nobody could check beside twenty that can be.
+══════════════════════════════════════════════════════════════════ */
+const OWN_LABEL_PROGRAM_TERMS_VERSION = 'OL-PROG-2026-01';
+
+/* ── CONSENTS (A17.8) — append-only, never edited (OL-3) ──────────
+   `textSnapshot` is the text as it was accepted. Changing a terms text
+   later never alters an existing snapshot: that is the whole reason
+   the text is on the row and not looked up by version. */
+const CONSENT_SUBJECT_TYPES = ['membership', 'project'];
+const consents = [
+  /* ── Programme consents, distributor side ──────────────────────── */
+  { id:'CNS-1001', subjectType:'membership', subjectId:'OLM-1001',
+    party:'Hawesko GmbH', role:'distributor',
+    termsType:'program_terms', termsVersion:OWN_LABEL_PROGRAM_TERMS_VERSION,
+    textSnapshot:'I confirm on behalf of the company that we apply to the Bottle Lobby Own Label programme as a distributor, that every own-label volume agreed under it is ordered through the platform, that we approach a partner winery about own-label work only through a project opened here, and that Bottle Lobby participates economically per bottle under the tariff in force when a project’s terms are concluded. We accept the audit and documentation duties of the programme agreement and acknowledge that membership may be suspended or terminated under it.',
+    byUser:'Hawesko GmbH', forCompany:'Hawesko GmbH', at:'2026-02-02', language:'en' },
+  { id:'CNS-1002', subjectType:'membership', subjectId:'OLM-1002',
+    party:'Enoteca Milano Import Srl', role:'distributor',
+    termsType:'program_terms', termsVersion:OWN_LABEL_PROGRAM_TERMS_VERSION,
+    textSnapshot:'I confirm on behalf of the company that we apply to the Bottle Lobby Own Label programme as a distributor, that every own-label volume agreed under it is ordered through the platform, that we approach a partner winery about own-label work only through a project opened here, and that Bottle Lobby participates economically per bottle under the tariff in force when a project’s terms are concluded. We accept the audit and documentation duties of the programme agreement and acknowledge that membership may be suspended or terminated under it.',
+    byUser:'Enoteca Milano Import Srl', forCompany:'Enoteca Milano Import Srl', at:'2026-07-27', language:'en' },
+
+  /* ── Programme consents, winery side ───────────────────────────── */
+  { id:'CNS-1003', subjectType:'membership', subjectId:'OLM-1003',
+    party:'Domaine Lefèvre', role:'winery',
+    termsType:'program_terms', termsVersion:OWN_LABEL_PROGRAM_TERMS_VERSION,
+    textSnapshot:'I confirm on behalf of the house that we apply to the Bottle Lobby Own Label programme as a producer, that we create every own-label product ourselves and stay answerable for its technical data, that we supply an own-label product to no party other than the primary distributor named in its project, and that the per-bottle programme fee is borne by this house under the tariff in force when a project’s terms are concluded. We accept the audit and documentation duties of the programme agreement and acknowledge that membership may be suspended or terminated under it.',
+    byUser:'Domaine Lefèvre', forCompany:'Domaine Lefèvre', at:'2026-03-02', language:'en' },
+  { id:'CNS-1004', subjectType:'membership', subjectId:'OLM-1004',
+    party:'Bodegas Ruiz', role:'winery',
+    termsType:'program_terms', termsVersion:OWN_LABEL_PROGRAM_TERMS_VERSION,
+    textSnapshot:'I confirm on behalf of the house that we apply to the Bottle Lobby Own Label programme as a producer, that we create every own-label product ourselves and stay answerable for its technical data, that we supply an own-label product to no party other than the primary distributor named in its project, and that the per-bottle programme fee is borne by this house under the tariff in force when a project’s terms are concluded. We accept the audit and documentation duties of the programme agreement and acknowledge that membership may be suspended or terminated under it.',
+    byUser:'Bodegas Ruiz', forCompany:'Bodegas Ruiz', at:'2026-04-06', language:'en' },
+  { id:'CNS-1005', subjectType:'membership', subjectId:'OLM-1005',
+    party:'Cantina Rossi', role:'winery',
+    termsType:'program_terms', termsVersion:OWN_LABEL_PROGRAM_TERMS_VERSION,
+    textSnapshot:'I confirm on behalf of the house that we apply to the Bottle Lobby Own Label programme as a producer, that we create every own-label product ourselves and stay answerable for its technical data, that we supply an own-label product to no party other than the primary distributor named in its project, and that the per-bottle programme fee is borne by this house under the tariff in force when a project’s terms are concluded. We accept the audit and documentation duties of the programme agreement and acknowledge that membership may be suspended or terminated under it.',
+    byUser:'Cantina Rossi', forCompany:'Cantina Rossi', at:'2026-05-04', language:'en' },
+  { id:'CNS-1006', subjectType:'membership', subjectId:'OLM-1006',
+    party:'Henri Dubois Domaine', role:'winery',
+    termsType:'program_terms', termsVersion:OWN_LABEL_PROGRAM_TERMS_VERSION,
+    textSnapshot:'I confirm on behalf of the house that we apply to the Bottle Lobby Own Label programme as a producer, that we create every own-label product ourselves and stay answerable for its technical data, that we supply an own-label product to no party other than the primary distributor named in its project, and that the per-bottle programme fee is borne by this house under the tariff in force when a project’s terms are concluded. We accept the audit and documentation duties of the programme agreement and acknowledge that membership may be suspended or terminated under it.',
+    byUser:'Henri Dubois Domaine', forCompany:'Henri Dubois Domaine', at:'2026-06-01', language:'en' },
+  { id:'CNS-1007', subjectType:'membership', subjectId:'OLM-1007',
+    party:'Weingut Schmitt', role:'winery',
+    termsType:'program_terms', termsVersion:OWN_LABEL_PROGRAM_TERMS_VERSION,
+    textSnapshot:'I confirm on behalf of the house that we apply to the Bottle Lobby Own Label programme as a producer, that we create every own-label product ourselves and stay answerable for its technical data, that we supply an own-label product to no party other than the primary distributor named in its project, and that the per-bottle programme fee is borne by this house under the tariff in force when a project’s terms are concluded. We accept the audit and documentation duties of the programme agreement and acknowledge that membership may be suspended or terminated under it.',
+    byUser:'Weingut Schmitt', forCompany:'Weingut Schmitt', at:'2026-06-22', language:'en' },
+  { id:'CNS-1008', subjectType:'membership', subjectId:'OLM-1008',
+    party:'Château Belrieu', role:'winery',
+    termsType:'program_terms', termsVersion:OWN_LABEL_PROGRAM_TERMS_VERSION,
+    textSnapshot:'I confirm on behalf of the house that we apply to the Bottle Lobby Own Label programme as a producer, that we create every own-label product ourselves and stay answerable for its technical data, that we supply an own-label product to no party other than the primary distributor named in its project, and that the per-bottle programme fee is borne by this house under the tariff in force when a project’s terms are concluded. We accept the audit and documentation duties of the programme agreement and acknowledge that membership may be suspended or terminated under it.',
+    byUser:'Château Belrieu', forCompany:'Château Belrieu', at:'2026-07-13', language:'en' }
+];
+
+function consentById(id) {
+  if (typeof id !== 'string') return null;
+  return consents.find(c => c.id === id) || null;
+}
+function consentsFor(subjectType, subjectId) {
+  return consents.filter(c => c.subjectType === subjectType && c.subjectId === subjectId);
+}
+
+/* ── CONTRACTS (A17.8) — one list, party as a field ───────────────
+   Not one chain per side. Both parties' rows sit in the same array and
+   are told apart by `party`, which is what makes "the other side's
+   contract STATUS is visible, its CONTENTS are not" (A17.13) a filter
+   rather than a second table.
+
+   `status` runs preparing → sent → received → under_review → approved,
+   with `revision_required` and `rejected` off to the side. APPROVED IS
+   NOT THE SAME ACT AS THE REVIEW that approves it: the contract row
+   records the document's state, the `reviews` row records who decided
+   and when (OL-4). Both exist for every approved contract below. */
+const CONTRACT_KINDS    = ['program_agreement', 'project_agreement', 'addendum'];
+const CONTRACT_STATUSES = ['preparing', 'sent', 'received', 'under_review',
+                           'approved', 'revision_required', 'rejected'];
+const contracts = [
+  /* Bottle Lobby ↔ each company, separately and before any project
+     (A17.1). `docNo` is Bottle Lobby's own reference. */
+  { id:'CTR-1001', subjectType:'membership', subjectId:'OLM-1001', party:'Hawesko GmbH',
+    kind:'program_agreement', status:'approved',
+    sentAt:'2026-02-04', receivedAt:'2026-02-16', docNo:'BL-OLP-2026-0001' },
+  { id:'CTR-1002', subjectType:'membership', subjectId:'OLM-1003', party:'Domaine Lefèvre',
+    kind:'program_agreement', status:'approved',
+    sentAt:'2026-03-04', receivedAt:'2026-03-16', docNo:'BL-OLP-2026-0002' },
+  { id:'CTR-1003', subjectType:'membership', subjectId:'OLM-1004', party:'Bodegas Ruiz',
+    kind:'program_agreement', status:'approved',
+    sentAt:'2026-04-08', receivedAt:'2026-04-20', docNo:'BL-OLP-2026-0003' },
+  { id:'CTR-1004', subjectType:'membership', subjectId:'OLM-1005', party:'Cantina Rossi',
+    kind:'program_agreement', status:'approved',
+    sentAt:'2026-05-06', receivedAt:'2026-05-18', docNo:'BL-OLP-2026-0004' },
+  { id:'CTR-1005', subjectType:'membership', subjectId:'OLM-1006', party:'Henri Dubois Domaine',
+    kind:'program_agreement', status:'approved',
+    sentAt:'2026-06-03', receivedAt:'2026-06-15', docNo:'BL-OLP-2026-0005' },
+  { id:'CTR-1006', subjectType:'membership', subjectId:'OLM-1007', party:'Weingut Schmitt',
+    kind:'program_agreement', status:'approved',
+    sentAt:'2026-06-24', receivedAt:'2026-07-06', docNo:'BL-OLP-2026-0006' },
+
+  /* THE TWO UNFINISHED ONES, and they are the point of the fixture
+     rather than filler. A17.14 asks the demo to show "a distributor
+     application in flight" and "a winery contract under review", and
+     both states are only readable if a record stops there. Neither
+     company derives an active membership, and neither may open a
+     project — which is exactly what A17.4's refusals are for. */
+  { id:'CTR-1007', subjectType:'membership', subjectId:'OLM-1008', party:'Château Belrieu',
+    kind:'program_agreement', status:'under_review',
+    sentAt:'2026-07-15', receivedAt:'2026-07-30', docNo:'BL-OLP-2026-0007' },
+  { id:'CTR-1008', subjectType:'membership', subjectId:'OLM-1002', party:'Enoteca Milano Import Srl',
+    kind:'program_agreement', status:'sent',
+    sentAt:'2026-07-29', receivedAt:null, docNo:'BL-OLP-2026-0008' }
+];
+
+function contractById(id) {
+  if (typeof id !== 'string') return null;
+  return contracts.find(c => c.id === id) || null;
+}
+function contractsFor(subjectType, subjectId) {
+  return contracts.filter(c => c.subjectType === subjectType && c.subjectId === subjectId);
+}
+function contractApproved(id) {
+  const c = contractById(id);
+  return !!c && c.status === 'approved';
+}
+
+/* ── REVIEWS (A17.8) — the only place Bottle Lobby's authority lives
+   Invariant 6 in one array: every approval is an act with an actor and
+   a date. Programme admission, contract approval and both gates are
+   the same act on different subjects, which is why `gateNumber` is
+   null on the first two rather than a separate table.
+
+   `approvalType` says WHAT was approved, so a reader does not have to
+   infer it from `subjectType` plus `gateNumber`. */
+const REVIEW_SUBJECT_TYPES = ['membership', 'contract', 'project'];
+const REVIEW_STATUSES      = ['pending', 'approved', 'changes_requested', 'rejected'];
+const reviews = [
+  /* Contract approvals — the act that moves a document to `approved`. */
+  { id:'RVW-1001', subjectType:'contract', subjectId:'CTR-1001', gateNumber:null,
+    reviewStatus:'approved', reviewedBy:'Bottle Lobby', reviewedAt:'2026-02-19',
+    reviewNotes:null, approvalType:'program_contract' },
+  { id:'RVW-1002', subjectType:'contract', subjectId:'CTR-1002', gateNumber:null,
+    reviewStatus:'approved', reviewedBy:'Bottle Lobby', reviewedAt:'2026-03-19',
+    reviewNotes:null, approvalType:'program_contract' },
+  { id:'RVW-1003', subjectType:'contract', subjectId:'CTR-1003', gateNumber:null,
+    reviewStatus:'approved', reviewedBy:'Bottle Lobby', reviewedAt:'2026-04-23',
+    reviewNotes:null, approvalType:'program_contract' },
+  { id:'RVW-1004', subjectType:'contract', subjectId:'CTR-1004', gateNumber:null,
+    reviewStatus:'approved', reviewedBy:'Bottle Lobby', reviewedAt:'2026-05-21',
+    reviewNotes:null, approvalType:'program_contract' },
+  { id:'RVW-1005', subjectType:'contract', subjectId:'CTR-1005', gateNumber:null,
+    reviewStatus:'approved', reviewedBy:'Bottle Lobby', reviewedAt:'2026-06-18',
+    reviewNotes:null, approvalType:'program_contract' },
+  { id:'RVW-1006', subjectType:'contract', subjectId:'CTR-1006', gateNumber:null,
+    reviewStatus:'approved', reviewedBy:'Bottle Lobby', reviewedAt:'2026-07-09',
+    reviewNotes:null, approvalType:'program_contract' },
+
+  /* Programme admissions — the SECOND approval, and deliberately not
+     the same row as the first. OL-4: an approved contract does not
+     admit a company; a person at Bottle Lobby admits it, one day later
+     in every fixture here, because the two acts are never simultaneous
+     in practice either. */
+  { id:'RVW-1101', subjectType:'membership', subjectId:'OLM-1001', gateNumber:null,
+    reviewStatus:'approved', reviewedBy:'Bottle Lobby', reviewedAt:'2026-02-20',
+    reviewNotes:null, approvalType:'program_admission' },
+  { id:'RVW-1102', subjectType:'membership', subjectId:'OLM-1003', gateNumber:null,
+    reviewStatus:'approved', reviewedBy:'Bottle Lobby', reviewedAt:'2026-03-20',
+    reviewNotes:null, approvalType:'program_admission' },
+  { id:'RVW-1103', subjectType:'membership', subjectId:'OLM-1004', gateNumber:null,
+    reviewStatus:'approved', reviewedBy:'Bottle Lobby', reviewedAt:'2026-04-24',
+    reviewNotes:null, approvalType:'program_admission' },
+  { id:'RVW-1104', subjectType:'membership', subjectId:'OLM-1005', gateNumber:null,
+    reviewStatus:'approved', reviewedBy:'Bottle Lobby', reviewedAt:'2026-05-22',
+    reviewNotes:null, approvalType:'program_admission' },
+  { id:'RVW-1105', subjectType:'membership', subjectId:'OLM-1006', gateNumber:null,
+    reviewStatus:'approved', reviewedBy:'Bottle Lobby', reviewedAt:'2026-06-19',
+    reviewNotes:null, approvalType:'program_admission' },
+  { id:'RVW-1106', subjectType:'membership', subjectId:'OLM-1007', gateNumber:null,
+    reviewStatus:'approved', reviewedBy:'Bottle Lobby', reviewedAt:'2026-07-10',
+    reviewNotes:null, approvalType:'program_admission' }
+];
+
+function reviewById(id) {
+  if (typeof id !== 'string') return null;
+  return reviews.find(r => r.id === id) || null;
+}
+function reviewsFor(subjectType, subjectId) {
+  return reviews.filter(r => r.subjectType === subjectType && r.subjectId === subjectId);
+}
+function reviewApproved(id) {
+  const r = reviewById(id);
+  return !!r && r.reviewStatus === 'approved';
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   PROGRAMME MEMBERSHIPS (A17.1) — and no boolean anywhere
+   ------------------------------------------------------------------
+   `companyRole` of `distributor` or `winery`, one model for both:
+   the two applications ask different questions and travel the
+   identical path.
+
+   THERE IS NO `isOwnLabelPartner` FIELD AND NO `applicationStatus`.
+   Both are read, and the reading is the six conditions of A17.1
+   below. A stored boolean beside six conditions can disagree with all
+   six at once, which is invariant 7 in one sentence.
+
+   EIGHT ROWS, SIX ACTIVE, AND THE TWO UNFINISHED ONES ARE THE
+   FIXTURE'S POINT. A17.14 asks for the whole arc on screen: an
+   application in flight (Enoteca, contract sent and not returned), a
+   contract under review (Château Belrieu, returned and not yet
+   approved), an admitted distributor (Hawesko), and an admitted winery
+   with no project (Weingut Schmitt — its Riesling is open to
+   own-label requests and nobody has asked).
+
+   EVERY DATE HAS A CEILING, AND IT IS OL-11. A project may not exist
+   whose companies were admitted afterwards, so each `validFrom` sits
+   before the request date of every project that names the company:
+
+     Hawesko           20 Feb  →  earliest project request 13 Apr
+     Domaine Lefèvre   20 Mar  →  OLP-104 requested 13 Apr
+     Bodegas Ruiz      24 Apr  →  OLP-103 requested  8 Jun
+     Cantina Rossi     22 May  →  OLP-102 requested 20 Jul
+     Henri Dubois      19 Jun  →  OLP-101 requested 13 Jul
+
+   The application days themselves are fixture authorship and say so:
+   nothing in the prototype recorded when a house applied, so each is
+   an unremarkable Monday far enough ahead of its ceiling to leave the
+   five acts room. `validUntil` is null on every row — an open-ended
+   membership is the normal case, and a date nobody agreed would be a
+   claim about a contract term this prototype does not hold.
+══════════════════════════════════════════════════════════════════ */
+const OWN_LABEL_COMPANY_ROLES = ['distributor', 'winery'];
+const ownLabelProgramMemberships = [
+  { id:'OLM-1001', companyId:'Hawesko GmbH', companyRole:'distributor',
+    applicationData:{ ownLabelExperience:'12 years, 4 house brands', targetVolume:'25,000 bottles / year',
+                      markets:['Germany', 'Denmark', 'Sweden'] },
+    submittedAt:'2026-02-02', consentId:'CNS-1001', contractId:'CTR-1001', reviewId:'RVW-1101',
+    validFrom:'2026-02-20', validUntil:null, suspendedAt:null, terminatedAt:null },
+
+  { id:'OLM-1002', companyId:'Enoteca Milano Import Srl', companyRole:'distributor',
+    applicationData:{ ownLabelExperience:'first own-label programme', targetVolume:'6,000 bottles / year',
+                      markets:['Italy'] },
+    submittedAt:'2026-07-27', consentId:'CNS-1002', contractId:'CTR-1008', reviewId:null,
+    validFrom:null, validUntil:null, suspendedAt:null, terminatedAt:null },
+
+  { id:'OLM-1003', companyId:'Domaine Lefèvre', companyRole:'winery',
+    applicationData:{ ownLabelExperience:'2 relabel lines for French buyers', capacity:'40,000 bottles / year',
+                      routes:['relabel_existing_wine', 'bespoke_new_wine'] },
+    submittedAt:'2026-03-02', consentId:'CNS-1003', contractId:'CTR-1002', reviewId:'RVW-1102',
+    validFrom:'2026-03-20', validUntil:null, suspendedAt:null, terminatedAt:null },
+
+  { id:'OLM-1004', companyId:'Bodegas Ruiz', companyRole:'winery',
+    applicationData:{ ownLabelExperience:'none, wants to develop', capacity:'30,000 bottles / year',
+                      routes:['bespoke_new_wine'] },
+    submittedAt:'2026-04-06', consentId:'CNS-1004', contractId:'CTR-1003', reviewId:'RVW-1103',
+    validFrom:'2026-04-24', validUntil:null, suspendedAt:null, terminatedAt:null },
+
+  { id:'OLM-1005', companyId:'Cantina Rossi', companyRole:'winery',
+    applicationData:{ ownLabelExperience:'4 own-label lines, Italian and German trade', capacity:'60,000 bottles / year',
+                      routes:['relabel_existing_wine', 'bespoke_new_wine'] },
+    submittedAt:'2026-05-04', consentId:'CNS-1005', contractId:'CTR-1004', reviewId:'RVW-1104',
+    validFrom:'2026-05-22', validUntil:null, suspendedAt:null, terminatedAt:null },
+
+  { id:'OLM-1006', companyId:'Henri Dubois Domaine', companyRole:'winery',
+    applicationData:{ ownLabelExperience:'1 relabel line, Loire co-operative', capacity:'18,000 bottles / year',
+                      routes:['relabel_existing_wine'] },
+    submittedAt:'2026-06-01', consentId:'CNS-1006', contractId:'CTR-1005', reviewId:'RVW-1105',
+    validFrom:'2026-06-19', validUntil:null, suspendedAt:null, terminatedAt:null },
+
+  { id:'OLM-1007', companyId:'Weingut Schmitt', companyRole:'winery',
+    applicationData:{ ownLabelExperience:'none', capacity:'12,000 bottles / year',
+                      routes:['relabel_existing_wine'] },
+    submittedAt:'2026-06-22', consentId:'CNS-1007', contractId:'CTR-1006', reviewId:'RVW-1106',
+    validFrom:'2026-07-10', validUntil:null, suspendedAt:null, terminatedAt:null },
+
+  { id:'OLM-1008', companyId:'Château Belrieu', companyRole:'winery',
+    applicationData:{ ownLabelExperience:'none', capacity:'9,000 bottles / year',
+                      routes:['relabel_existing_wine'] },
+    submittedAt:'2026-07-13', consentId:'CNS-1008', contractId:'CTR-1007', reviewId:null,
+    validFrom:null, validUntil:null, suspendedAt:null, terminatedAt:null }
+];
+
+function ownLabelMembershipOf(company) {
+  if (typeof company !== 'string') return null;
+  return ownLabelProgramMemberships.find(m => m.companyId === company) || null;
+}
+
+/* THE SIX CONDITIONS OF A17.1, in the order A17.1 states them, and
+   nothing else. `at` defaults to today because "is this company a
+   partner" is asked about now; passing a date asks it about then,
+   which is what a project's request date needs (OL-11).
+
+   A NULL `validUntil` IS UNBOUNDED, NOT EXPIRED. An open-ended
+   membership is the normal case, and reading a missing end date as a
+   past one would suspend every company in the fixture. */
+function ownLabelMembershipActive(m, at) {
+  if (!m) return false;
+  const day = at || todayISO();
+  if (!m.submittedAt) return false;
+  if (!consentById(m.consentId)) return false;
+  if (!contractApproved(m.contractId)) return false;
+  if (!reviewApproved(m.reviewId)) return false;
+  if (!m.validFrom || day < m.validFrom) return false;
+  if (m.validUntil != null && day > m.validUntil) return false;
+  if (m.suspendedAt || m.terminatedAt) return false;
+  return true;
+}
+function isOwnLabelPartner(company, at) {
+  return ownLabelMembershipActive(ownLabelMembershipOf(company), at);
+}
+
+/* ── A17.2 — the Own Label tab's seven states, read never stored ──
+   Seven screens, no screen name in the data. Each line below is a
+   reading of the records above, and the order is the order A17.2 lists
+   them in: the first one that answers wins.
+
+   `changes_required` is checked BEFORE the contract states, because a
+   returned revision request is the fact the company has to act on
+   even though its contract row still reads `sent`. */
+function ownLabelTabState(company, at) {
+  const m = ownLabelMembershipOf(company);
+  if (!m || !m.submittedAt) return 'not_applied';
+  if (ownLabelMembershipActive(m, at)) return 'approved';
+  if (m.suspendedAt || m.terminatedAt) return 'suspended_or_expired';
+  const admission = reviewById(m.reviewId);
+  if (admission && admission.reviewStatus === 'changes_requested') return 'changes_required';
+  const c = contractById(m.contractId);
+  if (c && c.status === 'revision_required') return 'changes_required';
+  if (c && (c.status === 'received' || c.status === 'under_review')) return 'contract_under_review';
+  if (c && c.status === 'sent') return 'contract_sent';
+  /* Applied, consented, and no contract out yet — A17.1's first step,
+     which A17.2 calls "application submitted". A17.1's `validFrom`
+     having passed while the review is still pending cannot reach here,
+     because `ownLabelMembershipActive` already answered. */
+  return 'application_submitted';
+}
+
+/* ── A17.3 — the public badge, derived from a valid membership ────
+   Nothing to clear on suspension, because nothing was ever set. The
+   role decides the wording; the membership decides whether there is
+   one at all. */
+const OWN_LABEL_BADGE_LABELS = {
+  distributor: 'Own Label Distributor Partner',
+  winery:      'Own Label Winery Partner'
+};
+function ownLabelPublicBadge(company, at) {
+  const m = ownLabelMembershipOf(company);
+  if (!ownLabelMembershipActive(m, at)) return null;
+  return OWN_LABEL_BADGE_LABELS[m.companyRole] || 'Verified Own Label Partner';
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   PROJECT TERMS (A17.8) — party-scoped, two rows per project
+   ------------------------------------------------------------------
+   Shared terms appear on BOTH rows and must agree, which is checkable
+   and is checked below. The fee appears ONLY on the winery's row and
+   the distributor's row has no fee field at all — OL-2, and it is an
+   omission rather than a secret, which is the only form that survives
+   a browser with developer tools open.
+
+   Empty here, and that is not a stopgap: terms belong to a project,
+   and the projects arrive with their own commit. A terms row naming a
+   project that does not exist yet would be the forward reference this
+   whole chain exists to avoid.
+══════════════════════════════════════════════════════════════════ */
+const OWN_LABEL_SHARED_TERMS = ['territory', 'termFrom', 'termUntil',
+                                'minimumQuantity', 'firstOrderQuantity', 'specVersion'];
+const ownLabelTerms = [];
+
+function ownLabelTermsOf(projectId, party) {
+  if (typeof projectId !== 'string') return party ? null : [];
+  const rows = ownLabelTerms.filter(t => t.projectId === projectId);
+  if (!party) return rows;
+  return rows.find(t => t.party === party) || null;
+}
+/* Do the two rows agree about everything they share? A17.8 says they
+   must and calls it checkable; this is where it is checked. Answers
+   null when there are not two rows to compare — "cannot be asked" and
+   "asked and agreed" are different answers. */
+function ownLabelTermsAgree(projectId) {
+  const rows = ownLabelTermsOf(projectId);
+  if (rows.length !== 2) return null;
+  return OWN_LABEL_SHARED_TERMS.every(k => rows[0][k] === rows[1][k]);
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   THE GATES, READ FROM THE THREE ACTS (A17.12)
+   ------------------------------------------------------------------
+   Four readings, and not one of them is a field:
+
+     gate1Permitted        both parties hold an APPROVED project
+                           contract — a precondition is a reading
+     projectActive         an approved gate-1 review exists, otherwise
+                           a project reads active after a contract is
+                           withdrawn
+     approvedForFirstOrder an approved gate-2 review exists
+     commercialStatus      the product carries an ownLabelProjectId
+                           whose project passed gate 2
+
+   `gateReview` is the one lookup: a gate is a review on the PROJECT
+   with a `gateNumber`, which is why gates needed no table of their own.
+══════════════════════════════════════════════════════════════════ */
+function gateReview(projectId, n) {
+  if (typeof projectId !== 'string') return null;
+  return reviews.find(r => r.subjectType === 'project' && r.subjectId === projectId &&
+                           r.gateNumber === n) || null;
+}
+function gateApproved(projectId, n) {
+  const r = gateReview(projectId, n);
+  return !!r && r.reviewStatus === 'approved';
+}
+/* A17.7: gate 1 is PERMITTED once both sides hold an approved project
+   contract. Permitted is not released — the release is the review. */
+function gate1Permitted(projectId) {
+  const signed = contractsFor('project', projectId)
+    .filter(c => c.kind === 'project_agreement' && c.status === 'approved')
+    .map(c => c.party);
+  return new Set(signed).size >= 2;
+}
+function projectActive(projectId)         { return gateApproved(projectId, 1); }
+function approvedForFirstOrder(projectId) { return gateApproved(projectId, 2); }
+
 const ownLabelProjects = [];
 
 function ownLabelProjectById(id) {

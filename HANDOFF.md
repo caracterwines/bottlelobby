@@ -31,7 +31,7 @@ Kein Build-Command, Publish-Directory = Repo-Root.
 > Dauerhafte Regeln gehoeren in `BOTTLE-LOBBY-SPEC.md`, kurze Invarianten in
 > `CLAUDE.md`. Findet sich hier eine Regel, ist sie am falschen Ort.
 
-**Baum sauber, `main` gepusht, 21 Harnesses gruen** (nachgezaehlt 06.08. — `own-label-grants.js` kam mit Durchgang 3 dazu).
+**Baum sauber, `main` gepusht, 22 Harnesses gruen** (nachgezaehlt 06.08. — `own-label-grants.js` kam mit Durchgang 3 dazu, `own-label-program.js` mit den A17-Fixtures).
 
 ### Womit eine Sitzung anfaengt
 
