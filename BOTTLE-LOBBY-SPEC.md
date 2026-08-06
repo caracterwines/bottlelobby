@@ -125,10 +125,15 @@ Two consequences the real build must keep:
 
 ```
 WINERY ─────────► DISTRIBUTOR ─────────► RESTAURANT
-                                    └────► RETAIL
+                    ▲      │        └────► RETAIL
+                    └──────┘
+              a distributor may also buy
+              from another distributor
 ```
 
 **Hard rule:** Restaurants and Retail source wine **exclusively via a Distributor partner**. Direct-from-winery sourcing for Restaurant/Retail **does not exist** in the model.
+
+The loop at the distributor is the second sourcing route, and it is ordinary trade rather than an exception — see *Where a distributor sources* below.
 
 Consequences for the build:
 - Restaurant/Retail never create or own wine data.
@@ -138,7 +143,47 @@ Consequences for the build:
 
 **Distributor portfolio:** Only wines actually taken on via purchase/partnership appear — never a winery's whole catalog automatically. The act of purchasing/partnering creates the relation.
 
-**Own-Label:** A separate flag/relation layered on top of the winery→distributor wine link (which distributor exclusively licensed which wine). Never a separate copy of the wine.
+**Own-Label:** Not a flag on the winery→distributor wine link. An own label is **its own product**, created by the winery out of a project, and the distributor's own-label status is **derived on his listing** from two conditions — first commercial delivery confirmed, and holder = the project's primary distributor. The model is A17 (A17.0a, A17.0b, A17.9, A17.12); the earlier flag reading is Appendix D **D36** and **D37**.
+
+### Where a distributor sources — the rule in full
+
+A8 has named **Distributor ↔ Distributor portfolio supplementation** as a case since
+it was written, and A17.9b describes the downstream holder in detail. The chain above
+never said it out loud, so the rule is stated here once, for **ordinary wine**, and
+own label is the special case rather than the other way round.
+
+1. **A distributor buys wine from a winery OR from another distributor.** Both are
+   ordinary purchases, and both are the same order record read from two sides (A14.1).
+2. **A may sell ordinary wines he lawfully carries to B**, provided an **active A↔B
+   partnership** exists (A6) and A's ordinary distribution agreement permits this
+   route, this territory and this channel.
+3. **Sub-distribution is not an own-label privilege.** Where A is the exclusive
+   distributor for the whole winery and the agreement permits sub-distribution, A may
+   resell single wines or his entire eligible range to B. **The platform does not
+   restrict this route to own labels** — the A17 machinery exists for own-label
+   products and says nothing about ordinary trade.
+4. **Nothing is copied.** B receives **his own listing per wine taken on**: the same
+   `productId`, his own `tradePrice`, his own article number, his own commercial
+   fields. The listing key is `(holder, productId)` (A15.2a), so this needs no schema
+   change and no second product record — invariant 2 holds unchanged.
+5. **The producer stays the winery. B's source and seller is A.** Five facts stay
+   apart here exactly as they do in A17.9b: producer · source · seller · holder ·
+   distribution right.
+6. **The A→B order creates nothing else.** No partnership, no purchase right and no
+   exclusivity arises between B and the winery. An order is a purchase, never a
+   relation.
+7. **A17 Market Grants are checked for own-label products ONLY.** An ordinary wine is
+   never refused because no project or grant exists — `ownLabelOrderRight()` answers
+   `null` for a product with no project, and a `null` is silence, not a refusal.
+8. **What governs an ordinary wine is the partnership, A's listing, and whatever
+   distribution reach the contract fixes. That agreement is NAMED here, not
+   modelled.** There is deliberately no second grant construct beside A17.9a: one
+   structure for own-label grants and a parallel one for ordinary contracts is D36 a
+   third time. If the platform ever has to enforce ordinary distribution terms, it
+   gets its own measured pass and this sentence is where it starts.
+9. **Restaurant and Retail still buy exclusively from a Distributor.** D2D changes
+   nothing at the end of the chain — it lengthens the middle, it does not open a
+   shortcut.
 
 **This rule governs the flow of goods, not the flow of money.** A distributor invoicing a producer for a service — a Wine Show catering contribution, `source: 'wine_show_catering'` (A16.11) — runs against the arrows above and is not a breach of them: no product changes hands, and such an order may not carry product lines at all. Only a route by which wine reaches a buyer is a supply chain shortcut. Wine bought off the back of a show (`wine_show_order`, A16.12) runs the arrows the normal way and is an ordinary purchase.
 
@@ -661,7 +706,7 @@ WINERY  ◄────── order ──────  DISTRIBUTOR  ◄──�
                                                             └──  RETAIL
 ```
 
-Both halves of the supply chain are real orders in the same table, distinguished only by `buyer_type` / `seller_type`. A distributor is the seller on one row and the buyer on another. **Restaurant and Retail can only ever buy from a Distributor** (A3); a Distributor buys from a Winery.
+Both halves of the supply chain are real orders in the same table, distinguished only by `buyer_type` / `seller_type`. A distributor is the seller on one row and the buyer on another. **Restaurant and Retail can only ever buy from a Distributor** (A3); a Distributor buys from a winery **or from another distributor** (A3, A17.9b) — that second row is an ordinary order too, with a distributor on both ends.
 
 Wines on an order are **referenced, never copied** — `order_items.wine_id` is a foreign key into `wines`, which the winery owns. An order line stores commercial terms (quantity, prices, discount), never wine content.
 
@@ -5611,6 +5656,7 @@ Without it the badge cannot be honest.
 | D37 | Own-label exclusivity was read as a lock on the **customer**: no other distributor sees the product, may select it, order it or take it into a book. Measured at **five spec locations** — A17.9 *Consequences* · A17.9 *Visible ≠ in the book* · the A17.13 table row *an exclusive product, in any picker* · A17.13 *Reach can never widen an action right* · the A17.12 row *`ownLabel` on a listing* | **A17.9 / A17.9a / A17.9b / A17.12 / A17.13a** — exclusivity locks the **source**: the winery may supply nobody but the primary distributor A, and no other distributor may order the product **from the winery**. A sells onward within his agreed **Market Grants** (A17.9a). A downstream holder B gets an ordinary listing — no own-label status, his own `tradePrice`, which the listing key already carries per holder — while the product stays an own-label product at product level. Only A's listing derives `ownLabel`, and now from **two** conditions: first commercial delivery confirmed **and** holder = the project's primary distributor. The fee accrues once, winery → A (OL-14, OL-15) | The lock was written one step too far down the chain, and at that distance it forbids ordinary trade: a distributor who has bought the goods may resell them, and every real own-label arrangement says where and through which channel. Read as written, the fifth location would additionally have marked **B's** listing as own label on B's own first delivery — the same collapse A17.0a exists to prevent, arriving through a different door. The draft that produced this correction first proposed a `resaleAllowed` boolean and a single `resaleTerritory` string; **that pair is superseded here before it ever entered the spec**, because a country grant, a channel grant, a sub-distribution grant and a named key account cannot share one field without becoming D36 a second time. |
 | D38 | A16.2's `planning` entry trigger: **venue + at least one exhibitor + at least one product confirmed** before a show is publicly listed | **A16.2 / A16.14c** — `planning` begins with the host's basics (title, date, city, focus). Venue, exhibitors, products, fixed costs, the per-bearer split and every affected consent become **publish preconditions**, checked before `pending_approval` | Recruiting happens *inside* `planning` (A16.4, A16.14c), so a show that may only enter `planning` with a confirmed exhibitor can never recruit its first one — the stage that exists to find participants was gated on already having them. The fixture WS-2604 sitting at zero wines is that contradiction observed, not an accident. Nothing is given away by moving the checks: A16.6's anonymisation makes an early listing safe, and the platform's guarantee has never attached at `planning` — it attaches at `published` (A16.1), which is exactly where the old trigger's checks now sit. |
 | D39 | The sidebar sections **My Partners** and **Network** (B8, all four roles); and, from the withdrawn A16.14 draft, `'network'` as a **reach value** | **B8 / A16.14b** — **Network** = the business relations (former My Partners: My Partnerships / My Distributors · My Requests). **Community** = the follow side (former Network: Matchmaking · My Opportunities · My Stars · My Fans). The reach taxonomy names those two levels `partners` and `community`; the generic value `network` does not exist | Two sections did not shift by one, they **swapped meanings**, so any split delivery leaves a window in which the word "Network" means the old section on one screen and the new one on another — which is why the rename is one commit across all four navs and this spec table. The reach value went for the same reason one level down: a nav section and a reach level may not be the same word, or a reader has to know which of the two a filter is talking about. Note the hazard the rename pass inherits: in the dashboard code the string `network` **already** names two different things — the partnerships *section key* (with its `*nav-network` ids) and the Matchmaking/Stars/Fans *group key* — so the rename goes by map position and id, never by string replacement. |
+| D40 | **A3's chain as the complete sourcing rule** — `WINERY → DISTRIBUTOR → RESTAURANT/RETAIL` and nothing else — together with **A14.1's narrow sentence** *"a Distributor buys from a Winery"*, and A3's own leftover reading of own label as *"a separate flag/relation layered on top of the winery→distributor wine link"* | **A3** *Where a distributor sources* — a distributor buys from a winery **or from another distributor**; A may sell ordinary wines he lawfully carries to B on an active A↔B partnership within his own distribution agreement; sub-distribution is not an own-label privilege; B gets his own listing on the same `productId` with his own `tradePrice` and article number; producer stays the winery and B's seller is A; the A→B order creates no relation; A17 grants are checked for **own-label products only**; the ordinary distribution agreement is **named, not modelled**; Restaurant and Retail still buy exclusively from a distributor. A14.1 widened to match; the own-label sentence now points at A17 (D36, D37) | The rule was never meant to forbid this and three places already assumed it did not: **A8** has named Distributor↔Distributor portfolio supplementation since it was written, **A17.9b** describes the downstream holder in full, and `ORDER_ROLES` names roles rather than pairings — only the chain diagram and one sentence in A14.1 said otherwise. Left as written, the platform would have permitted a distributor to resell an **own label** while forbidding him to resell an **ordinary wine**, which is exactly backwards: the own-label route is the constrained one, and ordinary trade is the case the whole model rests on. Serge named the contradiction from the business side — the Saparavi case (HANDOFF pass 4) and plain sub-distribution both need this route, and neither is an own label. What is deliberately NOT added: a second grant construct for ordinary distribution terms — A17.9a exists for own-label grants, and building its twin for ordinary contracts would be D36 a third time, so point 8 names the agreement and stops there. |
 
 ---
 

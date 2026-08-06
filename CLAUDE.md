@@ -47,7 +47,9 @@ product record. They never create or own product data. `order_items.product_id` 
 reference, never a copy.
 
 **3. The supply chain has no shortcuts.**
-`Producer → Distributor → Restaurant / Retail`.
+`Producer → Distributor → Restaurant / Retail`, and a distributor may also buy from
+another distributor (A3 *Where a distributor sources*) — that lengthens the middle of
+the chain, it does not open a shortcut.
 Restaurants and Retail source **exclusively** via a Distributor partner. Direct
 producer-to-restaurant sourcing does not exist in this model. Their "add product" action
 is a picker over a connected distributor's portfolio — never a creation form.
