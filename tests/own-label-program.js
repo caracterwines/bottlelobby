@@ -602,5 +602,97 @@ console.log('\n── the first order says what the terms say, and the fee lives
     phases.filter(p => p === 'awaiting_first_delivery').length + ' created and awaiting delivery');
 }
 
+/* ── 11. THE DOWNSTREAM HOLDER, ON THE PAGE'S OWN ROWS (A17.9b) ──── */
+console.log('\n── a downstream holder carries the product and not the badge');
+{
+  /* Everything below is asked of the fixtures the build ships. The grants
+     harness proves the RULES with a world it owns; this proves that the
+     demo actually shows the case, which is a different claim and the one
+     an investor conversation depends on. */
+  const rows = J(`listings.filter(function (l) {
+    var pr = ownLabelProjectOf(l.productId);
+    return pr && l.holder !== pr.distributor;
+  }).map(function (l) {
+    var pr = ownLabelProjectOf(l.productId);
+    return { holder:l.holder, productId:l.productId, price:l.tradePrice, art:l.holderArticleNo,
+             primary:pr.distributor, project:pr.id,
+             derived: ownLabelListingDerived(l),
+             inMyLabels: ownLabelListingsOf(l.holder).some(function (x) { return x.productId === l.productId; }),
+             partnered: arePartners(l.holder, pr.distributor),
+             grant: !!marketGrantCovering(pr.id, { country:'Italy', channel:'sub-distribution',
+                      intermediary:l.holder, at:'2026-08-06', bottles:240 }),
+             primaryPrice: (listingOf(pr.distributor, l.productId) || {}).tradePrice };
+  })`);
+
+  if (!rows.length) {
+    bad('no downstream holder of an own-label product in the fixtures — A17.9b is described and never shown');
+  } else rows.forEach(r => {
+    if (r.derived) bad(r.holder + ' derives own label on ' + r.productId +
+      " — B never becomes the primary own-label holder (OL-15's second condition)");
+    else if (r.inMyLabels) bad(r.holder + "'s listing appears in his own My Labels");
+    else if (!r.partnered) bad(r.holder + ' holds no partnership with ' + r.primary +
+      ' — A17.9b requires one, and without it the listing is not lawful');
+    else if (!r.grant) bad('no Market Grant of ' + r.project + ' covers ' + r.holder +
+      ' — MG-1: no distribution right without a covering grant');
+    else if (r.price == null || r.price === r.primaryPrice)
+      bad(r.holder + ' does not carry a price of his own (' + r.price + ' against ' + r.primaryPrice + ')');
+    else if (!r.art) bad(r.holder + ' carries no article number of his own');
+    else ok(r.holder + ' holds ' + r.productId + ' at ' + r.price + ' against the primary holder\'s ' +
+      r.primaryPrice + ' — ordinary listing, own article number, no badge, not in his My Labels');
+  });
+
+  /* THE A→B ORDER, AND THE FEE THAT DOES NOT FOLLOW IT. OL-14: the fee
+     accrues once, at the top of the chain. An event on this order would
+     make it a turnover tax on the chain rather than a fee on production. */
+  const ab = J(`orders.filter(function (o) {
+    return o.sellerType === 'distributor' && o.buyerType === 'distributor' &&
+           (o.items || []).some(function (i) { return !!ownLabelProjectOf(i.productId); });
+  }).map(function (o) {
+    var i = (o.items || []).filter(function (x) { return !!ownLabelProjectOf(x.productId); })[0];
+    var pr = ownLabelProjectOf(i.productId);
+    return { id:o.id, seller:o.seller, buyer:o.buyer, productId:i.productId, qty:i.qty, unit:i.unit,
+             sellerListing: (listingOf(o.seller, i.productId) || {}).tradePrice,
+             mayAccrue: ownLabelFeeMayAccrue(o, i.productId).allowed,
+             rule: ownLabelFeeMayAccrue(o, i.productId).rule,
+             ledgerRows: ownLabelFeeEvents.filter(function (e) { return e.orderId === o.id; }).length,
+             right: ownLabelOrderRight(o.buyer, o.seller, i.productId,
+                      { country:'Italy', channel:'sub-distribution', intermediary:o.buyer,
+                        at:o.placed, bottles:i.qty }) };
+  })`);
+
+  if (!ab.length) bad('no distributor→distributor order for an own-label product — the route A17.9b ' +
+    'describes has fixtures for the listing and none for the trade');
+  else ab.forEach(o => {
+    if (o.mayAccrue) bad(o.id + ': a fee may accrue on an A→B order (OL-14 says only the producing winery\'s sale)');
+    else if (o.ledgerRows) bad(o.id + ': the ledger carries ' + o.ledgerRows + ' event(s) for an A→B order');
+    else if (!o.right || o.right.allowed !== true)
+      bad(o.id + ': the order right refuses a supply the grant covers (' + (o.right && o.right.reason) + ')');
+    else if (o.unit !== o.sellerListing)
+      bad(o.id + ': the line is priced at ' + o.unit + ' where ' + o.seller + "'s own listing quotes " +
+          o.sellerListing + ' — the price on an A→B line is the seller\'s quoted one');
+    else ok(o.id + ': ' + o.seller + ' → ' + o.buyer + ', ' + o.qty + ' × ' + o.unit +
+      ' — covered by a grant, refused a fee under ' + o.rule + ', and priced off the seller\'s own listing');
+  });
+
+  /* AND THE ORDINARY D2D CASE IS STILL BESIDE IT, UNTOUCHED. This is the
+     sentence D40 exists for, and the two orders make it checkable rather
+     than arguable: one route, two products, and only the own label is
+     ever asked about a grant. */
+  const plain = J(`orders.filter(function (o) {
+    return o.sellerType === 'distributor' && o.buyerType === 'distributor' &&
+           !(o.items || []).some(function (i) { return !!ownLabelProjectOf(i.productId); });
+  }).map(function (o) {
+    var i = (o.items || [])[0];
+    return { id:o.id, productId:i.productId, qty:i.qty, unit:i.unit,
+             right: ownLabelOrderRight(o.buyer, o.seller, i.productId, {}) };
+  })`);
+  if (!plain.length) bad('no ordinary distributor→distributor order left — the comparison D40 rests on is gone');
+  else plain.forEach(o => {
+    if (o.right !== null) bad(o.id + ': A17 has an opinion about an ordinary wine: ' + JSON.stringify(o.right) +
+      ' — a false there would read as a refusal of ordinary trade (A3 point 7, D40)');
+    else ok(o.id + ' carries ' + o.productId + ' and A17 says nothing about it, with grants live beside it');
+  });
+}
+
 console.log(fail ? '\n' + fail + ' check(s) failed' : '\nown-label programme: all checks passed');
 process.exit(fail ? 1 : 0);

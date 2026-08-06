@@ -911,14 +911,33 @@ console.log('\n── a snapshot from before an added row does not hide the row'
     { from: "  { id:'ORD-2043', placed:'2026-06-16', buyer:'Enoteca Milano Import Srl', buyerType:'distributor',",
       to:   "  { id:'ORD-9999', placed:'2026-06-16', buyer:'REMOVED', buyerType:'distributor'," }
   ];
-  const OLD_VERSION = { from: '  var VERSION   = 4;', to: '  var VERSION   = 3;' };
+  /* THE VERSION ANCHOR IS READ, NOT TYPED. It named 4 literally, and
+     the next bump would have made this patch stop applying — which
+     openTab() reports as "the patch never applied", correctly, but only
+     after somebody has spent a while wondering why. It now takes
+     whatever the store ships and steps one back. */
+  const CURRENT_VERSION = (() => {
+    const m = fs.readFileSync(path.join(__dirname, '..', 'assets', 'bottle-lobby-store.js'), 'utf8')
+      .match(/var VERSION\s*=\s*(\d+);/);
+    if (!m) { bad('the store no longer declares a VERSION — this whole section cannot run'); return null; }
+    return Number(m[1]);
+  })();
+  const OLD_VERSION = { from: '  var VERSION   = ' + CURRENT_VERSION + ';',
+                        to:   '  var VERSION   = ' + (CURRENT_VERSION - 1) + ';' };
 
   const area = makeStorageArea();
   const seed = openTab(area, { persist: true, patch: ROWS_GONE.concat([OLD_VERSION]) });
+  /* THE THIRD COUNT NAMES ITS ROW NOW, and that is a correction the
+     own-label pass forced. It used to count every listing Enoteca holds,
+     which was one — the Pouilly-Fumé the D2D pass added. Enoteca holds a
+     second one since the own-label fixtures, on PRD-1028, and it has
+     nothing to do with the build this seed is reconstructing. Counting
+     the holder rather than the ROW made the check depend on Enoteca never
+     taking on another wine, which is not a property anybody promised. */
   const gone = seed.w.eval(`(function () {
     return [ orders.filter(function (o) { return o.id === 'ORD-2043'; }).length,
              partnerships.filter(function (p) { return p.partner === 'Enoteca Milano Import Srl' && p.distributor === 'Hawesko GmbH'; }).length,
-             listings.filter(function (l) { return l.holder === 'Enoteca Milano Import Srl'; }).length ].join(',');
+             listings.filter(function (l) { return l.holder === 'Enoteca Milano Import Srl' && l.productId === 'PRD-1015'; }).length ].join(',');
   })()`);
 
   if (gone !== '0,0,0') {
@@ -931,7 +950,7 @@ console.log('\n── a snapshot from before an added row does not hide the row'
 
     if (!snap) {
       bad('the previous build wrote no snapshot — this check proves nothing');
-    } else if (snap.v !== 3) {
+    } else if (snap.v !== CURRENT_VERSION - 1) {
       bad('the seed tab wrote version ' + snap.v + ' — the VERSION patch did not take, so the discard below would be for the wrong reason');
     } else {
       /* THE POINT OF THE SECTION. If these differ, the fingerprint
@@ -949,7 +968,7 @@ console.log('\n── a snapshot from before an added row does not hide the row'
       const back = t.w.eval(`(function () {
         return [ orders.filter(function (o) { return o.id === 'ORD-2043'; }).length,
                  partnerships.filter(function (p) { return p.partner === 'Enoteca Milano Import Srl' && p.distributor === 'Hawesko GmbH'; }).length,
-                 listings.filter(function (l) { return l.holder === 'Enoteca Milano Import Srl'; }).length ].join(',');
+                 listings.filter(function (l) { return l.holder === 'Enoteca Milano Import Srl' && l.productId === 'PRD-1015'; }).length ].join(',');
       })()`);
       if (back !== '1,1,1')
         bad('after restoring the older snapshot the page holds ' + back + ' of the three D2D rows (want 1,1,1) — ' +
@@ -975,7 +994,7 @@ console.log('\n── a snapshot from before an added row does not hide the row'
         const hidden = t2.w.eval(`(function () {
           return [ orders.filter(function (o) { return o.id === 'ORD-2043'; }).length,
                    partnerships.filter(function (p) { return p.partner === 'Enoteca Milano Import Srl' && p.distributor === 'Hawesko GmbH'; }).length,
-                   listings.filter(function (l) { return l.holder === 'Enoteca Milano Import Srl'; }).length ].join(',');
+                   listings.filter(function (l) { return l.holder === 'Enoteca Milano Import Srl' && l.productId === 'PRD-1015'; }).length ].join(',');
         })()`);
         if (hidden === '0,0,0')
           ok('caught: with the bump left out, the identical snapshot IS restored and all three rows disappear — the version number is what stops it, and nothing else could have');

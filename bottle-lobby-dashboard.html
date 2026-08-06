@@ -5072,6 +5072,39 @@ let listings = [
      PRD-1028 further down. */
   { holder:'Enoteca Milano Import Srl', productId:'PRD-1015', exclusive:false, listedAt:LISTED_AT, holderArticleNo:'EMI-0447', monthlyVolume:null, tradePrice:21.90 },
 
+  /* ── AND THE SAME HOUSE ON AN OWN-LABEL PRODUCT (A17.9b, OL-15) ───
+     THIS ROW IS THE POINT OF OL-15'S SECOND CONDITION. Enoteca holds
+     PRD-1028 lawfully: an active partnership with Hawesko since 19 May,
+     a Market Grant that names it as the admitted intermediary
+     (OLG-1003), and this listing of its own. It has its own tradePrice
+     and its own article number, both of which the key already carries
+     per holder.
+
+     WHAT IT IS NOT is the primary own-label listing. On the first OL-15
+     condition alone — "a confirmed first delivery of this product" —
+     this row would badge itself an own label the moment Enoteca took
+     delivery, and Enoteca never becomes the primary holder or the brand
+     owner. The second condition is `holder === project.distributor`, and
+     it is the whole reason the first one is not enough. Measured on
+     screen: this row appears in Enoteca's book as an ordinary listing and
+     in nobody's My Labels.
+
+     ONE PRODUCT, NOT TWO. No second `PRD-` record, no copy of the name,
+     the producer, the vintage or the brand — the product stays an
+     own-label product at PRODUCT level, its `ownLabelProjectId` is
+     unchanged, and so is everything derived from it.
+
+     THE PRICE IS THE THIRD ON THIS LINE. Domaine Lefèvre charges Hawesko
+     5.25 ex-cellar, Hawesko quotes 8.90, and Enoteca quotes 12.40 in
+     Milan. One wine, three holders, three numbers, each on its own row —
+     which is exactly what the flat price map could not do, now one level
+     deeper than the D2D pass reached with the Pouilly-Fumé.
+
+     `listedAt` 6 Jul: after Hawesko's own first delivery on 29 Jun,
+     because there was nothing to take on before it, and before the A→B
+     order on 8 Jul. */
+  { holder:'Enoteca Milano Import Srl', productId:'PRD-1028', exclusive:false, listedAt:'2026-07-06', holderArticleNo:'EMI-OL-12', monthlyVolume:null, tradePrice:12.40 },
+
   /* ── Bistro Laurent — the restaurant's wine list ───────────────── */
   { holder:'Bistro Laurent', productId:'PRD-1020', exclusive:true, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:null, tradePrice:null },
   { holder:'Bistro Laurent', productId:'PRD-1021', exclusive:true, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:null, tradePrice:null },
@@ -6293,7 +6326,37 @@ const marketGrants = [
      fixture decision and says so. */
   { id:'OLG-1002', projectId:'OLP-103',
     countries:['Germany'], channels:['gastronomy', 'retail', 'e-commerce'],
-    validFrom:'2026-07-27', validUntil:'2029-07-26', maxBottles:4000 }
+    validFrom:'2026-07-27', validUntil:'2029-07-26', maxBottles:4000 },
+
+  /* ── OLP-104's SECOND GRANT — sub-distribution into Italy ─────────
+     THE DIMENSION THAT COULD NOT HAVE BEEN A BOOLEAN. This grant admits
+     one channel (`sub-distribution`), one country, and ONE NAMED
+     INTERMEDIARY, and it does so beside a grant that admits two other
+     channels in three other countries. A `resaleAllowed` flag and a
+     single `resaleTerritory` string could not have held either row, let
+     alone both — which is D36, and D37 records the pair as superseded so
+     it is not proposed a third time.
+
+     GRANTS COMBINE, THEY DO NOT OVERRIDE. Nothing here narrows
+     OLG-1001; a supply needs only one grant to admit it, and
+     marketGrantCovering() returns the first that does. Two records, two
+     agreements, one project.
+
+     THE COUNTRY IS ITALY AND THE INTERMEDIARY IS NAMED, so Hawesko may
+     supply Enoteca Milano and no other agency — an unnamed second
+     Italian importer is refused by the same row that admits this one,
+     because a named dimension with nothing to match is a no. `maxBottles`
+     2,000 is a first-year ceiling and is CUMULATIVE: the caller totals
+     what the supply would take the grant to, and the ledger that could
+     total it lives with the orders.
+
+     Dated from the first delivery rather than from gate 2: there was
+     nothing to sub-distribute until Hawesko had bottles. */
+  { id:'OLG-1003', projectId:'OLP-104',
+    countries:['Italy'], channels:['sub-distribution'],
+    intermediaries:['Enoteca Milano Import Srl'],
+    validFrom:'2026-06-29', validUntil:'2028-06-07', maxBottles:2000,
+    conditions:'Sub-distribution to the named intermediary only; the Bottle Lobby platform binding passes through.' }
 ];
 
 function marketGrantsOf(projectId) {
@@ -9233,7 +9296,48 @@ let orders = [
   { id:'ORD-2043', placed:'2026-06-16', buyer:'Enoteca Milano Import Srl', buyerType:'distributor',
     seller:'Hawesko GmbH', sellerType:'distributor', stage:'accepted', source:'manual',
     note:'Portfolio supplementation — Loire whites for the Lombardy trade',
-    items:[ orderItemRaw('PRD-1015',180,17.20,2023) ] }
+    items:[ orderItemRaw('PRD-1015',180,17.20,2023) ] },
+
+  /* ── THE SECOND A→B ORDER, AND THIS ONE IS AN OWN LABEL ──────────
+     ORD-2043 above is the ordinary case and stays exactly as it was; this
+     is the same route with A17 in force, and the pair is the whole
+     demonstration. Side by side they show what the grants do and do not
+     reach: the Pouilly-Fumé needs no project and no grant and is never
+     asked about (A3 point 7, D40), and the Hanseatischer Weisser needs a
+     covering grant and has one (MG-1, A17.9b).
+
+     WHY THE ROUTE IS LAWFUL, in the three things A17.9b requires of B:
+       · an active partnership with A — Hawesko ↔ Enoteca, 19 May 2026
+       · a Market Grant that covers him — OLG-1003 names him as the
+         admitted intermediary for sub-distribution into Italy
+       · a listing of his own — above, at his own price
+
+     B ORDERS FROM A AND NEVER FROM THE WINERY (MG-2). The seller here is
+     Hawesko. An order line for this product whose seller were Domaine
+     Lefèvre and whose buyer were anybody but Hawesko does not exist, and
+     `ownLabelOrderRight()` refuses to produce one.
+
+     NO FEE ACCRUES HERE, and it is the clearest case in the demo. The
+     fee accrued once, at the top, on Domaine Lefèvre's accepted line to
+     Hawesko — €300 on OLF-1001. Charging it again on this order would
+     make it a turnover tax on the chain rather than a fee on production
+     (OL-14), and `ownLabelFeeMayAccrue()` refuses it because the seller
+     is not the producing winery. The ledger has two rows and both are
+     first orders.
+
+     THE UNIT PRICE IS MEASURED, not chosen: 8.90 is what Hawesko's own
+     listing quotes, exactly as ORD-2043 pays his 17.20. 240 bottles sits
+     under OLG-1003's 2,000 ceiling, which is what makes the grant answer
+     yes rather than merely exist.
+
+     Dated 8 Jul 2026 — after Hawesko's first delivery (29 Jun), after
+     Enoteca's listing (6 Jul), and before Enoteca tells Bistro Laurent on
+     19 Jul that it carries a French portfolio. `accepted`, so the order
+     is live on both sides. */
+  { id:'ORD-2046', placed:'2026-07-08', buyer:'Enoteca Milano Import Srl', buyerType:'distributor',
+    seller:'Hawesko GmbH', sellerType:'distributor', stage:'accepted', source:'manual',
+    note:'Sub-distribution — Hanseatischer Weisser for the Lombardy gastronomy trade',
+    items:[ orderItemRaw('PRD-1028',240,8.90,2023) ] }
 ];
 /* A line names a PRODUCT and adds this order's terms. `wine` and
    `winery` used to sit here as strings — the copy invariant 2 forbids
