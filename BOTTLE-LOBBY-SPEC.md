@@ -143,7 +143,7 @@ Consequences for the build:
 
 **Distributor portfolio:** Only wines actually taken on via purchase/partnership appear — never a winery's whole catalog automatically. The act of purchasing/partnering creates the relation.
 
-**Own-Label:** Not a flag on the winery→distributor wine link. An own label is **its own product**, created by the winery out of a project, and the distributor's own-label status is **derived on his listing** from two conditions — first commercial delivery confirmed, and holder = the project's primary distributor. The model is A17 (A17.0a, A17.0b, A17.9, A17.12); the earlier flag reading is Appendix D **D36** and **D37**.
+**Own-Label:** Not a flag on the winery→distributor wine link. An own label is **its own product**, created by the winery out of a project, and the distributor's own-label status is **derived on his listing** from two conditions — first commercial delivery confirmed, and holder = the project's primary distributor. The model is A17 (A17.0a, A17.0b, A17.9, A17.12); the earlier flag reading is Appendix D **D36**, **D37** and **D41**. A producer-owned brand sold exclusively by one distributor is **not** an own label — it is an ordinary product plus a distribution exclusivity (A17.0b, D41).
 
 ### Where a distributor sources — the rule in full
 
@@ -3147,10 +3147,33 @@ six.
 
 **Re-measured, 5 August 2026, after the catalogue pass.** The producer catalogue
 holds **21 products across 6 producers**; the distributor's book holds **14
-wines, 6 of them own label and 8 ordinary**; across every book the platform knows
-**27 distinct products, 6 of which are finished own labels** — plus **3** ordinary
-wines merely marked open to own-label requests, which is a capability and not a
-product (A17.0a).
+wines**; across every book the platform knows **27 distinct products** — plus
+ordinary wines merely marked open to own-label requests, which is a capability and
+not a product (A17.0a).
+
+> **The 5 August classification was wrong, and D41 records it.** That measurement
+> called **6 of the 27 finished own labels**, counting the six bridged listings
+> PRD-1020 … PRD-1025. **None of the six was an own label.** Every one of them is
+> the producer's own appellation wine, under the producer's brand, on an article
+> page written in the producer's name — and five of those pages give the
+> own-label ribbon the same reason: *exclusive distribution through Hawesko*.
+> That is the case **A17.0b's last paragraph excludes by name**: a producer-owned
+> brand sold exclusively by one distributor is an ordinary product plus a
+> distribution exclusivity, and it is out of scope here. The sixth, PRD-1022,
+> contradicted the flag on its own page, which reads *Own-Label Available* — the
+> capability, not the product.
+
+**Re-measured, 6 August 2026, after the own-label fixture pass.** The producer
+catalogue holds **21 products across 6 producers**, all ordinary; **2** finished
+own-label products exist, each with its own `PRD-` key, `brandOwner` = Hawesko
+and a gate-2-approved project behind it; **1 of the 2 is active** — its first
+commercial delivery is confirmed, so its primary distributor's listing derives
+`ownLabel` and it is in the book. The other exists and is deliberately **not** in
+the book (A17.9). The distributor's book holds **15 wines, 1 own label and 14
+ordinary**; across every book the platform knows **29 distinct products, 2 of
+which are finished own labels** — plus **5** ordinary wines across **2 producers**
+marked open to own-label requests, and **2** projects in flight carrying no
+product at all.
 
 > **OL-10 is a fixture rule, not a domain rule.** The demo keeps ordinary wine in
 > the clear majority so a reader can see what the platform is. That is a statement
@@ -3158,15 +3181,17 @@ product (A17.0a).
 > entirely in own label, and nothing in the model forbids it. The invariant is
 > checked against the fixtures and is silent about production.
 >
-> **So is the ratio itself: six own labels among 27 products is a FIXTURE
+> **So is the ratio itself: two own labels among 29 products is a FIXTURE
 > DECISION, not a market observation.** It is built that way on purpose, so the
 > whole pipeline is visible at once in an investor conversation — ordinary wines,
 > wines open to requests, a project in flight and finished, active own labels,
-> the four states this section asks for, all on screen together. Nobody should
-> read one in four and a half as a claim about how much of the trade is own
-> label. **That is precisely why OL-10 is a fixture invariant and not a domain
-> rule** — a domain rule would be asserting something about the world that this
-> catalogue is in no position to assert.
+> the four states this section asks for, all on screen together. **What the
+> pipeline demonstrates does not depend on the count**: one project per stage is
+> one stage visible, and the 5 August figure of six was six copies of the last
+> stage that had never reached it. Nobody should read either ratio as a claim
+> about how much of the trade is own label. **That is precisely why OL-10 is a
+> fixture invariant and not a domain rule** — a domain rule would be asserting
+> something about the world that this catalogue is in no position to assert.
 
 The fixtures must show four states a reader can tell apart at a glance: ordinary
 wines · ordinary wines open to own-label requests · projects in flight · finished,
@@ -3628,10 +3653,18 @@ primary distributor may do downstream with what he has bought.
 
 > **Why this is spelled out.** The paragraph above was read once as a permanent
 > three-party visibility, which made the demo fixtures look like a breach: six
-> finished own labels sit on public article pages and in the public Wine Guide,
-> and they belong there. It is the same collapse A17.0a exists to prevent —
-> *created is not carried* — one level further on. **Display right and action
-> right are two different questions, and only the second one is forever.**
+> wines then believed to be finished own labels sat on public article pages and in
+> the public Wine Guide, and they belonged there. It is the same collapse A17.0a
+> exists to prevent — *created is not carried* — one level further on. **Display
+> right and action right are two different questions, and only the second one is
+> forever.**
+>
+> **Those six turned out not to be own labels at all (D41), and that does not
+> weaken this reading — it is the first case that tests it.** The active own label
+> PRD-1028 has a public article page and a Wine Guide row *because* its first
+> delivery is confirmed; PRD-1029 has neither, because its first order is only
+> accepted. Two products, one project shape, and the boundary between them is a
+> delivery rather than a setting.
 
 ### A17.9a Market Grants — what the primary distributor may do downstream
 
@@ -3914,11 +3947,26 @@ varied or ended with a Bottle Lobby approval.
 
 ### A17.14 Fixtures and migration
 
-The existing `ownLabel:true` on **PRD-1020**, **PRD-1021**, **PRD-1022** becomes
-derived. **It does not survive as a parallel truth**: it is removed in the same
-pass that gives those wines real projects, not left beside its successor. The
-hand-written "My Labels" panel — `dlabels-list`, six typed rows against three
-flagged wines, no script writing into it — is rendered from data in the same pass.
+The existing `ownLabel:true` on **PRD-1020**, **PRD-1021**, **PRD-1022** does not
+become derived — **it becomes nothing, because there was nothing to derive.**
+Those wines, and the three the `legacyOwnLabel` bridge later backfilled beside
+them (PRD-1023, PRD-1024, PRD-1025), are **producer-branded wines with a
+distribution exclusivity**, which A17.0b's last paragraph puts outside this
+section. The flag is removed in the pass that gives Hawesko its **first real
+own-label projects**, and those projects name **new products** — not these six.
+D41 carries the measurement and the reasoning.
+
+What the six become, per wine: five stay ordinary wines and keep every ability
+A17.0 lists; **PRD-1020** additionally serves as the `sourceWineId` of a relabel
+project, which is exactly A17.0b's own example; **PRD-1022** and **PRD-1024**
+carry `ownLabelAvailability:'on_request'`, the capability their own article pages
+have been claiming all along. **Nothing about them is deleted** — a wine that was
+never an own label loses a badge, not a record.
+
+The hand-written "My Labels" panel — `dlabels-list`, six typed rows against three
+flagged wines, no script writing into it — is rendered from data in the same pass,
+and it renders **projects**, not listings: a project before its first delivery has
+no listing to render (A17.9) and is the one thing the panel most needs to show.
 
 The demo shows the whole arc: a distributor application in flight · a winery
 contract under review · an admitted distributor · an admitted winery with no
@@ -3929,9 +3977,24 @@ active own label.
 **Every project needs a programme membership dated before it.** A project whose
 companies were admitted afterwards is a contradiction the fixtures must not carry.
 
-Own-label availability is **spread across several producers** — today all three
-carrying it are Cantina Rossi, which would make every early-stage project come
-from one house. Ordinary wines stay clearly in the majority (A17.0).
+Own-label availability is **spread across several producers** — the three rows
+originally carrying it were all Cantina Rossi, which would make every early-stage
+project come from one house. It now sits on **5 wines across 2 producers**, and
+the four projects name **four different producers** (Henri Dubois Domaine, Cantina
+Rossi, Bodegas Ruiz, Domaine Lefèvre), so no house owns the feature. Ordinary
+wines stay clearly in the majority (A17.0).
+
+**The source of the availability values, because a capability is a claim too.**
+Three come from the producer's own catalogue, where `note:'Own-Label Available'`
+already stood (PRD-1002, PRD-1003, PRD-1005 — the note is replaced by the field,
+not supplemented). One comes from its own article page, which reads *Own-Label
+Available* where every surface around it read *Own-Label* (PRD-1022). The fifth is
+**Serge's decision, and it is the nearest true reading of a screen** rather than a
+measurement: PRD-1024 carried the bridge's only `'pending'` value, and a pending
+project was never a claim that a finished own label existed — *open to requests* is
+what that row has been trying to say for months. The winery dashboard's five typed
+badges are **not** a source; they are derived from this field in the same pass, and
+two of them (PRD-1001, PRD-1004) disappear because no producer record ever said so.
 
 **No contradictory orders, no invented history.** The build measures before
 placing anything; nothing here is a licence to create an order.
@@ -3946,15 +4009,18 @@ distributor-to-distributor lines (A17.9a). `promoDueFor()` needs nothing: a
 `buyerType` of `distributor` reaches no progress table and is already silently
 correct.
 
-**Known demo contradictions, recorded rather than quietly fixed.** They belong to
-the later UI pass, and they are listed so that nobody measures them a third time:
-My Labels and My Wine Portfolio show different counts · the Riesling's own-label
-status is contradictory across surfaces · "Start a New Own-Label" starts no real
-project · the distributor appears able to set an own-label checkbox · programme
-admission is absent from the interface entirely · the Wine Guide mixes
-availability, product and primary listing into one column. **There is no freely
-editable own-label checkbox in this model** (A17.12) — the one on screen is a
-mockup artefact and is removed with the panel it sits on.
+**Known demo contradictions, recorded rather than quietly fixed.** They were
+listed so that nobody measures them a third time, and the fixture pass closed most
+of them. Closed: My Labels and My Wine Portfolio showing different counts · the
+Riesling's contradictory own-label status · the distributor appearing able to set
+an own-label checkbox · the Wine Guide, the six article pages and the winery
+dashboard each naming a different one of A17.0a's four levels *Own-Label*. Still
+open, and deliberately: **"Start a New Own-Label" starts no real project** and
+**programme admission is absent from the interface entirely** — the records exist
+and are read, but no screen writes them, because the Bottle Lobby operations role
+does not exist yet (A17.13). **There is no freely editable own-label checkbox in
+this model** (A17.12) — the one on screen is a mockup artefact, and it is disabled
+until the panel it sits on is rebuilt.
 
 ### A17.15 Invariants
 
@@ -5657,6 +5723,7 @@ Without it the badge cannot be honest.
 | D38 | A16.2's `planning` entry trigger: **venue + at least one exhibitor + at least one product confirmed** before a show is publicly listed | **A16.2 / A16.14c** — `planning` begins with the host's basics (title, date, city, focus). Venue, exhibitors, products, fixed costs, the per-bearer split and every affected consent become **publish preconditions**, checked before `pending_approval` | Recruiting happens *inside* `planning` (A16.4, A16.14c), so a show that may only enter `planning` with a confirmed exhibitor can never recruit its first one — the stage that exists to find participants was gated on already having them. The fixture WS-2604 sitting at zero wines is that contradiction observed, not an accident. Nothing is given away by moving the checks: A16.6's anonymisation makes an early listing safe, and the platform's guarantee has never attached at `planning` — it attaches at `published` (A16.1), which is exactly where the old trigger's checks now sit. |
 | D39 | The sidebar sections **My Partners** and **Network** (B8, all four roles); and, from the withdrawn A16.14 draft, `'network'` as a **reach value** | **B8 / A16.14b** — **Network** = the business relations (former My Partners: My Partnerships / My Distributors · My Requests). **Community** = the follow side (former Network: Matchmaking · My Opportunities · My Stars · My Fans). The reach taxonomy names those two levels `partners` and `community`; the generic value `network` does not exist | Two sections did not shift by one, they **swapped meanings**, so any split delivery leaves a window in which the word "Network" means the old section on one screen and the new one on another — which is why the rename is one commit across all four navs and this spec table. The reach value went for the same reason one level down: a nav section and a reach level may not be the same word, or a reader has to know which of the two a filter is talking about. Note the hazard the rename pass inherits: in the dashboard code the string `network` **already** names two different things — the partnerships *section key* (with its `*nav-network` ids) and the Matchmaking/Stars/Fans *group key* — so the rename goes by map position and id, never by string replacement. |
 | D40 | **A3's chain as the complete sourcing rule** — `WINERY → DISTRIBUTOR → RESTAURANT/RETAIL` and nothing else — together with **A14.1's narrow sentence** *"a Distributor buys from a Winery"*, and A3's own leftover reading of own label as *"a separate flag/relation layered on top of the winery→distributor wine link"* | **A3** *Where a distributor sources* — a distributor buys from a winery **or from another distributor**; A may sell ordinary wines he lawfully carries to B on an active A↔B partnership within his own distribution agreement; sub-distribution is not an own-label privilege; B gets his own listing on the same `productId` with his own `tradePrice` and article number; producer stays the winery and B's seller is A; the A→B order creates no relation; A17 grants are checked for **own-label products only**; the ordinary distribution agreement is **named, not modelled**; Restaurant and Retail still buy exclusively from a distributor. A14.1 widened to match; the own-label sentence now points at A17 (D36, D37) | The rule was never meant to forbid this and three places already assumed it did not: **A8** has named Distributor↔Distributor portfolio supplementation since it was written, **A17.9b** describes the downstream holder in full, and `ORDER_ROLES` names roles rather than pairings — only the chain diagram and one sentence in A14.1 said otherwise. Left as written, the platform would have permitted a distributor to resell an **own label** while forbidding him to resell an **ordinary wine**, which is exactly backwards: the own-label route is the constrained one, and ordinary trade is the case the whole model rests on. Serge named the contradiction from the business side — the Saparavi case (HANDOFF pass 4) and plain sub-distribution both need this route, and neither is an own label. What is deliberately NOT added: a second grant construct for ordinary distribution terms — A17.9a exists for own-label grants, and building its twin for ordinary contracts would be D36 a third time, so point 8 names the agreement and stops there. |
+| D41 | **The six bridged listings read as finished own labels** — PRD-1020 Sauvignon Blanc — Sancerre · PRD-1021 Chardonnay — Chablis Premier Cru · PRD-1022 Primitivo — Alcamo DOC · PRD-1023 Tempranillo — Rioja Crianza · PRD-1024 Riesling Spätlese — Mosel · PRD-1025 Merlot — Bordeaux Supérieur. Carried at **three spec locations**: the A17.0 re-measurement of 5 Aug 2026 (*"27 distinct products, 6 of which are finished own labels"*, and *"14 wines, 6 of them own label and 8 ordinary"*) · the A17.14 migration sentence (*"the existing `ownLabel:true` on PRD-1020, PRD-1021, PRD-1022 becomes derived … the pass that gives those wines real projects"*) · and, in the prototype, `legacyOwnLabel:'active'`/`'pending'` on six listings, `status:'Own-Label'` on ten Wine Guide rows, an *Own Label* ribbon on six article pages, a six-row typed *Own-Label Portfolio* widget, two typed counters reading **5** and a *Real Example* on `bottle-lobby-own-label.html` | **A17.0b last paragraph** — none of the six is an own label. Each is the producer's own appellation wine, under the producer's brand, on an article page written in the producer's name; five of those pages give the ribbon the reason *exclusive distribution through Hawesko*, which is **a producer-owned brand plus a distribution exclusivity and explicitly out of scope**. The six become: five ordinary wines keeping every A17.0 ability; **PRD-1020** additionally the `sourceWineId` of a relabel project (A17.0b's own example); **PRD-1022** and **PRD-1024** carrying `ownLabelAvailability:'on_request'`. Hawesko's real own labels are **two new `PRD-` records** with `brandOwner:'Hawesko GmbH'`, each out of a gate-2-approved project, one active and one created-but-undelivered. A17.0's counts and A17.14's migration sentence are corrected accordingly | **The definition beats the fixture observation, and the fixtures said so themselves.** A17.0b was written on 4 Aug and its closing paragraph excludes this exact arrangement by name; the 5 Aug re-measurement counted the flags it found instead of testing them against it, and A17.14 then wrote the count into a migration plan. **The article pages are the evidence, and they were always public**: `bottle-lobby-wine-sauvignon-blanc-sancerre.html` describes the wine as *"Henri Dubois Domaine farms its Sauvignon Blanc …"* and justifies the ribbon with *"Exclusive to Hawesko in northern Germany and Scandinavia"* — brand and exclusivity in one sentence, and only the second one is true. **PRD-1022 contradicted the flag on its own page**, which reads *Own-Label Available* — a capability where three other surfaces claimed a product, which is D36 surviving inside its own replacement. **The strongest counter-argument refuted itself**: the six are absent from `partnerWinesPool`, and A17.9 does forbid an own-label product from appearing in another distributor's picker — but **PRD-1026 sat in exactly the same gap with no own-label claim anywhere**, so the gap is seven mockup rows that lived only in the distributor's book, not six own labels; `assets/bottle-lobby-data.js` recorded the doubt in writing (*"the open question is not whether to loosen A17.9 but whether all six are own labels at all"*). **What the misreading would have cost, measured**: those six wines are named by 7 of 11 orders, 4 of 5 promo materials, 3 of 3 exclusive deals and both buyers' wine lists. As own labels every one of those movements would need a covering Market Grant under MG-1 — the model would have started refusing ordinary trade in order to protect a brand nobody owns, which is D40's error one level down. As ordinary wines, not one of those fixtures changes. |
 
 ---
 
