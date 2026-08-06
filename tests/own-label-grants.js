@@ -72,10 +72,18 @@ function pageProjects(win) {
   return JSON.parse(win.eval('JSON.stringify(ownLabelProjects)'));
 }
 
-/* Three grants, combining freely, and between them every dimension
-   A17.9a names is exercised at least once — §1 asserts that rather than
-   trusting it. They are this file's own rows and carry an OLG-9 prefix
-   so they can never be confused with an agreement the page holds. */
+/* THE DIMENSION-COVERAGE GRANTS SIT ON A PROJECT ID OF THEIR OWN, and
+   that is what keeps §1 a rules test. Between them these three exercise
+   every dimension A17.9a names, which no real agreement would — and the
+   moment they shared a project with the page's own grants, "which grant
+   covers this supply" would have two candidates and §1 would be
+   measuring the fixtures instead of the rule. `marketGrantsOf()` filters
+   by id and needs no project row to exist, so the isolation costs
+   nothing. */
+const DIM_PROJECT = 'OLP-9001';
+
+/* And this file's own rows carry an OLG-9 prefix throughout, so they can
+   never be read as an agreement the page holds. */
 function grantsFor(projectId) {
   return [
     { id:'OLG-9001', projectId:projectId, countries:['Germany'], channels:['gastronomy','retail'],
@@ -135,7 +143,16 @@ function seed(win) {
   ACTIVE  = prs.find(p => win.eval('firstCommercialDeliveryOf(' + JSON.stringify(p.productId) + ') !== null')) || prs[0];
   PENDING = prs.find(p => p.id !== ACTIVE.id);
 
-  win.eval('marketGrants.push.apply(marketGrants, ' + JSON.stringify(grantsFor(ACTIVE.id)) + ')');
+  win.eval('marketGrants.push.apply(marketGrants, ' + JSON.stringify(grantsFor(DIM_PROJECT)) + ')');
+  /* §5 needs a grant that ADMITS B downstream so the refusal it measures
+     is MG-2 at the source and not MG-1 for want of coverage. Seeded only
+     where the page has none — once Enoteca's real sub-distribution grant
+     lands this becomes a no-op, exactly like the delivery above. */
+  const dsCtx = { country:'Italy', city:'Milano', channel:'sub-distribution', intermediary:B };
+  if (!win.eval('marketGrantCovering(' + JSON.stringify(ACTIVE.id) + ', ' + JSON.stringify(dsCtx) + ')'))
+    win.eval('marketGrants.push(' + JSON.stringify({ id:'OLG-9004', projectId:ACTIVE.id,
+      countries:['Italy'], cities:['Milano'], channels:['sub-distribution'],
+      intermediaries:[B] }) + ')');
   const prod = JSON.parse(win.eval('JSON.stringify(wineByRef(' + JSON.stringify(ACTIVE.productId) + '))'));
   if (!win.eval('firstCommercialDeliveryOf(' + JSON.stringify(ACTIVE.productId) + ') !== null')) {
     win.eval('orders.push(' + JSON.stringify({
@@ -225,8 +242,8 @@ console.log('\n── the A ↔ B partnership comes from the page, exactly once'
 /* ── 1. A GRANT IS A COMBINABLE RECORD (A17.9a) ─────────────────── */
 console.log('\n── every dimension is optional, and they combine');
 {
-  const MINE = grantsFor(ACTIVE.id);
-  const grants = ask(w, 'marketGrantsOf(' + S(ACTIVE.id) + ')').filter(g => /^OLG-9/.test(g.id));
+  const MINE = grantsFor(DIM_PROJECT);
+  const grants = ask(w, 'marketGrantsOf(' + S(DIM_PROJECT) + ')');
   if (grants.length !== MINE.length) bad('the grants did not reach the project: ' + grants.length + ' of ' + MINE.length);
   else ok(grants.length + ' grants on OLP-1, read back through marketGrantsOf()');
 
@@ -269,7 +286,7 @@ console.log('\n── every dimension is optional, and they combine');
   ];
   const faults = [];
   CASES.forEach(c => {
-    const got = ask(w, 'marketGrantCovering(' + S(ACTIVE.id) + ', ' + S(c.ctx) + ')');
+    const got = ask(w, 'marketGrantCovering(' + S(DIM_PROJECT) + ', ' + S(c.ctx) + ')');
     const id = got ? got.id : null;
     if (id !== c.grant) faults.push(c.why + ': got ' + (id || 'no grant') + ', expected ' + (c.grant || 'no grant'));
   });
@@ -280,9 +297,9 @@ console.log('\n── every dimension is optional, and they combine');
   /* COMBINABLE means the rows stay separate. If one supply were
      covered by both, the grants would be one permission written twice
      and the whole shape would be a boolean again. */
-  const a = ask(w, 'marketGrantsOf(' + S(ACTIVE.id) + ').filter(g => marketGrantCovers(g, ' +
+  const a = ask(w, 'marketGrantsOf(' + S(DIM_PROJECT) + ').filter(g => marketGrantCovers(g, ' +
     S({ country:'Germany', region:'Nordrhein-Westfalen', channel:'supermarket', keyAccount:'REWE Group', bottles:12000 }) + ')).map(g => g.id)');
-  const b = ask(w, 'marketGrantsOf(' + S(ACTIVE.id) + ').filter(g => marketGrantCovers(g, ' +
+  const b = ask(w, 'marketGrantsOf(' + S(DIM_PROJECT) + ').filter(g => marketGrantCovers(g, ' +
     S({ country:'Germany', channel:'gastronomy', at:'2026-08-06' }) + ')).map(g => g.id)');
   if (a.length !== 1 || b.length !== 1 || a[0] === b[0])
     bad('two different supplies are admitted by ' + S(a) + ' and ' + S(b) +
@@ -409,11 +426,41 @@ console.log('\n── a fee event only where the seller is the producing winery'
     else ok('every fee event in the ledger sits on a sale by the producing winery of its project');
   }
 
-  /* A fee event is never rewritten, and the builder is not a writer:
-     nothing in this pass appends to the ledger. */
-  if (ask(w, 'ownLabelFeeEvents').length !== 0)
-    bad('the page ledger is not empty — something wrote a fee event, and no path in this pass may');
-  else ok('the page ledger stays empty: the builder returns an event, it does not append one');
+  /* THE BUILDER IS NOT A WRITER. The page ledger holds fixture rows now,
+     so "is it empty" stopped being the question — what has to stay true
+     is that calling the builder does not lengthen it. An append-only
+     ledger with an implicit writer is how a correction becomes an edit
+     (OL-12). */
+  {
+    const win = fresh();
+    const before = win.eval('ownLabelFeeEvents.length');
+    if (!before) bad('the page ledger is empty — an own-label first order with no fee event behind it (OL-14)');
+    win.eval('ownLabelFeeEvent({ id:"X", type:"accrued", order: firstCommercialDeliveryOf(' +
+      S(ACTIVE.productId) + '), productId:' + S(ACTIVE.productId) + ', bottles:12, at:"2026-08-01" })');
+    if (win.eval('ownLabelFeeEvents.length') !== before)
+      bad('calling the builder appended to the ledger — it returns an event, it does not write one');
+    else ok(before + ' fee event(s) in the page ledger, and the builder appends to none of them');
+
+    /* AND THE TOTAL IS COUNTED. A stored figure would be wrong the
+       moment an adjustment landed, which is exactly what OL-6 is for. */
+    const t = JSON.parse(win.eval('JSON.stringify(ownLabelFeeTotal(' + S(ACTIVE.id) + '))'));
+    const rows = JSON.parse(win.eval('JSON.stringify(ownLabelFeeEventsOf(' + S(ACTIVE.id) + '))'));
+    const want = +rows.reduce((n, e) => n + e.bottles * e.feePerBottle, 0).toFixed(2);
+    if (!t) bad('no fee total for the active project');
+    else if (t.amount !== want) bad('the fee total reads ' + t.amount + ' where its own rows sum to ' + want);
+    else ok('the fee total is summed from the ledger: ' + t.bottles + ' bottles, ' +
+      t.amount.toFixed(2) + ' ' + t.currency);
+
+    /* A reversal has to move it, or the sign convention is decoration. */
+    win.eval('ownLabelFeeEvents.push(' + JSON.stringify({ id:'OLF-T1', type:'reversed',
+      projectId: null, orderId:null, orderLineId:null, bottles:100, feePerBottle:0.25,
+      feeCurrency:'EUR', feeTermsVersion:'OLF-2026-01', at:'2026-08-01', note:null, invoiceId:null })
+      .replace('"projectId":null', '"projectId":' + S(ACTIVE.id)) + ')');
+    const after = JSON.parse(win.eval('JSON.stringify(ownLabelFeeTotal(' + S(ACTIVE.id) + '))'));
+    if (!after || after.amount !== +(want - 25).toFixed(2))
+      bad('a reversal of 100 bottles did not take 25.00 off the total (got ' + (after && after.amount) + ')');
+    else ok('a reversal subtracts: ' + want.toFixed(2) + ' → ' + after.amount.toFixed(2) + ' EUR');
+  }
 }
 
 /* ── 4. MG-1 — VISIBILITY YIELDS NO ORDER RIGHT ─────────────────── */
@@ -522,11 +569,16 @@ console.log('\n── one reading on screen, and the screen moves with it');
      substance of the migration rather than a rewrite. While the bridge
      was the reader, a project appearing had to move NOTHING — a second
      road to one answer is how two surfaces come to disagree (D33). The
-     bridge is gone; the derivation is the reader; so a project appearing
-     must now move EVERYTHING that shows an own label, and a screen that
-     stays still is a screen still reading something else. */
-  const plain = build();
-  plain.eval('refreshOwnLabelSurfaces(); renderWinePortfolioD();');
+     bridge is gone and the derivation is the reader, so the claim now is
+     that the screen follows the RECORDS: the badge is there because both
+     OL-15 conditions hold, and it goes the moment either of them stops.
+
+     THE PROBE BREAKS THE DERIVATION RATHER THAN ADDING TO IT, because
+     the page already carries the delivered own label — comparing a
+     seeded page against a plain one would compare two identical screens
+     and pass on a no-op. */
+  const live = fresh();
+  live.eval('refreshOwnLabelSurfaces(); renderWinePortfolioD();');
   const read = win => ({
     labels: win.document.getElementById('dlabels-list').innerHTML,
     count:  win.document.getElementById('dlabels-count').textContent,
@@ -534,21 +586,28 @@ console.log('\n── one reading on screen, and the screen moves with it');
     widget: win.document.getElementById('dlabels-widget-body').innerHTML,
     stat:   win.document.getElementById('dstat-ol-value').textContent
   });
-  const before = read(plain);
+  const after = read(live);
 
-  const seeded = fresh();
-  seeded.eval('refreshOwnLabelSurfaces(); renderWinePortfolioD();');
-  const after = read(seeded);
-
-  if (seeded.eval('ownLabelListingDerived(listingOf(' + S(ACTIVE.distributor) + ', ' +
+  if (live.eval('ownLabelListingDerived(listingOf(' + S(ACTIVE.distributor) + ', ' +
       S(ACTIVE.productId) + '))') !== true)
-    bad('the seeded state does not derive own label at all — this section can prove nothing');
-  else if (before.book === after.book)
-    bad('the portfolio badges did not move when a delivered own label appeared — the badge is not ' +
-        'reading the derivation');
+    bad('the active project does not derive own label at all — this section can prove nothing');
   else if (after.book.indexOf('Own-Label') === -1)
     bad('the portfolio drew no Own-Label badge for a row that derives as one');
-  else ok('the portfolio badge follows the derivation onto the screen');
+  else {
+    /* Take the delivery away and the badge has to go with it. */
+    const broken = fresh();
+    broken.eval('firstCommercialDeliveryOf(' + S(ACTIVE.productId) + ').stage = "shipped"');
+    broken.eval('refreshOwnLabelSurfaces(); renderWinePortfolioD();');
+    const gone = read(broken);
+    if (gone.book === after.book)
+      bad('the portfolio badges did not move when the first delivery was withdrawn — the badge is not ' +
+          'reading the derivation');
+    else if (Number(gone.stat) >= Number(after.stat))
+      bad('the Own-Label SKUs counter did not fall when the delivery was withdrawn (' +
+          after.stat + ' → ' + gone.stat + ')');
+    else ok('withdrawing the first delivery takes the badge off the portfolio and the counter from ' +
+      after.stat + ' to ' + gone.stat + ' — both conditions of OL-15 reach the screen');
+  }
 
   if (Number(after.stat) < 1)
     bad('the Own-Label SKUs counter reads ' + JSON.stringify(after.stat) + ' with an active own label on the books');
@@ -557,7 +616,7 @@ console.log('\n── one reading on screen, and the screen moves with it');
   /* AND ALL FOUR SURFACES AGREE, which is the thing five typed copies
      could never do: the widget said six, two counters said five, and
      the records said three. */
-  const activeRows = seeded.eval('ownLabelListingsOf(' + S(ACTIVE.distributor) + ').length');
+  const activeRows = live.eval('ownLabelListingsOf(' + S(ACTIVE.distributor) + ').length');
   if (Number(after.stat) !== activeRows)
     bad('the counter says ' + after.stat + ' where ownLabelListingsOf() finds ' + activeRows);
   else if ((after.widget.match(/tag-green/g) || []).length !== activeRows)
@@ -662,7 +721,7 @@ console.log('\n── the counter-checks');
     { what: 'a named grant dimension starts admitting what it does not name',
       from: "    !Array.isArray(named) || !named.length || (value != null && named.indexOf(value) !== -1);",
       to:   "    !Array.isArray(named) || !named.length || value == null || named.indexOf(value) !== -1;",
-      ask:  win => win.eval('marketGrantCovering(' + S(ACTIVE.id) + ', ' + S({ country:'Germany', at:'2026-08-06' }) + ') === null'),
+      ask:  win => win.eval('marketGrantCovering(' + S(DIM_PROJECT) + ', ' + S({ country:'Germany', at:'2026-08-06' }) + ') === null'),
       says: 'a supply naming no channel slipping through a grant that names three' }
   ];
 

@@ -91,7 +91,14 @@ function chainReader(w) {
      declares — the order lines name a key now, and a check that asked
      wineByRef() would be asking the very function it stands over. */
   const products = {};
-  ['partnerWinesPool', 'currentWinePortfolio', 'rCurrentWineList', 'tCurrentWineSelection']
+  /* `ownLabelProducts` is the fifth book and it is NOT in the producers'
+     order pool, on purpose: A17.9 keeps an own-label product out of every
+     picker but its primary distributor's. A product record all the same,
+     produced by its winery (invariant 2, OL-8) — so a chain check that
+     did not know about it would report the first own-label order line as
+     a line naming nothing. */
+  ['partnerWinesPool', 'ownLabelProducts', 'currentWinePortfolio',
+   'rCurrentWineList', 'tCurrentWineSelection']
     .forEach(n => { try { J(n).forEach(r => { if (r.id && !products[r.id]) products[r.id] = r; }); } catch (e) {} });
 
   return {
@@ -354,37 +361,59 @@ console.log('\n── the distributor→distributor route: ordinary trade, ordin
     else if (!R.partnered(A, B)) bad('the two distributors are not partners, so the green above says nothing');
     else ok(o.id + ': ' + A + ' → ' + B + ' is intact — an active partnership, the wine in the seller\'s book, no "no partnership" anywhere');
 
-    /* (b) NO GRANT REQUIRED. Two halves, because either alone would
-       pass for the wrong reason: with the shipped fixtures there is no
-       project at all, so a null answer proves only that the function
-       ran. The second window gives A17 a live project and three grants
-       on ANOTHER product — the machinery answers there, and still says
-       nothing about this one. */
+    /* (b) NO GRANT REQUIRED, AND THIS IS THE CHECK THE WHOLE FILE
+       EXISTS FOR (A3 point 7, D40). An ordinary wine is never refused
+       because no own-label project covers it, and no codepath may make
+       the two touch.
+
+       IT USED TO REST ON `marketGrants` BEING EMPTY, and that tripwire
+       fired the day the A17 fixtures landed — correctly. The page now
+       holds live projects, live grants, a delivered own-label first
+       order and a fee ledger, so the null answer below is measured
+       against a fully populated A17 rather than against an absent one,
+       which is strictly stronger. The tripwire is replaced by its
+       reason: A17 must be LIVE for this to prove anything. */
     const right = ask('ownLabelOrderRight(' + S(B) + ', ' + S(A) + ', ' + S(REF) + ', ' +
       S({ country:'Italy', city:'Milano', channel:'wholesale', intermediary:B }) + ')');
     const grants = J('marketGrants');
+    const projects = J('ownLabelProjects');
+    const fees = J('ownLabelFeeEvents');
     if (right !== null) bad('ownLabelOrderRight() has an opinion about an ordinary wine: ' + JSON.stringify(right));
-    else if (grants.length) bad('marketGrants is no longer empty — this half has to be re-measured, not assumed');
-    else ok('ownLabelOrderRight() answers null for the ordinary wine, and the chain is green with zero market grants');
+    else if (!projects.length || !grants.length)
+      bad('A17 is not live in the page (' + projects.length + ' project(s), ' + grants.length +
+          ' grant(s)) — a null answer here proves only that the function ran');
+    else ok('ownLabelOrderRight() answers null for the ordinary wine with A17 fully live beside it: ' +
+      projects.length + ' project(s), ' + grants.length + ' grant(s), ' + fees.length + ' fee event(s)');
 
+    /* THE TWO ANSWERS SIDE BY SIDE, in one window, on the page's own
+       records. The own-label product gets a verdict and the ordinary wine
+       gets silence — and the D→D chain stays green while both are true,
+       which is the sentence D40 was written to fix.
+
+       The sub-distribution grant is seeded only where the page has none:
+       until Enoteca's real grant lands, this file supplies the one that
+       makes the own-label answer an ALLOWED rather than a refusal, so the
+       comparison is between "judged" and "not judged" and not between
+       two different refusals. */
     {
       const g = build();
-      g.eval('ownLabelProjects.push(' + S({ id:'OLP-T1', distributor:A, producer:'Cantina Rossi',
-        creationType:'bespoke_new_wine', sourceWineId:null, developmentReferenceWineId:null,
-        productId:'PRD-1022', stage:'gate2_approved', brandOwner:A,
-        requestedAt:'2026-04-06', requestedBy:A }) + ')');
-      g.eval('marketGrants.push(' + S({ id:'OLG-T1', projectId:'OLP-T1', countries:['Italy'],
-        channels:['sub-distribution'], intermediaries:[B] }) + ')');
-      const ctx = S({ country:'Italy', city:'Milano', channel:'sub-distribution', intermediary:B });
-      const live = askIn(g, 'ownLabelOrderRight(' + S(B) + ', ' + S(A) + ', "PRD-1022", ' + ctx + ')');
-      const ordinary = askIn(g, 'ownLabelOrderRight(' + S(B) + ', ' + S(A) + ', ' + S(REF) + ', ' + ctx + ')');
-      const rDD = chainReader(g);
-      const stillGreen = !(o.items || []).some(i => chainFaults(rDD, A, i.productId, B).length);
-      if (!live) bad('A17 answered null for an own-label product too — the null below proves nothing');
-      else if (ordinary !== null) bad('with grants in the page the ordinary wine is judged after all: ' + JSON.stringify(ordinary));
-      else if (!stillGreen) bad('the ordinary D→D order broke as soon as A17 had a project — the two must not touch');
-      else ok('with a live project and a grant beside it, A17 answers for the own label (allowed=' + live.allowed +
-              (live.rule ? ', ' + live.rule : '') + ') and still null for the ordinary wine');
+      const OL = J('ownLabelProjects').filter(p => p.productId && p.distributor === A)[0];
+      if (!OL) bad('no own-label project of ' + A + ' with a product — the comparison below has nothing to judge');
+      else {
+        const ctx = S({ country:'Italy', city:'Milano', channel:'sub-distribution', intermediary:B });
+        if (!askIn(g, 'marketGrantCovering(' + S(OL.id) + ', ' + ctx + ')'))
+          g.eval('marketGrants.push(' + S({ id:'OLG-T1', projectId:OL.id, countries:['Italy'],
+            channels:['sub-distribution'], intermediaries:[B] }) + ')');
+        const live = askIn(g, 'ownLabelOrderRight(' + S(B) + ', ' + S(A) + ', ' + S(OL.productId) + ', ' + ctx + ')');
+        const ordinary = askIn(g, 'ownLabelOrderRight(' + S(B) + ', ' + S(A) + ', ' + S(REF) + ', ' + ctx + ')');
+        const rDD = chainReader(g);
+        const stillGreen = !(o.items || []).some(i => chainFaults(rDD, A, i.productId, B).length);
+        if (!live) bad('A17 answered null for an own-label product too — the null beside it proves nothing');
+        else if (ordinary !== null) bad('with grants in the page the ordinary wine is judged after all: ' + JSON.stringify(ordinary));
+        else if (!stillGreen) bad('the ordinary D→D order broke as soon as A17 had a project — the two must not touch');
+        else ok('one window, two answers: A17 judges the own label (' + OL.productId + ', allowed=' + live.allowed +
+                (live.rule ? ', ' + live.rule : '') + ') and stays silent about the ordinary wine, and the D→D chain is green');
+      }
     }
 
     /* (c) ONE PRODUCT, TWO LISTINGS. The key is (holder, productId),

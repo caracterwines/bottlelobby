@@ -511,5 +511,96 @@ console.log('\n── a project may be opened only when seven conditions read tr
   }
 }
 
+/* ── 10. THE FIRST ORDER IS THE TERMS, AND THE FEE IS NOT HIS ───── */
+console.log('\n── the first order says what the terms say, and the fee lives on one side');
+{
+  /* A17.9 / A17.10: the first order's quantity and price are the ones
+     agreed at gate 2, not figures chosen when the order was written. Both
+     rows of `ownLabelTerms` carry them, both rows must agree, and the
+     order has to match. Four numbers, four records — checked rather than
+     described. */
+  const rows = J(`ownLabelProjects.filter(function (p) { return p.productId; }).map(function (p) {
+    var d = ownLabelTermsOf(p.id, p.distributor);
+    var y = ownLabelTermsOf(p.id, p.producer);
+    var o = orders.filter(function (x) {
+      return x.seller === p.producer && x.buyer === p.distributor &&
+             (x.items || []).some(function (i) { return i.productId === p.productId; });
+    }).sort(function (a, b) { return (a.placed || '').localeCompare(b.placed || ''); })[0] || null;
+    var line = o ? (o.items || []).filter(function (i) { return i.productId === p.productId; })[0] : null;
+    return { id:p.id, product:p.productId, agree: ownLabelTermsAgree(p.id),
+             dQty: d && d.firstOrderQuantity, yQty: y && y.firstOrderQuantity,
+             dPrice: d && d.agreedBottlePrice, yPrice: y && y.agreedBottlePrice,
+             order: o && o.id, qty: line && line.qty, unit: line && line.unit,
+             dHasFee: !!(d && (d.feePerBottle != null || d.feeCurrency != null || d.feeTermsVersion != null)),
+             yHasFee: !!(y && y.feePerBottle != null) };
+  })`);
+
+  if (!rows.length) return bad('no project names a product — this section examined nothing');
+  rows.forEach(r => {
+    if (r.agree !== true) bad(r.id + ': the two terms rows do not agree on the shared terms');
+    else if (!r.order) bad(r.id + ': no first order from ' + r.product + "'s producer to its primary distributor");
+    else if (r.qty !== r.dQty) bad(r.id + ': the first order is ' + r.qty + ' bottles where the terms agreed ' + r.dQty);
+    else if (r.unit !== r.yPrice) bad(r.id + ': the line is priced at ' + r.unit + ' where the terms agreed ' + r.yPrice);
+    else if (r.dPrice !== r.yPrice) bad(r.id + ': the two sides record different agreed prices');
+    else ok(r.id + ': ' + r.order + ' carries ' + r.qty + ' × ' + r.unit.toFixed(2) + ', exactly the agreed terms');
+  });
+
+  /* OL-2 — THE FEE IS NOT ON THE DISTRIBUTOR'S SIDE, and this is the
+     structural half of it: his terms row has no fee key at all. An
+     omission rather than a secret is the only form that survives a
+     browser with developer tools open (A17.13). */
+  const leaks = rows.filter(r => r.dHasFee);
+  const missing = rows.filter(r => !r.yHasFee);
+  if (leaks.length) bad(leaks.length + " project(s) put a fee field on the DISTRIBUTOR's terms row: " +
+    leaks.map(r => r.id).join(' · ') + ' — OL-2');
+  else if (missing.length) bad(missing.length + " project(s) have no fee on the winery's row either — " +
+    'the fee has to live somewhere, and A17.10 says which side');
+  else ok(rows.length + " project(s): the fee is on the winery's row and the distributor's row has no such key");
+
+  /* And no rendered distributor surface may show the number. Measured
+     over the source: every renderer whose name marks it as the
+     distributor's, scanned for the fee. */
+  {
+    const code = SRC.split('\n');
+    const suspects = [];
+    let fn = null;
+    code.forEach((line, i) => {
+      const m = line.match(/^function (render\w*D|renderOwnLabel\w*|renderDistributor\w*)\s*\(/);
+      if (m) fn = m[1];
+      else if (/^function /.test(line)) fn = null;
+      if (fn && /feePerBottle|feeCurrency|ownLabelFeeEvent|ownLabelFeeTotal|OWN_LABEL_FEE_TARIFF/.test(line))
+        suspects.push(fn + ' (line ' + (i + 1) + ')');
+    });
+    if (suspects.length) bad(suspects.length + " distributor renderer(s) reach the fee: " +
+      suspects.join(' · ') + ' — OL-2 says no rendered surface of his shows the number');
+    else ok('no distributor renderer reads a fee per bottle, a fee event or the tariff');
+  }
+
+  /* OL-14 OVER THE LEDGER THE PAGE SHIPS. Every stored event has to
+     satisfy the same rule the builder enforces — a fixture that could
+     not have been built is a fixture the rule does not cover. */
+  const bogus = J(`ownLabelFeeEvents.filter(function (e) {
+    var o = orders.find(function (x) { return x.id === e.orderId; });
+    var pr = ownLabelProjectById(e.projectId);
+    if (!o || !pr) return true;
+    return !ownLabelFeeMayAccrue(o, pr.productId).allowed || !feeEventHasSnapshot(e);
+  }).map(function (e) { return e.id; })`);
+  const ledger = J('ownLabelFeeEvents.length');
+  if (!ledger) bad('the page ledger is empty — an own-label first order with no fee event behind it (OL-14)');
+  else if (bogus.length) bad(bogus.length + ' stored fee event(s) the rule would refuse to build: ' + bogus.join(' · '));
+  else ok(ledger + ' stored fee event(s), each one the rule would have built and each carrying its snapshot');
+
+  /* AND THE ARC REACHES ITS FAR END. This is the assertion the fixture
+     commits were building toward: a project whose first delivery is
+     confirmed, so *created* and *carried* are both on screen at once. */
+  const phases = J('ownLabelProjectsOf("Hawesko GmbH").map(function (p) { return ownLabelProjectPhase(p); })');
+  if (phases.indexOf('active') === -1)
+    bad('no project reads `active` — the far end of A17.6 has no record behind it');
+  else if (phases.indexOf('awaiting_first_delivery') === -1)
+    bad('no project sits between creation and delivery — *created ≠ carried* is described and not shown');
+  else ok('the arc reaches both: ' + phases.filter(p => p === 'active').length + ' active, ' +
+    phases.filter(p => p === 'awaiting_first_delivery').length + ' created and awaiting delivery');
+}
+
 console.log(fail ? '\n' + fail + ' check(s) failed' : '\nown-label programme: all checks passed');
 process.exit(fail ? 1 : 0);

@@ -4900,7 +4900,28 @@ let currentWinePortfolio = [
   { id:'PRD-1015', winery:'Henri Dubois Domaine', name:'Pouilly-Fumé', vintage:2023,
     type:'White', origin:'Pouilly-Fumé AOC, Loire Valley', url:'bottle-lobby-wine-pouilly-fume.html' },
   { id:'PRD-1008', winery:'Cantina Rossi', name:'Baglio Rosso', vintage:2021,
-    type:'Red', origin:'Terre Siciliane IGT, Sicily', url:'bottle-lobby-wine-baglio-rosso.html' }
+    type:'Red', origin:'Terre Siciliane IGT, Sicily', url:'bottle-lobby-wine-baglio-rosso.html' },
+
+  /* ── The book's first own label, and it got in the same way as any
+     other wine: by arriving. ─────────────────────────────────────────
+     A17.9: the product enters the active book on CONFIRMED DELIVERY of
+     the first commercial order — ORD-2044, 1,200 bottles, delivered
+     29 Jun 2026. Not on creation, not on gate 2, not on the order being
+     placed. Before that moment it was visible to Domaine Lefèvre,
+     Hawesko and Bottle Lobby and to nobody else, and the reason is
+     physical rather than legal: an own label does not exist until it is
+     made, so putting it on a restaurant's list earlier would be a
+     promise on nothing.
+
+     PRD-1029 IS NOT HERE, and its absence is the same rule read from
+     the other side: its first order is accepted and not delivered.
+
+     The row carries no `brandOwner`. This is the distributor's BOOK —
+     what he holds and what he charges — and the brand is a fact about
+     the product, which is where it lives (`ownLabelProducts`). One fact,
+     one home; the row references the rest (invariant 1). */
+  { id:'PRD-1028', winery:'Domaine Lefèvre', name:'Hanseatischer Weisser — Mâcon-Villages', vintage:2023,
+    type:'White', origin:'Mâcon-Villages AOC, Burgundy', url:null }
 ];
 
 /* ══════════════════════════════════════════════════════════════════
@@ -4993,6 +5014,20 @@ let listings = [
      so Hawesko holds it. */
   { holder:'Hawesko GmbH', productId:'PRD-1027', exclusive:false, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:null, tradePrice:12.10 },
   { holder:'Hawesko GmbH', productId:'PRD-1009', exclusive:false, listedAt:LISTED_AT, holderArticleNo:null, monthlyVolume:null, tradePrice:10.60 },
+
+  /* ── The primary own-label listing, and the only one (OL-15) ─────
+     `listedAt` IS NOT `LISTED_AT` HERE, and that is the point of the
+     field. Every other fixture row carries 1 Jun 2026 because nothing in
+     this prototype recorded when a house took a wine on. This one is
+     known to the day: the product did not exist until 10 Jun and did not
+     enter the book until its first order was delivered on 29 Jun
+     (A17.9). Dating it 1 Jun would put a listing before its product.
+
+     `exclusive:false` — the buyer's own marking, and no buyer has made
+     it. `monthlyVolume` 1,900 is the figure Hawesko has typed; 3,150 is
+     what he sells it for at 8.90 against 5.25 ex-cellar, one wine and
+     two owners' numbers, exactly as the ordinary rows do it. */
+  { holder:'Hawesko GmbH', productId:'PRD-1028', exclusive:false, listedAt:'2026-06-29', holderArticleNo:'HAW-OL-01', monthlyVolume:1900, tradePrice:8.90 },
 
   /* ── The producers' own lines, at ex-cellar ────────────────────
      MEASURED, not invented: every one of these five prices is the unit
@@ -6222,8 +6257,42 @@ function producingWineryOf(ref)    { const p = wineByRef(ref); return p ? p.wine
    and pretending otherwise would put a made-up answer where a person
    has to look. A grant carrying nothing but conditions therefore
    covers everything the other dimensions leave open — which is what
-   "every dimension is optional" means. */
-const marketGrants = [];
+   "every dimension is optional" means.
+
+   ONE GRANT PER ACTIVE PROJECT, AND EACH ONE MATCHES ITS OWN TERMS.
+   Neither row below invents a territory: OLP-104's terms say Germany ·
+   Denmark · Sweden and OLP-103's say Germany, and the grants say the
+   same. The validity is the term, for the same reason — a permission
+   that outlived the agreement granting it would be a stored copy going
+   stale, which is D33.
+
+   THE EARLY PROJECTS HAVE NO GRANTS, and that is not an omission. A
+   grant is agreed in the project (A17.9a); OLP-101 has not reached final
+   terms and OLP-102 has not passed gate 1, so there is nothing agreed to
+   record. MG-1 then refuses every downstream supply of a product neither
+   of them has yet produced, which is the correct answer twice over. */
+const marketGrants = [
+  /* OLP-104 — the active own label. Two channels, and no key account,
+     intermediary or ceiling: what a grant does not name it does not
+     restrict, so Hawesko may supply any gastronomy or retail customer
+     in the three countries, in any quantity. That is the ordinary
+     shape of a first own-label agreement and the reason every dimension
+     is optional. */
+  { id:'OLG-1001', projectId:'OLP-104',
+    countries:['Germany', 'Denmark', 'Sweden'], channels:['gastronomy', 'retail'],
+    validFrom:'2026-06-08', validUntil:'2028-06-07',
+    conditions:'Bottle Lobby platform binding applies to every volume under this project.' },
+
+  /* OLP-103 — one country, three channels, and a ceiling. `maxBottles`
+     is CUMULATIVE and the ledger that could total it lives with the
+     orders, so marketGrantCovers() takes the figure the caller has
+     already added up rather than one order's quantity. 4,000 is the
+     project's `minimumQuantity` read as a first-year cap; it is a
+     fixture decision and says so. */
+  { id:'OLG-1002', projectId:'OLP-103',
+    countries:['Germany'], channels:['gastronomy', 'retail', 'e-commerce'],
+    validFrom:'2026-07-27', validUntil:'2029-07-26', maxBottles:4000 }
+];
 
 function marketGrantsOf(projectId) {
   if (typeof projectId !== 'string') return [];
@@ -6362,12 +6431,73 @@ function ownLabelListingDerived(listing) {
   return !!firstCommercialDeliveryOf(listing.productId);
 }
 
-/* The append-only ledger (A17.10). Empty for the same reason the
-   projects are: a fee event needs an own-label order line from a
-   producing winery to its primary distributor, and there is none.
-   `tests/own-label-grants.js` builds them and drives the rules. */
+/* ── THE APPEND-ONLY LEDGER (A17.10) ────────────────────────────
+   Two rows, one per own-label first order, and both of them `accrued`.
+
+   THE TRIGGER IS `accepted_order_line`, NOT DELIVERY, and the two rows
+   are what makes that legible. ORD-2044 is delivered and ORD-2045 is
+   only accepted, and both have accrued: what the winery owes follows
+   from having BOUND itself to supply, not from the lorry arriving. The
+   delivery decides something else entirely — whether the wine is in the
+   book (OL-15) — and keeping the two apart is why PRD-1029 has a fee
+   event and no listing.
+
+   THE AMOUNT TRAVELS WITH THE EVENT. `feePerBottle`, `feeCurrency` and
+   `feeTermsVersion` are on each row, stamped from the central tariff at
+   the moment it accrued. That is not a convenience copy: the version
+   alone would only name a document, and a ledger line has to be readable
+   as money from itself years later. A historic fee is never recomputed
+   from today's terms, and a wrong one is corrected by a NEW event and
+   never by editing an old one (OL-12).
+
+   1,200 × €0.25 = €300 and 720 × €0.25 = €180, and neither figure is
+   stored. A total is derived from the ledger (A17.12); a stored one goes
+   stale the moment an adjustment lands.
+
+   `invoiceId` IS NULL ON BOTH. Nothing has been invoiced to either
+   winery yet, and an event referenced by a fee invoice is closed
+   (OL-12) — so null is what keeps them correctable.
+
+   OL-2 HOLDS STRUCTURALLY, NOT BY ACCESS CONTROL. This prototype has no
+   login and every array is readable from the console (A17.13). What
+   protects the fee from the distributor's side is that no structure HIS
+   dashboard reads contains it: his `ownLabelTerms` row has no fee field,
+   and nothing rendered in his role reads this array. That is checkable,
+   and the harness checks it over the source rather than trusting it. */
 const OWN_LABEL_FEE_EVENT_TYPES = ['accrued', 'adjusted', 'reversed', 'waived'];
-const ownLabelFeeEvents = [];
+const ownLabelFeeEvents = [
+  { id:'OLF-1001', type:'accrued', projectId:'OLP-104',
+    orderId:'ORD-2044', orderLineId:'ORD-2044#PRD-1028', bottles:1200,
+    feePerBottle:0.25, feeCurrency:'EUR', feeTermsVersion:'OLF-2026-01',
+    at:'2026-06-15', note:'First order accepted — Domaine Lefèvre → Hawesko GmbH', invoiceId:null },
+
+  { id:'OLF-1002', type:'accrued', projectId:'OLP-103',
+    orderId:'ORD-2045', orderLineId:'ORD-2045#PRD-1029', bottles:720,
+    feePerBottle:0.25, feeCurrency:'EUR', feeTermsVersion:'OLF-2026-01',
+    at:'2026-07-31', note:'First order accepted — Bodegas Ruiz → Hawesko GmbH', invoiceId:null }
+];
+
+/* What this project has accrued, in the currency its events carry.
+   COUNTED, NEVER STORED (invariant 7, OL-6). An adjustment or a reversal
+   is a new row, so the total is only ever the sum of the rows — and a
+   stored figure would be wrong from the moment the second row landed.
+
+   The sign convention is the ledger's: `accrued` and `adjusted` add,
+   `reversed` and `waived` subtract. A mixed-currency project would be a
+   finding rather than a sum, so it answers null instead of adding
+   euros to kronor. */
+function ownLabelFeeTotal(projectId) {
+  const rows = ownLabelFeeEventsOf(projectId);
+  if (!rows.length) return null;
+  const currencies = new Set(rows.map(e => e.feeCurrency));
+  if (currencies.size > 1) return null;
+  const sign = t => (t === 'reversed' || t === 'waived') ? -1 : 1;
+  return {
+    bottles: rows.reduce((s, e) => s + sign(e.type) * (e.bottles || 0), 0),
+    amount: +rows.reduce((s, e) => s + sign(e.type) * (e.bottles || 0) * (e.feePerBottle || 0), 0).toFixed(2),
+    currency: rows[0].feeCurrency
+  };
+}
 
 function ownLabelFeeEventsOf(projectId) {
   if (typeof projectId !== 'string') return [];
@@ -6411,9 +6541,11 @@ function ownLabelFeeMayAccrue(order, ref) {
    of their own. (order, product) identifies one uniquely in every
    fixture order, so it is what the ledger names until lines get a key.
 
-   Builds and returns the event; it does not append. Nothing in this
-   pass writes the ledger, and a builder that quietly pushed would be a
-   write path nobody asked for. */
+   BUILDS AND RETURNS THE EVENT; IT DOES NOT APPEND. The ledger now holds
+   two fixture rows, and this function still writes nothing — a builder
+   that quietly pushed would be a write path nobody asked for, and an
+   append-only ledger with an implicit writer is how a correction becomes
+   an edit. The day a screen accrues a fee, the caller appends. */
 function ownLabelFeeEvent(fields) {
   const f = fields || {};
   const id = (f.productId && typeof f.productId === 'object') ? f.productId.id : f.productId;
@@ -9028,6 +9160,46 @@ let orders = [
   { id:'ORD-2039', placed:'2026-07-23', buyer:'Hawesko GmbH', buyerType:'distributor',
     seller:'Weingut Schmitt', sellerType:'winery', stage:'accepted',
     items:[ orderItemRaw('PRD-1024',240,7.90,2023) ] },
+
+  /* ── THE TWO OWN-LABEL FIRST ORDERS (A17.9, A17.10) ─────────────
+     A17.6 puts these at the end of the pipeline and A17.9 makes one of
+     them the moment everything else waits on: the first order is the
+     DISTRIBUTOR'S own act, never sent automatically, and its confirmed
+     delivery is what puts the product in the book.
+
+     THEY ARE ORDINARY ORDERS AND NEEDED NOTHING NEW. Same shape, same
+     lifecycle, same helpers — the only thing that makes them own-label
+     first orders is that their product carries an `ownLabelProjectId`
+     whose project passed gate 2. `orderNet()`, `promoDueFor()` and
+     `dealFreeGoodsFor()` all answer correctly without knowing that:
+     seller is a winery, so both promo and deal guards exit at once.
+
+     THE UNIT PRICES ARE THE AGREED ONES, read off `ownLabelTerms` and
+     not chosen here — 5.25 and 4.15, both `agreedBottlePrice`. The
+     quantities are the agreed `firstOrderQuantity`, 1200 and 720. Four
+     figures, four records behind them, and the harness compares each
+     order line against its project's terms rather than trusting this
+     paragraph. That is what makes 720 legible: the brief asked for 900,
+     the sample tasting settled on 720, and the addendum (CTR-2005 /
+     CTR-2006) is why the terms say what the order says.
+
+     ONE IS DELIVERED AND ONE IS NOT, deliberately, and it is the whole
+     of *created ≠ carried*. */
+  { id:'ORD-2044', placed:'2026-06-15', buyer:'Hawesko GmbH', buyerType:'distributor',
+    seller:'Domaine Lefèvre', sellerType:'winery', stage:'delivered', source:'manual',
+    note:'First order — own-label project OLP-104',
+    carrier:'DB Schenker', tracking:'DBS-4512-3390-FR', eta:'2026-06-29',
+    items:[ orderItemRaw('PRD-1028',1200,5.25,2023,'L-2023-088') ] },
+
+  /* Accepted, not delivered — so PRD-1029 exists, its fee has accrued
+     on an accepted line (A17.10's trigger), and the wine is in nobody's
+     book and on no public page. The one fixture in the demo where
+     "the product is real and you still cannot buy it" is a state you can
+     read rather than a sentence in a spec. */
+  { id:'ORD-2045', placed:'2026-07-31', buyer:'Hawesko GmbH', buyerType:'distributor',
+    seller:'Bodegas Ruiz', sellerType:'winery', stage:'accepted', source:'manual',
+    note:'First order — own-label project OLP-103',
+    items:[ orderItemRaw('PRD-1029',720,4.15,2022,'L-2022-401') ] },
 
   /* ── Distributor  →  Distributor  (A3, A17.9b) ────────────────
      The third leg of the chain, and it needed no architecture: buyer
