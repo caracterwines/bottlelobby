@@ -8338,8 +8338,29 @@ function promoDueFor(o) {
   return due;
 }
 
+/* WHO A DEAL IS FOR, and it is not the trade behind the trade.
+
+   Exclusive Deals are a CUSTOMER incentive (A9): the distributor's
+   own restaurants and retailers, buying for their list or their shelf.
+   Between two distributors they have no meaning — a resale is priced
+   in the agreement, not rewarded with free goods — and A17.9a named
+   this as the one exclusion the downstream chain actually needs.
+
+   The old guard read `sellerType` alone, so a distributor→distributor
+   line satisfied it and the deals were free to fire. BOTH ENDS ARE
+   ASKED NOW — the seller must be a distributor because it is his deal,
+   and the buyer must not be, because that is who the deal is for.
+
+   Measured, so the rule is not read as more than it is: on ORD-2043 as
+   it stands the answer was already empty, because no deal names the
+   Pouilly-Fumé. That is the fixture's doing and not the guard's, which
+   is why `tests/supply-chain.js` builds the state where a deal DOES
+   name the line and asserts the two answers apart — distributor buyer
+   empty, the same order with a customer buyer not. A guard whose only
+   evidence is a case that would pass without it proves nothing. */
 function dealFreeGoodsFor(o) {
-  if (o.sellerType !== 'distributor' || typeof exclusiveDeals === 'undefined') return [];
+  if (o.sellerType !== 'distributor' || o.buyerType === 'distributor' ||
+      typeof exclusiveDeals === 'undefined') return [];
   const out = [];
   exclusiveDeals.forEach(d => {
     const keys = dealProducts(d);
