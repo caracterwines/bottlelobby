@@ -434,14 +434,22 @@ console.log('\n── My Labels renders what the records say');
         '.filter(function (p) { return !p.productId && projectActive(p.id); })[0] || null)'));
       if (!target) ok('no in-conversation project to move — the stage check waits for one');
       else {
-        w2.eval('ownLabelProjectById(' + JSON.stringify(target.id) + ').stage = "sample_shipped"');
+        /* Move it to a stage it is NOT already in, or the check passes
+           on a no-op — which is how a mutation stops proving anything. */
+        const to = target.stage === 'sample_received' ? 'sample_prepared' : 'sample_received';
+        /* Neither of those two labels carries an ampersand, and that is
+           deliberate: 'Design & brand' comes back out of innerHTML as
+           'Design &amp; brand', and a check comparing the raw string
+           would fail on a panel that is perfectly correct. */
+        const label = w2.eval('OWN_LABEL_STAGE_LABELS[' + JSON.stringify(to) + ']');
+        w2.eval('ownLabelProjectById(' + JSON.stringify(target.id) + ').stage = ' + JSON.stringify(to));
         w2.eval('renderOwnLabelsD()');
         const after = w2.document.getElementById('dlabels-list').innerHTML;
         if (before === after) bad('the panel did not move when a project stage did — it is reading ' +
           'something else, and the stage is decoration');
-        else if (after.indexOf('Sample shipped') === -1)
-          bad('the stage moved and the panel drew something other than the new stage');
-        else ok('the stage under the name follows the project row');
+        else if (after.indexOf(label) === -1)
+          bad('the stage moved to "' + to + '" and the panel drew something other than ' + JSON.stringify(label));
+        else ok('the stage under the name follows the project row (→ ' + label + ')');
       }
     }
   }

@@ -379,5 +379,137 @@ console.log('\n── the counter-checks');
   });
 }
 
+/* ── 9. A17.4 — canStartOwnLabelProject, and its four refusals ───── */
+console.log('\n── a project may be opened only when seven conditions read true');
+{
+  /* THE REFUSALS ARE MEASURED OVER REAL HOUSES AND REAL WINES, which is
+     what makes them worth having. A17.4 lists four things that can be
+     missing and gives each its own sentence; every one of them has a
+     record behind it in this fixture, so none of the four is a branch
+     nobody has ever taken. */
+  const CASES = [
+    { d:'Hawesko GmbH', y:'Henri Dubois Domaine', p:'PRD-1020', missing:null,
+      what:'the relabel A17.0b uses as its own example' },
+    { d:'Hawesko GmbH', y:'Château Belrieu', p:'PRD-1025', missing:'winery_not_admitted',
+      what:'a winery whose programme contract is still under review' },
+    { d:'Enoteca Milano Import Srl', y:'Cantina Rossi', p:'PRD-1002', missing:'distributor_not_admitted',
+      what:'a distributor whose application is in flight' },
+    { d:'Hawesko GmbH', y:'Cantina Rossi', p:'PRD-1001', missing:'product_closed',
+      what:'a wine its producer has not opened to requests' },
+    { d:'Hawesko GmbH', y:'Weingut Schmitt', p:'PRD-1021', missing:'not_this_winerys_wine',
+      what:'a wine that belongs to another producer' }
+  ];
+  CASES.forEach(c => {
+    const r = J('canStartOwnLabelProject(' + S(c.d) + ', ' + S(c.y) + ', ' + S(c.p) + ')');
+    if (c.missing === null && !r.allowed) bad(c.what + ': refused as ' + r.missing);
+    else if (c.missing !== null && r.allowed) bad(c.what + ': allowed, and it must not be');
+    else if (c.missing !== null && r.missing !== c.missing)
+      bad(c.what + ': refused as ' + r.missing + ', expected ' + c.missing);
+    else if (c.missing !== null && (!r.say || !r.say.length))
+      bad(c.what + ': refused without naming what is missing — A17.4 says the refusal names the condition');
+    else ok(c.what + ' → ' + (r.allowed ? 'allowed' : r.missing));
+  });
+
+  /* NO PARTNERSHIP IS THE FOURTH REFUSAL, and no fixture pair produces
+     it: every admitted winery is already a Hawesko partner. It is
+     measured by taking the partnership away rather than by leaving the
+     branch untested. */
+  {
+    const win = build();
+    if (!win.eval("canStartOwnLabelProject('Hawesko GmbH','Henri Dubois Domaine','PRD-1020').allowed"))
+      bad('the partnership probe did not start from an allowed answer');
+    else {
+      win.eval("partnerships = partnerships.filter(function (p) { return p.partner !== 'Henri Dubois Domaine'; })");
+      const r = JSON.parse(win.eval("JSON.stringify(canStartOwnLabelProject('Hawesko GmbH','Henri Dubois Domaine','PRD-1020'))"));
+      if (r.allowed || r.missing !== 'no_partnership')
+        bad('removing the partnership did not produce the no_partnership refusal (got ' +
+            (r.allowed ? 'allowed' : r.missing) + ')');
+      else ok('no partnership → ' + JSON.stringify(r.say));
+    }
+  }
+
+  /* AND IT CREATES NOTHING. A17.4: a refused request leaves nothing
+     behind, because an empty project in a "blocked" state would be a
+     fifth way to describe the same conditions. */
+  {
+    const win = build();
+    const before = win.eval('ownLabelProjects.length + consents.length + contracts.length + reviews.length');
+    win.eval("canStartOwnLabelProject('Hawesko GmbH','Château Belrieu','PRD-1025')");
+    win.eval("canStartOwnLabelProject('Hawesko GmbH','Cantina Rossi','PRD-1001')");
+    if (win.eval('ownLabelProjects.length + consents.length + contracts.length + reviews.length') !== before)
+      bad('a refused request wrote a record — A17.4 says it leaves nothing behind');
+    else ok('two refused requests, and not one row anywhere was created');
+  }
+
+  /* THE PIPELINE IS ON SCREEN, which is what A17.14 asks the fixtures
+     for. The phase is re-derived HERE, from the raw records and without
+     calling the page's function, and the two answers have to agree —
+     double entry rather than a threshold. A count I bump by hand every
+     time the fixtures grow is a check that quietly stops meaning
+     anything; a second reading of the same records cannot. */
+  {
+    const rows = J(`ownLabelProjectsOf("Hawesko GmbH").map(function (p) {
+      return { id:p.id, productId:p.productId, phase: ownLabelProjectPhase(p),
+               gate1: !!reviews.find(function (r) { return r.subjectType === 'project' &&
+                        r.subjectId === p.id && r.gateNumber === 1 && r.reviewStatus === 'approved'; }),
+               gate2: !!reviews.find(function (r) { return r.subjectType === 'project' &&
+                        r.subjectId === p.id && r.gateNumber === 2 && r.reviewStatus === 'approved'; }),
+               delivered: !!(p.productId && orders.find(function (o) {
+                        return o.stage === 'delivered' && o.seller === p.producer &&
+                               o.buyer === p.distributor &&
+                               (o.items || []).some(function (i) { return i.productId === p.productId; }); })),
+               holderIsPrimary: !!(p.productId && listingOf(p.distributor, p.productId)) };
+    })`);
+    const expect = r => r.productId
+      ? (r.delivered && r.holderIsPrimary ? 'active' : 'awaiting_first_delivery')
+      : (r.gate2 ? 'approved_for_first_order' : r.gate1 ? 'in_progress' : 'awaiting_gate_1');
+    const wrong = rows.filter(r => r.phase !== expect(r));
+    if (!rows.length) bad('Hawesko holds no own-label projects — this section examined nothing');
+    else if (wrong.length) bad(wrong.length + ' project(s) report a phase the records do not support: ' +
+      wrong.map(r => r.id + ' says ' + r.phase + ', records say ' + expect(r)).join(' · '));
+    else ok(rows.length + ' project(s), every phase agreeing with a second reading of the records');
+
+    /* AND BOTH ENDS OF THE ARC ARE STANDING. A demo whose projects all
+       sit in one phase describes a pipeline without showing one, which
+       is what six copies of the last stage were doing before D41. */
+    const distinct = [...new Set(rows.map(r => r.phase))];
+    if (!rows.some(r => r.phase === 'awaiting_gate_1'))
+      bad('no project sits before gate 1 — the earliest state has no record behind it');
+    else if (!rows.some(r => r.productId))
+      bad('no project has produced a product — the far end of the arc has no record behind it');
+    else ok(distinct.length + ' distinct phase(s) on screen: ' + distinct.sort().join(' · '));
+
+    /* A project past gate 2 must carry the terminal conversation stage.
+       A17.12 allows `stage` to disagree with the facts and calls that a
+       finding — this is where the finding gets reported. */
+    const late = J(`ownLabelProjects.filter(function (p) { return approvedForFirstOrder(p.id); })
+      .map(function (p) { return { id: p.id, stage: p.stage }; })`);
+    const odd = late.filter(p => p.stage !== 'final_terms');
+    if (!late.length) bad('no project is past gate 2 — the stage relationship examined nothing');
+    else if (odd.length) bad(odd.length + ' project(s) past gate 2 hold a stage the pipeline has left behind: ' +
+      odd.map(p => p.id + ' = ' + p.stage).join(' · ') + ' — after gate 2 the phase is derived and the ' +
+      'stage is history, so it must read the last conversation stage');
+    else ok(late.length + ' project(s) past gate 2, each holding the terminal conversation stage');
+
+    /* And a project short of gate 2 must NOT name a product (A17.9). */
+    const early = J(`ownLabelProjects.filter(function (p) { return !approvedForFirstOrder(p.id); })
+      .map(function (p) { return { id: p.id, productId: p.productId }; })`);
+    const premature = early.filter(p => p.productId);
+    if (premature.length) bad(premature.length + ' project(s) name a product before gate 2: ' +
+      premature.map(p => p.id).join(' · ') + ' — the winery creates it after gate 2 and not before (A17.9)');
+    else ok(early.length + ' project(s) short of gate 2, none of them naming a product');
+
+    /* OL-9 twice over: a bespoke row claims no source, and no surface
+       may show a development reference as the new wine's origin. */
+    const lineage = J(`ownLabelProjects.map(function (p) { return { id:p.id, t:p.creationType,
+      src:p.sourceWineId, ref:p.developmentReferenceWineId }; })`);
+    const badLineage = lineage.filter(p => p.t === 'bespoke_new_wine' && p.src !== null);
+    const noSource   = lineage.filter(p => p.t === 'relabel_existing_wine' && !p.src);
+    if (badLineage.length) bad(badLineage.length + ' bespoke project(s) claim a source wine (OL-9)');
+    else if (noSource.length) bad(noSource.length + ' relabel project(s) name no source wine');
+    else ok(lineage.length + ' project(s): every bespoke row claims no lineage, every relabel names its source');
+  }
+}
+
 console.log(fail ? '\n' + fail + ' check(s) failed' : '\nown-label programme: all checks passed');
 process.exit(fail ? 1 : 0);

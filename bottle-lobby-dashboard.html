@@ -5299,7 +5299,39 @@ const consents = [
     termsType:'project_terms', termsVersion:'OL-PROJ-2026-01',
     programTermsVersion:OWN_LABEL_PROGRAM_TERMS_VERSION,
     textSnapshot:'For this project we agree the particulars set out in the project agreement: the cuvée to be developed, the technical execution that stays ours, the agreed bottle price, the territory, the term, the minimum quantity and the quantity of the first order. Our obligations under the framework agreement we accepted as OL-PROG-2026-01 continue to apply and are not restated here.',
-    byUser:'Bodegas Ruiz', forCompany:'Bodegas Ruiz', at:'2026-06-16', language:'en' }
+    byUser:'Bodegas Ruiz', forCompany:'Bodegas Ruiz', at:'2026-06-16', language:'en' },
+
+  /* ── OLP-101, the relabel in mid-pipeline ─────────────────────────── */
+  { id:'CNS-2005', subjectType:'project', subjectId:'OLP-101',
+    party:'Hawesko GmbH', role:'distributor',
+    termsType:'project_terms', termsVersion:'OL-PROJ-2026-01',
+    programTermsVersion:OWN_LABEL_PROGRAM_TERMS_VERSION,
+    textSnapshot:'For this project we agree the particulars set out in the project agreement: the source wine, the brand and label we own, the territory and channels granted to us, the term, the minimum quantity and the quantity of the first order. Our obligations under the framework agreement we accepted as OL-PROG-2026-01 continue to apply and are not restated here.',
+    byUser:'Hawesko GmbH', forCompany:'Hawesko GmbH', at:'2026-07-16', language:'en' },
+  { id:'CNS-2006', subjectType:'project', subjectId:'OLP-101',
+    party:'Henri Dubois Domaine', role:'winery',
+    termsType:'project_terms', termsVersion:'OL-PROJ-2026-01',
+    programTermsVersion:OWN_LABEL_PROGRAM_TERMS_VERSION,
+    textSnapshot:'For this project we agree the particulars set out in the project agreement: the wine to be relabelled, the technical execution that stays ours, the agreed bottle price, the territory, the term, the minimum quantity and the quantity of the first order. Our obligations under the framework agreement we accepted as OL-PROG-2026-01 continue to apply and are not restated here.',
+    byUser:'Henri Dubois Domaine', forCompany:'Henri Dubois Domaine', at:'2026-07-17', language:'en' },
+
+  /* ── OLP-102, before gate 1 ────────────────────────────────────────
+     BOTH CONSENTS ARE HERE AND ONLY ONE CONTRACT IS BACK, which is OL-4
+     in a single fixture: a checkbox acceptance and a signed contract are
+     two acts, and the second one has not happened for the winery. A
+     model with one status field could not hold this state at all. */
+  { id:'CNS-2007', subjectType:'project', subjectId:'OLP-102',
+    party:'Hawesko GmbH', role:'distributor',
+    termsType:'project_terms', termsVersion:'OL-PROJ-2026-01',
+    programTermsVersion:OWN_LABEL_PROGRAM_TERMS_VERSION,
+    textSnapshot:'For this project we agree the particulars set out in the project agreement: the development brief, the brand and label we own, the territory and channels granted to us, the term, the minimum quantity and the quantity of the first order. Our obligations under the framework agreement we accepted as OL-PROG-2026-01 continue to apply and are not restated here.',
+    byUser:'Hawesko GmbH', forCompany:'Hawesko GmbH', at:'2026-07-22', language:'en' },
+  { id:'CNS-2008', subjectType:'project', subjectId:'OLP-102',
+    party:'Cantina Rossi', role:'winery',
+    termsType:'project_terms', termsVersion:'OL-PROJ-2026-01',
+    programTermsVersion:OWN_LABEL_PROGRAM_TERMS_VERSION,
+    textSnapshot:'For this project we agree the particulars set out in the project agreement: the cuvée to be developed, the technical execution that stays ours, the agreed bottle price, the territory, the term, the minimum quantity and the quantity of the first order. Our obligations under the framework agreement we accepted as OL-PROG-2026-01 continue to apply and are not restated here.',
+    byUser:'Cantina Rossi', forCompany:'Cantina Rossi', at:'2026-07-23', language:'en' }
 ];
 
 function consentById(id) {
@@ -5390,7 +5422,27 @@ const contracts = [
     sentAt:'2026-07-22', receivedAt:'2026-07-24', docNo:'BL-OLA-2026-0001' },
   { id:'CTR-2006', subjectType:'project', subjectId:'OLP-103', party:'Bodegas Ruiz',
     kind:'addendum', status:'approved',
-    sentAt:'2026-07-22', receivedAt:'2026-07-24', docNo:'BL-OLA-2026-0002' }
+    sentAt:'2026-07-22', receivedAt:'2026-07-24', docNo:'BL-OLA-2026-0002' },
+
+  /* ── OLP-101 — both back and approved, so gate 1 was permitted ───── */
+  { id:'CTR-2007', subjectType:'project', subjectId:'OLP-101', party:'Hawesko GmbH',
+    kind:'project_agreement', status:'approved',
+    sentAt:'2026-07-16', receivedAt:'2026-07-22', docNo:'BL-OLJ-2026-0005' },
+  { id:'CTR-2008', subjectType:'project', subjectId:'OLP-101', party:'Henri Dubois Domaine',
+    kind:'project_agreement', status:'approved',
+    sentAt:'2026-07-17', receivedAt:'2026-07-23', docNo:'BL-OLJ-2026-0006' },
+
+  /* ── OLP-102 — ONE back, one still out: gate 1 is not permitted ────
+     The state gate1Permitted() exists to answer, standing in a record.
+     Hawesko's is approved and Cantina Rossi's is `sent` — so the project
+     is requested, consented on both sides, and stuck exactly where a
+     real one gets stuck. Nothing about it is a flag. */
+  { id:'CTR-2009', subjectType:'project', subjectId:'OLP-102', party:'Hawesko GmbH',
+    kind:'project_agreement', status:'approved',
+    sentAt:'2026-07-22', receivedAt:'2026-07-24', docNo:'BL-OLJ-2026-0007' },
+  { id:'CTR-2010', subjectType:'project', subjectId:'OLP-102', party:'Cantina Rossi',
+    kind:'project_agreement', status:'sent',
+    sentAt:'2026-07-23', receivedAt:null, docNo:'BL-OLJ-2026-0008' }
 ];
 
 function contractById(id) {
@@ -5486,7 +5538,21 @@ const reviews = [
   { id:'RVW-2004', subjectType:'project', subjectId:'OLP-103', gateNumber:2,
     reviewStatus:'approved', reviewedBy:'Bottle Lobby', reviewedAt:'2026-07-27',
     reviewNotes:'Sample approved 20 Jul; first-order quantity moved 900 → 720, so the addendum was required and is approved on both sides.',
-    approvalType:'gate_2' }
+    approvalType:'gate_2' },
+
+  /* ── OLP-101 — gate 1 released, gate 2 not asked for ──────────────
+     There is no gate-2 row and there must not be: the sample is in
+     transit, so nothing has been submitted for it. A pending review row
+     would be a record of a decision nobody has taken, which is the
+     `applicationStatus` mistake one level down. */
+  { id:'RVW-2005', subjectType:'project', subjectId:'OLP-101', gateNumber:1,
+    reviewStatus:'approved', reviewedBy:'Bottle Lobby', reviewedAt:'2026-07-27',
+    reviewNotes:'Both project agreements returned and approved; source wine PRD-1020 is on_request and belongs to the named producer.',
+    approvalType:'gate_1' }
+
+  /* ── OLP-102 has NO review row at all ─────────────────────────────
+     Gate 1 is not permitted, so Bottle Lobby has not been asked. Its
+     absence is the record. */
 ];
 
 function reviewById(id) {
@@ -5988,8 +6054,118 @@ const ownLabelProjects = [
     creationType:'bespoke_new_wine', sourceWineId:null,
     developmentReferenceWineId:'PRD-1016',
     productId:'PRD-1029', stage:'final_terms', brandOwner:'Hawesko GmbH',
-    requestedAt:'2026-06-08', requestedBy:'Hawesko GmbH' }
+    requestedAt:'2026-06-08', requestedBy:'Hawesko GmbH' },
+
+  /* ── OLP-101 — a relabel in mid-pipeline, productId NULL ──────────
+     A17.0b'S OWN WORKED EXAMPLE, done for real: "Hawesko's Sancerre
+     under Hawesko's brand is not Henri Dubois' Sancerre". The source is
+     PRD-1020, which is `on_request` — A17.4 requires exactly that of a
+     relabel, so the availability is not a decoration here but the
+     precondition.
+
+     AND PRD-1020 STAYS ORDINARY THROUGHOUT. It is on two buyers' lists,
+     carries a promo and a deal, and is sold every month. A17.0a: a wine
+     open to requests stays ordinarily tradeable unless a specific
+     exclusivity agreement says otherwise, and this project is not one —
+     what it will produce is a DIFFERENT product. The demo's clearest
+     answer to the reading D41 corrects.
+
+       17 Feb  Hawesko ↔ Henri Dubois Domaine (partnerships)
+       19 Jun  Henri Dubois admitted            (OLM-1006)
+       13 Jul  project requested                ← first Monday clear of
+                                                  the admission
+       27 Jul  both project contracts approved → gate 1 released
+       31 Jul  sample shipped
+
+     `productId` IS NULL AND MUST BE (A17.9): the winery creates the
+     product after gate 2, and gate 2 has not been asked for. There is
+     nothing to name. */
+  { id:'OLP-101', distributor:'Hawesko GmbH', producer:'Henri Dubois Domaine',
+    creationType:'relabel_existing_wine', sourceWineId:'PRD-1020',
+    developmentReferenceWineId:null,
+    productId:null, stage:'sample_shipped', brandOwner:'Hawesko GmbH',
+    requestedAt:'2026-07-13', requestedBy:'Hawesko GmbH' },
+
+  /* ── OLP-102 — a bespoke development, before gate 1 ───────────────
+     THE EARLIEST STATE ANY PROJECT CAN BE IN, and it is a state only a
+     record can show: requested, both consents given, and gate 1 NOT
+     released because only one of the two project agreements has come
+     back. `gate1Permitted()` answers false over the contracts and
+     `projectActive()` answers false over the reviews — two different
+     readings, both correct, and neither of them a field.
+
+     `sourceWineId` IS NULL (OL-9) and `developmentReferenceWineId`
+     names PRD-1004, Cantina Rossi's Primitivo Riserva. That reference is
+     DEVELOPMENT HISTORY AND NOTHING ELSE: it never feeds a technical
+     value, it is never shown as this wine's origin, and it never implies
+     the two are the same wine. The panel prints "Developed after
+     Primitivo Riserva" in the column where a relabel would print an
+     origin — which is the distinction OL-9 exists for, made visible
+     rather than described.
+
+       9 Mar  Hawesko ↔ Cantina Rossi (partnerships)
+      22 May  Cantina Rossi admitted   (OLM-1005)
+      20 Jul  project requested        ← the Monday after Hawesko's own
+                                         Riesling project settled
+      22 Jul  Hawesko's project agreement approved
+      23 Jul  the winery's sent, and still out — gate 1 waits */
+  { id:'OLP-102', distributor:'Hawesko GmbH', producer:'Cantina Rossi',
+    creationType:'bespoke_new_wine', sourceWineId:null,
+    developmentReferenceWineId:'PRD-1004',
+    productId:null, stage:'requested', brandOwner:'Hawesko GmbH',
+    requestedAt:'2026-07-20', requestedBy:'Hawesko GmbH' }
 ];
+
+/* ── A17.4 — MAY A PROJECT BE OPENED AT ALL? ─────────────────────
+   Seven conditions, every one of them READ, and the whole function is a
+   reading of records that already exist. It creates nothing: A17.4 is
+   explicit that a refused request leaves no trace, because an empty
+   project in a "blocked" state would be a fifth way to describe the
+   same conditions.
+
+   THE REFUSAL NAMES THE MISSING CONDITION rather than saying no. That
+   is not politeness — a distributor who is told "Partnership required"
+   knows what to do next, and one told "not available" opens a support
+   ticket. The four messages are A17.4's own.
+
+   `product` IS OPTIONAL, because the bespoke route has no source wine
+   to ask about (A17.5 route B, OL-9). Where one IS named, its
+   availability and its producer are both checked: a wine that belongs to
+   another house is not this winery's to relabel. */
+function canStartOwnLabelProject(distributor, winery, ref, at) {
+  if (!isOwnLabelPartner(distributor, at))
+    return { allowed:false, missing:'distributor_not_admitted', say:'Apply to become an Own Label Partner' };
+  if (!isOwnLabelPartner(winery, at))
+    return { allowed:false, missing:'winery_not_admitted', say:'Winery is not currently an Own Label Partner' };
+  if (!arePartners(distributor, winery))
+    return { allowed:false, missing:'no_partnership', say:'Partnership required' };
+  if (ref != null) {
+    const p = wineByRef(ref);
+    if (!p || p.winery !== winery)
+      return { allowed:false, missing:'not_this_winerys_wine', say:'That wine belongs to another producer' };
+    if (!ownLabelOnRequest(ref))
+      return { allowed:false, missing:'product_closed', say:'Own Label not available for this wine' };
+    /* A CONFLICTING EXCLUSIVITY, DEFINED NARROWLY AND ON PURPOSE.
+       A17.4 names the condition without saying what counts, so this
+       says: another distributor's relabel project on the SAME source
+       wine that has passed GATE 2 — meaning its product exists and the
+       winery is already bound to supply one house with that liquid under
+       a brand. Before gate 2 nothing is bound and two houses may both be
+       talking; after it, a second relabel of the same wine would promise
+       the same liquid twice.
+
+       IT IS NOT the ordinary distribution exclusivity of D40 point 8.
+       That one is named and deliberately not modelled, and it has never
+       blocked a project — reading it as a block here would be D41's
+       error arriving through the front door. */
+    const clash = ownLabelProjects.find(pr => pr.sourceWineId === p.id &&
+      pr.distributor !== distributor && gateApproved(pr.id, 2));
+    if (clash)
+      return { allowed:false, missing:'conflicting_exclusivity',
+               say:'Another own-label project already runs on this wine' };
+  }
+  return { allowed:true, missing:null, say:null };
+}
 
 function ownLabelProjectById(id) {
   if (typeof id !== 'string') return null;
