@@ -645,6 +645,18 @@ body {
 .cb-item input[type="checkbox"] { width:13px; height:13px; appearance:none; -webkit-appearance:none; border:1px solid rgba(247,243,238,0.2); background:transparent; border-radius:1px; cursor:pointer; flex-shrink:0; position:relative; transition:all 0.15s; }
 .cb-item input:checked { background:var(--gold); border-color:var(--gold); }
 .cb-label { font-size:0.78rem; color:rgba(247,243,238,0.55); }
+/* The reach multi-select (A16.14b). Each row is a level, its label and
+   the sentence saying who it lets in — a taxonomy nobody can read is a
+   taxonomy that gets ticked at random. `.rf-locked` is matchmaking:
+   present, named, unclickable, with its reason on the row. */
+.rf-row { display:flex; align-items:flex-start; gap:0.7rem; padding:0.7rem 0; border-bottom:1px solid rgba(247,243,238,0.05); cursor:pointer; }
+.rf-row input[type="checkbox"] { width:13px; height:13px; margin-top:0.15rem; appearance:none; -webkit-appearance:none; border:1px solid rgba(247,243,238,0.2); background:transparent; border-radius:1px; cursor:pointer; flex-shrink:0; }
+.rf-row input:checked { background:var(--gold); border-color:var(--gold); }
+.rf-name { font-size:0.8rem; color:var(--paper); }
+.rf-what { font-size:0.72rem; color:var(--dim); margin-top:0.15rem; }
+.rf-locked { cursor:not-allowed; opacity:0.5; }
+.rf-locked input { cursor:not-allowed; }
+.rf-lock-tag { font-size:0.62rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--gold); border:1px solid rgba(184,151,90,0.3); padding:0.1rem 0.4rem; border-radius:2px; margin-left:0.5rem; }
 .add-btn { display:flex; align-items:center; gap:0.6rem; font-size:0.68rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--gold); background:rgba(184,151,90,0.07); border:1px dashed rgba(184,151,90,0.3); padding:0.8rem 1.4rem; cursor:pointer; border-radius:2px; font-family:'Inter',sans-serif; transition:background 0.2s; width:100%; justify-content:center; }
 .add-btn:hover { background:rgba(184,151,90,0.12); }
 .icon-btn { background:transparent; border:1px solid var(--line); color:var(--dim); padding:0.3rem 0.6rem; border-radius:2px; cursor:pointer; font-size:0.7rem; transition:all 0.15s; font-family:'Inter',sans-serif; text-decoration:none; display:inline-block; }
@@ -11561,11 +11573,122 @@ function toggleShowVisPreview(level) {
   renderShowDetail(showState[activeShowRole].openId);
 }
 
+/* ══ REACH — THE HOST'S SETTING (A16.14b) ════════════════════════ */
+/* One line per level saying WHO it lets in. The taxonomy itself lives
+   in the shared asset with the function that reads it; what belongs
+   here is only how it reads on screen. */
+const REACH_LABEL = {
+  public:       ['Anyone',              'The open website. Strangers find the show on the public Wine Shows page.'],
+  members:      ['Every member',        'Any Bottle Lobby account, whatever their role.'],
+  wineries:     ['Wineries',            'Producers — the people who would exhibit.'],
+  distributors: ['Distributors',        'Other distributors, including possible co-hosts.'],
+  restaurants:  ['Restaurants',         'The on-trade side of the room.'],
+  retail:       ['Retail',              'Wine shops and specialist retailers.'],
+  partners:     ['Your partners',       'Every house you hold an active partnership with, whatever their role.'],
+  community:    ['Your community',      'The accounts that follow you and the accounts you follow.']
+};
+/* NAMED, SHOWN, LOCKED — and the reason is on the row (C2, A16.14b).
+   Leaving it out entirely would hide that the level is coming; adding
+   it as a real value would offer an option that quietly does nothing.
+   It unlocks when the matchmaking model exists, not before. */
+const REACH_LOCKED = {
+  matchmaking: ['Matchmaking', 'Houses the platform judges a fit for this show. Locked: the matching model ' +
+                               'is a query over four relations that are still moving, so a box here would ' +
+                               'promise an audience nobody can resolve yet.']
+};
+
+/* WHAT THE SETTING ACTUALLY COSTS, counted rather than described. A
+   host ticking boxes is choosing an audience, and "wineries + partners"
+   is not a number until somebody counts it. */
+function reachAudienceLine(show, levels) {
+  if (!levels.length) return 'Nobody can find this show. Only you and the houses that have already ' +
+    'confirmed will see it — it is on no directory and no public page.';
+  if (levels.indexOf('public') !== -1) return 'Anyone at all, including visitors who are not members.';
+  const named = [];
+  if (levels.indexOf('partners') !== -1) named.push(hostPartners(show.leadHost).length + ' active partner(s)');
+  if (levels.indexOf('community') !== -1) named.push(hostCommunity(show.leadHost).length + ' follower(s) and account(s) you follow');
+  const roles = levels.filter(l => ['members','wineries','distributors','restaurants','retail'].indexOf(l) !== -1)
+                      .map(l => REACH_LABEL[l][0].toLowerCase());
+  if (roles.length) named.unshift('every ' + roles.join(', every '));
+  return 'Found by ' + named.join(' — plus ') + '. Everyone else: no card, no title, no count.';
+}
+
+let reachShowId = null;
+function openReachModal(id) {
+  const s = actionShow(id); if (!s) return;
+  if (s.leadHost !== SHOW_ROLES[activeShowRole].entity) {
+    actionSay('Only the host sets the reach of a show'); return;
+  }
+  reachShowId = id;
+  const on = showReach(s);
+  document.getElementById('rf-show').textContent = s.title + ' · ' + orderDate(s.date) + ' · ' + s.city;
+  document.getElementById('rf-levels').innerHTML = REACH_LEVELS.map(l =>
+    '<label class="rf-row"><input type="checkbox" value="' + l + '"' +
+      (on.indexOf(l) !== -1 ? ' checked' : '') + ' onchange="onReachChange()">' +
+    '<span><span class="rf-name">' + REACH_LABEL[l][0] + '</span>' +
+    '<div class="rf-what">' + REACH_LABEL[l][1] + '</div></span></label>').join('');
+  document.getElementById('rf-locked').innerHTML = Object.keys(REACH_LOCKED).map(l =>
+    '<div class="rf-row rf-locked"><input type="checkbox" disabled>' +
+    '<span><span class="rf-name">' + REACH_LOCKED[l][0] +
+      '<span class="rf-lock-tag">Locked</span></span>' +
+    '<div class="rf-what">' + REACH_LOCKED[l][1] + '</div></span></div>').join('');
+  onReachChange();
+  document.getElementById('show-reach-modal').classList.add('active');
+}
+function closeReachModal() { document.getElementById('show-reach-modal').classList.remove('active'); }
+/* Recomputed on every tick, never stored — the count is a view of the
+   partnership and follow books as they stand right now (A16.10). */
+function reachTicked() {
+  return [...document.querySelectorAll('#rf-levels input:checked')].map(b => b.value);
+}
+function onReachChange() {
+  const s = wineShows.find(x => x.id === reachShowId); if (!s) return;
+  document.getElementById('rf-effect').innerHTML = reachAudienceLine(s, reachTicked());
+}
+/* Deduplicated on the way in as well as on the way out: two paths to
+   the same array must not be able to disagree about what is in it. */
+function saveReach() {
+  const s = actionShow(reachShowId); if (!s) return;
+  const before = showReach(s).slice().sort().join(',');
+  s.reach = [...new Set(reachTicked())];
+  const after = s.reach.slice().sort().join(',');
+  if (before !== after)
+    logShow(s, s.leadHost, 'Reach set to ' + (s.reach.length ? s.reach.join(', ') : 'nobody'));
+  closeReachModal();
+  refreshShows();
+  renderAppearanceWidgets();
+  refreshNotifications();
+  showToast('✓ Reach saved');
+}
+
 /* ══ THE VENUE RELATION IN THE DETAIL PANE (A16.11 steps 1–2) ════ */
 /* Two boxes over one record, one per side. The host's says how far the
    request has got; the venue's is where the price is named. Neither
    holds a second copy of the number — both read `cateringTotal`. */
 const VENUE_ASKABLE_STAGES = ['draft','planning','changes_requested'];
+
+/* The host's own reading of their reach setting. It says the EMPTY
+   case in words, because that is the one a silent box would hide: a
+   show nobody can find looks exactly like a show nobody has looked at
+   yet, and the host would have no way to tell them apart. */
+function hostReachBox(s) {
+  const on = showReach(s);
+  const released = publicLevelFor(s) === 'full';
+  const chips = on.length
+    ? on.map(l => '<span class="ord-chip chip-deal">' + (REACH_LABEL[l] ? REACH_LABEL[l][0] : l) + '</span>').join('')
+    : '<span class="ord-chip chip-manual">Nobody yet</span>';
+  return '<div class="odt-box"><div class="odt-box-head">Who May Find This Show' +
+    '<span class="right"><button class="btn-sm btn-outline" onclick="openReachModal(\'' + s.id + '\')">Edit reach</button></span>' +
+    '</div><div class="odt-box-body">' +
+    '<div style="display:flex;flex-wrap:wrap;gap:0.4rem;margin-bottom:0.8rem">' + chips + '</div>' +
+    '<div class="edit-section-sub" style="margin:0">' + reachAudienceLine(s, on) + '</div>' +
+    (released
+      ? '<div class="ord-track" style="margin-top:0.9rem">This show is released, so the reach no longer ' +
+        'gates anything: a published show stands on the open website and is never locked by role or ' +
+        'membership. The setting is kept because it still says who the show was announced to.</div>'
+      : '') +
+  '</div></div>';
+}
 
 function hostVenueBox(s) {
   const askable = VENUE_ASKABLE_STAGES.indexOf(s.stage) !== -1;
@@ -12327,6 +12450,7 @@ function renderShowDetail(id) {
         (isVenue && isMyVenue(role, s) ? venueRequestBox(s) : '') +
         (isVenue ? myAttendanceBox(role, s) : '') +
         (isVenue ? myOrderListBox(role, s) : '') +
+        (isHost  ? hostReachBox(s)    : '') +
         (isHost  ? hostVenueBox(s)    : '') +
         exhActions + (cfg.side === 'producer' ? producerHeldBox(role, s) : '') +
         hostProposalBox + readinessBox + gateBox +
@@ -14343,6 +14467,29 @@ BLStore.start({
     <div class="modal-footer">
       <button class="btn-sm btn-outline" onclick="closeInviteModal()">Cancel</button>
       <button class="btn-sm btn-gold" onclick="saveInvite()">Send Invitation →</button>
+    </div>
+  </div>
+</div>
+
+<!-- The host decides who may FIND the show (A16.14b). A multi-select,
+     not a ladder: every box permits, none forbids, and matchmaking is
+     named and locked rather than quietly absent. -->
+<div class="modal-overlay" id="show-reach-modal">
+  <div class="modal-panel" style="max-width:620px">
+    <div class="modal-header">
+      <div class="modal-title">Who May <span>Find This Show</span></div>
+      <button class="modal-close" onclick="closeReachModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="ord-track" style="margin-top:0"><b id="rf-show"></b></div>
+      <div class="edit-section-sub">Every box you tick <b>permits</b> — none of them forbids anything. A house in two ticked groups sees the show once. Reach decides who may <b>find</b> the show; it never decides what they may see of it, and it never gives anyone the right to act on it.</div>
+      <div id="rf-levels"></div>
+      <div id="rf-locked"></div>
+      <div class="edit-section-sub" id="rf-effect" style="margin-bottom:0"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-sm btn-outline" onclick="closeReachModal()">Cancel</button>
+      <button class="btn-sm btn-gold" onclick="saveReach()">Save Reach →</button>
     </div>
   </div>
 </div>
