@@ -11860,15 +11860,21 @@ function myApplicationBox(role, s) {
 /* One line per level saying WHO it lets in. The taxonomy itself lives
    in the shared asset with the function that reads it; what belongs
    here is only how it reads on screen. */
+/* Three strings per level: the tick-box name, what it means, and the
+   AUDIENCE PHRASE the effect sentence is built from. The third one
+   exists because "every " + the name produced "every wineries" — a
+   sentence assembled from labels reads like a sentence assembled from
+   labels, and this one is the host's only account of who they are
+   about to let in. */
 const REACH_LABEL = {
-  public:       ['Anyone',              'The open website. Strangers find the show on the public Wine Shows page.'],
-  members:      ['Every member',        'Any Bottle Lobby account, whatever their role.'],
-  wineries:     ['Wineries',            'Producers — the people who would exhibit.'],
-  distributors: ['Distributors',        'Other distributors, including possible co-hosts.'],
-  restaurants:  ['Restaurants',         'The on-trade side of the room.'],
-  retail:       ['Retail',              'Wine shops and specialist retailers.'],
-  partners:     ['Your partners',       'Every house you hold an active partnership with, whatever their role.'],
-  community:    ['Your community',      'The accounts that follow you and the accounts you follow.']
+  public:       ['Anyone',              'The open website. Strangers find the show on the public Wine Shows page.', 'anyone at all'],
+  members:      ['Every member',        'Any Bottle Lobby account, whatever their role.',                          'every member'],
+  wineries:     ['Wineries',            'Producers — the people who would exhibit.',                               'every winery'],
+  distributors: ['Distributors',        'Other distributors, including possible co-hosts.',                        'every distributor'],
+  restaurants:  ['Restaurants',         'The on-trade side of the room.',                                          'every restaurant'],
+  retail:       ['Retail',              'Wine shops and specialist retailers.',                                    'every retailer'],
+  partners:     ['Your partners',       'Every house you hold an active partnership with, whatever their role.',   'your partners'],
+  community:    ['Your community',      'The accounts that follow you and the accounts you follow.',               'your community']
 };
 /* NAMED, SHOWN, LOCKED — and the reason is on the row (C2, A16.14b).
    Leaving it out entirely would hide that the level is coming; adding
@@ -11887,13 +11893,19 @@ function reachAudienceLine(show, levels) {
   if (!levels.length) return 'Nobody can find this show. Only you and the houses that have already ' +
     'confirmed will see it — it is on no directory and no public page.';
   if (levels.indexOf('public') !== -1) return 'Anyone at all, including visitors who are not members.';
-  const named = [];
-  if (levels.indexOf('partners') !== -1) named.push(hostPartners(show.leadHost).length + ' active partner(s)');
-  if (levels.indexOf('community') !== -1) named.push(hostCommunity(show.leadHost).length + ' follower(s) and account(s) you follow');
-  const roles = levels.filter(l => ['members','wineries','distributors','restaurants','retail'].indexOf(l) !== -1)
-                      .map(l => REACH_LABEL[l][0].toLowerCase());
-  if (roles.length) named.unshift('every ' + roles.join(', every '));
-  return 'Found by ' + named.join(' — plus ') + '. Everyone else: no card, no title, no count.';
+  const named = levels
+    .filter(l => ['members','wineries','distributors','restaurants','retail'].indexOf(l) !== -1)
+    .map(l => REACH_LABEL[l][2]);
+  /* The two relational levels are COUNTED rather than named: "your
+     partners" is a number the host can check against their own
+     Network, and a number is what makes the setting decidable. */
+  if (levels.indexOf('partners') !== -1)
+    named.push('your ' + hostPartners(show.leadHost).length + ' active partner(s)');
+  if (levels.indexOf('community') !== -1)
+    named.push('your community of ' + hostCommunity(show.leadHost).length + ' account(s)');
+  const last = named.pop();
+  return 'Found by ' + (named.length ? named.join(', ') + ' and ' + last : last) +
+         '. Everyone else: no card, no title, no count.';
 }
 
 let reachShowId = null;
