@@ -4,7 +4,7 @@
 > Dateiliste, Dateianzahl und Aenderungshistorie stehen in der Git-Historie — nicht hier.
 > Dauerhafte Regeln stehen in `BOTTLE-LOBBY-SPEC.md`, kurze Invarianten in `CLAUDE.md` — nicht hier.
 
-**Letzte Aktualisierung:** 6. August 2026
+**Letzte Aktualisierung:** 7. August 2026
 
 ---
 
@@ -21,7 +21,7 @@ Kein Build-Command, Publish-Directory = Repo-Root.
 
 ---
 
-## ▶ EINSTIEG — Stand 6. August 2026
+## ▶ EINSTIEG — Stand 7. August 2026
 
 > **Was Git nicht weiss, steht hier. Alles andere nicht.** Diese Datei fuehrt
 > keine Chronik: was gebaut wurde, wann und von wem, beantwortet `git log`
@@ -31,12 +31,12 @@ Kein Build-Command, Publish-Directory = Repo-Root.
 > Dauerhafte Regeln gehoeren in `BOTTLE-LOBBY-SPEC.md`, kurze Invarianten in
 > `CLAUDE.md`. Findet sich hier eine Regel, ist sie am falschen Ort.
 
-**Baum sauber, `main` gepusht, 22 Harnesses gruen** (nachgezaehlt 06.08. — `own-label-grants.js` kam mit Durchgang 3 dazu, `own-label-program.js` mit den A17-Fixtures).
+**Baum sauber, `main` gepusht, 22 Harnesses gruen** (nachgezaehlt 07.08. — `own-label-grants.js` kam mit Durchgang 3 dazu, `own-label-program.js` mit dem A17-Fixture-Durchgang). **`BLStore.VERSION` steht auf 5.**
 
 ### Womit eine Sitzung anfaengt
 
 ```
-node tests/run-all.js        →  21 Harnesses, muss gruen sein, bevor irgendetwas beginnt
+node tests/run-all.js        →  22 Harnesses, muss gruen sein, bevor irgendetwas beginnt
 node tests/serve.js          →  http://localhost:8765   (no-store — NIE python http.server)
 node tests/stamp-assets.js   →  nach jeder Aenderung an assets/, sonst wird check-static rot
 ```
@@ -50,7 +50,7 @@ Fehlmessungen an einem Tag kamen genau daher** (Spec C7, „Browser acceptance")
 `BOTTLE-LOBBY-SPEC.md` ist die Autoritaet und waechst. **Niemand liest sie ganz —
 also je Durchgang die geltenden Abschnitte benennen**, sonst wird nach
 Plausibilitaet statt nach Spec gebaut. `CLAUDE.md` hat die acht Invarianten,
-Anhang D die abgeloesten Entscheidungen (**D1–D40** — nie ohne Blick dorthin
+Anhang D die abgeloesten Entscheidungen (**D1–D41** — nie ohne Blick dorthin
 etwas wiedervorschlagen).
 
 Arbeitsregeln, die diesen Tag ueberdauern und in **C3/C7** stehen: jeden Commit
@@ -95,7 +95,7 @@ Wahrheiten stabilisieren, dann nach aussen bauen.
 | 8 | **Member Events, Ausrollen** | Cockpits Winery/Restaurant/Retail + deren Events-Sektionen |
 | 9 | **Wine Guide → Events** | Verzeichnis-Tab, Filter nur ueber echte Daten, Karten wiederverwendet, die drei oeffentlichen Flaechen gleichgezogen |
 | 10 | **Kampagnen + Benachrichtigungen** | Ankuendigung/Erinnerung getrennt, Empfaenger-Snapshot, C9-Bedingungen |
-| 11 | **`bottle-lobby-own-label.html` neu** | Die Seite behauptet das alte Modell in ~20 Passagen (Zeilen 206–453) — **das alte Modell IST ihr Argument**, also Neuschrift, nicht Korrektur. Zeile 449 nennt einen Basiswein des Erzeugers „own-labeled exclusively for Hawesko" — D36 woertlich, oeffentlich. **Muss nach Durchgang 3**, sonst wird die Seite zweimal geschrieben |
+| 11 | **`bottle-lobby-own-label.html` neu** | Die Seite behauptet das alte Modell in ~20 Passagen (Zeilen 206–453) — **das alte Modell IST ihr Argument**, also Neuschrift, nicht Korrektur. Die zwei *konkreten* Falschaussagen sind mit dem A17-Fixture-Durchgang weg (siehe den Block unter der Tabelle); die **Argumentation** steht unveraendert. **Muss nach dem A17-Fixture-Durchgang**, sonst wird die Seite zweimal geschrieben |
 
 **Zwischen den Durchgaengen jeweils eine Browser-Abnahme** — klicken statt
 Funktionen aufrufen, `transferSize` vorher lesen (C7).
@@ -103,15 +103,18 @@ Funktionen aufrufen, `transferSize` vorher lesen (C7).
 > **Durchgang 3 ist gebaut, mit einem benannten Rest.** Datensaetze und
 > Lesungen stehen in der Seite (`ownLabelProjects`, `marketGrants`,
 > `ownLabelFeeEvents`, `ownLabelListingDerived()`, `ownLabelOrderRight()`,
-> `ownLabelFeeEvent()`); die **Arrays sind leer**, die Fixtures liegen in
-> `tests/own-label-grants.js`. Grund, gemessen: keine der sechs ueberbrueckten
+> `ownLabelFeeEvent()`). Die Arrays blieben damals **leer**, mit Fixtures nur in
+> `tests/own-label-grants.js`; **seit dem A17-Fixture-Durchgang tragen sie echte
+> Zeilen** — der Rest ist eingeloest. Grund damals, gemessen: keine der sechs ueberbrueckten
 > Listing-Zeilen hat eine gelieferte Bestellung ihres erzeugenden Weinguts an
 > Hawesko — ORD-2029 ist die einzige gelieferte Weingut→Distributor-Order und
 > traegt PRD-1008, das nicht ueberbrueckt ist. Eine Projektzeile in der Seite
 > haette die Ableitung fuer alle sechs auf `false` gestellt, A17.14 haette die
 > `legacyOwnLabel`-Bruecke im selben Commit verlangt, und „My Labels" waere leer
 > — reparabel nur durch eine **erfundene** Erstlieferung, die A17.14 im selben
-> Atemzug verbietet.
+> Atemzug verbietet. **Die Aufloesung war keine Lieferung, sondern eine
+> Klassifikation:** die sechs brauchten nie eine, weil keine davon ein Own Label
+> ist (D41).
 >
 > **Durchgang 4 ist gebaut, und er ist die GRUNDLAGE, nicht der Saparavi-Fall.**
 > Was liegt: die Spec-Korrektur zuerst (A3 traegt die Bezugsregel in neun
@@ -130,12 +133,50 @@ Funktionen aufrufen, `transferSize` vorher lesen (C7).
 > Enoteca nicht ueber seine eigene Cantina-Rossi-Partnerschaft erreicht **und**
 > der einen quotierten Preis traegt.
 >
-> **Zieldurchgang fuer den Rest: A17-Fixtures** (nach 4, vor 11) — Programm-
-> Mitgliedschaften, Projekte ueber den ganzen Bogen, die erste gelieferte
-> Bestellung, Grants und Gebuehrenereignisse an echten Zeilen, und im selben
-> Commit der Abbau von `legacyOwnLabel` / `listingOwnLabelStatus()`.
-> `tests/listings.js` §6d haelt die Schuld sichtbar: sie wird rot, sobald eine
-> Projektzeile neben der Bruecke steht.
+> **Der A17-Fixture-Durchgang ist gebaut (07.08.), neun einzeln gepushte
+> Commits — und er hat mit einer Klassifikation angefangen, nicht mit Code.**
+> Die sechs ueberbrueckten Listing-Zeilen sind **keine Own Labels und waren es
+> nie**: Erzeugerweine unter der Marke des Erzeugers plus eine
+> Vertriebsexklusivitaet. **Warum, mit Belegen: Spec D41** — hier nicht
+> wiederholt. Daraus folgte alles Weitere:
+>
+> - **A17.0-Zahlen korrigiert**, A17.14 sagt jetzt, dass an `ownLabel:true`
+>   nichts abzuleiten war, und **D41** haelt die abgeloeste Lesart fest.
+> - **`legacyOwnLabel` und `listingOwnLabelStatus()` sind weg** — die Bruecke aus
+>   Durchgang 3 ist abgebaut, alle Leser haengen an `ownLabelListingDerived()`.
+>   `tests/listings.js` §6d meldet die Migration abgeschlossen und dreht damit
+>   die Richtung: sie wird jetzt rot, wenn die Bruecke *zurueckkommt*.
+> - **Vier Projekte ueber den ganzen Bogen:** OLP-101 (Relabel auf PRD-1020,
+>   `productId` null) · OLP-102 (Bespoke, `developmentReferenceWineId` PRD-1004)
+>   · OLP-103 → **PRD-1029** „Hanseatischer Roter", nach Gate 2 erzeugt, Erstorder
+>   `accepted`, **nicht geliefert, nicht gelistet, korrekt nicht oeffentlich**
+>   (`url: null`, keine Guide-Zeile — A17.9) · OLP-104 → **PRD-1028**
+>   „Hanseatischer Weisser", Erstlieferung bestaetigt, Primary Listing aktiv,
+>   **vollstaendige Artikelseite und Guide-Zeile**.
+> - **Die Saparavi-Struktur auf Own-Label-Ebene:** Enoteca listet PRD-1028 mit
+>   eigenem `tradePrice` und eigener Artikelnummer, **ohne Primary-Badge und
+>   nicht in Enotecas „My Labels"** (A17.9b), gedeckt von einem
+>   Unterdistributions-Grant. **Die Gebuehr fiel einmal an** — Weingut→Hawesko,
+>   nicht erneut Hawesko→Enoteca.
+> - **Sichtbare Produktwahrheit:** keine Guide-Zeile, kein Ribbon und kein Badge
+>   nennt mehr einen normalen Erzeugerwein ein fertiges Own Label.
+>   „Own-Label Available", „fertiges Own Label" und „Primary Listing aktiv" sind
+>   drei getrennte Aussagen mit drei Wortlauten.
+>
+> **Bewusst offen geblieben, und das ist keine Nachlaessigkeit:**
+> · die **Neufassung von `bottle-lobby-own-label.html`** ist Durchgang 11 — die
+>   zwei konkreten Falschaussagen (das *Real Example* und die Rechner-Notiz,
+>   beide nannten PRD-1022 „own-labeled for Hawesko") sind korrigiert und nennen
+>   jetzt PRD-1028, aber **die Seite argumentiert weiter das alte Modell**;
+> · es gibt **keine echte Oberflaeche fuer die Programmzulassung** — die
+>   A17.1-Bedingungen und die A17.8-Datensaetze liegen und werden gelesen, aber
+>   Aufnahme, Consent und Vertragsfreigabe passieren nirgends per Klick, und
+>   „+ Start a New Own-Label" oeffnet noch keinen Projektantrag
+>   (`canStartOwnLabelProject()` traegt die Pruefung samt sechs Absagegruenden
+>   bereits — es fehlt nur der Dialog davor);
+> · **Cantina Rossis Winery-Flaechen** rendern ihre elf Portfoliozeilen weiter
+>   getippt statt aus dem Buch; die Zeilen tragen seit diesem Durchgang
+>   `data-product`, der Vollrender ist damit vorbereitet, aber nicht gebaut.
 
 **Nicht Teil dieser Konsolidierung:** das **Matchmaking-Cockpit** (A8, Seek/Offer).
 Eigener vermessener Durchgang danach; bis dahin bleibt `matchmaking` als
@@ -201,15 +242,20 @@ Aus diesen zwei Tagen liegt Folgendes:
   benutzt, weil sie die Mehrheit ist, und die acht Land-Zeilen **bewusst nicht
   angefasst**: eine bereits praezise Zeile umzuschreiben ist der A4-Durchgang,
   nicht das Nachtragen einer fehlenden.
-- **Die verbliebenen festen `profile-section-count`.** Gemessen am 05.08.:
-  **19 Zaehler, nicht 20.** 14 tragen eine Id und werden zur Laufzeit gerechnet.
-  „My Labels" ist mit `2df920a` dazugekommen, **also stehen noch 4 fest im
-  Markup**, davon **2 nachweislich falsch**: der Winzer-Abschnitt behauptet
-  `My Wine Portfolio (11)` bei **10** Cantina-Rossi-Produkten im Buch, der
-  Distributor `My Wine Portfolio (5)` bei **14** Zeilen in
-  `currentWinePortfolio`. Die anderen zwei — `My Wine List (3)`,
-  `My Wine Selection (3)` — stimmen heute **zufaellig** und gehen beim naechsten
-  Hinzufuegen kaputt. Fix ist derselbe wie bei den 14: aus der Liste rechnen.
+- **Die verbliebenen festen `profile-section-count`.** Nachgemessen am 07.08.:
+  **19 Zaehler, 16 mit Id und zur Laufzeit gerechnet, 3 fest im Markup** — und
+  **keiner der 3 ist heute nachweislich falsch.** Beide am 05.08. falschen sind
+  weg, aber auf zwei verschiedene Weisen, und die zweite ist die interessante:
+  · `My Wine Portfolio (5)` beim Distributor ist mit dem A17-Fixture-Durchgang
+    zu `dportfolio-count` geworden und wird gerechnet — jetzt **15** Zeilen in
+    `currentWinePortfolio`, weil PRD-1028 dazugekommen ist;
+  · `My Wine Portfolio (11)` beim Winzer **stimmt jetzt zufaellig**: Cantina
+    Rossi hat mit PRD-1022 aus D41 die elfte Katalogzeile bekommen, also 11
+    getippte Zeilen gegen 11 im Buch. **Eine falsche Zahl, die durch eine
+    Datenaenderung richtig wurde, ist nicht reparierter Code** — sie geht beim
+    naechsten Hinzufuegen wieder kaputt, genau wie `My Wine List (3)` und
+    `My Wine Selection (3)`. Fix ist bei allen drei derselbe: aus der Liste
+    rechnen.
 Danach in dieser Reihenfolge:
 
 - **A3 Retail-Bedingung** — Weinhaus Muellers Auswahl und seine Einkaeufe sind
@@ -221,17 +267,19 @@ Danach in dieser Reihenfolge:
   stand bis zum 4.8. faelschlich im Praeteritum, daher die neue Tempus-Regel in
   **C4**.
 - **Katalog vervollstaendigen — nur zur Haelfte moeglich, und der Grund ist der
-  naechste Punkt.** Nachgemessen am 05.08., die aelteren Zahlen hier waren falsch:
-  **41 Artikelseiten und 41 Guide-Zeilen, deckungsgleich** (nicht 40), 27 davon
-  von einem `PRD-`Datensatz benannt, **14 verwaist** (nicht 15 — die aeltere Zahl
-  stammte von vor Terra Rossas Katalogzeile). Keine der 14 ist eine leere Huelse:
-  **alle 41 Artikelseiten tragen exakt 16 Spec-Felder**, einen Erzeugerlink und
-  eine Guide-Zeile. Cantina Rossi hat **null** Verwaiste, die anderen fuenf
-  Erzeuger tragen alle 14.
-  Von den sieben Weinen, die nur im Distributor-Buch standen, ist **PRD-1026
-  „Chateau Belrieu Grand Vin" nachgetragen** — der einzige ohne Own-Label-
-  Anspruch. **Die uebrigen sechs bleiben absichtlich draussen**, siehe unten.
-  Offen bleiben damit die 14 verwaisten Artikelseiten; sie haengen zu elf an
+  naechste Punkt.** Nachgemessen am 07.08.: **42 Artikelseiten und 42
+  Guide-Zeilen, deckungsgleich**, 28 davon von einem `PRD-`Datensatz benannt,
+  **14 verwaist**. Keine der 14 ist eine leere Huelse: **alle 42 Artikelseiten
+  tragen exakt 16 Spec-Felder**, einen Erzeugerlink und eine Guide-Zeile.
+  Cantina Rossi hat **null** Verwaiste, die anderen fuenf Erzeuger tragen alle 14.
+  Von den sieben Weinen, die nur im Distributor-Buch standen, sind alle sieben
+  im Katalog: PRD-1026 am 05.08., **die uebrigen sechs mit dem
+  A17-Fixture-Durchgang** — sobald sie als normale Erzeugerweine klassifiziert
+  waren (D41), gab es keinen Grund mehr, sie draussen zu lassen; sie tragen jetzt
+  `ownLabelAvailability` und stehen jedem Distributor im Picker offen.
+  `partnerWinesPool` hat damit **27 Zeilen**, insgesamt sind **29 `PRD-`
+  Schluessel** vergeben (die 27 plus PRD-1028 und PRD-1029).
+  Offen bleiben die 14 verwaisten Artikelseiten; sie haengen zu elf an
   Distributor-Erzeuger-Paaren ohne Partnerschaftszeile. Vorbedingung fuer das
   abgeleitete Portfolio.
 - **~~Own-Label-Sichtbarkeit gegen A17.9~~ — ES GAB NIE EINEN WIDERSPRUCH.**
@@ -251,15 +299,16 @@ Danach in dieser Reihenfolge:
   **Handlungsrechte, keine Anzeigerechte** — und die Tabelle in **A17.13** sagt
   das in ihrer letzten Zeile bereits so („an exclusive product, **in any
   picker**").
-  Beide Beobachtungen stimmen also gleichzeitig, und keine widerspricht der
-  anderen:
-  · die sechs fehlen im Erzeugerkatalog **zu Recht** — `partnerWinesPool` ist
-    die Bestellliste, aus der jeder Distributor ordern kann;
-  · die sechs stehen auf Artikelseiten und im Wine Guide **zu Recht** — Hawesko
-    verkauft sie, ein Restaurant muss sie finden koennen. **Ein Produkt, das
-    niemand sehen darf, kann niemand kaufen.**
   A17.9 traegt seit dem 05.08. einen Satz, der die zwei Ebenen ausdruecklich
   trennt, damit die Fehllesart nicht noch einmal moeglich ist.
+  **Nachtrag 07.08., und er raeumt den Rest weg:** dieser Punkt bezog sich auf
+  die sechs ueberbrueckten Weine, und die sind **keine Own Labels** (D41). Ihr
+  Fehlen im Erzeugerkatalog war also gar kein A17.9-Fall, sondern eine
+  Mockup-Luecke — sie stehen seit dem A17-Fixture-Durchgang im Pool. **Der
+  A17.9-Fall wird jetzt von den richtigen Zeilen getragen**, und zwar an beiden
+  Enden: **PRD-1029** ist erzeugt und vor der Erstlieferung nirgends oeffentlich,
+  **PRD-1028** ist nach der Erstlieferung Artikelseite und Guide-Zeile — und
+  keines von beiden steht in einem fremden Picker.
   **Die Reichweitenfrage ist am 06.08. entschieden** und steht als **A17.13a**
   in der Spec — der primaere Distributor stellt sie waehrend der Pipeline je
   Produkt ein, sie greift mit der Erstlieferung, und die Stufen sind die
@@ -363,8 +412,8 @@ Ausgesprochene Grenze, kein Versehen — Begruendung und Beleg stehen jetzt in
 **Spec C8**. Ein mechanischer Riegel existiert nicht; eine „Format-Generation"
 neben `VERSION` ist **bewusst nicht gebaut**, weil sie die Disziplin nur
 verschiebt.
-*Am 05.08. ist die Grenze zum zweiten Mal erreicht und diesmal getroffen worden:
-`VERSION` steht auf **3**. Der Katalog-Durchgang hat sechs `origin`-Werte und
+*Am 05.08. ist die Grenze zum zweiten Mal erreicht und diesmal getroffen worden.
+Der Katalog-Durchgang hat sechs `origin`-Werte und
 einen Weinnamen in drei registrierten Sammlungen geaendert, alle Schluessel
 unverandert — fuer den Fingerprint unsichtbar. **Nachgewiesen statt vermutet:**
 ein Snapshot aus einem zurueckgepatchten Build, ueber die neuen Fixtures
@@ -372,6 +421,14 @@ wiederhergestellt, lieferte auf heutigem Code weiterhin „Loire Valley, France"
 und „Primitivo Sicilia IGT 2022". Der Nachweis ist reproduzierbar mit
 `openTab(area, {patch})` aus `tests/persistence.js` — **die Bauart, die dafuer
 da ist, und der bisher einzige Weg, diesen Fall ehrlich zu zeigen.***
+*Seit dem A17-Fixture-Durchgang steht `VERSION` auf **5**. Der Bump ist gemessen
+begruendet, nicht vorsorglich: die Fingerprints wurden vor und nach dem
+Durchgang Sammlung fuer Sammlung verglichen, **zwei von 22 haben ihre Form
+geaendert** (`orders`, und `listings` durch den Wegfall von `legacyOwnLabel`).
+`currentWinePortfolio` ist der Grund fuer den Bump — es hat mit PRD-1028 eine
+Zeile derselben Form dazubekommen, und ein Array faltet auf die **Vereinigung**
+der Elementformen, ist fuer Riegel 2 also bauartbedingt unsichtbar. Die
+Begruendung steht ausgeschrieben an `VERSION` in `assets/bottle-lobby-store.js`.*
 
 **3. `SHOW_TODAY` ist eine feste Konstante (`'2026-07-31'`).** Faellt nicht auf,
 weil die Demo-Daten darum herum gebaut sind. Bis echte Zeit ins Spiel kommt ist
@@ -419,9 +476,13 @@ eine Netlify-Sperre gewinnt also wenig — trotzdem eine bewusste Entscheidung
 wert, weil dort das vollstaendige Geschaeftsmodell steht. `netlify.toml` koennte
 sie mit derselben Redirect-Regel wie `/tests/*` ausschliessen.
 
-**Zwei tote CSS-Klassen: `.profile-badge` und `.badge-own-label`.** Im Markup
-benutzt, nirgends definiert — Reste der Vor-B9-Konvention. **Kein sichtbarer
-Defekt**, alle betroffenen Elemente setzen ihre Werte inline. Zum Aufraeumen
+**Zwei tote CSS-Klassen: `.profile-badge` und `.badge-own-label`.** Benutzt,
+nirgends definiert — Reste der Vor-B9-Konvention. **Kein sichtbarer Defekt**,
+alle betroffenen Elemente setzen ihre Werte inline. Seit dem
+A17-Fixture-Durchgang stehen sie nicht mehr im Markup, sondern werden von den
+Renderern als **Klartext-Literale** ausgegeben; `check-static.js` zaehlt genau
+solche Literale seit demselben Durchgang mit, sonst waeren die beiden lautlos
+als „nicht mehr benutzt" durchgefallen. Zum Aufraeumen
 braucht es zwei optische Entscheidungen, und die liegen bei euch: bleiben die
 Inline-Styles und die Klassennamen fallen weg, oder wandern die Werte in echte
 Regeln? Solange nichts entschieden ist, fuehrt `check-static.js` sie in

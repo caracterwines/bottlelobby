@@ -987,7 +987,7 @@ console.log('\n── a snapshot from before an added row does not hide the row'
       forgot.w.eval('orders[0].note = orders[0].note');
       nudge(forgot.w); await settle(forgot.w);
       const unbumped = read(area2);
-      if (!unbumped || unbumped.v !== 4) {
+      if (!unbumped || unbumped.v !== CURRENT_VERSION) {
         bad('the un-bumped seed wrote version ' + (unbumped && unbumped.v) + ' — the counter-check never reached its own premise');
       } else {
         const t2 = openTab(area2, { persist: true });

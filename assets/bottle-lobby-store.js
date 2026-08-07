@@ -168,8 +168,30 @@ window.BLStore = (function () {
      The rule to carry forward: VERSION is the lever whenever a
      returning visitor's snapshot would be WRONG, and that is broader
      than "the format changed". Added fixture rows are wrong in the
-     same way — the demo shows less than the build ships. */
-  var VERSION   = 4;
+     same way — the demo shows less than the build ships.
+
+     5 — the A17 own-label fixture pass (07.08.2026), and it is the
+     THIRD class again rather than a repeat: rows added to registered
+     collections, plus one collection that lost a key.
+
+     MEASURED, NOT ASSUMED. The two fingerprint sets were captured from
+     the pre-pass build and from this one and compared, collection by
+     collection. Exactly TWO of the twenty-two changed shape — `orders`
+     and `listings`, the latter because `legacyOwnLabel` came off every
+     row. The other twenty hash identically, and `currentWinePortfolio`
+     is the one that makes the bump necessary: it gained PRD-1028, the
+     first own-label product to enter the book, and the row is the same
+     shape as the fourteen beside it. An array folds to the UNION of its
+     element shapes, so guard 2 cannot see it by construction.
+
+     What a returning visitor would otherwise keep: a book without the
+     own label, orders without the two first orders and without the
+     A→B sub-distribution order, and listings that still carry the
+     removed bridge field. The last of those is the dangerous one — the
+     page reads own-label status from a derivation now, and a restored
+     listing with a stale field would simply be ignored while the wine
+     it belongs to disappeared from My Labels. */
+  var VERSION   = 5;
   var DEBOUNCE  = 200;   /* ms after the last event before a write */
   var HEARTBEAT = 2000;  /* ms between "does storage still match?" checks */
   var POLL      = 500;   /* ms between retries while the tab is busy */
