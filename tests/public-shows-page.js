@@ -50,16 +50,43 @@ console.log('\n── which shows are listed');
 {
   const listed = cards('#ups-upcoming').concat(cards('#ups-past'))
     .map(b => b.querySelector('.ws-public-title').textContent);
-  const shouldList = shows.filter(s => ['planning','published','completed'].includes(s.stage));
-  const shouldNot  = shows.filter(s => !['planning','published','completed'].includes(s.stage));
+  /* TWO GATES, derived here rather than borrowed. The stage says
+     whether the show is listed at ALL; the reach says whether an
+     anonymous visitor is one of the audiences it was listed FOR
+     (A16.14b). Before `published` both apply — a planning show without
+     'public' in its reach is not on this page. From `published` the
+     reach falls away entirely (WS-3). */
+  const anon = s => ['published','completed'].includes(s.stage) ||
+                    (s.reach || []).includes('public');
+  const listable   = s => ['planning','published','completed'].includes(s.stage);
+  const shouldList = shows.filter(s => listable(s) && anon(s));
+  const shouldNot  = shows.filter(s => !listable(s) || !anon(s));
 
   const leaked = shouldNot.filter(s => listed.includes(s.title));
-  if (leaked.length) bad('non-public stages listed: ' + leaked.map(s => s.title + ' (' + s.stage + ')').join(', '));
-  else ok(shouldNot.length + ' draft/pending shows correctly absent');
+  if (leaked.length) bad('shows listed that an anonymous visitor may not find: ' +
+    leaked.map(s => s.title + ' (' + s.stage + ', reach ' + JSON.stringify(s.reach) + ')').join(', '));
+  else ok(shouldNot.length + ' show(s) correctly absent — unlisted stage or reach that excludes a stranger');
 
   const dropped = shouldList.filter(s => !listed.includes(s.title));
   if (dropped.length) bad('public shows missing from the page: ' + dropped.map(s => s.title).join(', '));
   else ok(shouldList.length + ' public shows listed');
+
+  /* WS-4 measured on the page rather than on the array: an excluded
+     show leaves NOTHING behind — not its title anywhere in the visible
+     document, not a placeholder, not a count of what is missing.
+
+     THE SCRIPTS COME OUT FIRST, and that is not a softening of the
+     check: load-dashboard.js inlines assets/bottle-lobby-data.js into
+     this page, so the fixture source — every title, reachable or not —
+     is literally inside <script>. A browser renders none of it. Leaving
+     it in made the guard fire on the data file rather than on the page,
+     which is a guard that can only ever report the same thing. */
+  const visible = d.body.cloneNode(true);
+  [...visible.querySelectorAll('script')].forEach(n => n.remove());
+  const body = visible.innerHTML;
+  const ghosts = shows.filter(s => listable(s) && !anon(s)).filter(s => body.includes(s.title));
+  if (ghosts.length) bad('WS-4: an excluded show left a trace on the page — ' + ghosts.map(s => s.title).join(', '));
+  else ok('WS-4: excluded shows leave no card, no title and no count');
 
   /* Upcoming and past must not mix — a past show in the upcoming grid
      reads as an invitation. */
@@ -75,9 +102,12 @@ console.log('\n── which shows are listed');
    expanded listing, not in an attribute. */
 console.log('\n── A16.6 on a real page');
 {
-  const planning = shows.filter(s => s.stage === 'planning');
-  if (!planning.length) bad('no planning show in the fixtures — the anonymised level is untested');
-  else ok(planning.length + ' planning show(s) in the fixtures');
+  /* Only the ones a stranger may find: a planning show whose reach
+     excludes them is not on the page at all, and asserting it is
+     anonymised there would be asserting against nothing. */
+  const planning = shows.filter(s => s.stage === 'planning' && (s.reach || []).includes('public'));
+  if (!planning.length) bad('no publicly reachable planning show in the fixtures — the anonymised level is untested');
+  else ok(planning.length + ' publicly reachable planning show(s) in the fixtures');
 
   for (const s of planning) {
     const cell = [...d.querySelectorAll('.ws-cell')]

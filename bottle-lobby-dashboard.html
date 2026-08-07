@@ -3977,7 +3977,7 @@ With an annual production capacity of over 1.2 million bottles, Cantina Rossi is
 -->
 <script src="assets/bottle-lobby-store.js?v=26125d6d"></script>
 <script src="assets/bottle-lobby-data.js?v=59261671"></script>
-<script src="assets/bottle-lobby-public-shows.js?v=66e44128"></script>
+<script src="assets/bottle-lobby-public-shows.js?v=5ea39527"></script>
 
 <script>
 
@@ -10759,24 +10759,25 @@ const SHOW_STAGE_LABEL = {
 /* Which stages count as "still running" vs history, per role tab. */
 const SHOW_PAST_STAGES = ['completed','cancelled'];
 
-/* The platform's reach taxonomy (A16.14b), defined exactly once.
-   Wine Shows, member events (A16.8), own-label visibility (A17.13a)
-   and campaigns (A16.14e) all REFERENCE this list — none of them
-   redefines the levels and none adds a private one.
+/* REACH_LEVELS and the whole visibility derivation moved to
+   assets/bottle-lobby-public-shows.js — the taxonomy belongs beside
+   the function that reads it, and the public pages need both.
 
-   Every entry permits; none forbids. A house in two selected groups
-   sees the thing once — it is a multi-select, not a ladder.
+   What the dashboard owes it: the two books that only exist here.
+   Getters, not arrays, because BLStore reassigns these bindings when
+   it restores a snapshot and a captured array would be yesterday's. */
+registerReachBooks({
+  partnerships: function () { return partnerships; },
+  follows:      function () { return wineFollowGraph; }
+});
 
-   'partners' = active business relations (the Network nav section).
-   'community' = the follow side (My Stars / My Fans). The generic
-   value 'network' deliberately does not exist: that word names a nav
-   section and a section key, and may not also name a reach level (D39).
-   'matchmaking' is deliberately absent too — shown locked in the
-   interface with its reason on screen, until A8 exists (C2).
-
-   Not yet read by any UI; the reach selector is its own later pass. */
-const REACH_LEVELS = ['public','members','wineries','distributors',
-                      'restaurants','retail','partners','community'];
+/* The reader, as the class-1 surfaces have to declare them. A logged-in
+   dashboard is always a member of exactly one role — which is why the
+   dashboard never constructs the anonymous viewer and the public pages
+   never construct any other. */
+function roleViewer(role) {
+  return showViewer(SHOW_ROLES[role].entity, role);
+}
 
 /* `wineShows` now lives in assets/bottle-lobby-data.js, loaded ahead
    of this block. It is shared with the public pages: one record,
@@ -10861,8 +10862,14 @@ function showsForRole(role) {
      added whatever their stage. Filtering by `venueEntity` alone was
      the mistake this comment exists to prevent. */
   if (cfg.side === 'venue') {
-    const listable = PUBLIC_UPCOMING_STAGES.concat(PUBLIC_PAST_STAGES);
-    return wineShows.filter(s => listable.indexOf(s.stage) !== -1 || isMyVenue(role, s));
+    /* TWO CLASSES IN ONE LIST, and they are kept apart on purpose. The
+       browsing half is class 1 and therefore asks showVisibleTo() — a
+       show whose reach does not name this house is absent from it, with
+       no card, no title and no count (WS-4). The venue half is class 2:
+       a house that has been ASKED reaches the show through its own
+       relation, whatever the reach says, because a request it cannot
+       see is a request it cannot answer. */
+    return wineShows.filter(s => showVisibleTo(s, roleViewer(role)) || isMyVenue(role, s));
   }
   return wineShows.filter(s => s.exhibitors.some(e => e.producer === cfg.entity));
 }
@@ -11284,10 +11291,14 @@ function starsOf(followerName) {
 /* One entry per (show, followed account) pair: if you follow both the
    host and an exhibitor, both are news, and collapsing them would drop
    the one you care about. Already ordered by date via publicShows(). */
-function followedAppearances(entity, past) {
+function followedAppearances(entity, past, role) {
   const stars = starsOf(entity);
   const out = [];
-  publicShows(wineShows, past).forEach(s => {
+  /* The feed is a class-1 surface (A16.14a), so it is reach-filtered
+     like every other one. Following an account subscribes you to its
+     appearances — it does not admit you to a show whose host has not
+     named your audience. */
+  publicShows(wineShows, past, showViewer(entity, role)).forEach(s => {
     stars.forEach(who => {
       const role = publicParticipation(s, who);
       if (role) out.push({ show: s, who: who, role: role });
@@ -11311,10 +11322,15 @@ function appearanceRow(a) {
 
 /* Three rows like the Orders widget, and the count of what is left —
    silently cutting the list would read as "that is all there is". */
-function paintAppearanceWidget(elId, entity) {
+/* Takes the ROLE, not the entity: the feed is reach-filtered now, and
+   reach asks which audience the reader belongs to. Naming the house
+   without its role would have left the four widgets asking as if
+   nobody were logged in — the strangers' answer, on four member
+   dashboards. */
+function paintAppearanceWidget(elId, role) {
   const el = document.getElementById(elId);
   if (!el) return;
-  const all = followedAppearances(entity, false);
+  const all = followedAppearances(SHOW_ROLES[role].entity, false, role);
   if (!all.length) {
     el.innerHTML = '<div style="padding:0.4rem 0;font-size:0.78rem;color:var(--dim)">' +
       'No upcoming appearances from the accounts you follow.</div>';
@@ -11328,10 +11344,10 @@ function paintAppearanceWidget(elId, entity) {
 }
 
 function renderAppearanceWidgets() {
-  paintAppearanceWidget('wfeed-widget', 'Cantina Rossi');
-  paintAppearanceWidget('dfeed-widget', 'Hawesko GmbH');
-  paintAppearanceWidget('rfeed-widget', 'Bistro Laurent');
-  paintAppearanceWidget('tfeed-widget', 'Weinhaus Müller');
+  paintAppearanceWidget('wfeed-widget', 'winery');
+  paintAppearanceWidget('dfeed-widget', 'distributor');
+  paintAppearanceWidget('rfeed-widget', 'restaurant');
+  paintAppearanceWidget('tfeed-widget', 'retail');
 }
 /* Restaurant and Retail have no Wine Shows sub-view yet (A16.5), so
    their "View All" goes where the full listings actually are. */
@@ -13456,8 +13472,13 @@ function notifRegional(role, list) {
     /* Not party to it — otherwise it is an ordinary condition-2 entry
        and would appear twice, once as mine and once as "in your area". */
     if (notifHasEdge(s, cfg.entity)) return;
-    /* Condition 3: only shows a stranger may see at all. */
-    if (!publicShows([s], false).length && !publicShows([s], true).length) return;
+    /* Condition 3: only shows this reader may FIND at all. It used to
+       ask the strangers' question — no viewer, so no reach — which was
+       right while there was no reach to ask about. The notification is
+       a class-1 surface like the feed and the directory, so it asks the
+       same function with the same reader (A16.14a). */
+    const v = roleViewer(role);
+    if (!publicShows([s], false, v).length && !publicShows([s], true, v).length) return;
     notifPush(list, cfg.entity, {
       id: notifId('regional', s.id, s.date),
       kind: 'regional', cls: 'info', at: s.date, actor: s.leadHost,

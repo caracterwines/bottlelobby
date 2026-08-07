@@ -39,6 +39,173 @@ function showHeroImage(show) {
    public state either. */
 const PUBLIC_UPCOMING_STAGES = ['planning', 'published'];
 const PUBLIC_PAST_STAGES     = ['completed'];
+function showListable(show) {
+  return PUBLIC_UPCOMING_STAGES.indexOf(show.stage) !== -1 ||
+         PUBLIC_PAST_STAGES.indexOf(show.stage) !== -1;
+}
+
+/* ══ REACH — WHO MAY FIND THE SHOW (A16.14a/b) ═══════════════════ */
+/* THE PLATFORM'S REACH TAXONOMY, DEFINED EXACTLY ONCE, and it lives
+   here rather than in the dashboard because this is the file that
+   answers "what may this visitor see" — the taxonomy and its reader
+   in one place, or they drift like any other pair of copies. Wine
+   Shows, member events (A16.8), own-label visibility (A17.13a) and
+   campaigns (A16.14e) all REFERENCE this list; none redefines the
+   levels and none adds a private one.
+
+   'partners' = active business relations (the Network nav section).
+   'community' = the follow side (My Stars / My Fans). The generic
+   value 'network' deliberately does not exist: that word names a nav
+   section and a section key and may not also name a reach level (D39).
+   'matchmaking' is deliberately absent too — named in the interface,
+   shown locked, with its reason on screen, until A8 exists (C2). */
+const REACH_LEVELS = ['public','members','wineries','distributors',
+                      'restaurants','retail','partners','community'];
+
+/* The dashboard's role names are not the taxonomy's. One map, here,
+   beside the values it maps onto — a second one anywhere else would be
+   a second answer to which audience a role belongs to. */
+const REACH_ROLE_VALUE = {
+  winery:'wineries', distributor:'distributors',
+  restaurant:'restaurants', retail:'retail'
+};
+
+/* THE VIEWER, and the reason this whole section is one function: a
+   class-1 surface has to answer "may THIS reader find this show" for a
+   role, for a named house, and for somebody who is neither. Three
+   questions with three answers would be three places to get it wrong,
+   so they are one question with one shape.
+
+   `entity` is the house, `role` its dashboard role. An anonymous
+   visitor has neither, and that is not a special case — it is simply
+   the viewer that matches no role and appears in nobody's books. */
+const SHOW_ANON = { entity:null, role:null };
+function showViewer(entity, role) {
+  return { entity: entity || null, role: role || null };
+}
+
+/* Deduplicated on the way out: a house in two selected groups sees the
+   show once, and an accidental duplicate in the data changes nothing.
+   A show with no reach at all is found by nobody — the protective
+   direction, and the host cockpit says so in words. */
+function showReach(show) {
+  if (!Array.isArray(show.reach)) return [];
+  const seen = {}, out = [];
+  show.reach.forEach(function (v) { if (!seen[v]) { seen[v] = 1; out.push(v); } });
+  return out;
+}
+
+/* Whose show it is (WS-2). Not an audience — the host and the people
+   who have said yes ARE the show, and no reach setting may lock them
+   out of it. A venue that has only been ASKED is deliberately absent:
+   it is not a confirmed participant, and it reaches the show through
+   its own direct relation, which is a class-2 route.
+
+   Membership only. Nothing here is ever rendered, or it would be the
+   name disclosure A16.6 forbids before `published`. */
+function showParties(show) {
+  const out = [show.leadHost];
+  confirmedExhibitors(show).forEach(function (e) { out.push(e.producer); });
+  (show.attendees || []).forEach(function (a) {
+    if (a.status === 'confirmed') out.push(a.stakeholder);
+  });
+  if (show.venueEntity && show.venueStatus === 'accepted') out.push(show.venueEntity);
+  return out;
+}
+
+/* `partnerships` and `wineFollowGraph` are top-level `let`s in the
+   dashboard — and a top-level `let` in a classic script is NOT a
+   property of `window`, so this file cannot reach them by name. The
+   page hands them over, exactly as it hands its state to BLStore and
+   for exactly the same JS fact. GETTERS, never the arrays: a captured
+   array is a copy of a binding and goes stale the moment the store
+   restores a snapshot over it (invariant 1, applied to ourselves).
+
+   A public page registers nothing, and that is not a degraded answer:
+   an anonymous visitor has no entity, so 'partners' and 'community'
+   could never have admitted them anyway. Absent book, empty book. */
+const REACH_BOOKS = {
+  partnerships: function () { return []; },
+  follows:      function () { return []; }
+};
+function registerReachBooks(map) {
+  Object.keys(map).forEach(function (k) {
+    if (typeof map[k] !== 'function')
+      throw new Error('registerReachBooks: "' + k + '" needs a getter');
+    REACH_BOOKS[k] = map[k];
+  });
+}
+/* 'partners' resolves over the HOST's active business relations, read
+   from both ends of the one partnership row (A6). */
+function hostPartners(host) {
+  return (REACH_BOOKS.partnerships() || []).filter(function (p) {
+    return p.distributor === host || p.partner === host;
+  }).map(function (p) { return p.distributor === host ? p.partner : p.distributor; });
+}
+/* 'community' is the host's follow side — the houses that follow them
+   (My Fans) and the houses they follow (My Stars), A7. */
+function hostCommunity(host) {
+  const out = [];
+  (REACH_BOOKS.follows() || []).forEach(function (f) {
+    if (f.winery === host)   out.push(f.follower);
+    if (f.follower === host) out.push(f.winery);
+  });
+  return out;
+}
+
+/* EVERY ENTRY PERMITS; NONE FORBIDS. There is no precedence and no
+   self-contradicting combination, which is exactly why reach is a
+   multi-select and not a ladder — so this is an `.some()` over the
+   selected values and can never be anything else. An unknown value
+   permits nothing rather than everything: the safe direction for a
+   level this code has not been taught yet. */
+function reachAdmits(show, level, viewer) {
+  switch (level) {
+    case 'public':       return true;
+    case 'members':      return !!viewer.role;
+    case 'wineries':
+    case 'distributors':
+    case 'restaurants':
+    case 'retail':       return REACH_ROLE_VALUE[viewer.role] === level;
+    case 'partners':     return !!viewer.entity &&
+                                hostPartners(show.leadHost).indexOf(viewer.entity) !== -1;
+    case 'community':    return !!viewer.entity &&
+                                hostCommunity(show.leadHost).indexOf(viewer.entity) !== -1;
+    default:             return false;
+  }
+}
+
+/* ONE DERIVATION FOR EVERY CLASS-1 SURFACE (A16.14a): the Wine Shows
+   page, the public profiles, the follow feed, the regional
+   notification and the dashboards' Discover lists all ask this and
+   nothing else. A second implementation would be a second answer to
+   "may this reader find this show", and the day the two disagree is
+   the day the quieter one is wrong.
+
+   The order of the three gates is the rule, in order:
+
+     1. THE STAGE. `draft`, `pending_approval` and `changes_requested`
+        are on no public or directory surface at all. That is not reach
+        and no reach value reopens it.
+     2. WS-2. Within a listed stage the host and the confirmed
+        participants always find their own show.
+     3. WS-3. From `published` the reach FALLS AWAY. A released show
+        stands on the open website, and filtering a public URL for
+        members is a promise the URL cannot keep. Reach may still order
+        a directory — it never gates the route.
+
+   Only then does reach decide, and EXCLUDED MEANS INVISIBLE: the
+   caller drops the show entirely. No greyed card, no count, no
+   placeholder — an anonymised tile reads "something is happening here,
+   and not with you", which in a competitive trade is information in
+   itself (WS-4). */
+function showVisibleTo(show, viewer) {
+  viewer = viewer || SHOW_ANON;
+  if (!showListable(show)) return false;
+  if (viewer.entity && showParties(show).indexOf(viewer.entity) !== -1) return true;
+  if (publicLevelFor(show) === 'full') return true;
+  return showReach(show).some(function (l) { return reachAdmits(show, l, viewer); });
+}
 
 /* ONE date formatter, and it lives here because this is the file every
    surface loads — the dashboard and all 16 public pages. The dashboard
@@ -83,10 +250,19 @@ function showDateValue(show) {
   if (mi === -1) return Number.MAX_SAFE_INTEGER;
   return Number(m[3]) * 10000 + (mi + 1) * 100 + Number(m[1]);
 }
-/* Upcoming soonest first; past most recent first. */
-function publicShows(all, past) {
+/* Upcoming soonest first; past most recent first — and only what this
+   viewer may find at all (A16.14b). `viewer` defaults to the anonymous
+   one, so the public Wine Shows page and the fifteen public profiles
+   get the strangers' answer without asking for it, and a dashboard
+   surface has to say who is reading before it gets more.
+
+   SORTING IS BY DATE AND STAYS BY DATE. Reach may order a directory
+   (A16.14b) — it is a placement input, never an access one, and the
+   day it becomes an ordering input it must not quietly become the
+   other thing here. */
+function publicShows(all, past, viewer) {
   const stages = past ? PUBLIC_PAST_STAGES : PUBLIC_UPCOMING_STAGES;
-  return all.filter(s => stages.indexOf(s.stage) !== -1)
+  return all.filter(s => stages.indexOf(s.stage) !== -1 && showVisibleTo(s, viewer))
             .sort((a, b) => past ? showDateValue(b) - showDateValue(a)
                                  : showDateValue(a) - showDateValue(b));
 }
@@ -111,9 +287,7 @@ function publicShows(all, past) {
    Spec: A16.6, "Anonymisation holds across every surface at once", and
    the role table in A16.7. Read those before loosening this. */
 function publicParticipation(show, entity) {
-  const listable = PUBLIC_UPCOMING_STAGES.indexOf(show.stage) !== -1 ||
-                   PUBLIC_PAST_STAGES.indexOf(show.stage) !== -1;
-  if (!listable) return null;
+  if (!showListable(show)) return null;
   if (show.leadHost === entity) return 'host';
   if (publicLevelFor(show) !== 'full') return null;
   return confirmedExhibitors(show).some(e => e.producer === entity) ? 'exhibitor' : null;
@@ -123,11 +297,14 @@ const PARTICIPATION_LABEL = { host: 'Hosting', exhibitor: 'Exhibiting' };
 /* Everything a profile page needs: the shows this entity may be seen
    at, split the way A16.7 asks for them — "upcoming and, after
    `completed`, as history". */
-function publicShowsForEntity(all, entity) {
+/* A profile page is a class-1 surface, so the reader's reach decides
+   here too: a profile may not become the way round an exclusion. The
+   filter is publicShows()' own, applied twice on the same list. */
+function publicShowsForEntity(all, entity, viewer) {
   const mine = all.filter(s => publicParticipation(s, entity));
   return {
-    upcoming: publicShows(mine, false),
-    past:     publicShows(mine, true)
+    upcoming: publicShows(mine, false, viewer),
+    past:     publicShows(mine, true,  viewer)
   };
 }
 

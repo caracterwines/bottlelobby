@@ -43,11 +43,17 @@ const wineNameOf = ref => probe.window.eval('wineName(' + JSON.stringify(ref) + 
 
 /* What SHOULD be on each page, derived here independently of the
    renderer — a test that reuses the implementation proves nothing. */
+/* A profile page is read by an ANONYMOUS visitor, so the reach gate is
+   the strangers' one: before `published` the show has to name 'public',
+   from `published` the reach falls away (WS-3). A profile may not
+   become the way round an exclusion — including its own host's. */
+const findableByAnyone = s => ['published','completed'].includes(s.stage) ||
+                              (s.reach || []).includes('public');
 function expected(entity) {
   const out = [];
   for (const s of SHOWS) {
     const listable = ['planning', 'published', 'completed'].includes(s.stage);
-    if (!listable) continue;
+    if (!listable || !findableByAnyone(s)) continue;
     if (s.leadHost === entity) { out.push({ show: s, role: 'Hosting' }); continue; }
     const full = s.stage === 'published' || s.stage === 'completed';
     if (!full) continue;
@@ -202,7 +208,7 @@ console.log('\n── the fixtures exercise both outcomes');
   if (roles.has('Hosting') && roles.has('Exhibiting')) ok('both host and exhibitor roles occur');
 
   /* And the case the whole rule exists for must be present. */
-  const hidden = SHOWS.filter(s => s.stage === 'planning')
+  const hidden = SHOWS.filter(s => s.stage === 'planning' && findableByAnyone(s))
     .flatMap(s => s.exhibitors.filter(e => e.status === 'confirmed').map(e => e.producer));
   if (!hidden.length) bad('no producer is confirmed at an anonymised show — A16.6 is untested here');
   else ok(hidden.length + ' confirmed producer(s) correctly absent from their own profile: ' +
