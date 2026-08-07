@@ -72,7 +72,15 @@ w.showWineShows('distributor','current');
 /* WS-2604 is the draft this file drives to `planning`, and its venue is
    a partner that has been asked but has not answered. Settle that first
    — otherwise the promotion checked further down cannot happen for a
-   reason that has nothing to do with the wine handshake (A16.11). */
+   reason that has nothing to do with the wine handshake (A16.11).
+
+   IT SHIPS IN `planning` NOW (D38) — recruiting is what that stage is
+   for, and a show recruiting its first exhibitor may not be held in
+   `draft` waiting for one. The promotion this file measures is still
+   live code, so the draft it needs is built here rather than borrowed
+   from a fixture that has moved for reasons of its own. */
+w.eval("(function(){var s=wineShows.find(x=>x.id==='WS-2604');s.stage='draft';})()");
+if (S('WS-2604').stage !== 'draft') { console.log('  ✗ could not put WS-2604 back into draft'); process.exit(1); }
 console.log('\n── the venue answers first, so the wine can be the only variable');
 w.showWineShows('restaurant','current');
 w.openShowDetail('WS-2604');

@@ -105,7 +105,15 @@ if (!pub.includes('Weingut Schmitt')) bad('published show should default to the 
 else ok('published → full card by default');
 
 // ── 6. readiness checklist is computed (A16.10)
+/* WS-2604 SHIPS IN `planning` NOW (D38): recruiting happens inside that
+   stage, so the fixture that recruits from zero may not sit in `draft`.
+   The promotion mechanism this section measures still exists and still
+   needs a draft to be observed on, so the harness BUILDS one instead of
+   leaning on a fixture that has legitimately moved — the same discipline
+   the rest of this file follows. Everything below is unchanged. */
 console.log('\n── readiness checklist');
+w.eval("(function(){var s=wineShows.find(x=>x.id==='WS-2604');s.stage='draft';})()");
+if (byId('WS-2604').stage !== 'draft') bad('could not put WS-2604 back into draft for this section');
 w.openShowDetail('WS-2604');                       // draft, venue asked, no exhibitors
 let rows = [...d.querySelectorAll('#dshow-detail-pane .ws-check-row')];
 if (rows.length !== 3) bad('expected 3 checklist rows, got ' + rows.length);

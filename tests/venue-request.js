@@ -91,8 +91,8 @@ w.showWineShows('restaurant','current');
   else ok('restaurant sees shows it has no relation to at all');
   if (has('Nordic Selection')) bad('LEAK: a pending_approval show is not public and must not be listed');
   else ok('pending_approval absent — nothing is listed before it is listable');
-  if (!has('Sicilia Prima')) bad('the show it is the venue for is missing — a draft reaches it by relation');
-  else ok('its own venue request is listed too, draft though it is');
+  if (!has('Sicilia Prima')) bad('the show it is the venue for is missing');
+  else ok('its own venue request is listed too');
   /* WS-2605 is the C9 regional fixture: a Frankfurt planning show this
      restaurant has no relation to. It is publicly listed, so it belongs
      in this count for exactly the reason Grande Rioja does. */
@@ -122,10 +122,20 @@ w.showWineShows('restaurant','current');
 w.showWineShows('retail','current');
 {
   const rows = [...d.querySelectorAll('#tshow-table .otbl-row')];
-  if (rows.length !== 3) bad('retail should see the 3 publicly listed shows, got ' + rows.length);
-  else ok('retail sees the same 3 public shows — it is the venue of none of them');
-  if (rows.some(r => r.textContent.includes('Sicilia Prima'))) bad('LEAK: a draft show reached a role with no relation to it');
-  else ok('the draft stays with the venue it was sent to');
+  /* FOUR now, not three, and the fourth is the D38 consequence: WS-2604
+     ships in `planning` instead of `draft`, so it is a listed show like
+     any other. Weinhaus Müller is the venue of none of them. */
+  if (rows.length !== 4) bad('retail should see the 4 publicly listed shows, got ' + rows.length);
+  else ok('retail sees 4 listed shows — it is the venue of none of them');
+  /* It reaches the retailer as a LISTING, never as a task: the venue
+     request on it went to Bistro Laurent. A row here is browsing. */
+  const sp = rows.find(r => r.textContent.includes('Sicilia Prima'));
+  if (!sp) bad('a planning show must be listed for a retailer browsing');
+  else if (sp.textContent.includes('Awaiting you'))
+    bad("LEAK: another venue's request badged this retailer as if it were theirs");
+  else if (sp.textContent.includes('Bistro Laurent'))
+    bad('LEAK: the anonymised row names the venue that was asked');
+  else ok("someone else's venue request is listed, unchipped and unnamed");
 }
 w.showWineShows('retail','history');
 {

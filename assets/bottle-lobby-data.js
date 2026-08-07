@@ -479,17 +479,50 @@ function sameWine(a, b, book) {
   return !!pa && !!pb && pa.id === pb.id;
 }
 
+/* `reach` is the host's answer to "who may FIND this show" (A16.14b),
+   and it is a MULTI-SELECT: every entry permits, none forbids, and a
+   house in two selected groups sees the show once. It gates the class-1
+   surfaces before `published` and nothing at all from `published` on —
+   a released show stands on the open website (WS-3).
+
+   Every fixture carries an explicit value. Four of them read ['public']
+   because that is the surface they stand on TODAY: a reach decision
+   introduced after the fact must not retroactively narrow visibility
+   somebody has already been shown. WS-2605 in particular carries the
+   regional-notification fixture that tests/notifications.js asserts.
+
+   A show with no `reach` at all is found by nobody but its host and its
+   confirmed participants. That is the protective direction — and the
+   host cockpit says so in words rather than leaving a silent gap. */
 let wineShows = [
+  /* THE RECRUITING FIXTURE, and the one D38 is written about (A16.2,
+     Appendix D): `planning` with zero exhibitors and zero wines. The
+     old trigger would have held it in `draft` until it had a confirmed
+     exhibitor — which is the contradiction D38 names, because
+     recruiting is what `planning` is FOR.
+
+     It is also the restricted open call: reach names wineries and
+     Hawesko's own active partners, so the two groups that could
+     actually exhibit or attend find it, and an anonymous visitor does
+     not. Measured consequence, and it is the point rather than a side
+     effect: Bistro Laurent, Weinhaus Müller and Vinstuen København
+     hold active Hawesko partnerships and therefore DO see it through
+     'partners'. Invisible means an unpartnered restaurant or retailer
+     and the open web — not "every buyer". */
   { id:'WS-2604', title:'Sicilia Prima', date:'2027-03-14', city:'Frankfurt',
     focus:'Sicilian indigenous varieties for the on-trade',
     heroImage:'images/hamburg-glasses.jpg',
-    stage:'draft', leadHost:'Hawesko GmbH',
+    stage:'planning', leadHost:'Hawesko GmbH',
+    reach:['wineries','partners'],
+    applications_open:true, application_deadline:'2027-01-31',
     venueType:'partner_venue', venueEntity:'Bistro Laurent',
     venueName:'Bistro Laurent, Frankfurt', venueStatus:'requested',
     capacity:60, exhibitors:[], attendees:[],
     events:[
       { at:'2026-07-30', actor:'Hawesko GmbH', text:'Show created as a draft' },
-      { at:'2026-07-30', actor:'Hawesko GmbH', text:'Venue request sent to Bistro Laurent' } ] },
+      { at:'2026-07-30', actor:'Hawesko GmbH', text:'Venue request sent to Bistro Laurent' },
+      { at:'2026-07-30', actor:'Hawesko GmbH', text:'Basics stand — show listed in Planning', scope:'show' },
+      { at:'2026-07-30', actor:'Hawesko GmbH', text:'Open for applications from wineries and partners until 31 Jan 2027' } ] },
 
   /* Deliberate fixture for C9's regional exception. Bistro Laurent sits
      in Frankfurt and has NOTHING to do with this show — not host, not
@@ -510,6 +543,12 @@ let wineShows = [
     focus:'German riesling and pinot for the Rhein-Main on-trade',
     heroImage:'images/hamburg-glasses.jpg',
     stage:'planning', leadHost:'Hawesko GmbH',
+    /* ['public'] read off the surface it stands on: this is the show
+       the regional notification is derived from, and that derivation
+       only reaches a stranger's eyes at all because the show is
+       publicly listed (C9 condition 3). */
+    reach:['public'],
+    applications_open:false, application_deadline:null,
     venueType:'host_premises', venueEntity:null,
     venueName:'Hawesko Rhein-Main Loft, Frankfurt', venueStatus:'not_required',
     capacity:50, attendees:[],
@@ -525,6 +564,11 @@ let wineShows = [
     focus:'Premium reds from Rioja and Sicily',
     heroImage:'images/duesseldorf-tasting-wide.jpg',
     stage:'planning', leadHost:'Hawesko GmbH',
+    /* Serge's decision, 6 Aug 2026: the open, anonymised listing — the
+       one an anonymous visitor finds on the public Wine Shows page.
+       It is the counterpart WS-2604 is read against. */
+    reach:['public'],
+    applications_open:false, application_deadline:null,
     venueType:'host_premises', venueEntity:null,
     venueName:'Hawesko Tasting Loft, Hamburg', venueStatus:'not_required',
     capacity:80,
@@ -556,6 +600,8 @@ let wineShows = [
     focus:'Mediterranean whites for Scandinavian kitchens',
     heroImage:'images/duesseldorf-pouring.jpg',
     stage:'pending_approval', leadHost:'Hawesko GmbH',
+    reach:['public'],
+    applications_open:false, application_deadline:null,
     venueType:'partner_venue', venueEntity:'Vinstuen København',
     venueName:'Vinstuen København, Copenhagen', venueStatus:'quoted',
     cateringTotal:1250, venueQuotedAt:'2026-07-27',
@@ -578,6 +624,12 @@ let wineShows = [
     focus:'Cool-climate whites, two rivers',
     heroImage:'images/hamburg-tasting-room.jpg',
     stage:'published', leadHost:'Hawesko GmbH',
+    /* Carried for completeness, and deliberately without effect: from
+       `published` the reach falls away and the show stands on the open
+       route whatever it says (WS-3). It is history on this row, not a
+       gate. */
+    reach:['public'],
+    applications_open:false, application_deadline:null,
     venueType:'host_premises', venueEntity:null,
     venueName:'Hawesko Tasting Loft, Hamburg', venueStatus:'not_required',
     /* Deliberately small so the waitlist is reachable in the demo: three
@@ -629,6 +681,8 @@ let wineShows = [
     focus:'Italian spring releases',
     heroImage:'images/duesseldorf-presenter.jpg',
     stage:'completed', leadHost:'Hawesko GmbH',
+    reach:['public'],
+    applications_open:false, application_deadline:null,
     venueType:'partner_venue', venueEntity:'Weinhaus Müller',
     venueName:'Weinhaus Müller, Munich', venueStatus:'accepted',
     cateringTotal:780, venueQuotedAt:'2026-02-09', venueAcceptedAt:'2026-02-11',

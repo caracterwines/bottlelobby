@@ -43,18 +43,26 @@ const ROLES = [
 function stars(entity) {
   return [...new Set(GRAPH.filter(f => f.follower === entity).map(f => f.winery))];
 }
+/* SORTED BY DATE, because the feed is — and the window below is only
+   meaningful against the real order. Reading the fixtures in array
+   order was a hidden assumption that array order IS render order; it
+   held only while the one show declared first happened to be excluded
+   anyway. WS-2604 moving into `planning` (D38) put the LAST show by
+   date at the FRONT of the array and the assumption fell over. Deriving
+   the order here rather than borrowing it keeps this file independent
+   of the implementation, which is the whole point of it. */
 function shouldAnnounce(entity) {
   const out = [];
   for (const s of SHOWS) {
     if (!['planning', 'published'].includes(s.stage)) continue;
     for (const who of stars(entity)) {
-      if (s.leadHost === who) { out.push({ who, title: s.title, role: 'host' }); continue; }
+      if (s.leadHost === who) { out.push({ who, title: s.title, date: s.date, role: 'host' }); continue; }
       if (s.stage !== 'published') continue;
       if (s.exhibitors.some(e => e.status === 'confirmed' && e.producer === who))
-        out.push({ who, title: s.title, role: 'exhibitor' });
+        out.push({ who, title: s.title, date: s.date, role: 'exhibitor' });
     }
   }
-  return out;
+  return out.sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : 0);
 }
 
 console.log('── every role has a feed');

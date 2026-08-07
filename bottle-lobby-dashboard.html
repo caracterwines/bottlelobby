@@ -3976,7 +3976,7 @@ With an annual production capacity of over 1.2 million bottles, Cantina Rossi is
      also switches persistence off for every harness. See tests/README.
 -->
 <script src="assets/bottle-lobby-store.js?v=26125d6d"></script>
-<script src="assets/bottle-lobby-data.js?v=be9617ad"></script>
+<script src="assets/bottle-lobby-data.js?v=59261671"></script>
 <script src="assets/bottle-lobby-public-shows.js?v=66e44128"></script>
 
 <script>
@@ -10941,7 +10941,16 @@ function showAwaits(role, show) {
   if (SHOW_PAST_STAGES.indexOf(show.stage) !== -1) return false;
   if (cfg.side === 'venue') {
     const me = myAttendance(role, show);
-    return venueTurn(show) === 'venue' || (!!me && me.status === 'invited');
+    /* THE REQUEST HAS TO BE ADDRESSED TO ME. venueTurn() answers "does
+       this show wait on its venue", which is a property of the SHOW —
+       asking it without isMyVenue() badges every restaurant and
+       retailer browsing a show whose venue request went to somebody
+       else. It was unreachable only because the one show with an
+       unanswered request happened to sit in `draft` and therefore in
+       nobody else's list; WS-2604 moving to `planning` (D38) made it
+       reachable, and tests/venue-request.js caught it the same hour. */
+    return (isMyVenue(role, show) && venueTurn(show) === 'venue') ||
+           (!!me && me.status === 'invited');
   }
   /* An attendee request waits on the host exactly as a proposed wine
      does — same shape, same single answer (A16.5). */
