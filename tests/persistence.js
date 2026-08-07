@@ -528,6 +528,7 @@ console.log('\n── the one list stays the one list');
     attendeeShowId:        'the show an open invite modal is about',
     counterShowId:         'the show an open counter-proposal modal is about',
     reachShowId:           'the show an open reach editor is about — the SETTING is on the show record and persists with it',
+    applyShowId:           'the show an open application modal is about — the APPLICATION is an exhibitors row and persists with the show',
     interestShowId:        'the show an open order-list modal is about',
     inviteShowId:          'the show an open exhibitor-invite modal is about',
     venueShowId:           'the show an open venue modal is about',

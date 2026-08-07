@@ -10898,7 +10898,33 @@ function isShowParticipant(role, show) {
   const cfg = SHOW_ROLES[role];
   if (cfg.side === 'host')  return show.leadHost === cfg.entity;
   if (cfg.side === 'venue') return isMyVenue(role, show);
-  return show.exhibitors.some(e => e.producer === cfg.entity);
+  /* AN APPLICANT IS NOT A PARTICIPANT. They have asked; nobody has said
+     yes. The working view shows the line-up to the people who are part
+     of it, and handing it to somebody the host has not accepted would
+     turn "let me apply" into a way to read the competition — A16.6 puts
+     the applicant in exactly two views, their own and the host's, and
+     theirs is the visitor pane with their own application on it. */
+  return show.exhibitors.some(e => e.producer === cfg.entity && e.status !== 'applied');
+}
+/* My row on this show whatever its status — including an application,
+   which isShowParticipant() deliberately does not count. */
+function myApplication(role, show) {
+  const e = myExhibitor(role, show);
+  return e && e.status === 'applied' ? e : null;
+}
+function applicationsOf(show) {
+  return show.exhibitors.filter(e => e.status === 'applied');
+}
+/* May this house apply right now? Every clause is a fact about the
+   record, so the button and the guard in saveApplication() cannot
+   drift apart — one function, two readers (A16.10). */
+function canApplyTo(role, show) {
+  const cfg = SHOW_ROLES[role];
+  if (cfg.side !== 'producer') return false;      // only a producer exhibits
+  if (!show.applications_open) return false;
+  if (PUBLIC_UPCOMING_STAGES.indexOf(show.stage) === -1) return false;
+  if (!showVisibleTo(show, roleViewer(role))) return false;
+  return !myExhibitor(role, show);                // already on the show, either way
 }
 function showsForTab(role, tab) {
   const list = showsForRole(role).filter(s =>
@@ -10928,6 +10954,12 @@ function actionCount(role) {
    when the side that did NOT propose it has said yes (A16.4, D23). */
 function exhibitorTurn(show, e) {
   if (e.status === 'declined') return null;
+  /* AN APPLICATION IS A16.4 MIRRORED (A16.14c). An invitation is the
+     host asking and the producer answering; an application is the
+     producer asking and the host answering. Same row, same statuses,
+     opposite direction — which is why it needs one line here and not a
+     second mechanism beside this one. */
+  if (e.status === 'applied')  return 'host';
   if (e.status === 'invited')  return 'producer';   // invitation unanswered
   if (e.products.some(p => p.status === 'confirmed')) return null;
   const open = e.products.find(p => p.status === 'proposed');
@@ -11275,8 +11307,14 @@ function logShow(show, actor, text, scope) {
   show.events.push(e);
 }
 
+/* WINES ON THE SHOW, and an applicant's is not one of them (WS-5): an
+   application creates no exhibitor confirmation, so the wine it names
+   is not yet being presented anywhere. It starts counting the moment
+   the host accepts, which is the moment it becomes true. */
 function showProductCount(show) {
-  return show.exhibitors.reduce((n, e) => n + e.products.filter(p => p.status !== 'declined').length, 0);
+  return show.exhibitors
+    .filter(e => e.status !== 'applied')
+    .reduce((n, e) => n + e.products.filter(p => p.status !== 'declined').length, 0);
 }
 /* confirmedExhibitors() moved to assets/bottle-lobby-public-shows.js. */
 
@@ -11511,6 +11549,10 @@ function renderWineShows(role) {
     const roleChip  = isMyVenue(role, s)
       ? '<span class="ord-chip chip-promo">' +
         (s.venueStatus === 'requested' ? 'Venue request' : 'You are the venue') + '</span>' : '';
+    /* An application is a state the list has to say out loud, or the
+       producer's own row looks like an ordinary invitation. */
+    const app       = cfg.side === 'producer' ? myApplication(role, s) : null;
+    const applyChip = app ? '<span class="ord-chip chip-manual">Applied — waiting for the host</span>' : '';
     const me        = cfg.side === 'venue' ? myAttendance(role, s) : null;
     const standing  = me ? attendeeStanding(s, me) : null;
     const attendChip = !me ? ''
@@ -11527,7 +11569,7 @@ function renderWineShows(role) {
       '<span class="otbl-dim">' + orderDate(s.date) + '</span>' +
       '<span class="otbl-cust">' + s.title +
         '<em>' + (showAwaits(role, s) ? '<span class="ord-chip chip-offer">Awaiting you</span>' : '') +
-        quoteChip + roleChip + attendChip + s.focus + '</em></span>' +
+        quoteChip + roleChip + applyChip + attendChip + s.focus + '</em></span>' +
       '<span class="otbl-cust">' + s.city + '<em>' + venueCell + '</em></span>' +
       '<span class="otbl-dim">' + wineCell + '</span>' +
       '<span><span class="ord-stage ws-' + s.stage + '">' + SHOW_STAGE_LABEL[s.stage] + '</span></span>' +
@@ -11571,6 +11613,160 @@ function showVenueLabel(show) {
 function toggleShowVisPreview(level) {
   showState[activeShowRole].visPreview = level;
   renderShowDetail(showState[activeShowRole].openId);
+}
+
+/* ══ APPLICATIONS — A16.4 MIRRORED (A16.14c) ═════════════════════ */
+/* Recruiting is an activity INSIDE `planning`, not a new stage and not
+   a second record (D38). An application is a `wine_show_exhibitors`
+   row with status 'applied' and source 'open_call' — the same row an
+   invitation writes, entered from the other end.
+
+   AN APPLICATION CREATES NOTHING (WS-5). No exhibitor confirmation, no
+   participation, no seat, no order. On the host's side it is a task; on
+   the applicant's side it reads "applied, waiting for the host". Both
+   sentences are rendered from this one row. */
+let applyShowId = null;
+function openApplyModal(id) {
+  const role = activeShowRole, s = actionShow(id); if (!s) return;
+  if (!canApplyTo(role, s)) { actionSay('This show is not taking applications from you'); return; }
+  applyShowId = id;
+  /* THE APPLICANT'S OWN WINES, and only those (invariant 2). A producer
+     applies with a bottle they made; the picker is their book, never
+     the host's portfolio and never a typed name (A15.2a). */
+  const mine = partnerWinesPool.filter(w => w.winery === SHOW_ROLES[role].entity);
+  document.getElementById('ap-show').textContent = s.title + ' · ' + orderDate(s.date) + ' · ' + s.city;
+  document.getElementById('ap-deadline').textContent = showApplicationsLine(s);
+  document.getElementById('ap-product').innerHTML =
+    '<option value="">Without naming a wine — ask to be considered</option>' +
+    mine.map(w => '<option value="' + w.id + '">' + wineLabel(w) + ' · ' + w.type + '</option>').join('');
+  document.getElementById('show-apply-modal').classList.add('active');
+}
+function closeApplyModal() { document.getElementById('show-apply-modal').classList.remove('active'); }
+
+function saveApplication() {
+  const role = activeShowRole, s = actionShow(applyShowId); if (!s) return;
+  const me = SHOW_ROLES[role].entity;
+  /* Asked again rather than trusted: the modal was opened against a
+     state that may have moved since (B12). */
+  if (!canApplyTo(role, s)) { actionSay('This show is no longer taking applications from you'); return; }
+  const ref = document.getElementById('ap-product').value;
+  const row = { producer: me, status:'applied', source:'open_call', products: [] };
+  if (ref) row.products.push({ productId: ref, proposedBy:'producer', status:'proposed' });
+  s.exhibitors.push(row);
+  logShow(s, me, ref ? 'Applied to exhibit with ' + wineLabel(ref)
+                     : 'Applied to exhibit without naming a wine');
+  closeApplyModal();
+  refreshShows();
+  refreshNotifications();
+  showToast('✓ Applied — waiting for ' + s.leadHost);
+}
+
+/* THE TWO TRANSITIONS, AND THE ROW SURVIVES BOTH (A16.14c). A decline
+   is a resting state with its reason kept on the row, like `held_back`
+   (D29) — never a deletion, or the host loses the record of who asked
+   and the applicant loses the answer. */
+function hostRespondToApplication(showId, producer, action) {
+  const s = actionShow(showId); if (!s) return;
+  if (s.leadHost !== SHOW_ROLES[activeShowRole].entity) { actionSay('Only the host answers an application'); return; }
+  const e = applicationsOf(s).find(x => x.producer === producer);
+  if (!e) { actionSay('No open application from ' + producer); return; }
+
+  if (action === 'accept') {
+    /* 'confirmed', NOT a new word. A16.14c's `accepted` means "from
+       here it is an ordinary exhibitor entry and A16.4 is unchanged" —
+       and A16.4's word for a producer who is on the show is
+       `confirmed`. Two words for one state is the mistake D26 names,
+       and confirmedExhibitors() is the single gate deciding who may be
+       NAMED in public: it must have exactly one input.
+
+       THE WINE IS NOT CONFIRMED HERE. The producer proposed it, so the
+       host still has to agree it (D23) — which drops the row straight
+       into the existing "Wines Awaiting Your Confirmation" flow rather
+       than inventing a second one. */
+    e.status = 'confirmed';
+    logShow(s, s.leadHost, 'Accepted ' + producer + "'s application" +
+      (e.products.length ? ' — their wine still needs confirming' : ' — no wine named yet'));
+    showToast('✓ ' + producer + ' is on the show');
+  } else {
+    const why = (window.prompt('Why is this application declined? The reason stays on the record and is what ' +
+                               producer + ' is told.') || '').trim();
+    if (!why) { showToast('✗ A decline needs a reason'); return; }
+    e.status = 'declined';
+    e.declineReason = why;
+    logShow(s, s.leadHost, 'Declined ' + producer + "'s application — " + why);
+    showToast('✓ Application declined');
+  }
+  refreshShows();
+  refreshNotifications();
+}
+
+/* The host's task list. It is separate from "Wines Awaiting Your
+   Confirmation" on purpose: that box asks "is this the right wine",
+   this one asks "is this house on the show at all", and answering the
+   second with the first would confirm a wine for somebody who has not
+   been accepted. */
+function hostApplicationBox(s) {
+  const apps = applicationsOf(s);
+  if (!apps.length) {
+    if (!s.applications_open) return '';
+    return '<div class="odt-box"><div class="odt-box-head">Applications</div><div class="odt-box-body">' +
+      '<div class="edit-section-sub" style="margin:0">' + showApplicationsLine(s) + ' — none received yet. ' +
+      'Producers who can find this show (see the reach above) may apply with one of their own wines.</div>' +
+    '</div></div>';
+  }
+  return '<div class="odt-box"><div class="odt-box-head">Applications' +
+    '<span class="right"><span class="ord-chip chip-offer">' + apps.length + ' awaiting you</span></span>' +
+    '</div><div class="odt-box-body">' +
+    '<div class="edit-section-sub" style="margin:0 0 0.9rem">These producers asked to exhibit. Accepting puts ' +
+    'them on the show as an ordinary exhibitor; the wine they named is still a proposal and you confirm it ' +
+    'separately. Declining keeps the record, with your reason on it.</div>' +
+    apps.map(e => {
+      const wine = e.products.length ? showProductLabel(e.products[0]) : 'No wine named — asked to be considered';
+      return '<div style="padding:0.75rem 0;border-bottom:1px solid rgba(247,243,238,0.05)">' +
+        '<div style="font-size:0.84rem;color:var(--paper)">' + e.producer + '</div>' +
+        '<div class="otbl-dim" style="font-size:0.74rem;margin-top:0.2rem">' + wine + '</div>' +
+        '<div class="ord-actions" style="margin-top:0.6rem">' +
+          '<button class="btn-sm btn-gold" onclick="hostRespondToApplication(\'' + s.id + '\',\'' +
+            e.producer.replace(/'/g, "\\'") + '\',\'accept\')">Accept</button>' +
+          '<button class="btn-sm btn-outline" onclick="hostRespondToApplication(\'' + s.id + '\',\'' +
+            e.producer.replace(/'/g, "\\'") + '\',\'decline\')">Decline with a reason</button>' +
+        '</div>' +
+      '</div>';
+    }).join('') +
+  '</div></div>';
+}
+
+/* The applicant's side of the same row — and the box that says an
+   application is not a place. It sits on the VISITOR pane, because
+   that is what an applicant gets until the host accepts. */
+function myApplicationBox(role, s) {
+  const cfg = SHOW_ROLES[role];
+  if (cfg.side !== 'producer') return '';
+  const mine = myExhibitor(role, s);
+
+  if (mine && mine.status === 'applied') {
+    const wine = mine.products.length ? showProductLabel(mine.products[0]) : 'no wine named';
+    return '<div class="odt-box"><div class="odt-box-head">Applied, Waiting for the Host</div><div class="odt-box-body">' +
+      '<div class="edit-section-sub" style="margin:0">You applied to exhibit at this show with <strong ' +
+      'style="color:var(--paper)">' + wine + '</strong>. ' + s.leadHost + ' has not answered yet.<br><br>' +
+      'An application is a request, not a place: it books nothing, confirms no wine and creates no order. ' +
+      'Until it is accepted you are on no line-up and appear on no public surface.</div>' +
+    '</div></div>';
+  }
+  if (mine && mine.status === 'declined' && mine.declineReason) {
+    return '<div class="odt-box"><div class="odt-box-head">Application Declined</div><div class="odt-box-body">' +
+      '<div class="edit-section-sub" style="margin:0">' + s.leadHost + ' declined your application: <strong ' +
+      'style="color:var(--paper)">' + mine.declineReason + '</strong>.</div>' +
+    '</div></div>';
+  }
+  if (!canApplyTo(role, s)) return '';
+  return '<div class="odt-box"><div class="odt-box-head">Apply to Exhibit</div><div class="odt-box-body">' +
+    '<div class="edit-section-sub" style="margin:0 0 0.9rem">' + showApplicationsLine(s) + '. Apply with one of ' +
+    'your own wines, or ask to be considered without naming one. ' + s.leadHost + ' decides — an application ' +
+    'takes no place and commits nobody to anything.</div>' +
+    '<div class="ord-actions"><button class="btn-sm btn-gold" onclick="openApplyModal(\'' + s.id + '\')">' +
+      'Apply to exhibit →</button></div>' +
+  '</div></div>';
 }
 
 /* ══ REACH — THE HOST'S SETTING (A16.14b) ════════════════════════ */
@@ -12251,6 +12447,7 @@ function renderShowVisitorDetail(s, cfg) {
         '</div></div>' +
       '</div>' +
       '<div>' +
+        myApplicationBox(activeShowRole, s) +
         myAttendanceBox(activeShowRole, s) +
         myOrderListBox(activeShowRole, s) +
         '<div class="odt-box"><div class="odt-box-head">What is public</div><div class="odt-box-body">' +
@@ -12294,7 +12491,14 @@ function renderShowDetail(id) {
       ' confirmed exhibitor(s), ' + showProductCount(s) + ' wine(s), ' +
       attendeeQueue(s).seated.length + ' guest(s) expected — enough to plan the catering. ' +
       'Who they are is the host\'s book, not yours (A16.5).</div>'
-    : s.exhibitors.length ? s.exhibitors.map(e => {
+    /* AN APPLICANT IS NAMED IN EXACTLY TWO VIEWS — his own and the
+       host's (A16.6). A confirmed exhibitor reading the line-up must
+       not learn who else has asked: that would make "let me apply" a
+       way to read the competition, and it is the one class-2 leak the
+       spec calls out by name. The host's own view keeps them, and the
+       Applications box above is where they are answered. */
+    : (isHost ? s.exhibitors : s.exhibitors.filter(e => e.status !== 'applied')).length
+      ? (isHost ? s.exhibitors : s.exhibitors.filter(e => e.status !== 'applied')).map(e => {
     const prods = e.products.map(p =>
       '<div class="ord-item">' +
         '<span class="ord-item-name">' + showProductLabel(p) + '</span>' +
@@ -12320,7 +12524,11 @@ function renderShowDetail(id) {
   /* ── host: wines a producer has put forward and that need an answer ── */
   let hostProposalBox = '';
   if (isHost) {
-    const waiting = s.exhibitors.filter(e => exhibitorTurn(s, e) === 'host');
+    /* Applications are excluded and answered in their own box: this one
+       asks "is this the right wine", that one asks "is this house on
+       the show at all", and confirming a wine for somebody who has not
+       been accepted answers the second question with the first. */
+    const waiting = s.exhibitors.filter(e => e.status !== 'applied' && exhibitorTurn(s, e) === 'host');
     if (waiting.length) {
       hostProposalBox =
         '<div class="odt-box"><div class="odt-box-head">Wines Awaiting Your Confirmation</div><div class="odt-box-body">' +
@@ -12453,6 +12661,7 @@ function renderShowDetail(id) {
         (isHost  ? hostReachBox(s)    : '') +
         (isHost  ? hostVenueBox(s)    : '') +
         exhActions + (cfg.side === 'producer' ? producerHeldBox(role, s) : '') +
+        (isHost ? hostApplicationBox(s) : '') +
         hostProposalBox + readinessBox + gateBox +
         '<div class="odt-box"><div class="odt-box-head">Exhibitors &amp; Wines' +
           (hostActions ? '<span class="right">' + hostActions + '</span>' : '') +
@@ -14467,6 +14676,31 @@ BLStore.start({
     <div class="modal-footer">
       <button class="btn-sm btn-outline" onclick="closeInviteModal()">Cancel</button>
       <button class="btn-sm btn-gold" onclick="saveInvite()">Send Invitation →</button>
+    </div>
+  </div>
+</div>
+
+<!-- A producer asks to exhibit (A16.14c). A16.4 mirrored: the same
+     exhibitors row an invitation writes, entered from the other end. -->
+<div class="modal-overlay" id="show-apply-modal">
+  <div class="modal-panel" style="max-width:620px">
+    <div class="modal-header">
+      <div class="modal-title">Apply to <span>Exhibit</span></div>
+      <button class="modal-close" onclick="closeApplyModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="ord-track" style="margin-top:0"><b id="ap-show"></b><br><span id="ap-deadline"></span></div>
+      <div class="edit-section-sub">You apply with one of <b>your own</b> wines, or ask to be considered without naming one. The host decides. An application takes no place, confirms no wine and creates no order — nothing happens until it is accepted.</div>
+
+      <div class="form-row full">
+        <div class="form-field"><div class="field-label">Wine you would present (optional)</div>
+          <select class="field-input" id="ap-product"></select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-sm btn-outline" onclick="closeApplyModal()">Cancel</button>
+      <button class="btn-sm btn-gold" onclick="saveApplication()">Send Application →</button>
     </div>
   </div>
 </div>
