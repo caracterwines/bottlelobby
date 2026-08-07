@@ -10815,7 +10815,7 @@ const SHOW_ROLES = {
     profileTabs:'dprofile-tabs', profileNavEl:D_NAV_EL,
     navIds:['dnav-dashboard','dnav-orders-in','dnav-orders-out','dnav-orders-hist','dnav-shows','dnav-notifs'],
     nav:'dnav-shows', badge:'dshow-badge',
-    tabs:[ { key:'current', label:'My Shows' }, { key:'history', label:'Past Shows' } ]
+    tabs:[ { key:'current', label:'My Shows' }, { key:'discover', label:'Discover' }, { key:'history', label:'Past Shows' } ]
   },
   winery: {
     /* `side` must use the same vocabulary as exhibitorTurn()'s return
@@ -10828,7 +10828,7 @@ const SHOW_ROLES = {
     profileTabs:'wprofile-tabs', profileNavEl:W_NAV_EL,
     navIds:['wnav-dashboard','wnav-orders-in','wnav-orders-hist','wnav-shows','wnav-notifs'],
     nav:'wnav-shows', badge:'wshow-badge',
-    tabs:[ { key:'current', label:'Wine Shows' }, { key:'history', label:'Past Shows' } ]
+    tabs:[ { key:'current', label:'Wine Shows' }, { key:'discover', label:'Discover' }, { key:'history', label:'Past Shows' } ]
   },
   /* The two venue roles. They reach a show through one relation only —
      `venueEntity` — and never through the exhibitor list, which is why
@@ -10842,7 +10842,7 @@ const SHOW_ROLES = {
     profileTabs:'rprofile-tabs', profileNavEl:R_NAV_EL,
     navIds:['rnav-dashboard','rnav-orders','rnav-orders-hist','rnav-shows','rnav-notifs'],
     nav:'rnav-shows', badge:'rshow-badge',
-    tabs:[ { key:'current', label:'Wine Shows' }, { key:'history', label:'Past Shows' } ]
+    tabs:[ { key:'current', label:'Wine Shows' }, { key:'discover', label:'Discover' }, { key:'history', label:'Past Shows' } ]
   },
   retail: {
     entity:'Weinhaus Müller', side:'venue', prefix:'tshow',
@@ -10853,12 +10853,19 @@ const SHOW_ROLES = {
     profileTabs:'tprofile-tabs', profileNavEl:T_NAV_EL,
     navIds:['tnav-dashboard','tnav-orders','tnav-orders-hist','tnav-shows','tnav-notifs'],
     nav:'tnav-shows', badge:'tshow-badge',
-    tabs:[ { key:'current', label:'Wine Shows' }, { key:'history', label:'Past Shows' } ]
+    tabs:[ { key:'current', label:'Wine Shows' }, { key:'discover', label:'Discover' }, { key:'history', label:'Past Shows' } ]
   }
 };
 
 const showState = {};
-Object.keys(SHOW_ROLES).forEach(r => { showState[r] = { tab:'current', openId:null, built:false, visPreview:null }; });
+Object.keys(SHOW_ROLES).forEach(r => {
+  showState[r] = { tab:'current', openId:null, built:false, visPreview:null,
+                   /* Discover's two filters. Both are backed by a field
+                      that really exists on the records (A16.14d: no
+                      invented counts, no empty categories) — the city,
+                      and whether the show is taking applications. */
+                   city:'', appsOnly:false };
+});
 let activeShowRole = 'distributor';
 
 /* ══ WHO SEES WHAT ═══════════════════════════════════════════════ */
@@ -10926,7 +10933,36 @@ function canApplyTo(role, show) {
   if (!showVisibleTo(show, roleViewer(role))) return false;
   return !myExhibitor(role, show);                // already on the show, either way
 }
+/* ══ DISCOVER — THE DIRECTORY (A16.14d) ══════════════════════════ */
+/* "A reach setting without a directory changes nothing", because it
+   only decides who WOULD see a show nobody can browse for. This is
+   that directory, and it is a class-1 surface: every upcoming show
+   this viewer is allowed to see, sorted by date, and nothing else.
+
+   It asks showVisibleTo() through publicShows() like every other
+   class-1 surface. There is no second list and no second answer — a
+   show excluded here is excluded on the public page and in the feed,
+   by the same function, in the same run. */
+function discoverShows(role) {
+  return publicShows(wineShows, false, roleViewer(role));
+}
+/* The cities that are actually in this viewer's list. Built from the
+   list rather than from a table of cities, so the filter can never
+   offer a city with nothing behind it — and can never name a city
+   that only appears in a show this reader may not find. */
+function discoverCities(role) {
+  return [...new Set(discoverShows(role).map(s => s.city))].sort();
+}
+function setDiscoverCity(role, city) { showState[role].city = city; renderWineShows(role); }
+function setDiscoverApps(role, on)   { showState[role].appsOnly = !!on; renderWineShows(role); }
+
 function showsForTab(role, tab) {
+  /* Unfiltered on purpose: this is what the TAB holds, and the tab
+     count reads from it. The toolbar's two filters and the search box
+     narrow the rendered list, in renderWineShows() beside each other —
+     a count that moved with the filters would say "nothing to
+     discover" when it meant "nothing matching that city". */
+  if (tab === 'discover') return discoverShows(role);
   const list = showsForRole(role).filter(s =>
     tab === 'history' ? SHOW_PAST_STAGES.indexOf(s.stage) !== -1
                       : SHOW_PAST_STAGES.indexOf(s.stage) === -1);
@@ -11507,13 +11543,28 @@ function renderWineShows(role) {
     '" onclick="showWineShows(\'' + role + '\',\'' + t.key + '\')">' +
     t.label + '<span class="cnt">(' + showsForTab(role, t.key).length + ')</span></button>').join('');
 
-  document.getElementById(p + '-actions').innerHTML = cfg.side === 'host'
-    ? '<button class="btn-sm btn-gold" onclick="openShowModal()">+ Host a Wine Show</button>'
-    : '<span style="font-size:0.72rem;color:var(--dim)">' + (cfg.side === 'venue'
-        ? 'Every show open to you, as a visitor sees it. Requests to you as the venue are listed first.'
-        : 'Invitations awaiting your answer are listed first.') + '</span>';
+  /* Discover gets its own toolbar: two filters over fields that really
+     exist on the records, and nothing that has to be invented to fill
+     a dropdown (A16.14d). */
+  document.getElementById(p + '-actions').innerHTML = st.tab === 'discover'
+    ? '<select class="field-input" style="max-width:200px;margin:0" onchange="setDiscoverCity(\'' + role + '\',this.value)">' +
+        '<option value="">Every city</option>' +
+        discoverCities(role).map(c =>
+          '<option value="' + c + '"' + (st.city === c ? ' selected' : '') + '>' + c + '</option>').join('') +
+      '</select>' +
+      '<label class="cb-item" style="margin-left:1rem"><input type="checkbox"' + (st.appsOnly ? ' checked' : '') +
+        ' onchange="setDiscoverApps(\'' + role + '\',this.checked)"><span class="cb-label">Taking applications</span></label>'
+    : cfg.side === 'host'
+      ? '<button class="btn-sm btn-gold" onclick="openShowModal()">+ Host a Wine Show</button>'
+      : '<span style="font-size:0.72rem;color:var(--dim)">' + (cfg.side === 'venue'
+          ? 'Every show open to you, as a visitor sees it. Requests to you as the venue are listed first.'
+          : 'Invitations awaiting your answer are listed first.') + '</span>';
 
   let list = showsForTab(role, st.tab);
+  if (st.tab === 'discover') {
+    if (st.city)     list = list.filter(s => s.city === st.city);
+    if (st.appsOnly) list = list.filter(s => !!s.applications_open);
+  }
   const term = (document.getElementById(p + '-search').value || '').toLowerCase().trim();
   /* Search only what this viewer may already read. Matching producer
      names on an anonymised show would turn the search box into the
@@ -11577,13 +11628,49 @@ function renderWineShows(role) {
     '</div>';
   }).join('');
 
-  document.getElementById(p + '-table').innerHTML = list.length
-    ? '<div class="otbl">' + head + rows + '</div>'
-    : '<div class="otbl"><div class="otbl-empty">' + (cfg.side === 'host'
-        ? 'No shows here yet. Host one to get started.'
-        : (cfg.side === 'venue'
-          ? 'No shows listed right now. Shows appear here as soon as a distributor puts one on — and if one asks to hold it at your place, that request lands here too.'
-          : 'No wine shows yet — a distributor partner invites you, and the invitation lands here.')) + '</div></div>';
+  const table = document.getElementById(p + '-table');
+  if (st.tab === 'discover') {
+    /* THE SAME CARD THE PUBLIC PAGE AND THE FIFTEEN PROFILES RENDER
+       (A16.14d: reused, never copied). A directory card of its own
+       would be a fourth renderer of the A16.6 promise, and the fourth
+       one is always the one that discloses something the others do
+       not. What differs is only WHO is reading — the viewer goes in,
+       and publicLevelFor() picks the level from it. */
+    table.innerHTML = list.length
+      ? '<div class="ws-grid" id="' + p + '-discover"></div>'
+      : '<div class="otbl"><div class="otbl-empty">' +
+        (st.city || st.appsOnly
+          ? 'No upcoming show matches those filters. Clear them to see everything you can find.'
+          : 'No upcoming shows you can find right now. A host decides who may find a show — you see it ' +
+            'when their reach names you, and always when you are on it.') + '</div></div>';
+    if (list.length) {
+      const grid = document.getElementById(p + '-discover');
+      mountShowCards(grid, list, null, roleViewer(role));
+      /* THE ONE THING A PUBLIC CARD HAS NO USE FOR: a way into the
+         dashboard's own detail pane, where a producer applies and a
+         restaurant asks for a place. It is appended here rather than
+         built into the shared renderer, because the fifteen public
+         profiles and the public Wine Shows page have no such pane and
+         must not grow a dead link to one. */
+      [...grid.querySelectorAll('.ws-cell')].forEach((cell, i) => {
+        const s = list[i]; if (!s) return;
+        const open = document.createElement('button');
+        open.className = 'btn-sm btn-outline';
+        open.style.cssText = 'width:100%;margin-top:0.5rem';
+        open.textContent = 'Open this show →';
+        open.onclick = () => openShowDetail(s.id);
+        cell.appendChild(open);
+      });
+    }
+  } else {
+    table.innerHTML = list.length
+      ? '<div class="otbl">' + head + rows + '</div>'
+      : '<div class="otbl"><div class="otbl-empty">' + (cfg.side === 'host'
+          ? 'No shows here yet. Host one to get started.'
+          : (cfg.side === 'venue'
+            ? 'No shows listed right now. Shows appear here as soon as a distributor puts one on — and if one asks to hold it at your place, that request lands here too.'
+            : 'No wine shows yet — a distributor partner invites you, and the invitation lands here.')) + '</div></div>';
+  }
 
   const badge = document.getElementById(cfg.badge);
   if (badge) {
