@@ -3977,7 +3977,7 @@ With an annual production capacity of over 1.2 million bottles, Cantina Rossi is
 -->
 <script src="assets/bottle-lobby-store.js?v=26125d6d"></script>
 <script src="assets/bottle-lobby-data.js?v=59261671"></script>
-<script src="assets/bottle-lobby-public-shows.js?v=5ea39527"></script>
+<script src="assets/bottle-lobby-public-shows.js?v=79d32f7a"></script>
 
 <script>
 
@@ -12106,7 +12106,11 @@ function closeShowDetail() {
    the dashboard cannot become the one surface that discloses more —
    the trap A16.6 names and A16.7 repeats for the feed. */
 function renderShowVisitorDetail(s, cfg) {
-  const level = publicLevelFor(s);
+  /* A dashboard reader is a MEMBER, so this is the member level, not
+     the strangers' one (A16.6). It was the strangers' one while there
+     were only two levels — which meant a logged-in restaurant deciding
+     whether to attend was shown exactly what the open web was shown. */
+  const level = publicLevelFor(s, roleViewer(activeShowRole));
   document.getElementById(cfg.prefix + '-detail-pane').innerHTML =
     '<button class="odt-back" onclick="closeShowDetail()">‹ Back to Wine Shows</button>' +
     '<div class="odt-head">' +
@@ -12128,9 +12132,13 @@ function renderShowVisitorDetail(s, cfg) {
         myOrderListBox(activeShowRole, s) +
         '<div class="odt-box"><div class="odt-box-head">What is public</div><div class="odt-box-body">' +
           '<div class="edit-section-sub" style="margin:0">' +
-          (level === 'anonymised'
-            ? 'Exhibitors, their wines and the venue are named once Bottle&nbsp;Lobby releases the show.'
-            : 'Exhibitors, their wines and the venue are public.') + '</div>' +
+          (level === 'full'
+            ? 'Exhibitors, their wines and the venue are public.'
+            : level === 'member'
+              ? 'As a member you see the shape of the show — venue status, capacity, how many exhibitors ' +
+                'are confirmed, places left and whether it is taking applications. Not one name: exhibitors, ' +
+                'their wines and the exact venue are named once Bottle&nbsp;Lobby releases the show.'
+              : 'Exhibitors, their wines and the venue are named once Bottle&nbsp;Lobby releases the show.') + '</div>' +
           '<div class="ws-demo-note" style="margin-top:0.8rem">Nothing here is a second, more generous view of ' +
           'the show: the listing is rendered by the same functions the public Wine Shows page uses.</div>' +
         '</div></div>' +
@@ -12348,8 +12356,12 @@ function renderShowDetail(id) {
           '<div class="odt-kv"><span>Focus</span><span style="text-align:right">' + s.focus + '</span></div>' +
         '</div></div>' +
         '<div class="odt-box"><div class="odt-box-head">What the public sees</div><div class="odt-box-body">' +
+          /* THREE buttons, because there are three levels (A16.6). Two
+             of them would leave the host unable to preview the one
+             level their reach setting actually decides — the member's. */
           '<div class="ws-vis-toggle">' +
-            '<button class="' + (level === 'anonymised' ? 'active' : '') + '" onclick="toggleShowVisPreview(\'anonymised\')">Anonymised</button>' +
+            '<button class="' + (level === 'anonymised' ? 'active' : '') + '" onclick="toggleShowVisPreview(\'anonymised\')">Stranger</button>' +
+            '<button class="' + (level === 'member' ? 'active' : '') + '" onclick="toggleShowVisPreview(\'member\')">Member</button>' +
             '<button class="' + (level === 'full' ? 'active' : '') + '" onclick="toggleShowVisPreview(\'full\')">Full</button>' +
           '</div>' +
           /* Card first, then the listing behind it — the same two
@@ -12358,10 +12370,16 @@ function renderShowDetail(id) {
              host guessing at the card their hero image lands in. */
           publicShowTeaser(s, level) +
           '<div class="ws-listing open">' + publicShowCard(s, level) + '</div>' +
-          '<div class="ws-demo-note">Right now a visitor sees the <b style="color:var(--paper)">' +
-            (publicLevelFor(s) === 'full' ? 'full' : 'anonymised') + '</b> version, because this show is ' +
-            SHOW_STAGE_LABEL[s.stage].toLowerCase() + '. Both levels are rendered from the one show record, ' +
-            'by the same functions the public page uses.</div>' +
+          /* Says what each reader gets, not what "a visitor" gets —
+             the sentence had one subject while there were two levels
+             and would have had to pick one of two readers now. */
+          '<div class="ws-demo-note">This show is ' + SHOW_STAGE_LABEL[s.stage].toLowerCase() + ', so ' +
+            (publicLevelFor(s) === 'full'
+              ? 'every reader sees the <b style="color:var(--paper)">full</b> version.'
+              : 'a stranger sees the <b style="color:var(--paper)">stranger</b> version and a member the ' +
+                '<b style="color:var(--paper)">member</b> one — if your reach lets them find it at all.') +
+            ' All three levels are rendered from the one show record, by the same functions the public ' +
+            'page uses.</div>' +
         '</div></div>' +
       '</div>' +
     '</div>';

@@ -316,9 +316,17 @@ function publicShowsForEntity(all, entity, viewer) {
    listing into the reason to trust it. */
 function publicShowTeaser(show, level, role) {
   const past = PUBLIC_PAST_STAGES.indexOf(show.stage) !== -1;
+  /* The member's note leads with the recruiting state where there is
+     one: a directory whose cards all read the same sentence makes the
+     one show that is actually looking for exhibitors invisible in the
+     only sense that matters. */
   const note = level === 'anonymised'
     ? 'Exhibitors are named once they have accepted — never before.'
-    : (past ? 'This show has taken place.' : 'Exhibitors, wines and venue confirmed.');
+    : level === 'member'
+      ? (show.applications_open ? showApplicationsLine(show)
+                                : confirmedExhibitors(show).length + ' exhibitor(s) confirmed · ' +
+                                  showFreePlaces(show) + ' place(s) left')
+      : (past ? 'This show has taken place.' : 'Exhibitors, wines and venue confirmed.');
   /* Only set on a profile, where the question is what THIS account did
      at the show; on the Wine Shows page there is no such subject. */
   const chip = role && PARTICIPATION_LABEL[role]
@@ -351,6 +359,31 @@ function publicShowCard(show, level) {
     return '<div class="ws-public">' + head +
       '<div class="ws-public-hidden">Exhibitors, their wines and the exact venue stay hidden until Bottle&nbsp;Lobby releases the show. ' +
       'An invited producer must not appear in public before accepting — a later decline would read as a withdrawal.</div>' +
+      '<div class="ws-public-line" style="margin-top:0.9rem">Join Bottle&nbsp;Lobby to see the shape of this show — ' +
+      'venue status, capacity, how many exhibitors are confirmed and whether it is taking applications.</div>' +
+    '</div>';
+  }
+
+  /* THE MEMBER LEVEL (A16.6, A16.14a). Every figure below is a COUNT or
+     a STATUS. Read the list once more before adding to it: the moment
+     one line here resolves to a name, the anonymisation is gone — and
+     it is gone on every surface at once, because they all render from
+     this one function. */
+  if (level === 'member') {
+    const kv = (k, v) => '<div class="ws-public-line"><b>' + k + '</b> · ' + v + '</div>';
+    const free = showFreePlaces(show);
+    return '<div class="ws-public">' + head +
+      '<div style="margin-top:0.9rem">' +
+        kv('Host', show.leadHost) +
+        kv('Venue', showVenueStatusLine(show)) +
+        kv('Capacity', show.capacity + ' guests') +
+        kv('Places left', free + (free ? '' : ' — the room is full')) +
+        kv('Exhibitors confirmed', confirmedExhibitors(show).length) +
+        kv('Applications', showApplicationsLine(show)) +
+      '</div>' +
+      '<div class="ws-public-hidden" style="margin-top:0.9rem">Counts, not names. Who is exhibiting, ' +
+      'what they are pouring and the exact venue are named when Bottle&nbsp;Lobby releases the show — ' +
+      'a producer who has been invited but has not answered must not appear anywhere before they accept.</div>' +
     '</div>';
   }
 
@@ -367,9 +400,55 @@ function publicShowCard(show, level) {
     '<div style="margin-top:0.9rem;padding-top:0.8rem;border-top:1px solid rgba(247,243,238,0.08)">' + lines + '</div>' +
   '</div>';
 }
-/* The level a real visitor would get right now, from the stage alone. */
-function publicLevelFor(show) {
-  return (show.stage === 'published' || show.stage === 'completed') ? 'full' : 'anonymised';
+/* THREE LEVELS, not two (A16.6). The stage decides whether anything is
+   released at all; below that, WHO IS READING decides how much of the
+   SHAPE of the show is legible. A show that is meant to recruit has to
+   show a member enough to want in, and a stranger less than that.
+
+   The anonymisation is unchanged in both cases, and that is the whole
+   point of the split: a member sees COUNTS, never IDENTITIES. Nothing
+   at the member level names an exhibitor, an applicant or an invitee
+   (WS-1) — it names the shape of the room, not the people in it. */
+function publicLevelFor(show, viewer) {
+  if (show.stage === 'published' || show.stage === 'completed') return 'full';
+  return (viewer && viewer.role) ? 'member' : 'anonymised';
+}
+
+/* THE VENUE STATUS WITHOUT THE VENUE. A16.14a grants a member the
+   status and withholds the place "before venue_accepted", and the two
+   halves of that sentence are one rule: a restaurant that has only been
+   ASKED must not be announced as the venue — a later decline would read
+   as a withdrawal, which is A16.6's own argument about producers.
+
+   The host's own premises are status-only too. They need no third
+   party's consent, but they are still the exact venue of an anonymised
+   show, and A16.6 withholds that from everyone until `published`. */
+function showVenueStatusLine(show) {
+  if (show.venueStatus === 'accepted') return show.venueName;
+  if (show.venueType !== 'partner_venue') return 'The host\'s own premises';
+  if (show.venueStatus === 'requested')   return 'A partner venue has been asked — not settled yet';
+  if (show.venueStatus === 'quoted')      return 'A partner venue has quoted — not settled yet';
+  if (show.venueStatus === 'declined')    return 'The venue asked has declined — another is being sought';
+  return 'Not settled yet';
+}
+
+/* Places left, computed from the same arithmetic the seat queue uses:
+   only CONFIRMED attendees consume capacity, or a host could fill their
+   own room by inviting sixty people who never replied (A16.5, A16.10). */
+function showFreePlaces(show) {
+  const taken = (show.attendees || []).filter(a => a.status === 'confirmed').length;
+  return Math.max(0, (show.capacity || 0) - taken);
+}
+
+/* One sentence for the recruiting state, and it says the closed case
+   out loud. A show that is not taking applications and a show whose
+   field was never set look identical in the data; a blank line would
+   let a reader assume the first. */
+function showApplicationsLine(show) {
+  if (!show.applications_open) return 'Not open for applications';
+  return show.application_deadline
+    ? 'Open for applications until ' + blDate(show.application_deadline)
+    : 'Open for applications';
 }
 
 /* ══ MOUNTING (A16.7) ════════════════════════════════════════════ */
@@ -380,11 +459,14 @@ function publicLevelFor(show) {
    renderer would.
 
    `entity`, when given, makes the card say what that account did at
-   the show — the profile case. Returns how many were rendered. */
-function mountShowCards(host, list, entity) {
+   the show — the profile case. `viewer` says who is reading, which is
+   what decides between the anonymised and the member level; omitting
+   it is the strangers' answer, which is what the public pages want.
+   Returns how many were rendered. */
+function mountShowCards(host, list, entity, viewer) {
   if (!host) return 0;
   host.innerHTML = list.map(function (s) {
-    const level = publicLevelFor(s);
+    const level = publicLevelFor(s, viewer);
     const id = 'ws-listing-' + s.id + (entity ? '-' + entity.replace(/\W+/g, '') : '');
     const role = entity ? publicParticipation(s, entity) : null;
     return '<div class="ws-cell">' +
