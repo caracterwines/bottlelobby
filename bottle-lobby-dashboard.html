@@ -2472,8 +2472,8 @@ With an annual production capacity of over 1.2 million bottles, Cantina Rossi is
           </div>
           <div class="stat-card">
             <div class="stat-card-label">Exclusive Wines</div>
-            <div class="stat-card-value">6<span></span></div>
-            <div class="stat-card-delta">Protected from price dumping</div>
+            <div class="stat-card-value" id="rstat-excl-value"></div>
+            <div class="stat-card-delta" id="rstat-excl-delta"></div>
           </div>
           <div class="stat-card">
             <div class="stat-card-label">Bottles This Month</div>
@@ -2483,7 +2483,7 @@ With an annual production capacity of over 1.2 million bottles, Cantina Rossi is
           <div class="stat-card">
             <div class="stat-card-label">Avg. Margin</div>
             <div class="stat-card-value">68<span>%</span></div>
-            <div class="stat-card-delta">↑ +4% since own-label</div>
+            <div class="stat-card-delta">↑ +4%</div>
           </div>
         </div>
 
@@ -2662,8 +2662,8 @@ With an annual production capacity of over 1.2 million bottles, Cantina Rossi is
                 <div class="fact"><div class="fact-label">Location</div><div class="fact-value">Frankfurt, Germany</div></div>
                 <div class="fact"><div class="fact-label">Cuisine</div><div class="fact-value">Modern European Bistro</div></div>
                 <div class="fact"><div class="fact-label">Wine List Size</div><div class="fact-value">14 labels</div></div>
-                <div class="fact"><div class="fact-label">Exclusive Wines</div><div class="fact-value">3 own-label</div></div>
-                <div class="fact"><div class="fact-label">Avg. Margin</div><div class="fact-value">68% since own-label</div></div>
+                <div class="fact"><div class="fact-label">Exclusive Wines</div><div class="fact-value" id="rfact-excl"></div></div>
+                <div class="fact"><div class="fact-label">Avg. Margin</div><div class="fact-value">68%</div></div>
                 <div class="fact"><div class="fact-label">Portfolio Focus</div><div class="fact-value">French, Italian, Spanish mono-cépages</div></div>
                 <div class="fact"><div class="fact-label">Website</div><div class="fact-value"><a href="https://bistrolaurent.de" style="color:var(--gold)" target="_blank">bistrolaurent.de</a></div></div>
               </div>
@@ -2871,8 +2871,8 @@ With an annual production capacity of over 1.2 million bottles, Cantina Rossi is
         <div class="stats-row">
           <div class="stat-card">
             <div class="stat-card-label">Exclusive Wines</div>
-            <div class="stat-card-value">18<span></span></div>
-            <div class="stat-card-delta">Protected from price dumping</div>
+            <div class="stat-card-value" id="tstat-excl-value"></div>
+            <div class="stat-card-delta" id="tstat-excl-delta"></div>
           </div>
           <div class="stat-card">
             <div class="stat-card-label">Events Planned</div>
@@ -2887,7 +2887,7 @@ With an annual production capacity of over 1.2 million bottles, Cantina Rossi is
           <div class="stat-card">
             <div class="stat-card-label">Avg. Margin</div>
             <div class="stat-card-value">62<span>%</span></div>
-            <div class="stat-card-delta">↑ +3% since own-label</div>
+            <div class="stat-card-delta">↑ +3%</div>
           </div>
         </div>
 
@@ -3068,8 +3068,8 @@ With an annual production capacity of over 1.2 million bottles, Cantina Rossi is
                 <div class="fact"><div class="fact-label">Location</div><div class="fact-value">Munich, Germany</div></div>
                 <div class="fact"><div class="fact-label">Shop Type</div><div class="fact-value">Independent Wine Shop / Fachhandel</div></div>
                 <div class="fact"><div class="fact-label">Wine Selection Size</div><div class="fact-value">24 labels</div></div>
-                <div class="fact"><div class="fact-label">Exclusive Wines</div><div class="fact-value">18 own-label</div></div>
-                <div class="fact"><div class="fact-label">Avg. Margin</div><div class="fact-value">62% since own-label</div></div>
+                <div class="fact"><div class="fact-label">Exclusive Wines</div><div class="fact-value" id="tfact-excl"></div></div>
+                <div class="fact"><div class="fact-label">Avg. Margin</div><div class="fact-value">62%</div></div>
                 <div class="fact"><div class="fact-label">Portfolio Focus</div><div class="fact-value">Italian, French, Spanish mono-cépages</div></div>
                 <div class="fact"><div class="fact-label">Website</div><div class="fact-value"><a href="https://weinhaus-mueller.de" style="color:var(--gold)" target="_blank">weinhaus-mueller.de</a></div></div>
               </div>
@@ -5161,6 +5161,28 @@ function ownLabelListingsOf(holder) {
 }
 function isExclusiveFor(holder, ref) { const l = listingOf(holder, ref); return !!(l && l.exclusive); }
 
+/* ── A BUYER'S EXCLUSIVITY IS NOT AN OWN LABEL ──────────────────
+   Two different facts that four typed surfaces had collapsed into one
+   word. `exclusive` is the HOLDER'S OWN MARKING on his own row — "no
+   other restaurant in my city carries this", which is what the add-wine
+   dialog says when it offers the checkbox. Own-label status is OL-15,
+   and its second condition is `holder === project.distributor`: a
+   restaurant or a retailer can never satisfy it, so a buyer aggregate
+   that says "own-label" is not a wrong number, it is an impossible
+   claim. Measured before this pass: Bistro Laurent's profile said
+   "3 own-label", the same profile's KPI card said 6, and both described
+   three rows that are exclusive and no own label at all. Weinhaus
+   Müller's said 18 twice against the same three rows.
+
+   Counted, never stored (invariant 7). Reading the buyer's own listings
+   rather than his list collection is deliberate: the marking lives on
+   the (holder, wine) row, so an unmarked row is a wine on the list
+   without an exclusivity — which is precisely the distinction the single
+   typed number could not carry. */
+function exclusiveListingsOf(holder) {
+  return listingsOf(holder).filter(l => !!l.exclusive);
+}
+
 /* ── Writing one ────────────────────────────────────────────────
    The only way a listing is created, and it is deliberately the only
    one: (holder, productId) has to stay unique, and eight call sites
@@ -7157,6 +7179,39 @@ function refreshOwnLabelSurfaces() {
   renderOwnLabelStatsD();
 }
 
+/* ── THE TWO BUYERS' EXCLUSIVITY FIGURES, DRAWN FROM THEIR OWN ROWS ──
+   One function for both, because the two roles ask the identical
+   question of the identical collection and the old markup answered it
+   with four different numbers — three of which were wrong and all four
+   of which named the wrong concept (see exclusiveListingsOf).
+
+   THE DENOMINATOR IS ON SCREEN because the count alone is not the
+   fact. "3" says nothing about whether that is all of the list or a
+   third of it, and the delta line was free for it: it carried
+   "Protected from price dumping", a claim about what exclusivity does
+   rather than a measurement of how much of it there is.
+
+   THE EMPTY CASE IS NAMED, and it is reachable — deleting the marked
+   rows leaves a buyer with a list and no exclusivity, which reads
+   "None marked exclusive" rather than a bare 0 beside a wine list. */
+function renderBuyerExclusiveStats() {
+  [{ holder: 'Bistro Laurent',  p: 'r', where: 'on your list' },
+   { holder: 'Weinhaus Müller', p: 't', where: 'in your selection' }].forEach(function (b) {
+    const rows  = listingsOf(b.holder);
+    const excl  = exclusiveListingsOf(b.holder).length;
+    const value = document.getElementById(b.p + 'stat-excl-value');
+    const delta = document.getElementById(b.p + 'stat-excl-delta');
+    const fact  = document.getElementById(b.p + 'fact-excl');
+    if (value) value.innerHTML = excl + '<span></span>';
+    if (delta) delta.textContent = excl
+      ? 'of ' + rows.length + ' ' + b.where
+      : 'None marked exclusive';
+    if (fact) fact.textContent = excl
+      ? excl + ' of ' + rows.length + ' marked exclusive'
+      : 'None marked exclusive';
+  });
+}
+
 /* What a project is called before it has a product. The route is the
    honest name for it — "Relabel · Mâcon-Villages" says what is being
    worked on without claiming a bottle exists. */
@@ -7664,6 +7719,10 @@ function renderWineListR() {
       <div class="entry-tag"><span class="badge${isExclusiveFor('Bistro Laurent', w.id) ? ' badge-gold' : ''}" style="font-size:0.55rem${isExclusiveFor('Bistro Laurent', w.id) ? '' : ';background:rgba(247,243,238,0.05);color:var(--dim)'}">${isExclusiveFor('Bistro Laurent', w.id) ? 'Exclusive' : 'Standard'}</span></div>
       <div class="entry-actions"><button class="icon-btn" onclick="deleteListWine(${idx})" title="Remove from list">✕</button></div>
     </div>`).join('');
+  /* Same call from both buyer renderers rather than at every mutation:
+     every path that adds, removes or re-marks a row already ends in one
+     of the two, so the figures cannot drift behind the list they count. */
+  renderBuyerExclusiveStats();
 }
 function deleteListWine(idx) {
   if (!confirm('Remove this wine from your list?')) return;
@@ -8072,6 +8131,7 @@ function renderWineSelectionT() {
       <div class="entry-tag"><span class="badge${isExclusiveFor('Weinhaus M\u00fcller', w.id) ? ' badge-gold' : ''}" style="font-size:0.55rem${isExclusiveFor('Weinhaus M\u00fcller', w.id) ? '' : ';background:rgba(247,243,238,0.05);color:var(--dim)'}">${isExclusiveFor('Weinhaus M\u00fcller', w.id) ? 'Exclusive' : 'Standard'}</span></div>
       <div class="entry-actions"><button class="icon-btn" onclick="deleteSelectionWine(${idx})" title="Remove from selection">✕</button></div>
     </div>`).join('');
+  renderBuyerExclusiveStats();
 }
 function deleteSelectionWine(idx) {
   if (!confirm('Remove this wine from your selection?')) return;

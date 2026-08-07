@@ -515,6 +515,148 @@ console.log('\n── the relation is created and removed with the wine');
   else ok('removing the wine removes its listing; the count is back to ' + r.before);
 }
 
+/* ── 8b. A buyer's exclusivity is not an own label ────────────────
+   A CLASS OF DEFECT, not one wrong number. Four typed aggregates on the
+   two buyer profiles described the same three rows and disagreed with
+   each other AND with the domain: Bistro Laurent's profile fact said
+   "3 own-label" while its KPI card said 6, Weinhaus Müller's said 18 in
+   both places, and every one of the four named own label where the
+   marking is an exclusivity.
+
+   WHY IT IS AN IMPOSSIBLE CLAIM AND NOT MERELY A WRONG ONE: OL-15's
+   second condition is `holder === project.distributor`, so no buyer can
+   ever hold a primary own-label listing. That is what section 8b
+   asserts structurally — every buyer's own-label count must be zero
+   BY DERIVATION, not because today's fixtures happen to say so.
+
+   The visible-text half is deliberately a plain-text sweep over the
+   rendered profiles rather than a check of the four ids: an id that
+   stops being filled would still pass a "does the derivation work"
+   test while the surface silently showed nothing, and a FIFTH typed
+   aggregate could be added tomorrow with no id at all. */
+console.log('\n── a buyer holds exclusivities, never own labels');
+{
+  const win = build();
+  const BUYERS = [
+    { holder: 'Bistro Laurent',  p: 'r', word: 'list' },
+    { holder: 'Weinhaus Müller', p: 't', word: 'selection' }
+  ];
+
+  BUYERS.forEach(b => {
+    /* DOUBLE ENTRY, and the mutation run is why. Asking
+       exclusiveListingsOf() for the expected number and then asking
+       whether the screen agrees only proves the two are consistent —
+       break the derivation and both move together, silently. `raw` is
+       counted off the rows themselves, so the derivation and the
+       surface are each checked against the data instead of each other. */
+    const out = win.eval(`(function(){
+      var who = ${JSON.stringify(b.holder)};
+      return JSON.stringify({
+        rows:      listings.filter(function (l) { return l.holder === who; }).length,
+        raw:       listings.filter(function (l) { return l.holder === who && l.exclusive === true; }).length,
+        excl:      exclusiveListingsOf(who).length,
+        ownLabels: ownLabelListingsOf(who).length,
+        value:     (document.getElementById('${b.p}stat-excl-value')  || {}).textContent,
+        delta:     (document.getElementById('${b.p}stat-excl-delta')  || {}).textContent,
+        fact:      (document.getElementById('${b.p}fact-excl')        || {}).textContent
+      });
+    })()`);
+    const r = JSON.parse(out);
+
+    if (r.excl !== r.raw)
+      bad('exclusiveListingsOf(' + b.holder + ') answers ' + r.excl + ' where ' + r.raw +
+          ' of ' + r.rows + ' rows carry exclusive:true — the derivation is not reading the marking');
+    else ok('exclusiveListingsOf(' + b.holder + ') matches the rows themselves (' + r.raw + ')');
+
+    /* OL-15 structurally: a buyer can never be a project's distributor. */
+    if (r.ownLabels !== 0)
+      bad(b.holder + ' holds ' + r.ownLabels + ' own-label listing(s) — OL-15 says a buyer never can');
+    else ok(b.holder + ' holds no own label, by derivation (OL-15)');
+
+    if (!r.rows) bad(b.holder + ' has no listing rows at all — the count below would prove nothing');
+    else if (r.value !== String(r.raw))
+      bad(b.holder + "'s KPI card reads '" + r.value + "' against " + r.raw +
+          ' exclusive row(s) — a typed number beside the rows it claims to count');
+    else ok(b.holder + "'s KPI card is the counted number (" + r.raw + ' of ' + r.rows + ')');
+
+    if (r.fact !== r.raw + ' of ' + r.rows + ' marked exclusive')
+      bad(b.holder + "'s profile fact reads '" + r.fact + "' — expected the counted " +
+          r.raw + ' of ' + r.rows);
+    else ok(b.holder + "'s profile fact and KPI card give the SAME derived answer");
+
+    if (!/own[- ]label/i.test(r.fact + ' ' + r.delta + ' ' + r.value)) ok('neither surface says own-label');
+    else bad(b.holder + "'s exclusivity surfaces still claim own-label: '" + r.fact + "' / '" + r.delta + "'");
+  });
+
+  /* GROUNDED OVER EVERY HOLDER, and the mutation run is why this is not
+     just the two buyers. All three of each buyer's rows carry
+     `exclusive:true`, so "count the marked rows" and "count all rows"
+     give the SAME answer for them — a derivation that had stopped
+     reading the marking would have passed both buyer checks above. The
+     holders that catch it are the ones with unmarked rows, and Hawesko
+     alone has sixteen. */
+  const perHolder = win.eval(`(function(){
+    var out = {};
+    listings.forEach(function (l) {
+      out[l.holder] = out[l.holder] || { rows: 0, raw: 0 };
+      out[l.holder].rows++;
+      if (l.exclusive === true) out[l.holder].raw++;
+    });
+    Object.keys(out).forEach(function (h) { out[h].derived = exclusiveListingsOf(h).length; });
+    return JSON.stringify(out);
+  })()`);
+  const per = JSON.parse(perHolder);
+  const wrong = Object.keys(per).filter(h => per[h].derived !== per[h].raw);
+  const mixed = Object.keys(per).filter(h => per[h].raw !== per[h].rows);
+  if (!mixed.length)
+    bad('every holder has all rows marked the same way — this check could not tell "marked" from "any"');
+  else if (wrong.length)
+    bad('the derivation disagrees with the rows for ' + wrong.map(h =>
+      h + ' (' + per[h].derived + ' vs ' + per[h].raw + ' of ' + per[h].rows + ')').join(', '));
+  else ok('the derivation matches the marked rows for all ' + Object.keys(per).length +
+     ' holders, ' + mixed.length + ' of them carrying unmarked rows');
+
+  /* The named empty case, reached by taking the markings off rather
+     than by asserting what today's fixtures happen to be (C7). */
+  const empty = win.eval(`(function(){
+    var saved = listings.map(function (l) { return l.exclusive; });
+    listings.forEach(function (l) { if (l.holder === 'Bistro Laurent') l.exclusive = false; });
+    renderWineListR();
+    var fact  = document.getElementById('rfact-excl').textContent;
+    var delta = document.getElementById('rstat-excl-delta').textContent;
+    var value = document.getElementById('rstat-excl-value').textContent;
+    listings.forEach(function (l, i) { l.exclusive = saved[i]; });
+    renderWineListR();
+    return JSON.stringify({ fact: fact, delta: delta, value: value,
+                            restored: document.getElementById('rfact-excl').textContent });
+  })()`);
+  const e = JSON.parse(empty);
+  if (e.value !== '0' || !/None marked exclusive/.test(e.fact) || !/None marked exclusive/.test(e.delta))
+    bad('a buyer with a list and no markings does not read as an empty case: ' +
+        JSON.stringify([e.value, e.fact, e.delta]));
+  else ok('no markings reads "None marked exclusive" on both surfaces, not a bare 0');
+  if (e.restored === e.fact) bad('the fixtures did not come back — the check above changed the file state');
+  else ok('markings restored (' + e.restored + ')');
+
+  /* No FIFTH one. The whole rendered text of both buyer profiles must
+     not put an own-label word next to a number. */
+  const sweep = win.eval(`(function(){
+    var hits = [];
+    ['rbasics-view', 'tbasics-view', 'restaurant-view-dashboard', 'retail-view-dashboard']
+      .forEach(function (id) {
+        var el = document.getElementById(id);
+        if (!el) { hits.push('MISSING:' + id); return; }
+        el.textContent.split('\\n').forEach(function (line) {
+          if (/own[- ]label/i.test(line) && /\\d/.test(line)) hits.push(id + ': ' + line.trim());
+        });
+      });
+    return JSON.stringify(hits);
+  })()`);
+  const h = JSON.parse(sweep);
+  if (h.length) bad('a buyer surface still pairs a number with an own-label claim: ' + h.join(' | '));
+  else ok('no number on either buyer profile or dashboard is called own-label');
+}
+
 /* ── 9. Counter-checks ──────────────────────────────────────────── */
 console.log('\n── the counter-checks');
 {
@@ -589,6 +731,40 @@ console.log('\n── the counter-checks');
         return !codeLines(src).some(x => /legacyOwnLabel/.test(x.line));
       },
       says: 'a bridge read in live code that section 6a reported as absent' },
+
+    /* A FIFTH typed aggregate, with no id for anything to overwrite —
+       which is how the four originals got there. Aiming this at
+       `#tfact-excl` proved nothing: the renderer paints over that node,
+       so the mutation was a no-op and the "NOT caught" it produced was
+       the mutation run doing its job. */
+    { what: 'a fresh own-label aggregate is typed onto a buyer profile',
+      from: '<div class="fact"><div class="fact-label">Avg. Margin</div><div class="fact-value">62%</div></div>',
+      to:   '<div class="fact"><div class="fact-label">Avg. Margin</div><div class="fact-value">62% since own-label</div></div>',
+      ask:  win => {
+        const el = win.document.getElementById('tbasics-view');
+        return !el.textContent.split('\n').some(l => /own[- ]label/i.test(l) && /\d/.test(l));
+      },
+      says: 'the exact shape of the four this section removed, added again where no renderer runs' },
+
+    { what: 'exclusive stops meaning the marking and starts meaning the row',
+      from: '  return listingsOf(holder).filter(l => !!l.exclusive);',
+      to:   '  return listingsOf(holder);',
+      ask:  win => win.eval(`(function(){
+        /* Asked the way section 8b asks it — derivation against the raw
+           rows, over every holder. Asking the two buyers alone returned
+           "not caught": all three of each buyer's rows are marked, so
+           "marked" and "any" are the same number there. */
+        var raw = {}, bad = 0;
+        listings.forEach(function (l) {
+          raw[l.holder] = raw[l.holder] || 0;
+          if (l.exclusive === true) raw[l.holder]++;
+        });
+        Object.keys(raw).forEach(function (h) {
+          if (exclusiveListingsOf(h).length !== raw[h]) bad++;
+        });
+        return bad === 0;
+      })()`),
+      says: 'every row counted as exclusive — the number the old typed 6 and 18 were, one layer down' },
 
     { what: 'a price goes back to having no owner',
       from: "function listingPrice(holder, ref) {\n  const l = listingOf(holder, ref);",
