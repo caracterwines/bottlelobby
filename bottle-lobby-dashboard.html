@@ -2926,10 +2926,15 @@ With an annual production capacity of over 1.2 million bottles, Cantina Rossi is
             <div class="stat-card-value" id="tstat-excl-value"></div>
             <div class="stat-card-delta" id="tstat-excl-delta"></div>
           </div>
+          <!-- Rendered from `memberEvents` (A16.8). It used to read a
+               typed "3" beside a typed three-row widget below, which
+               agreed with each other only because both were typed —
+               the D36 shape. Both are retired here; the fixture
+               decides what these events actually are. -->
           <div class="stat-card">
-            <div class="stat-card-label">Events Planned</div>
-            <div class="stat-card-value">3<span></span></div>
-            <div class="stat-card-delta">↑ +1 vs last quarter</div>
+            <div class="stat-card-label">Upcoming Events</div>
+            <div class="stat-card-value" id="tstat-events-value"></div>
+            <div class="stat-card-delta" id="tstat-events-delta"></div>
           </div>
           <div class="stat-card">
             <div class="stat-card-label">Bottles This Month</div>
@@ -3017,44 +3022,13 @@ With an annual production capacity of over 1.2 million bottles, Cantina Rossi is
         </div>
 
         <div class="grid-13">
-          <!-- Upcoming Events -->
+          <!-- Upcoming Events (A16.8) — rendered by renderRetailEvents() -->
           <div class="widget">
             <div class="widget-header">
               <span class="widget-title">Upcoming Events</span>
-              <button class="widget-action">View All →</button>
+              <button class="widget-action" onclick="openPublicWineShows()">View All →</button>
             </div>
-            <div class="widget-body">
-              <div class="list-item">
-                <div class="list-dot list-dot-gold"></div>
-                <div class="list-item-main">
-                  <div class="list-item-title">Cantina Rossi Tasting</div>
-                  <div class="list-item-sub">Sept 18 · In-store</div>
-                </div>
-                <div class="list-item-right">
-                  <span class="tag tag-gold">Confirmed</span>
-                </div>
-              </div>
-              <div class="list-item">
-                <div class="list-dot list-dot-gold"></div>
-                <div class="list-item-main">
-                  <div class="list-item-title">Wine Dinner × Bistro Nord</div>
-                  <div class="list-item-sub">Oct 4 · Collab</div>
-                </div>
-                <div class="list-item-right">
-                  <span class="tag tag-gold">Confirmed</span>
-                </div>
-              </div>
-              <div class="list-item">
-                <div class="list-dot" style="background:var(--dim)"></div>
-                <div class="list-item-main">
-                  <div class="list-item-title">Oenologist Evening</div>
-                  <div class="list-item-sub">Nov 8 · Planning</div>
-                </div>
-                <div class="list-item-right">
-                  <span class="tag tag-dim">Planning</span>
-                </div>
-              </div>
-            </div>
+            <div class="widget-body" id="tevents-widget"></div>
           </div>
 
           <!-- Pending Orders -->
@@ -14280,6 +14254,9 @@ Object.keys(SHOW_ROLES).forEach(r => {
    sub-view: A16.7's example is a restaurant following a winery, and
    the restaurant is precisely the role that cannot host or exhibit. */
 renderAppearanceWidgets();
+/* The retail dashboard's two event surfaces, replacing what used to be
+   typed straight into the markup (A16.8). */
+renderRetailEvents();
 
 
 /* ══════════════════════════════════════════════════════════════════
@@ -14617,6 +14594,7 @@ function hideEventsView(role) {
    role's view was ever built must still complete (B12). */
 function refreshEvents() {
   Object.keys(EVENT_ROLES).forEach(r => { if (eventState[r].built) renderMyEvents(r); });
+  renderRetailEvents();
   if (typeof refreshShows === 'function' && showState[activeShowRole] &&
       showState[activeShowRole].built) renderWineShows(activeShowRole);
 }
@@ -14864,6 +14842,58 @@ function renderEventDetail(role, ev) {
       '</div>' +
     '</div>';
 }
+/* ── THE RETAIL DASHBOARD'S TWO EVENT SURFACES (A16.8) ──────────
+   NOT the retail cockpit — that is the rollout pass. This is only the
+   retirement of two hand-typed surfaces that A16.8 names by name: a
+   stat card claiming three planned events and an "Upcoming Events"
+   widget with three typed rows, which agreed with each other only
+   because both were typed (the D36 shape). One of them carried the
+   duplicate "Cantina Rossi Tasting" — the same evening, two dates, two
+   surfaces, no shared record.
+
+   A RETAILER'S UPCOMING EVENTS ARE NOT ONLY HIS OWN. He hosts some and
+   he is a guest at others, and both belong on a widget called Upcoming
+   Events; splitting them would be a distinction the reader did not
+   ask for. The role each one puts him in is on the row, because that
+   IS the difference. */
+function retailEventRows() {
+  const me = SHOW_ROLES.retail.entity;
+  return memberEvents
+    .filter(e => (e.status === 'published' || e.status === 'postponed') && !e.moderation)
+    .map(e => {
+      const mine = e.host === me;
+      const p = mine ? null : eventParticipant(e, me);
+      if (!mine && (!p || ['accepted','confirmed'].indexOf(p.status) === -1)) return null;
+      return { ev:e, role: mine ? 'Hosting' : (p.role === 'guest' ? 'Attending' : 'Taking part') };
+    })
+    .filter(Boolean)
+    .sort((a, b) => blDateValue(a.ev.date) - blDateValue(b.ev.date));
+}
+function renderRetailEvents() {
+  const rows = retailEventRows();
+  const v = document.getElementById('tstat-events-value');
+  if (v) {
+    v.innerHTML = rows.length + '<span></span>';
+    const hosted = rows.filter(r => r.role === 'Hosting').length;
+    document.getElementById('tstat-events-delta').textContent =
+      hosted + ' of your own · ' + (rows.length - hosted) + ' you are a guest at';
+  }
+  const el = document.getElementById('tevents-widget');
+  if (!el) return;
+  el.innerHTML = rows.length
+    ? rows.map(r =>
+        '<div class="list-item">' +
+          '<div class="list-dot' + (r.role === 'Hosting' ? ' list-dot-gold' : '') + '"></div>' +
+          '<div class="list-item-main">' +
+            '<div class="list-item-title">' + r.ev.title + '</div>' +
+            '<div class="list-item-sub">' + blDate(r.ev.date) + ' · ' + (r.ev.city || r.ev.location) + '</div>' +
+          '</div>' +
+          '<div class="list-item-right"><span class="tag tag-dim">' + r.role + '</span></div>' +
+        '</div>').join('')
+    : '<div style="padding:0.4rem 0;font-size:0.78rem;color:var(--dim)">' +
+      'No upcoming events. Member events are your own occasions — Bottle Lobby neither reviews nor releases them.</div>';
+}
+
 function inviteFromDetail(id) {
   const p = EVENT_ROLES[activeEventRole].prefix;
   inviteToEvent(id, document.getElementById(p + '-invite-who').value,
@@ -14989,6 +15019,9 @@ function redrawAll() {
   renderExclusiveDealsRetail();
   renderAllOrders();
   refreshShows();
+  /* Redraws whichever My Events view is open and the retail dashboard's
+     two event surfaces (A16.8) — the same split refreshShows() makes. */
+  refreshEvents();
   renderAppearanceWidgets();
   /* Notifications are derived from everything above, so they are
      redrawn last — and the badges of the three roles whose view is
