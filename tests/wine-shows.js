@@ -257,9 +257,24 @@ if (!w.eval('publishReadiness')(byId('WS-2604')).ready)
 else ok('venue accepted and the split named — every line green');
 w.submitShowForRelease('WS-2604');
 if (byId('WS-2604').stage !== 'pending_approval') bad('submit failed');
-else ok('submitted → pending_approval');
+else ok('submitted → Final Review (stage pending_approval)');
+/* THE STORED STAGE KEEPS ITS NAME, the label is what is read (A16.2). */
+w.openShowDetail('WS-2604');
+if (!d.querySelector('#dshow-detail-pane .ws-pending_approval').textContent.includes('Final Review'))
+  bad('the stage chip does not read "Final Review"');
+else ok('the stage renders as "Final Review" while the stored value stays pending_approval');
+/* WS-6: the asking is a row, and it is open. */
+{
+  const open = w.eval('showReviewOpen')(byId('WS-2604'));
+  if (!open) bad('submitting wrote no review row');
+  else if (open.subjectType !== 'show' || open.approvalType !== 'show_release' || open.gateNumber !== null)
+    bad('the review row is not a show release: ' + JSON.stringify(open));
+  else ok('submitting wrote a pending reviews row, subjectType show / show_release');
+  if (w.eval('showReleaseApproved')(byId('WS-2604'))) bad('a pending review must not count as approved');
+  else ok('a pending row is not an approval');
+}
 const gate = d.querySelector('#dshow-detail-pane .ws-demo');
-if (!gate || !gate.textContent.includes('Simulate Bottle Lobby release (demo)')) bad('demo button missing or unlabelled');
+if (!gate || !gate.textContent.includes('Simulate release (demo)')) bad('demo button missing or unlabelled');
 else if (!gate.textContent.includes('internal admin panel')) bad('demo note does not name the real mechanism');
 else ok('demo release button is labelled as demo and names the real gate');
 w.simulateStaffRelease('WS-2604');

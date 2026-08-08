@@ -214,9 +214,32 @@ w.openShowDetail('WS-2601');
   if (!boxWithHead('rshow','Venue Request')) bad('venue has no request box');
   else ok('venue sees the request box with a price and a decline');
 }
-/* released → the line-up is public, so the venue reads it like anyone else */
+/* released → the line-up is public, so the venue reads it like anyone else.
+   Driven through the real path, because a release without a review row
+   is exactly what WS-6 forbids: the host names the cost split, submits,
+   and only then can staff release. */
+/* This file asked Bistro Laurent to be WS-2601's venue a few lines up,
+   so the full relation has to run its course before the show can go
+   out: the venue prices it, the host accepts it, the host says who
+   carries it. Every step through the real action. */
+w.showWineShows('restaurant','current');
+w.openShowDetail('WS-2601');
+w.openVenueQuoteModal('WS-2601');
+d.getElementById('vq-amount').value = '1100';
+w.saveVenueQuote();
 w.showWineShows('distributor','current');
+w.openShowDetail('WS-2601');
+w.openVenueAcceptModal('WS-2601');
+d.getElementById('va-cb').checked = true;
+w.acceptVenueOffer();
+w.openShowDetail('WS-2601');
+d.getElementById('cm-mode-WS-2601').value = 'host_covers';
+w.saveCateringMode('WS-2601');
+w.submitShowForRelease('WS-2601');
+if (S('WS-2601').stage !== 'pending_approval')
+  bad('WS-2601 did not reach Final Review: ' + JSON.stringify(w.eval('missingPublishPoints')(S('WS-2601'))));
 w.simulateStaffRelease('WS-2601');
+if (S('WS-2601').stage !== 'published') bad('WS-2601 did not reach published: ' + S('WS-2601').stage);
 w.showWineShows('restaurant','current');
 w.openShowDetail('WS-2601');
 if (!paneText('rshow').includes('Bodegas Ruiz')) bad('after release the venue should see the line-up like the public does');

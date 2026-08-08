@@ -929,6 +929,14 @@ body {
 .ws-completed        { background:rgba(247,243,238,0.05); color:rgba(247,243,238,0.4); }
 .ws-cancelled        { background:rgba(107,26,26,0.3); color:#d88; }
 .ws-rescheduled      { background:rgba(184,151,90,0.22); color:#e0c07a; }
+/* review rows (A16.14c, A17.8) — deliberately NOT the stage colours:
+   a review is a record of a decision, not the stage the decision moved
+   the subject to, and one palette for two things reads as one thing. */
+.rv-pending          { background:rgba(127,170,240,0.15); color:#7faaf0; }
+.rv-approved         { background:rgba(76,175,125,0.15); color:#4caf7d; }
+.rv-changes_requested{ background:rgba(224,133,133,0.15); color:#e08585; }
+.rv-rejected         { background:rgba(107,26,26,0.3); color:#d88; }
+.rv-superseded       { background:rgba(247,243,238,0.05); color:rgba(247,243,238,0.4); }
 /* exhibitor / product response states.
    `applied` shares the `invited` styling on purpose: both mean "on the
    table, nobody has decided yet" — only the direction differs, the host
@@ -5549,9 +5557,20 @@ function contractApproved(id) {
 
    `approvalType` says WHAT was approved, so a reader does not have to
    infer it from `subjectType` plus `gateNumber`. */
-const REVIEW_SUBJECT_TYPES = ['membership', 'contract', 'project'];
-const REVIEW_STATUSES      = ['pending', 'approved', 'changes_requested', 'rejected'];
-const reviews = [
+/* 'show' joins the three own-label subjects rather than getting a
+   register of its own (A16.14c). A Wine Show release is the same act as
+   a programme admission or a gate: a person at Bottle Lobby decided,
+   on a date, about a subject. A second table would be a second place
+   the platform's authority lives, and invariant 6 says there is one. */
+const REVIEW_SUBJECT_TYPES = ['membership', 'contract', 'project', 'show'];
+/* `superseded` is the fifth, and it is not a decision: it is what
+   happens to an OPEN review whose subject moved underneath it (A16.2's
+   material-change rule). Nobody at Bottle Lobby said yes or no, so
+   neither `approved` nor `changes_requested` may be written — and the
+   row is closed rather than deleted, because who asked and why it
+   lapsed is exactly what an audit of a manual approval needs. */
+const REVIEW_STATUSES      = ['pending', 'approved', 'changes_requested', 'rejected', 'superseded'];
+let reviews = [
   /* Contract approvals — the act that moves a document to `approved`. */
   { id:'RVW-1001', subjectType:'contract', subjectId:'CTR-1001', gateNumber:null,
     reviewStatus:'approved', reviewedBy:'Bottle Lobby', reviewedAt:'2026-02-19',
@@ -5632,12 +5651,43 @@ const reviews = [
   { id:'RVW-2005', subjectType:'project', subjectId:'OLP-101', gateNumber:1,
     reviewStatus:'approved', reviewedBy:'Bottle Lobby', reviewedAt:'2026-07-27',
     reviewNotes:'Both project agreements returned and approved; source wine PRD-1020 is on_request and belongs to the named producer.',
-    approvalType:'gate_1' }
+    approvalType:'gate_1' },
 
   /* ── OLP-102 has NO review row at all ─────────────────────────────
      Gate 1 is not permitted, so Bottle Lobby has not been asked. Its
      absence is the record. */
+
+  /* ── WINE SHOW RELEASES (A16.1, A16.14c) ──────────────────────────
+     `approvalType: 'show_release'`, `gateNumber: null` — a release is
+     not a gate in a numbered sequence, it is the one decision a show
+     gets. Every date below is READ OFF THE SHOW'S OWN LOG rather than
+     invented, so the two records say the same thing about the same
+     act: WS-2603 released 15 Jun, WS-2599 released 1 Mar, WS-2602
+     submitted 21 Jul and still pending.
+
+     WS-2602 IS THE PENDING ROW, and it exists because the show really
+     is in `pending_approval` — a submitted show whose review row was
+     missing would be a `published` show waiting to happen with nobody
+     recorded as deciding (WS-6). It is the opposite case to OLP-102
+     above: there, nothing was asked, so there is no row; here, it was
+     asked, so the asking is the row. */
+  { id:'RVW-3001', subjectType:'show', subjectId:'WS-2603', gateNumber:null,
+    reviewStatus:'approved', reviewedBy:'Bottle Lobby', reviewedAt:'2026-06-15',
+    reviewNotes:'Venue on the host\'s own premises, two exhibitors confirmed with a wine each, no contribution charged.',
+    approvalType:'show_release' },
+  { id:'RVW-3002', subjectType:'show', subjectId:'WS-2599', gateNumber:null,
+    reviewStatus:'approved', reviewedBy:'Bottle Lobby', reviewedAt:'2026-03-01',
+    reviewNotes:'Weinhaus Müller\'s offer accepted 11 Feb; three wines confirmed; host carries the room.',
+    approvalType:'show_release' },
+  { id:'RVW-3003', subjectType:'show', subjectId:'WS-2602', gateNumber:null,
+    reviewStatus:'pending', reviewedBy:null, reviewedAt:null,
+    reviewNotes:null, approvalType:'show_release' }
 ];
+/* Ids for releases decided in the demo. Separate from the own-label
+   3000-block above only by where the counter starts; it travels with
+   the reviews for the same reason orderSeq travels with the orders —
+   without it a reload would hand out an id that already exists. */
+let reviewSeq = 3004;
 
 function reviewById(id) {
   if (typeof id !== 'string') return null;
@@ -5649,6 +5699,59 @@ function reviewsFor(subjectType, subjectId) {
 function reviewApproved(id) {
   const r = reviewById(id);
   return !!r && r.reviewStatus === 'approved';
+}
+
+/* ── THE REVIEW REGISTER IS APPEND-ONLY ──────────────────────────
+   A row records an act at a moment: the host asked, or Bottle Lobby
+   answered, or the request lapsed. None of those is an edit of any
+   other, so nothing here rewrites a row — the state of a review is
+   the LAST row about that subject, and the whole sequence stays
+   readable. It is OL-3's discipline applied to the register the
+   own-label pass built, and the reason `changes_requested → resubmit`
+   leaves a trail instead of a field that flickered.
+
+   `reviewsFor()` returns rows in insertion order, which is the order
+   they happened in — an append-only array has no other. */
+function writeReview(subjectType, subjectId, status, by, notes, approvalType) {
+  if (REVIEW_SUBJECT_TYPES.indexOf(subjectType) === -1) {
+    console.warn('[reviews] unknown subjectType "' + subjectType + '" — no row written'); return null;
+  }
+  if (REVIEW_STATUSES.indexOf(status) === -1) {
+    console.warn('[reviews] unknown reviewStatus "' + status + '" — no row written'); return null;
+  }
+  const row = { id: 'RVW-' + (reviewSeq++), subjectType: subjectType, subjectId: subjectId,
+                gateNumber: null, reviewStatus: status,
+                /* A pending row has no reviewer and no date, because
+                   nobody has reviewed anything yet. Writing "today" and
+                   the host's name would make an asking look like an
+                   answer. */
+                reviewedBy: by || null, reviewedAt: by ? SHOW_TODAY : null,
+                reviewNotes: notes || null, approvalType: approvalType };
+  reviews.push(row);
+  return row;
+}
+const REVIEW_STATUS_LABEL = {
+  pending:'Waiting for Bottle Lobby', approved:'Released',
+  changes_requested:'Changes requested', rejected:'Rejected',
+  superseded:'Closed — the show changed'
+};
+/* The last row about this show — its current review state. */
+function showReviewLatest(show) {
+  const rows = reviewsFor('show', show.id);
+  return rows.length ? rows[rows.length - 1] : null;
+}
+/* An OPEN review is one nobody has answered and nothing has closed. */
+function showReviewOpen(show) {
+  const last = showReviewLatest(show);
+  return last && last.reviewStatus === 'pending' ? last : null;
+}
+/* WS-6 IN ONE FUNCTION: a `published` show needs an approved release
+   row. Asked of the register, never of the stage — the stage is what
+   this is supposed to justify, so deriving it from the stage would
+   make the invariant true by construction and prove nothing. */
+function showReleaseApproved(show) {
+  return reviewsFor('show', show.id).some(r =>
+    r.approvalType === 'show_release' && r.reviewStatus === 'approved');
 }
 
 /* ══════════════════════════════════════════════════════════════════
@@ -10764,7 +10867,10 @@ renderAllOrders();
    them into one order to the producer.
 ════════════════════════════════════════════════════════════════════ */
 const SHOW_STAGE_LABEL = {
-  draft:'Draft', planning:'Planning', pending_approval:'Pending Approval',
+  /* THE STORED STAGE KEEPS ITS NAME, the label is what people read
+     (A16.2). There is no separate Final Review stage and adding one
+     would duplicate `pending_approval` exactly. */
+  draft:'Draft', planning:'Planning', pending_approval:'Final Review',
   changes_requested:'Changes Requested', published:'Published',
   completed:'Completed', cancelled:'Cancelled', rescheduled:'Rescheduled'
 };
@@ -12907,23 +13013,49 @@ function renderShowDetail(id) {
       hostActions += '<button class="btn-sm btn-outline" onclick="openInviteModal(\'' + s.id + '\')">+ Invite Exhibitor</button>';
     }
     if (s.stage === 'planning' || s.stage === 'changes_requested') {
-      hostActions += '<button class="btn-sm btn-gold" onclick="submitShowForRelease(\'' + s.id + '\')">Submit to Bottle Lobby →</button>';
+      hostActions += '<button class="btn-sm btn-gold" onclick="submitShowForRelease(\'' + s.id + '\')">Submit to Final Review →</button>';
     }
   }
 
   /* ── the approval gate (A16.1) ── */
   let gateBox = '';
   if (s.stage === 'pending_approval') {
-    gateBox = '<div class="odt-box"><div class="odt-box-head">Bottle Lobby Release</div><div class="odt-box-body">' +
-      '<div class="ord-track">Submitted and waiting. A Wine Show carries Bottle&nbsp;Lobby\'s name, so a member of ' +
+    const open = showReviewOpen(s);
+    gateBox = '<div class="odt-box"><div class="odt-box-head">Final Review</div><div class="odt-box-body">' +
+      '<div class="ord-track">Submitted and waiting' +
+        (open ? ' — review <b>' + open.id + '</b>, opened ' + orderDate(open.reviewedAt || SHOW_TODAY) : '') +
+        '. A Wine Show carries Bottle&nbsp;Lobby\'s name, so a member of ' +
       'staff checks date, venue, exhibitors and wines before it goes public — the same control point that activates ' +
-      'a partnership.</div>' +
+      'a partnership. The release is a recorded decision, not a state the show reaches by itself.</div>' +
       (isHost ? '<div class="ws-demo">' +
-        '<button class="btn-sm btn-outline" onclick="simulateStaffRelease(\'' + s.id + '\')">Simulate Bottle Lobby release (demo)</button>' +
+        '<button class="btn-sm btn-outline" onclick="simulateStaffRelease(\'' + s.id + '\')">Simulate release (demo)</button>' +
+        '<button class="btn-sm btn-outline" onclick="simulateStaffChangesRequested(\'' + s.id + '\')">Simulate changes requested (demo)</button>' +
         '<div class="ws-demo-note">Shortcut for this demo only. In the live platform a Bottle&nbsp;Lobby staff member ' +
-        'releases the show from the internal admin panel — the host cannot release their own show.</div>' +
+        'decides from the internal admin panel — the host cannot release their own show.</div>' +
       '</div>' : '') +
     '</div></div>';
+  }
+  /* WHAT BOTTLE LOBBY HAS ALREADY SAID ABOUT THIS SHOW. The register is
+     append-only, so this is a history rather than a status — and a host
+     who was sent back reads the reason here after the stage has moved
+     on, which is the whole point of putting it on the row. */
+  let reviewBox = '';
+  if (isHost) {
+    const rows = reviewsFor('show', s.id);
+    if (rows.length) {
+      reviewBox = '<div class="odt-box"><div class="odt-box-head">Bottle Lobby Review Record</div><div class="odt-box-body">' +
+        rows.slice().reverse().map(r =>
+          '<div class="odt-kv"><span class="otbl-dim">' + r.id + ' · ' +
+            (r.reviewedAt ? orderDate(r.reviewedAt) : 'not answered yet') + ' · ' +
+            (r.reviewedBy || s.leadHost) + '</span>' +
+          '<span style="text-align:right;flex:1"><span class="ord-stage rv-' + r.reviewStatus + '">' +
+            REVIEW_STATUS_LABEL[r.reviewStatus] + '</span>' +
+            (r.reviewNotes ? '<div class="otbl-dim" style="font-size:0.72rem;margin-top:0.3rem">' + r.reviewNotes + '</div>' : '') +
+          '</span></div>').join('') +
+        '<div class="edit-section-sub" style="margin:0.9rem 0 0">Nothing here is ever rewritten. A decision, a ' +
+        'request for changes and a lapsed review are three different acts, and each is its own line.</div>' +
+      '</div></div>';
+    }
   }
 
   /* ── producer: one box, four states, driven by exhibitorTurn ── */
@@ -12994,7 +13126,7 @@ function renderShowDetail(id) {
         (isHost  ? hostCateringBox(s) : '') +
         exhActions + (cfg.side === 'producer' ? producerHeldBox(role, s) : '') +
         (isHost ? hostApplicationBox(s) : '') +
-        hostProposalBox + readinessBox + gateBox +
+        hostProposalBox + readinessBox + gateBox + reviewBox +
         '<div class="odt-box"><div class="odt-box-head">Exhibitors &amp; Wines' +
           (hostActions ? '<span class="right">' + hostActions + '</span>' : '') +
         '</div><div class="odt-box-body">' + exhRows +
@@ -13077,20 +13209,59 @@ function submitShowForRelease(id) {
      refusal already has. */
   const rd = publishReadiness(s);
   if (!rd.ready) { showToast('✗ Not ready for Final Review — ' + missingPublishPoints(s).join('; ')); return; }
+  if (SUBMITTABLE_STAGES.indexOf(s.stage) === -1) { actionSay('This show is not in a stage that can be submitted'); return; }
+  if (showReviewOpen(s)) { actionSay('This show is already with Bottle Lobby'); return; }
   s.stage = 'pending_approval';
-  logShow(s, s.leadHost, 'Submitted to Bottle Lobby for release', 'show');
+  /* THE ASKING IS A ROW (A16.14c). Written before the log line so a
+     reader of either record finds the other; `reviewedBy` stays null
+     because nobody has reviewed anything yet. */
+  writeReview('show', s.id, 'pending', null, null, 'show_release');
+  logShow(s, s.leadHost, 'Submitted to Bottle Lobby for Final Review', 'show');
   refreshShows();
-  showToast('✓ Submitted — Bottle Lobby staff will review the show');
+  showToast('✓ Submitted — Bottle Lobby staff take the final review');
 }
+const SUBMITTABLE_STAGES = ['draft', 'planning', 'changes_requested'];
 
-/* Demo shortcut only. The real gate lives in the internal admin panel
-   (A16.1) and is never operable by the host. */
+/* ── THE TWO ANSWERS ─────────────────────────────────────────────
+   Demo shortcuts only. The real gate lives in the internal admin panel
+   (A16.1) and is never operable by the host — which is exactly why
+   both buttons say so on screen rather than pretending to be staff.
+
+   Each writes a NEW row. The pending row stays where it is: it is the
+   record of the host asking, and the answer is a different act by a
+   different party on a different day. */
 function simulateStaffRelease(id) {
   const s = actionShow(id); if (!s) return;
+  const open = showReviewOpen(s);
+  if (!open) { actionSay('There is no open review on this show to release'); return; }
+  writeReview('show', s.id, 'approved', 'Bottle Lobby',
+    'Released for publication — venue, line-up and costs checked.', 'show_release');
   s.stage = 'published';
   logShow(s, 'Bottle Lobby', 'Released — full details are now public', 'show');
   refreshShows();
+  refreshNotifications();
   showToast('✓ Released — the show is now fully public');
+}
+/* The return path (A16.2). The reason is not optional and it lives on
+   the review row, because that is the record of the decision — the
+   show log says a decision happened, the row says what it was. */
+function simulateStaffChangesRequested(id) {
+  const s = actionShow(id); if (!s) return;
+  const open = showReviewOpen(s);
+  if (!open) { actionSay('There is no open review on this show to answer'); return; }
+  const why = (window.prompt('What has to change before Bottle Lobby will release this show? ' +
+                             'The reason stays on the review record and is what the host is told.') || '').trim();
+  if (!why) { showToast('✗ A request for changes needs a reason'); return; }
+  writeReview('show', s.id, 'changes_requested', 'Bottle Lobby', why, 'show_release');
+  /* Back to `planning`, not to a stage of its own: the show goes on
+     being listed and goes on recruiting while the host amends it, which
+     is what `planning` is (D38). `changes_requested` is the return
+     PATH; it is not where the show waits. */
+  s.stage = 'planning';
+  logShow(s, 'Bottle Lobby', 'Changes requested before release — ' + why, 'show');
+  refreshShows();
+  refreshNotifications();
+  showToast('Changes requested — the show is back with ' + s.leadHost);
 }
 
 /* ── PRODUCER SIDE ──────────────────────────────────────────────
@@ -14791,6 +14962,16 @@ BLStore.register({
   orders:                 [function () { return orders; },                 function (v) { orders = v; }],
   orderSeq:               [function () { return orderSeq; },               function (v) { orderSeq = v; }],
   docSeq:                 [function () { return docSeq; },                 function (v) { docSeq = v; }],
+
+  /* Reviews — Bottle Lobby's decisions, own-label and Wine Show alike
+     (A17.8, A16.14c). It had to be registered the moment a show release
+     became one of them: `wineShows` persists, so a reload used to bring
+     back a `published` show whose release row had evaporated — a show
+     the platform vouched for with nobody recorded as having decided
+     (WS-6). Its counter travels with it for the same reason orderSeq
+     travels with the orders. */
+  reviews:                [function () { return reviews; },                function (v) { reviews = v; }],
+  reviewSeq:              [function () { return reviewSeq; },              function (v) { reviewSeq = v; }],
 
   /* Partnerships — one row, four dashboards read it (A6). It replaced
      wineryPartners, which was registered here, plus three `const`
