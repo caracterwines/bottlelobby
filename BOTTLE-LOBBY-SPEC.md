@@ -2998,6 +2998,12 @@ application states, only as many as are needed:
     draft · sent · invited · viewed · applied · accepted · declined ·
     withdrawn · expired
 
+> **`accepted` is the act of accepting, never a second exhibitor status.**
+> The one status of a producer who is on the show is `confirmed` (A16.4), and
+> `confirmed_exhibitors` is the single gate deciding who may be named in public
+> — it must have exactly one input. Read the row above as "the host accepts, and
+> the row becomes `confirmed`"; two words for one state is the defect D26 names.
+
 **Publish preconditions — the old planning trigger, arriving where it belongs.**
 All of these before **Submit to Bottle Lobby** becomes active:
 
@@ -3110,7 +3116,8 @@ Member events:
   failure (A15.2a).
 - **ME-7 — no consumer checkout or ticketing structures exist.**
 
-**Harness homes:** a new `tests/shows-reach.js` for WS-1..WS-7 — **with guards
+**Harness homes:** `tests/shows-reach.js` for WS-1..WS-5 and
+`tests/shows-release.js` for WS-6 and WS-7 — **with guards
 that actually look**, which is the A16.6 lesson (C7) — and a new
 `tests/member-events.js` for ME-1..ME-7. Each derives independently and compares
 against the rendered surfaces rather than the arrays behind them.
