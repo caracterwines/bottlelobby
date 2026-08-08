@@ -13260,7 +13260,16 @@ function checkMaterialChanges() {
     s.stage = 'planning';
     logShow(s, s.leadHost, 'Withdrawn from Final Review — ' + what +
       ' changed, so the review no longer had the show in front of it', 'show');
-    showToast('Back in Planning — ' + what + ' changed under review. Submit again when it stands.');
+    /* AFTER THE ACTION'S OWN RECEIPT, and that ordering is the point.
+       This runs inside refreshShows(), which every action calls BEFORE
+       its own toast — so said plainly it would be overwritten a
+       millisecond later by "✓ Cost split saved", and the host would be
+       told the small thing and not the large one. Deferring it by a
+       tick puts the consequence after the receipt, which is also the
+       order in which the two actually happened. Measured in the
+       browser, where it was the other way round. */
+    const msg = 'Back in Planning — ' + what + ' changed under review. Submit again when it stands.';
+    setTimeout(function () { showToast(msg); }, 0);
   });
 }
 
