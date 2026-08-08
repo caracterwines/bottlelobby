@@ -674,8 +674,39 @@ const MEMBER_EVENT_DISCLAIMER =
   'A member event, published by its host. Bottle Lobby neither reviews nor releases it ' +
   'and gives no guarantee for it — that is what a Wine Show is and this is not.';
 
+/* ══ WHO MAY BE NAMED ON THE CARD (ME-5, D42) ════════════════════ */
+/* A confirmed `winemaker` or `exhibitor` may be named on the public
+   surfaces of a PUBLISHED member event — after their explicit
+   acceptance and never before it. Everybody else stays a head count:
+   applicants, unanswered invitations, guests, sponsors and general
+   participants appear on no public surface (before acceptance a name
+   lives only in the invitee's own view and the host's, which are
+   cockpit panes, not cards).
+
+   The status gate is eventListable(): `published`, `postponed` and
+   `completed` are all states the HOST has published, `draft` is on no
+   directory, and a delisted event renders no card at all. The naming
+   is a permission the acceptance carries — it is NOT the Bottle Lobby
+   release vocabulary, and the card's disclaimer stands unchanged
+   beside it (ME-3). */
+const EVENT_NAMEABLE_ROLES  = ['winemaker', 'exhibitor'];
+const EVENT_NAMEABLE_STATUS = ['accepted', 'attended'];
+function eventNamedLineup(ev) {
+  if (!eventListable(ev)) return [];
+  return (ev.participants || []).filter(function (p) {
+    return EVENT_NAMEABLE_ROLES.indexOf(p.role) !== -1 &&
+           EVENT_NAMEABLE_STATUS.indexOf(p.status) !== -1;
+  });
+}
+
 function memberEventCard(ev) {
   const free = eventFreePlaces(ev);
+  const named = eventNamedLineup(ev);
+  const lineup = named.length
+    ? '<div class="me-card-lineup">' + named.map(function (p) {
+        return 'With <b>' + p.stakeholder + '</b> — ' + p.role;
+      }).join(' · ') + '</div>'
+    : '';
   const note = ev.applicationsOpen
     ? (ev.applicationDeadline
         ? 'Open for applications until ' + blDate(ev.applicationDeadline)
@@ -696,6 +727,7 @@ function memberEventCard(ev) {
       '<div class="me-card-date">' + blDate(ev.date) + (ev.city ? ' · ' + ev.city : '') + '</div>' +
       '<div class="me-card-title">' + ev.title + '</div>' +
       '<div class="me-card-host">Hosted by ' + ev.host + '</div>' +
+      lineup +
       '<div class="me-card-note">' + note + '</div>' +
       paid +
       '<div class="me-card-disclaim">' + MEMBER_EVENT_DISCLAIMER + '</div>' +

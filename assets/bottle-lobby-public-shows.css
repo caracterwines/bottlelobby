@@ -97,6 +97,11 @@
   color:rgba(247,243,238,0.38); margin-bottom:0.35rem; }
 .me-card-title { font-size:0.95rem; font-weight:500; color:var(--paper); line-height:1.35; }
 .me-card-host { font-size:0.72rem; color:var(--dim); margin-top:0.35rem; }
+/* The named line-up (ME-5, D42): the paper tone the card already
+   speaks, deliberately not the show card's gold — a named winemaker is
+   an announcement, never a guarantee. */
+.me-card-lineup { font-size:0.72rem; color:rgba(247,243,238,0.65); margin-top:0.45rem; }
+.me-card-lineup b { font-weight:500; color:var(--paper); }
 .me-card-note { font-size:0.72rem; color:var(--dim); margin-top:0.55rem; }
 .me-card-paid { font-size:0.7rem; color:rgba(247,243,238,0.5); margin-top:0.35rem; }
 /* The sentence ME-3 is about. It is not fine print: it is the reason

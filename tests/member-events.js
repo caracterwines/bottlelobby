@@ -593,42 +593,116 @@ console.log('\n── ME-3: the two cards may share a list and may not share a p
 }
 
 /* ══════════════════════════════════════════════════════════════════
-   ME-5 — head counts, never identities, until `completed`.
+   ME-5 — as replaced on 8 Aug 2026 (D42): guests, general
+   participants, applicants and unanswered invitations stay head
+   counts and are never named; a confirmed `winemaker` or `exhibitor`
+   IS named on the public card of a PUBLISHED event — after explicit
+   acceptance, never before it.
+
+   The allowed set is derived HERE, independently of the asset's own
+   eventNamedLineup(), so the card is measured against the rule rather
+   than against itself.
 ══════════════════════════════════════════════════════════════════ */
-console.log('\n── ME-5: the card counts the room, it does not name it');
+console.log('\n── ME-5: the card counts the room — and names exactly the accepted winemaker');
 {
-  const named = [];
-  EVENTS().forEach(ev => {
-    if (ev.status === 'completed') return;
-    const html = w.memberEventCard(ev);
-    ev.participants.forEach(p => {
-      /* The HOST is not an identity being disclosed — a card is the
-         host announcing himself (A16.7), and it says so in words. */
-      if (p.role === 'host') return;
-      if (html.indexOf(p.stakeholder) !== -1) named.push(ev.id + ' names ' + p.stakeholder);
+  const mayName  = p  => ['winemaker', 'exhibitor'].indexOf(p.role) !== -1 &&
+                         ['accepted', 'attended'].indexOf(p.status) !== -1;
+  const listable = ev => ['published', 'postponed', 'completed'].indexOf(ev.status) !== -1 &&
+                         !ev.moderation;
+
+  /* ME-2 accepted Château Belrieu's application as its own test act.
+     Put the fixture fact back — same row, same source — so this
+     section really measures the `applied` shape it claims to. */
+  const belrieu = EV('ME-3102').participants.find(p => p.stakeholder === 'Château Belrieu');
+  belrieu.status = 'applied';
+
+  /* Everybody OUTSIDE the allowed set stays unnamed, on every card. */
+  const overshared = () => {
+    const hits = [];
+    EVENTS().forEach(ev => {
+      const html = w.memberEventCard(ev);
+      ev.participants.forEach(p => {
+        /* The HOST is not an identity being disclosed — a card is the
+           host announcing himself (A16.7), and it says so in words. */
+        if (p.role === 'host') return;
+        if (listable(ev) && mayName(p)) return;
+        if (html.indexOf(p.stakeholder) !== -1)
+          hits.push(ev.id + ' names ' + p.stakeholder + ' (' + p.role + ', ' + p.status + ')');
+      });
     });
-  });
-  if (named.length) bad(named.join('; '));
-  else ok('no participant, invitee, applicant or guest is named on any card');
+    return hits;
+  };
+  const hits = overshared();
+  if (hits.length) bad(hits.join('; '));
+  else ok('no applicant, open invitation, guest, sponsor or general participant is named on any card');
+
+  /* The fixtures cover every protected shape by name — if one of these
+     rows disappears, the assertion above measures less than it claims. */
+  const protectedShapes = [
+    ['an applicant',            EV('ME-3102').participants.find(p => p.status === 'applied')],
+    ['an unanswered invitation', EV('ME-3103').participants.find(p => p.status === 'sent')],
+    ['a confirmed guest',       EV('ME-3101').participants.find(p => p.role === 'guest' && p.status === 'confirmed')],
+    ['an accepted sponsor',     EV('ME-3102').participants.find(p => p.role === 'sponsor' && p.status === 'accepted')]
+  ].filter(([, p]) => !p).map(([label]) => label);
+  if (protectedShapes.length) bad('the fixtures no longer hold ' + protectedShapes.join(', '));
+  else ok('and the fixtures really hold all four protected shapes to measure against');
+
+  /* The one naming the rule now ALLOWS, measured as a requirement:
+     an accepted winemaker on a published event is the announcement the
+     event exists to make. */
+  const dinner = EV('ME-3101');
+  const maker = dinner.participants.find(p => p.role === 'winemaker' && p.status === 'accepted');
+  if (!maker) bad('ME-3101 has no accepted winemaker — the allowed naming is unmeasured');
+  else if (w.memberEventCard(dinner).indexOf(maker.stakeholder) === -1)
+    bad('the accepted winemaker ' + maker.stakeholder + ' is not named on the published card');
+  else ok(maker.stakeholder + ', accepted winemaker, is named on ME-3101\'s public card');
+
+  /* BEFORE the acceptance the very same name is publicly invisible —
+     the same row, one status earlier. */
+  maker.status = 'sent';
+  const leaked = w.memberEventCard(dinner).indexOf(maker.stakeholder) !== -1;
+  maker.status = 'accepted';
+  if (leaked) bad('the same winemaker is named while the invitation is still unanswered');
+  else ok('and one status earlier — sent instead of accepted — the same name is off the card');
+
+  /* And the host's own publish state gates it: a draft card names
+     nobody, whoever has accepted. */
+  const was = dinner.status;
+  dinner.status = 'draft';
+  const draftLeak = w.memberEventCard(dinner).indexOf(maker.stakeholder) !== -1;
+  dinner.status = was;
+  if (draftLeak) bad('an accepted winemaker is named on a DRAFT card');
+  else ok('and on a draft — not published, findable by nobody — the name is withheld too');
+
+  /* The naming reaches the rendered Discover surface through the same
+     card, with its own wording and no show gold. */
+  const pane = discoverText('distributor');
+  if (pane.indexOf('With') === -1 || pane.indexOf(maker.stakeholder) === -1)
+    bad('the accepted winemaker does not reach the rendered Discover pane');
+  else ok('and the rendered Discover pane carries the line-up line');
 
   const ev = EV('ME-3101');
   const card = w.memberEventCard(ev);
   const free = w.eventFreePlaces(ev);
   if (card.indexOf(String(free)) === -1) bad('the card shows no place count at all');
-  else ok('it shows the count instead — ' + free + ' place(s) left of ' + ev.capacity);
+  else ok('guests stay arithmetic: ' + free + ' place(s) left of ' + ev.capacity);
 
-  expectRed('name the participants on the card', () => {
+  expectRed('name the unanswered invitation with the accepted', () => {
+    const real = w.eventNamedLineup;
+    w.eventNamedLineup = e => (e.participants || []).filter(p =>
+      ['winemaker', 'exhibitor'].indexOf(p.role) !== -1);
+    try {
+      const h = overshared();
+      if (h.length) bad(h.join('; '));
+    } finally { w.eventNamedLineup = real; }
+  });
+
+  expectRed('name everybody on the card', () => {
     const real = w.memberEventCard;
     w.memberEventCard = e => real(e) + '<div>' + e.participants.map(p => p.stakeholder).join(', ') + '</div>';
     try {
-      EVENTS().forEach(e => {
-        if (e.status === 'completed') return;
-        const html = w.memberEventCard(e);
-        e.participants.forEach(p => {
-          if (p.role === 'host') return;
-          if (html.indexOf(p.stakeholder) !== -1) bad(e.id + ' names ' + p.stakeholder);
-        });
-      });
+      const h = overshared();
+      if (h.length) bad(h.join('; '));
     } finally { w.memberEventCard = real; }
   });
 }
