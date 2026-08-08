@@ -190,8 +190,28 @@ window.BLStore = (function () {
      removed bridge field. The last of those is the dangerous one — the
      page reads own-label status from a derivation now, and a restored
      listing with a stale field would simply be ignored while the wine
-     it belongs to disappeared from My Labels. */
-  var VERSION   = 5;
+     it belongs to disappeared from My Labels.
+
+     6 — the member-event rollout (08.08.2026). ONE row added to an
+     existing collection: ME-3105, the winery's own harvest event,
+     without which the winery cockpit demonstrates an empty state and
+     nothing else.
+
+     MEASURED, AND THE MEASUREMENT ARGUES AGAINST ITSELF. The two
+     fingerprint sets were captured before and after: exactly one of
+     the 26 collections changed, and it is `memberEvents`
+     (92c5d5c0 → 2de22954). So guard 2 WOULD have discarded an old
+     snapshot on its own — and the bump is here anyway, because of
+     WHY it changed. The new row is the first with `reachCountry:null`
+     where the four before it all carry a string, and the union of
+     element shapes moved for that reason alone. Had the estate's
+     event narrowed to Italy like the others narrow to Germany,
+     nothing would have changed and the row would have vanished for
+     every returning visitor. A protection that rests on one field
+     happening to be null is not a protection; Durchgang 7 could skip
+     the bump because `memberEvents` was a NEW registration, and this
+     is the case its own note said would bring the C8 rule back. */
+  var VERSION   = 6;
   var DEBOUNCE  = 200;   /* ms after the last event before a write */
   var HEARTBEAT = 2000;  /* ms between "does storage still match?" checks */
   var POLL      = 500;   /* ms between retries while the tab is busy */

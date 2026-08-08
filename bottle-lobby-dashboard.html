@@ -4023,8 +4023,8 @@ With an annual production capacity of over 1.2 million bottles, Cantina Rossi is
      fails the run if any asset is missing or empty. That same file
      also switches persistence off for every harness. See tests/README.
 -->
-<script src="assets/bottle-lobby-store.js?v=26125d6d"></script>
-<script src="assets/bottle-lobby-data.js?v=808628ea"></script>
+<script src="assets/bottle-lobby-store.js?v=17ef35f1"></script>
+<script src="assets/bottle-lobby-data.js?v=7f5dcddf"></script>
 <script src="assets/bottle-lobby-public-shows.js?v=fb934a45"></script>
 
 <script>
@@ -14367,7 +14367,7 @@ let activeEventRole = 'distributor';
 /* The id counter, and it persists with the collection: without it a
    reload would start handing out ME- ids that already exist, which is
    the fact orderSeq records for orders. */
-let eventSeq = 3104;
+let eventSeq = 3105;
 function nextEventId() { return 'ME-' + (++eventSeq); }
 
 function eventById(id) { return memberEvents.find(e => e.id === id); }

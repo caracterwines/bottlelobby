@@ -1006,5 +1006,65 @@ let memberEvents = [
       { stakeholder:'Hawesko GmbH', role:'host', source:'own', status:'confirmed', requestedAt:'2026-08-07' }
     ],
     log:[
-      { at:'2026-08-07', actor:'Hawesko GmbH', text:'Event created as a draft' } ] }
+      { at:'2026-08-07', actor:'Hawesko GmbH', text:'Event created as a draft' } ] },
+
+  /* THE WINERY'S OWN, AND IT IS THE ONE ROW THE ROLLOUT NEEDED. When
+     the cockpit went to all four roles, three of them already hosted
+     something — Weinhaus Müller has ME-3101, Bistro Laurent has
+     ME-3102, Hawesko has two. The winery hosted nothing, so its
+     cockpit would have demonstrated the empty state and nothing else.
+     One row, and only one: A16.8's winery examples are estate
+     occasions, and a second would have been decoration.
+
+     WHY IT DOES NOT NARROW GEOGRAPHICALLY. `reach` is partners +
+     community — this estate's distributors and the houses that follow
+     it — and every one of those is in Germany or northern Italy. An
+     Alcamo narrowing would have been honest about the address and
+     wrong about the audience: people travel to a harvest, which is
+     exactly the case ME-3101's Munich narrowing is NOT (an in-store
+     evening cannot be attended from Copenhagen). Two events, two
+     answers, and the field is what carries the difference.
+
+     WEINHAUS MÜLLER IS ASKED AND HAS NOT ANSWERED. That is not
+     decoration either: it is the one open invitation on the retail
+     side, and it is what makes "accept · decline · RSVP" reachable
+     from a cockpit that is not the host's. Hawesko has answered and
+     holds a place, so the two states sit side by side on one record.
+
+     Today is 8 Aug 2026 (C7); a Sicilian harvest is September, and the
+     log rows are bounded by both. */
+  { id:'ME-3105', title:'Harvest Days in Contrada Ferla',
+    host:'Cantina Rossi', hostRole:'winery',
+    category:'harvest event',
+    date:'2026-09-19', time:'10:00', city:'Alcamo',
+    description:'Two days in the vineyard and the cellar during the harvest: the Nero d\'Avola coming in, ' +
+                'the 2023 whites out of steel, and the Riserva tasted from barrel. For the houses that ' +
+                'carry these wines and the ones that follow the estate.',
+    location:'Cantina Rossi, Contrada Ferla, 91011 Alcamo TP',
+    locationEntity:'Cantina Rossi',
+    heroImage:'images/lebanon-vineyard.jpg',
+    status:'published',
+    capacity:30,
+    reach:['partners','community'],
+    reachCountry:null, reachRegion:null, reachCity:null,
+    registrationMode:'rsvp',
+    applicationsOpen:false, applicationDeadline:null,
+    isPaid:false, priceNote:null, externalLink:null,
+    moderation:null,
+    /* The estate's own wines, by key. A producer naming his own range
+       is still a reference and never a description (ME-6). */
+    products:[ { productId:'PRD-1003' }, { productId:'PRD-1004' },
+               { productId:'PRD-1002' }, { productId:'PRD-1007' } ],
+    participants:[
+      { stakeholder:'Cantina Rossi',   role:'host',  source:'own',        status:'confirmed', requestedAt:'2026-07-28' },
+      { stakeholder:'Hawesko GmbH',    role:'guest', source:'invitation', status:'confirmed', requestedAt:'2026-07-30' },
+      /* Asked, nothing answered. The row the retail cockpit acts on. */
+      { stakeholder:'Weinhaus Müller', role:'guest', source:'invitation', status:'sent',      requestedAt:'2026-08-04' }
+    ],
+    log:[
+      { at:'2026-07-28', actor:'Cantina Rossi', text:'Event created as a draft' },
+      { at:'2026-07-30', actor:'Cantina Rossi', text:'Invitation sent to Hawesko GmbH as guest' },
+      { at:'2026-07-31', actor:'Hawesko GmbH',  text:'RSVP — attending as a guest' },
+      { at:'2026-08-02', actor:'Cantina Rossi', text:'Published to partners and community', scope:'event' },
+      { at:'2026-08-04', actor:'Cantina Rossi', text:'Invitation sent to Weinhaus Müller as guest' } ] }
 ];
