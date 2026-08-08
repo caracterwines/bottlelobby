@@ -14302,6 +14302,7 @@ renderRetailEvents();
 const EVENT_TABS = [
   { key:'drafts',   label:'Drafts' },
   { key:'published',label:'Published' },
+  { key:'upcoming', label:'Upcoming' },
   { key:'invites',  label:'Invitations & Applications' },
   { key:'past',     label:'Past' }
 ];
@@ -14611,13 +14612,73 @@ function eventShellHtml(role) {
   '<div id="' + p + '-detail-pane" style="display:none"></div>';
 }
 
+
+/* ── HOSTING AND BEING ON IT ARE TWO DIFFERENT THINGS ─────────────
+   A16.8 gives the cockpit five lists, and Drafts · Published · Past
+   are all about the events this role HOSTS. Upcoming is the one about
+   the events it is merely ON — and it exists because answering an
+   invitation has to lead somewhere. Without it an accepted invitation
+   disappears from the cockpit at the moment of accepting, and the role
+   that is going to somebody else's evening has no screen that says so.
+
+   These two functions are the whole of the difference between a host
+   and a guest in this file. Everything below them — the list, the
+   detail pane, the actions — asks one of the two rather than carrying
+   a second copy of the cockpit for people who did not organise
+   anything. */
+function isEventHost(role, ev) {
+  return !!ev && ev.host === EVENT_ROLES[role].entity;
+}
+/* My own row on somebody else's event: the one row that carries all
+   five facts about me (A16.9 — `event_participants` extends
+   `event_invitations`, so there is nothing else to look in). */
+function myEventRow(role, ev) {
+  return eventParticipant(ev, EVENT_ROLES[role].entity);
+}
+/* Events I am ON but do not host. `accepted` and `confirmed` only:
+   being asked is not being on it, and that half is the Invitations
+   tab's business. Delisted events drop out here as they do everywhere
+   else — a moderation block takes an event off every directory, and a
+   participant list is one (A16.8). */
+const EVENT_IM_ON = ['accepted', 'confirmed', 'attended'];
+function eventsImOn(role) {
+  return memberEvents.filter(e => {
+    if (isEventHost(role, e) || e.moderation) return false;
+    if (['published', 'postponed'].indexOf(e.status) === -1) return false;
+    const p = myEventRow(role, e);
+    return !!p && EVENT_IM_ON.indexOf(p.status) !== -1;
+  }).sort((a, b) => blDateValue(a.date) - blDateValue(b.date));
+}
+/* Invitations waiting for MY answer. An invitation reaches its
+   invitee through the participant row itself and not through reach —
+   an invitation you cannot see is one you cannot answer, which is
+   gate 2 of eventVisibleTo() said in the cockpit. A delisted event is
+   still excluded: Bottle Lobby took it off the directories, and a
+   pending invitation is not a way back onto one. */
+function eventsAwaitingMe(role) {
+  return memberEvents.filter(e => {
+    if (isEventHost(role, e) || e.moderation) return false;
+    if (['published', 'postponed'].indexOf(e.status) === -1) return false;
+    const p = myEventRow(role, e);
+    return !!p && (p.status === 'sent' || p.status === 'viewed');
+  }).sort((a, b) => blDateValue(a.date) - blDateValue(b.date));
+}
+
 function eventsForTab(role, tab) {
   const mine = myEvents(role);
   if (tab === 'drafts')    return mine.filter(e => e.status === 'draft');
   if (tab === 'published') return mine.filter(e => e.status === 'published' || e.status === 'postponed');
   if (tab === 'past')      return mine.filter(e => e.status === 'completed' || e.status === 'cancelled');
-  /* Invitations & Applications: the events with something to answer. */
-  return mine.filter(e => (e.participants || []).some(p => p.status === 'applied' || p.status === 'sent'));
+  if (tab === 'upcoming')  return eventsImOn(role);
+  /* Invitations & Applications, and it reads BOTH directions, because
+     the label names both and a role is on both sides of them. What
+     waits on my own events is an application or an invitation nobody
+     has answered; what waits on somebody else's is an invitation to
+     me. One tab, because "something here is waiting for an answer" is
+     one question however the arrow points. */
+  return mine
+    .filter(e => (e.participants || []).some(p => p.status === 'applied' || p.status === 'sent'))
+    .concat(eventsAwaitingMe(role));
 }
 function eventOpenTasks(ev) {
   return (ev.participants || []).filter(p => p.status === 'applied').length;
@@ -14670,11 +14731,17 @@ function eventKpis(role) {
   const mine = myEvents(role);
   const live = mine.filter(e => e.status === 'published' || e.status === 'postponed');
   const tasks = mine.reduce((n, e) => n + eventOpenTasks(e), 0);
+  /* "Waiting for You" is ONE figure over both directions, for the same
+     reason the Invitations tab is one tab: an application on my own
+     event and an invitation to somebody else's are the same question
+     asked of me — is there an answer I owe? Two tiles would make the
+     reader add them up himself. */
+  const owed = tasks + eventsAwaitingMe(role).length;
   return [
-    { label:'Published',     value:live.length,                                 sub:'findable by your chosen reach' },
-    { label:'Drafts',        value:mine.filter(e => e.status === 'draft').length, sub:'nobody can find these' },
-    { label:'Applications',  value:tasks,                                       sub:'waiting for your answer' },
-    { label:'Places Taken',  value:live.reduce((n, e) => n + eventTakenPlaces(e), 0), sub:'RSVPs across your events' }
+    { label:'Published',      value:live.length,                                 sub:'findable by your chosen reach' },
+    { label:'Drafts',         value:mine.filter(e => e.status === 'draft').length, sub:'nobody can find these' },
+    { label:'Waiting for You', value:owed,                                       sub:'applications and invitations to answer' },
+    { label:'Places Taken',   value:live.reduce((n, e) => n + eventTakenPlaces(e), 0), sub:'RSVPs across your events' }
   ];
 }
 
@@ -14705,19 +14772,36 @@ function renderMyEvents(role) {
     '<span>Places</span><span>Status</span><span></span></div>';
 
   const rows = list.map(ev => {
-    const tasks = eventOpenTasks(ev);
+    /* WHOSE ROW IS THIS. A host reads his own worklist off it — how
+       many applications wait, whether the event is delisted, whether
+       it takes applications. A guest reads something else entirely:
+       who is running this, and what his own standing on it is. Same
+       row, two readings, and the record decides which. */
+    const host  = isEventHost(role, ev);
+    const mineP = host ? null : myEventRow(role, ev);
+    const tasks = host ? eventOpenTasks(ev) : 0;
     const taskChip = tasks
       ? '<span class="ord-chip chip-offer">' + tasks + ' application(s) to answer</span>' : '';
     const modChip = ev.moderation
       ? '<span class="ord-chip chip-manual">Delisted — ' + ev.moderation.reason + '</span>' : '';
-    const appChip = ev.applicationsOpen
+    const appChip = (host && ev.applicationsOpen)
       ? '<span class="ord-chip chip-deal">Taking applications</span>' : '';
+    const hostChip = host ? ''
+      : '<span class="ord-chip chip-promo">Hosted by ' + ev.host + '</span>';
+    const standing = mineP ? eventStanding(ev, mineP) : null;
+    const mineChip = !mineP ? ''
+      : '<span class="ord-chip chip-manual">' + (
+          mineP.status === 'sent' || mineP.status === 'viewed'
+            ? 'Invited as ' + mineP.role.replace('_', '-') + ' — waiting for you'
+          : standing === 'waitlist' ? 'Waitlist #' + eventWaitlistPosition(ev, mineP)
+          : standing === 'seat'     ? 'You have a place'
+          : 'You are on it as ' + mineP.role.replace('_', '-')) + '</span>';
     return '<div class="otbl-row" style="grid-template-columns:104px 104px 1.6fr 1.2fr 90px 120px 26px" ' +
       'onclick="openEventDetail(\'' + ev.id + '\')">' +
       '<span class="otbl-id">' + ev.id + '</span>' +
       '<span class="otbl-dim">' + blDate(ev.date) + '</span>' +
       '<span class="otbl-cust">' + ev.title +
-        '<em>' + taskChip + modChip + appChip + ev.category + '</em></span>' +
+        '<em>' + taskChip + hostChip + mineChip + modChip + appChip + ev.category + '</em></span>' +
       '<span class="otbl-cust">' + (ev.city || '—') + '<em>' + ev.location + '</em></span>' +
       '<span class="otbl-dim">' + eventTakenPlaces(ev) + ' / ' + (ev.capacity || 0) + '</span>' +
       '<span><span class="ord-stage me-' + ev.status + '">' + EVENT_STATUS_LABEL[ev.status] + '</span></span>' +
@@ -14728,10 +14812,11 @@ function renderMyEvents(role) {
   document.getElementById(p + '-table').innerHTML = list.length
     ? '<div class="otbl">' + head + rows + '</div>'
     : '<div class="otbl"><div class="otbl-empty">' + (
-        st.tab === 'drafts'  ? 'No drafts. Create an event — it starts as a draft, and nobody can find it until you publish it.' :
-        st.tab === 'invites' ? 'Nothing waiting for an answer.' :
-        st.tab === 'past'    ? 'Nothing in your history yet.' :
-                               'Nothing published yet. A draft becomes findable the moment you publish it yourself.'
+        st.tab === 'drafts'   ? 'No drafts. Create an event — it starts as a draft, and nobody can find it until you publish it.' :
+        st.tab === 'invites'  ? 'Nothing waiting for an answer — neither on your own events nor from anybody else.' :
+        st.tab === 'upcoming' ? 'You are not on anybody else\'s event. An invitation you accept appears here; the events you run yourself are under Published.' :
+        st.tab === 'past'     ? 'Nothing in your history yet.' :
+                                'Nothing published yet. A draft becomes findable the moment you publish it yourself.'
       ) + '</div></div>';
 
   if (st.openId) {
@@ -14768,9 +14853,81 @@ function eventInvitables(ev) {
     .filter(n => n !== ev.host && !eventParticipant(ev, n));
 }
 
+
+/* ── MY OWN SIDE OF SOMEBODY ELSE'S EVENT (A16.8) ────────────────
+   THE ACTIONS ARE THE ONES DURCHGANG 7 ALREADY WROTE. This box adds
+   no mechanism: respondToEventInvite() and rsvpToEvent() are the same
+   two functions the host's pane calls to simulate an answer, called
+   here by the house the answer is actually about. That is the whole
+   of what "the same components, reused role-dependently" means — a
+   second accept path would be a second place for `accepted` to mean
+   something, and the two would part company.
+
+   ACCEPTANCE AND RSVP ARE DELIBERATELY NOT THE SAME BUTTON. A sponsor
+   who never comes and a guest who does are different facts (A16.8),
+   so an accepted exhibitor reads "you are on it" and only a guest is
+   offered a place.
+
+   WHAT IS NOT HERE: applying. `applyToEvent()` exists and is tested,
+   and the surface a member applies FROM is the applicant view — that
+   is its own pass, and putting half of it here would be the parallel
+   workflow this cockpit exists to avoid. */
+function eventMyParticipationBox(role, ev) {
+  const me = EVENT_ROLES[role].entity, p = myEventRow(role, ev);
+  const q = s => "'" + ev.id + "','" + me + "','" + s + "'";
+  if (!p) {
+    return '<div class="odt-box"><div class="odt-box-head">You</div><div class="odt-box-body">' +
+      '<div class="ws-demo-note" style="margin-bottom:0.8rem">' + MEMBER_EVENT_DISCLAIMER + '</div>' +
+      '<div class="edit-section-sub" style="margin:0">You are not on this event. You can find it because ' +
+        ev.host + ' chose a reach that names you — being able to find an event is not being on one.</div>' +
+    '</div></div>';
+  }
+  const standing = eventStanding(ev, p);
+  const waiting  = p.status === 'sent' || p.status === 'viewed';
+  const line = waiting
+    ? ev.host + ' invited you as <strong style="color:var(--paper)">' + p.role.replace('_', '-') +
+      '</strong>. Accepting puts you on the event; it creates no order and no partnership.'
+    : p.status === 'declined'  ? 'You declined this invitation.'
+    : p.status === 'withdrawn' ? 'You withdrew from the guest list. The place went back to the room.'
+    : p.role === 'guest'
+      ? (standing === 'waitlist'
+          ? 'You are on the waitlist, position ' + eventWaitlistPosition(ev, p) +
+            '. Places are computed from the order the RSVPs arrived, never written down.'
+          : 'You have a place as a guest.')
+      : 'You are on this event as <strong style="color:var(--paper)">' + p.role.replace('_', '-') + '</strong>.';
+  const buttons =
+    (waiting
+      ? '<button class="btn-sm btn-gold" onclick="respondToEventInvite(' + q('accept') + ')">Accept</button>' +
+        '<button class="btn-sm btn-outline" style="margin-left:0.4rem" ' +
+          'onclick="respondToEventInvite(' + q('decline') + ')">Decline</button>'
+      : '') +
+    (p.role === 'guest' && p.status === 'confirmed'
+      ? '<button class="btn-sm btn-outline" onclick="rsvpToEvent(' + q('withdraw') + ')">Give up your place</button>'
+      : '') +
+    (p.role === 'guest' && (p.status === 'withdrawn' || p.status === 'accepted')
+      ? '<button class="btn-sm btn-gold" onclick="rsvpToEvent(' + q('confirm') + ')">RSVP — take a place</button>'
+      : '');
+  return '<div class="odt-box"><div class="odt-box-head">You</div><div class="odt-box-body">' +
+    '<div class="ws-demo-note" style="margin-bottom:0.8rem">' + MEMBER_EVENT_DISCLAIMER + '</div>' +
+    '<div class="odt-kv"><span>Your row</span><span style="text-align:right;flex:1">' +
+      p.role.replace('_', '-') + ' · <span class="ord-chip chip-manual">' + p.status.replace('_', '-') +
+      '</span></span></div>' +
+    '<div class="edit-section-sub" style="margin:0.8rem 0 ' + (buttons ? '0.8rem' : '0') + '">' + line + '</div>' +
+    buttons +
+  '</div></div>';
+}
+
 function renderEventDetail(role, ev) {
   const p = EVENT_ROLES[role].prefix;
   const pane = document.getElementById(p + '-detail-pane');
+  /* ONE PANE, TWO READERS. Everything a member event IS — the evening,
+     the address, the wines, what happened to it — is the same for the
+     host and for the house he invited. What differs is what may be
+     DONE: publishing, inviting, opening applications, answering them
+     and the moderation shortcut are the host's, and they are absent
+     rather than disabled for anybody else. A greyed-out publish button
+     on somebody else's event would suggest the act exists for them. */
+  const host = isEventHost(role, ev);
 
   const parts = (ev.participants || []).filter(x => x.role !== 'host');
   const applied = parts.filter(x => x.status === 'applied');
@@ -14785,19 +14942,19 @@ function renderEventDetail(role, ev) {
     return '<div class="odt-kv"><span>' + x.stakeholder +
       '<span class="otbl-dim"> · ' + x.role.replace('_', '-') + place + '</span></span>' +
       '<span style="text-align:right;flex:1"><span class="ord-chip chip-manual">' + x.status.replace('_', '-') + '</span>' +
-      (x.status === 'sent' || x.status === 'viewed'
+      (host && (x.status === 'sent' || x.status === 'viewed')
         ? '<button class="btn-sm btn-outline" style="margin-left:0.5rem" ' +
           'onclick="respondToEventInvite(\'' + ev.id + '\',\'' + x.stakeholder + '\',\'accept\')">Simulate accept</button>' +
           '<button class="btn-sm btn-outline" style="margin-left:0.4rem" ' +
           'onclick="respondToEventInvite(\'' + ev.id + '\',\'' + x.stakeholder + '\',\'decline\')">Decline</button>'
         : '') +
-      (x.status === 'applied'
+      (host && x.status === 'applied'
         ? '<button class="btn-sm btn-gold" style="margin-left:0.5rem" ' +
           'onclick="decideEventApplication(\'' + ev.id + '\',\'' + x.stakeholder + '\',\'accept\')">Accept</button>' +
           '<button class="btn-sm btn-outline" style="margin-left:0.4rem" ' +
           'onclick="decideEventApplication(\'' + ev.id + '\',\'' + x.stakeholder + '\',\'decline\')">Decline</button>'
         : '') +
-      (x.role === 'guest' && x.status !== 'confirmed' && x.status !== 'declined'
+      (host && x.role === 'guest' && x.status !== 'confirmed' && x.status !== 'declined'
         ? '<button class="btn-sm btn-outline" style="margin-left:0.4rem" ' +
           'onclick="rsvpToEvent(\'' + ev.id + '\',\'' + x.stakeholder + '\',\'confirm\')">Simulate RSVP</button>'
         : '') +
@@ -14808,7 +14965,8 @@ function renderEventDetail(role, ev) {
      about the card as much as about the record — so the host reads the
      same sentence at the moment he publishes that a reader will see on
      the card afterwards. One constant, two places, no drift. */
-  const publishBox = ev.status === 'draft'
+  const publishBox = !host ? ''
+    : ev.status === 'draft'
     ? '<div class="odt-box"><div class="odt-box-head">Publishing</div><div class="odt-box-body">' +
         '<div class="ws-demo-note" style="margin-bottom:0.8rem">' + MEMBER_EVENT_DISCLAIMER + '</div>' +
         '<div class="edit-section-sub" style="margin:0 0 0.8rem">You publish this yourself. There is no ' +
@@ -14832,7 +14990,8 @@ function renderEventDetail(role, ev) {
     : '<div class="edit-section-sub" style="margin:0">No wines named yet. They are references into the ' +
       "producer's own range — a wine is never described here (invariant 2).</div>";
 
-  const modBox = ev.moderation
+  const modBox = !host ? ''
+    : ev.moderation
     ? '<div class="odt-box"><div class="odt-box-head">Moderation</div><div class="odt-box-body">' +
         '<div class="odt-kv"><span>Delisted by ' + ev.moderation.by + ' on ' + blDate(ev.moderation.at) +
         '</span><span style="text-align:right;flex:1">' + ev.moderation.reason + '</span></div>' +
@@ -14869,9 +15028,11 @@ function renderEventDetail(role, ev) {
           '<div class="edit-section-sub" style="margin:0.8rem 0 0">' + ev.description + '</div>' +
         '</div></div>' +
         publishBox +
+        (host ? '' : eventMyParticipationBox(role, ev)) +
         '<div class="odt-box"><div class="odt-box-head">Wines &amp; Program</div><div class="odt-box-body">' + wines + '</div></div>' +
       '</div>' +
       '<div>' +
+        (host ?
         '<div class="odt-box"><div class="odt-box-head">Invitations &amp; Applications</div><div class="odt-box-body">' +
           '<select class="field-input" id="' + p + '-invite-who" style="margin:0 0 0.5rem">' +
             eventInvitables(ev).map(n => '<option value="' + n + '">' + n + '</option>').join('') +
@@ -14894,7 +15055,14 @@ function renderEventDetail(role, ev) {
             : '') +
           (applied.length ? '<div style="margin-top:0.8rem">' + applied.map(partRow).join('') + '</div>' : '') +
           (asked.length   ? '<div style="margin-top:0.8rem">' + asked.map(partRow).join('') + '</div>' : '') +
-        '</div></div>' +
+        '</div></div>' : '') +
+        /* WHO IS ON IT, for both readers — but only the houses that are
+           actually on it. The host's worklist above (who has applied,
+           who has not answered) is his alone: a pending application is
+           a fact between the applicant and the host, and handing it to
+           the other participants would turn "let me apply" into a
+           thing the room watches, which is the reason A16.6 keeps an
+           applicant out of the line-up view one kind over. */
         '<div class="odt-box"><div class="odt-box-head">Participants</div><div class="odt-box-body">' +
           (onIt.length ? onIt.map(partRow).join('')
                        : '<div class="edit-section-sub" style="margin:0">Nobody has accepted yet.</div>') +
