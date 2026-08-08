@@ -213,16 +213,26 @@ window.BLStore = (function () {
      is the case its own note said would bring the C8 rule back.
 
      7 — Wine Guide → Events (09.08.2026). VALUE changes on one row of
-     an existing collection, no shape change at all: ME-3102 gains
-     `public` in its reach and drops the Germany narrowing (its own
-     `city` note had already described it as narrowing to nothing).
-     This is guard 2's blind spot by construction — every key is in
-     place, `reachCountry:null` already exists on ME-3105, so both
-     fingerprint sets hash identically. A returning visitor would keep
-     the old values for good and the anonymous Events directory would
-     show them no member event, which looks exactly like the feature
-     being broken. The C8 rule in one line: change the FORMAT or the
-     VALUES stored state depends on, bump VERSION in the same commit. */
+     an existing collection: ME-3102 gains `public` in its reach and
+     drops the Germany narrowing (its own `city` note had already
+     described it as narrowing to nothing).
+
+     MEASURED, AND THE MEASUREMENT CORRECTED THE PREDICTION. The
+     prediction was "no shape change — `reachCountry:null` already
+     exists on ME-3105". Wrong, and usefully so: the array folds to
+     the union of WHOLE-ROW shape strings, not per-field types, and
+     ME-3102's combination of nullable fields (priceNote, externalLink,
+     applicationDeadline all strings) makes its row shape unique — so
+     flipping its `reachCountry` to null DID move `memberEvents`
+     (2de22954 → 39a547a0, the only one of 26), and guard 2 would have
+     discarded an old snapshot on its own. The bump stands anyway, for
+     Durchgang 8's reason one step further: the `public` string itself
+     is invisible (an array of strings folds to [string]), and the
+     discard only happens because this row's OTHER nullable fields
+     happen to make it unique. A protection that rests on a
+     coincidental field combination is not a protection. The C8 rule
+     in one line: change the FORMAT or the VALUES stored state depends
+     on, bump VERSION in the same commit. */
   var VERSION   = 7;
   var DEBOUNCE  = 200;   /* ms after the last event before a write */
   var HEARTBEAT = 2000;  /* ms between "does storage still match?" checks */
