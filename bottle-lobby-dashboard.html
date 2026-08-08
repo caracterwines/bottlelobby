@@ -3989,7 +3989,7 @@ With an annual production capacity of over 1.2 million bottles, Cantina Rossi is
 -->
 <script src="assets/bottle-lobby-store.js?v=26125d6d"></script>
 <script src="assets/bottle-lobby-data.js?v=59261671"></script>
-<script src="assets/bottle-lobby-public-shows.js?v=79d32f7a"></script>
+<script src="assets/bottle-lobby-public-shows.js?v=11643e57"></script>
 
 <script>
 
@@ -11289,12 +11289,36 @@ function prepaymentDefault(buyer, seller) {
     o.stage === 'delivered' && o.payment && o.payment.status === 'paid');
 }
 
-/* Whether a draft may move to `planning` is derived from the show's
-   own relations every time it is asked — there is no readiness flag. */
-function venueSettled(show) {
-  return show.venueType === 'host_premises' ||
-         show.venueStatus === 'quoted' || show.venueStatus === 'accepted';
+/* THE TWO CHECKS D38 SEPARATED, AND WHY THEY ARE TWO.
+   -----------------------------------------------------------------
+   `planning` begins with the HOST'S BASICS: title, date, city, focus.
+   Nothing else, because recruiting is what `planning` is FOR — a show
+   that may only enter it once it has a confirmed exhibitor can never
+   recruit its first one, which is the contradiction D38 names and the
+   reason WS-2604 sat at zero wines.
+
+   Venue, exhibitors, wines, costs and consents did not disappear; they
+   moved to where the platform's guarantee actually attaches, which is
+   `published` (A16.1). They are now PUBLISH PRECONDITIONS, checked
+   before `pending_approval` (A16.14c).
+
+   Both are computed on every read, never stored (A16.10). Listing
+   early is safe because A16.6 makes it safe: an anonymised show names
+   nobody. */
+function showBasics(show) {
+  const named = v => typeof v === 'string' && v.trim() !== '';
+  const title = named(show.title), date = named(show.date),
+        city  = named(show.city),  focus = named(show.focus);
+  return { title, date, city, focus, ready: title && date && city && focus };
 }
+/* venueSettled() is gone with the old planning trigger. It answered
+   "has the venue moved at all", which was the right question while a
+   quote was as far as the relation could get. The publish precondition
+   is stricter and is asked directly in publishReadiness(): a partner
+   venue is settled when the HOST HAS ACCEPTED its offer (A16.11 step
+   6), and a quote nobody answered settles nothing. Keeping the looser
+   function beside the stricter rule would be two answers to one
+   question, waiting for a caller to pick the wrong one. */
 /* WHETHER THE SHOW IS COMMITTED — derived, never a flag (A16.10).
    True from the first consent: the host's acceptance of the venue's
    offer, or a producer's confirmation of their contribution, whichever
@@ -11310,21 +11334,58 @@ function isCommitted(show) {
   return !!show.venueAcceptedAt ||
          show.exhibitors.some(e => !!e.contributionConsentedAt);
 }
-function showReadiness(show) {
-  /* A partner venue that has only been ASKED is not a venue yet — it
-     has neither named a price nor agreed to open its doors (A16.11). */
-  const venue    = !!show.venueName && venueSettled(show);
-  const exhibitor= show.exhibitors.some(e => e.status === 'confirmed');
-  const product  = show.exhibitors.some(e =>
-                     e.status === 'confirmed' && e.products.some(p => p.status === 'confirmed'));
-  return { venue, exhibitor, product, ready: venue && exhibitor && product };
+/* THE PUBLISH PRECONDITIONS (A16.14c), each one derived and each one
+   able to say what is MISSING rather than only that something is.
+   A count tells a host they are not ready; a name tells them what to
+   do next, and the difference is the whole value of the box.
+
+   Two of A16.14c's bullets are deliberately absent: "the host's final
+   confirmation" is the submit click itself, and "the required
+   documents present" has no document model on a show yet. Neither is
+   faked as a permanently green tick — a checklist that ticks a box
+   nobody filled is worse than one that is honestly short. */
+function publishReadiness(show) {
+  /* A partner venue that has only been ASKED or QUOTED is not settled:
+     the binding answer is the host's acceptance (A16.11 step 6). On the
+     host's own premises there is nobody to accept. */
+  const venue = show.venueType !== 'partner_venue'
+    ? !!show.venueName
+    : show.venueStatus === 'accepted';
+  const confirmed = show.exhibitors.filter(e => e.status === 'confirmed');
+  const exhibitor = confirmed.length > 0;
+  const product   = confirmed.some(e => e.products.some(p => p.status === 'confirmed'));
+  /* On a partner venue the total is the venue's quote and arrives with
+     it; on the host's own premises there is no third party to quote, so
+     the cost is fixed by the host naming the split. */
+  const costs = show.venueType !== 'partner_venue' || show.cateringTotal > 0;
+  const split = !!show.cateringMode;
+
+  /* THE CONSENT LINE IS THE SUM OVER THE EXHIBITOR ROWS (A16.10) — not
+     a flag, and not a special case for "not built yet". A split that
+     charges nobody has no bearer and therefore nothing outstanding; a
+     split that charges somebody needs each of them to have consented,
+     and every one who has not is NAMED. Dispatching those quotes is
+     A16.11 steps 4–6 and is not built, so a charging split cannot be
+     released today — which is the rule working, not a gap in it. */
+  const bearers = cateringCharges(show) ? confirmed : [];
+  const missingConsents = bearers.filter(e => !e.contributionConsentedAt).map(e => e.producer);
+  const consents = split && missingConsents.length === 0;
+
+  return { venue, exhibitor, product, costs, split, consents, missingConsents,
+           ready: venue && exhibitor && product && costs && split && consents };
 }
+/* Kept as the name three call sites and two harnesses already use, now
+   answering the question it was always really asked: may this go out? */
+function showReadiness(show) { return publishReadiness(show); }
+
 /* Called after every change that could satisfy the condition. A draft
-   promotes itself; nothing else is auto-advanced. */
+   promotes itself on the BASICS alone; nothing else is auto-advanced,
+   and nothing auto-advances into `pending_approval` — that is the
+   host's own act (A16.14c). */
 function promoteIfReady(show) {
-  if (show.stage === 'draft' && showReadiness(show).ready) {
+  if (show.stage === 'draft' && showBasics(show).ready) {
     show.stage = 'planning';
-    logShow(show, 'Bottle Lobby', 'Venue, exhibitor and product confirmed — show moved to Planning', 'show');
+    logShow(show, 'Bottle Lobby', 'The basics stand — show listed in Planning, anonymised', 'show');
     return true;
   }
   return false;
@@ -12613,14 +12674,49 @@ function visibleTrail(show, side) {
   });
 }
 
-/* What the readiness checklist calls the venue line. "Venue set" was
-   true enough while every show ran on the host's own premises; with a
-   partner it has to say whether they have actually answered. */
+/* WHAT EACH CHECKLIST LINE SAYS WHEN IT IS NOT MET — the point of the
+   box. "Venue accepted ✗" tells a host they are not ready; "waiting for
+   Bistro Laurent to name a price" tells them whose move it is. */
 function readinessVenueLabel(s) {
-  if (s.venueType !== 'partner_venue') return 'Venue set';
-  if (s.venueStatus === 'requested') return 'Venue set — waiting for ' + s.venueEntity + ' to name a price';
-  if (s.venueStatus === 'declined')  return 'Venue set — ' + s.venueEntity + ' declined, ask another';
-  return 'Venue set — ' + s.venueEntity;
+  if (s.venueType !== 'partner_venue') return 'Venue accepted — your own premises, nobody to ask';
+  if (s.venueStatus === 'requested') return 'Venue accepted — waiting for ' + s.venueEntity + ' to name a price';
+  if (s.venueStatus === 'quoted')    return 'Venue accepted — ' + s.venueEntity + ' has quoted, accept the offer';
+  if (s.venueStatus === 'declined')  return 'Venue accepted — ' + s.venueEntity + ' declined, ask another';
+  if (s.venueStatus === 'accepted')  return 'Venue accepted — ' + s.venueEntity;
+  return 'Venue accepted';
+}
+function readinessCostLabel(s) {
+  if (s.venueType !== 'partner_venue') return 'Total cost fixed — your own premises, your own book';
+  if (s.cateringTotal > 0) return 'Total cost fixed — ' + eur(s.cateringTotal) + ' quoted by ' + s.venueEntity;
+  return 'Total cost fixed — waiting for ' + (s.venueEntity || 'the venue') + ' to name a price';
+}
+function readinessSplitLabel(s) {
+  return s.cateringMode
+    ? 'Cost split named — ' + CATERING_MODES[s.cateringMode]
+    : 'Cost split named — say how the cost reaches your exhibitors';
+}
+/* The unmet lines, in the same words the box uses. One source for what
+   is missing, read by the box and by the refusal — two lists would
+   drift and the host would be told two different things. */
+function missingPublishPoints(s) {
+  const rd = publishReadiness(s), out = [];
+  if (!rd.venue)     out.push(readinessVenueLabel(s));
+  if (!rd.exhibitor) out.push('no confirmed exhibitor yet');
+  if (!rd.product)   out.push('no confirmed wine yet');
+  if (!rd.costs)     out.push(readinessCostLabel(s));
+  if (!rd.split)     out.push(readinessSplitLabel(s));
+  if (!rd.consents)  out.push(readinessConsentLabel(s));
+  return out;
+}
+/* THE NAMES, NOT THE COUNT. Who has not consented is the one thing a
+   host can act on, so it is what the line says. */
+function readinessConsentLabel(s) {
+  const rd = publishReadiness(s);
+  if (!s.cateringMode) return 'Every affected consent in — decide the cost split first';
+  if (!cateringCharges(s)) return 'Every affected consent in — this split charges nobody, so nobody has to agree';
+  if (rd.missingConsents.length)
+    return 'Every affected consent in — still missing: ' + rd.missingConsents.join(', ');
+  return 'Every affected consent in';
 }
 
 /* ══ LEVEL 2 — DETAIL ════════════════════════════════════════════ */
@@ -12773,20 +12869,34 @@ function renderShowDetail(id) {
     }
   }
 
-  /* ── readiness checklist — A16.10, recomputed on every render ── */
+  /* ── the PUBLISH checklist — A16.10, recomputed on every render ──
+     This box used to ask "Ready for Planning?". D38 moved its checks to
+     where the platform's guarantee attaches, so it now asks the only
+     question they were ever really answering: may this go out under
+     Bottle Lobby's name? Nothing here is stored; every line is derived
+     from the show on each render, and every unmet line says what is
+     missing rather than that something is. */
   const checkRow = (met, label) =>
     '<div class="ws-check-row ' + (met ? 'met' : 'unmet') + '">' +
       '<span class="ws-check-mark">' + (met ? '✓' : '✗') + '</span><span>' + label + '</span></div>';
-  const readinessBox = s.stage === 'draft'
-    ? '<div class="odt-box"><div class="odt-box-head">Ready for Planning?</div><div class="odt-box-body">' +
-        '<div class="edit-section-sub" style="margin:0 0 0.9rem">A show lists publicly as soon as it has a venue, ' +
-        'a confirmed exhibitor and a confirmed wine. This is computed from the show itself, not switched by hand.</div>' +
+  const CHECKLIST_STAGES = ['draft','planning','changes_requested'];
+  const readinessBox = (isHost && CHECKLIST_STAGES.indexOf(s.stage) !== -1)
+    ? '<div class="odt-box"><div class="odt-box-head">Ready for Final Review?</div><div class="odt-box-body">' +
+        '<div class="edit-section-sub" style="margin:0 0 0.9rem">The show is listed and recruiting already — ' +
+        'that needs only your basics. These are what Bottle&nbsp;Lobby checks before it goes public under its ' +
+        'name, and all of them have to stand before you can submit. Computed from the show itself, ' +
+        'not switched by hand.</div>' +
         '<div class="ws-check">' +
           checkRow(rd.venue, readinessVenueLabel(s)) +
           checkRow(rd.exhibitor, 'At least one confirmed exhibitor') +
           checkRow(rd.product, 'At least one confirmed wine') +
+          checkRow(rd.costs, readinessCostLabel(s)) +
+          checkRow(rd.split, readinessSplitLabel(s)) +
+          checkRow(rd.consents, readinessConsentLabel(s)) +
         '</div>' +
-        (rd.ready ? '<div class="ord-track" style="margin-top:0.9rem"><b>Ready.</b> The show moves to Planning automatically.</div>' : '') +
+        (rd.ready
+          ? '<div class="ord-track" style="margin-top:0.9rem"><b>Ready.</b> Submit it and Bottle&nbsp;Lobby takes the final review.</div>'
+          : '') +
       '</div></div>'
     : '';
 
@@ -12961,7 +13071,12 @@ function refreshShows() {
 
 function submitShowForRelease(id) {
   const s = actionShow(id); if (!s) return;
-  if (!showReadiness(s).ready) { showToast('✗ A show needs a venue, a confirmed exhibitor and a confirmed wine first.'); return; }
+  /* THE CHECKLIST IS THE GATE, and the refusal names the same points
+     the box does — a toast that says "not ready" sends the host back to
+     the box to find out why, which is a round trip for information the
+     refusal already has. */
+  const rd = publishReadiness(s);
+  if (!rd.ready) { showToast('✗ Not ready for Final Review — ' + missingPublishPoints(s).join('; ')); return; }
   s.stage = 'pending_approval';
   logShow(s, s.leadHost, 'Submitted to Bottle Lobby for release', 'show');
   refreshShows();
@@ -13642,7 +13757,14 @@ function saveShow() {
   const pReg    = partner ? stakeholder(partner).region : '';
   const s = {
     id: 'WS-' + (2605 + wineShows.length),
-    title: title, date: showFormatDate(date), city: city,
+    /* ISO, like every other date on every other record. The date input
+       already yields yyyy-mm-dd; it used to be reformatted to the
+       display form the fixtures once carried, and they have been ISO
+       since 3 Aug. It went unnoticed while a new show sat in `draft`
+       and was rendered nowhere but here — from D38 it is listed
+       publicly the moment it is created, and an unparseable date sorts
+       a show to the end of every directory it appears in. */
+    title: title, date: date, city: city,
     focus: document.getElementById('sf-focus').value.trim() || 'Focus to be announced',
     heroImage: document.getElementById('sf-hero').value || SHOW_HERO_FALLBACK,
     stage: 'draft', leadHost: SHOW_ROLES.distributor.entity,
@@ -13658,20 +13780,23 @@ function saveShow() {
   };
   logShow(s, s.leadHost, 'Show created as a draft');
   if (partner) logShow(s, s.leadHost, 'Venue request sent to ' + partner);
+  /* The basics were required by the form, so this promotes on the spot
+     and `draft` lasts one line (D38). It is asked rather than assumed
+     because the promotion rule lives in exactly one function. */
+  const listed = promoteIfReady(s);
   wineShows.unshift(s);
   closeShowModal();
   showState.distributor.openId = null;
   showWineShows('distributor', 'current');
   openShowDetail(s.id);
-  showToast('✓ ' + title + ' created — invite an exhibitor to move it forward');
+  showToast(listed ? '✓ ' + title + ' created and listed — start recruiting exhibitors'
+                   : '✓ ' + title + ' created');
 }
-/* yyyy-mm-dd from the date input → the display form the demo data uses */
-function showFormatDate(v) {
-  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v);
-  if (!m) return v;
-  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  return m[3] + ' ' + months[parseInt(m[2], 10) - 1] + ' ' + m[1];
-}
+/* showFormatDate() lived here and is gone: it turned the date input's
+   ISO value into the display form, which is orderDate()'s job and only
+   ever at render time. Storing a formatted date is a second format for
+   one fact — and the one thing the store's shape fingerprint cannot
+   see (C8). */
 
 /* ══ MODAL — invite an exhibitor ═════════════════════════════════ */
 let inviteShowId = null;
@@ -14859,7 +14984,7 @@ BLStore.start({
       <button class="modal-close" onclick="closeShowModal()">✕</button>
     </div>
     <div class="modal-body">
-      <div class="edit-section-sub" style="margin-top:0">A show starts as a draft, visible only to you. It lists publicly — still anonymised — as soon as it has a venue, a confirmed exhibitor and a confirmed wine.</div>
+      <div class="edit-section-sub" style="margin-top:0">Title, date, city and focus are all a show needs to start recruiting: it lists straight away — anonymised, naming nobody — and finding exhibitors is what that stage is for. Venue, exhibitors, wines and costs are what Bottle&nbsp;Lobby checks before it goes public under its name.</div>
 
       <div class="form-block-title">The Show</div>
       <div class="form-row full">

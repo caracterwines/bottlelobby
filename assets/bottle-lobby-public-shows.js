@@ -32,11 +32,13 @@ function showHeroImage(show) {
 }
 
 /* Which shows a visitor may see listed at all, and in what order.
-   `draft` and `pending_approval` are absent: nothing is public before
-   the show has a venue, a confirmed exhibitor and a confirmed wine
-   (A16.2), and nothing is fully public before Bottle Lobby releases it
-   (A16.1). `changes_requested` is a show being reworked and is not a
-   public state either. */
+   `planning` is listed because that is where recruiting happens and an
+   anonymised listing names nobody (A16.6, D38): a show is here as soon
+   as its host's basics stand. `draft` is absent because it has not even
+   those. `pending_approval` is absent because a show under Final Review
+   is a show being decided on, and `changes_requested` is one being
+   reworked — neither is a state to show the public. Nothing is fully
+   public before Bottle Lobby releases it (A16.1). */
 const PUBLIC_UPCOMING_STAGES = ['planning', 'published'];
 const PUBLIC_PAST_STAGES     = ['completed'];
 function showListable(show) {

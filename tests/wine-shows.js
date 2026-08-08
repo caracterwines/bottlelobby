@@ -107,27 +107,48 @@ pub = d.querySelector('#dshow-detail-pane .ws-public').textContent;
 if (!pub.includes('Weingut Schmitt')) bad('published show should default to the full card');
 else ok('published → full card by default');
 
-// ── 6. readiness checklist is computed (A16.10)
-/* WS-2604 SHIPS IN `planning` NOW (D38): recruiting happens inside that
-   stage, so the fixture that recruits from zero may not sit in `draft`.
-   The promotion mechanism this section measures still exists and still
-   needs a draft to be observed on, so the harness BUILDS one instead of
-   leaning on a fixture that has legitimately moved — the same discipline
-   the rest of this file follows. Everything below is unchanged. */
-console.log('\n── readiness checklist');
-w.eval("(function(){var s=wineShows.find(x=>x.id==='WS-2604');s.stage='draft';})()");
+// ── 6. TWO checks, and D38 separated them (A16.2, A16.10, A16.14c)
+/* `planning` is entered on the HOST'S BASICS alone — title, date, city,
+   focus — because recruiting is what that stage is for. Venue,
+   exhibitors, wines and costs are PUBLISH preconditions now, and they
+   are what the checklist box asks about.
+
+   WS-2604 ships in `planning`, so the harness BUILDS the draft it needs
+   rather than leaning on a fixture that has legitimately moved. And it
+   builds a draft whose basics do NOT stand, because a draft with them
+   promotes itself the moment anything is asked of it — which is the
+   behaviour under test, not an obstacle to it. */
+console.log('\n── planning is entered on the basics alone (D38)');
+w.eval("(function(){var s=wineShows.find(x=>x.id==='WS-2604');s.stage='draft';s._focus=s.focus;s.focus='';})()");
 if (byId('WS-2604').stage !== 'draft') bad('could not put WS-2604 back into draft for this section');
-w.openShowDetail('WS-2604');                       // draft, venue asked, no exhibitors
+if (w.eval('showBasics')(byId('WS-2604')).ready) bad('a show with no focus must not count as having its basics');
+else ok('basics incomplete — a show with no focus is not ready to list');
+w.eval('promoteIfReady')(byId('WS-2604'));
+if (byId('WS-2604').stage !== 'draft') bad('promoted without the basics');
+else ok('no promotion while a basic is missing');
+w.eval("(function(){var s=wineShows.find(x=>x.id==='WS-2604');s.focus=s._focus;delete s._focus;})()");
+w.eval('promoteIfReady')(byId('WS-2604'));
+if (byId('WS-2604').stage !== 'planning') bad('the basics stand and it did not list, is ' + byId('WS-2604').stage);
+else ok('basics complete → listed in planning, with no venue, no exhibitor and no wine');
+if (!byId('WS-2604').events.some(e => e.text.includes('listed in Planning'))) bad('the listing is not in the trail');
+else ok('the listing is written to the append-only trail');
+
+console.log('\n── the publish checklist');
+w.showWineShows('distributor','current');
+w.openShowDetail('WS-2604');                       // planning, venue asked, no exhibitors
 let rows = [...d.querySelectorAll('#dshow-detail-pane .ws-check-row')];
-if (rows.length !== 3) bad('expected 3 checklist rows, got ' + rows.length);
+if (rows.length !== 6) bad('expected 6 checklist rows, got ' + rows.length);
 let met = rows.map(r => r.classList.contains('met'));
-if (JSON.stringify(met) !== JSON.stringify([false,false,false])) bad('draft checklist wrong: ' + met);
-else ok('draft: venue ✗ (asked, not answered), exhibitor ✗, wine ✗');
+if (JSON.stringify(met) !== JSON.stringify([false,false,false,false,false,false]))
+  bad('checklist on a fresh planning show wrong: ' + met);
+else ok('nothing met yet: venue, exhibitor, wine, total, split, consents');
 if (!rows[0].textContent.includes('Bistro Laurent')) bad('venue row does not name who is being waited on');
 else ok('venue row names the partner it waits on');
-if (byId('WS-2604').stage !== 'draft') bad('draft promoted too early');
+/* A MISSING POINT IS NAMED, NOT COUNTED — the whole value of the box. */
+if (!rows[4].textContent.includes('say how the cost reaches')) bad('the split row does not say what to do: ' + rows[4].textContent);
+else ok('an unmet row says what is missing, not that something is');
 
-// the venue answers → the first check flips, and only that one
+// the venue answers → the TOTAL is fixed, and only that
 w.showWineShows('restaurant','current');
 w.openShowDetail('WS-2604');
 w.openVenueQuoteModal('WS-2604');
@@ -136,10 +157,10 @@ w.saveVenueQuote();
 w.showWineShows('distributor','current');
 w.openShowDetail('WS-2604');
 met = [...d.querySelectorAll('#dshow-detail-pane .ws-check-row')].map(r => r.classList.contains('met'));
-if (JSON.stringify(met) !== JSON.stringify([true,false,false])) bad('checklist after the quote: ' + met);
-else ok('venue quoted → venue ✓, the other two untouched');
-if (byId('WS-2604').stage !== 'draft') bad('a venue alone must not promote the show');
-else ok('still draft — a venue is not an exhibitor');
+if (JSON.stringify(met) !== JSON.stringify([false,false,false,true,false,false])) bad('checklist after the quote: ' + met);
+else ok('venue quoted → the total is fixed, and the venue line is NOT — that waits on the host accepting');
+if (byId('WS-2604').stage !== 'planning') bad('a quote must not move the stage');
+else ok('still planning — a quote is not a release');
 
 // ── 7. full flow: invite → producer confirms with a different wine → auto-promote
 console.log('\n── invite / counter-propose / auto-promotion');
@@ -173,8 +194,11 @@ w.saveInvite();
 let s = byId('WS-2604');
 if (s.exhibitors.length !== 1 || s.exhibitors[0].status !== 'invited') bad('invitation not recorded');
 else ok('invitation recorded as invited/proposed');
-if (s.stage !== 'draft') bad('invite alone must not promote the show');
-else ok('still draft — an invitation is not a confirmation');
+/* The stage does not move on an invitation, and it does not move on
+   anything else in this section either: a listed show stays listed
+   while it recruits, and only a submit takes it further (D38). */
+if (s.stage !== 'planning') bad('an invitation must not move the stage, is ' + s.stage);
+else ok('still planning — recruiting is what that stage is for');
 
 // producer side
 w.showWineShows('winery','current');
@@ -198,8 +222,8 @@ if (live.length !== 1 || liveLabel !== 'Grillo Sicilia DOC 2023' || live[0].prop
     || live[0].status !== 'proposed')
   bad('counter-proposal not recorded as a proposal: ' + JSON.stringify(ex.products));
 else ok('counter-proposal recorded as proposed-by-producer, awaiting the host (D23)');
-if (s.stage !== 'draft') bad('a one-sided proposal must not promote the show, is ' + s.stage);
-else ok('still draft — the host has not agreed the wine yet');
+if (s.stage !== 'planning') bad('a one-sided proposal must not move the stage, is ' + s.stage);
+else ok('still planning — the host has not agreed the wine yet');
 
 // the host now has to say yes; only then does it count
 w.showWineShows('distributor','current');
@@ -208,15 +232,29 @@ w.hostRespondToProduct('WS-2604','Cantina Rossi','confirm');
 s = byId('WS-2604');
 if (s.exhibitors[0].products.find(p => p.status === 'confirmed') === undefined) bad('host confirm did not stick');
 else ok('host confirmed the wine — both sides agreed');
-if (s.stage !== 'planning') bad('show should have auto-promoted to planning, is ' + s.stage);
-else ok('auto-promoted draft → planning once both sides agreed');
-if (!s.events.some(e => e.text.includes('moved to Planning'))) bad('promotion not in the trail');
-else ok('promotion written to the append-only trail');
+if (s.stage !== 'planning') bad('the stage should still be planning, is ' + s.stage);
+else ok('a confirmed wine ticks a checklist line and moves no stage — that is the submit');
 
 // ── 8. submit + demo release
 console.log('\n── approval gate');
 w.showWineShows('distributor','current');
 w.openShowDetail('WS-2604');
+/* An INCOMPLETE checklist must not submit. The venue has quoted but
+   nobody has accepted it and no cost split is named, so two lines are
+   red — and a red line is a closed door, not a warning. */
+w.submitShowForRelease('WS-2604');
+if (byId('WS-2604').stage === 'pending_approval') bad('submitted with an incomplete checklist');
+else ok('an incomplete checklist cannot be submitted');
+/* Now complete it, through the real actions. */
+w.openVenueAcceptModal('WS-2604');
+d.getElementById('va-cb').checked = true;
+w.acceptVenueOffer();
+w.openShowDetail('WS-2604');
+d.getElementById('cm-mode-WS-2604').value = 'host_covers';
+w.saveCateringMode('WS-2604');
+if (!w.eval('publishReadiness')(byId('WS-2604')).ready)
+  bad('the checklist is still not green: ' + JSON.stringify(w.eval('publishReadiness')(byId('WS-2604'))));
+else ok('venue accepted and the split named — every line green');
 w.submitShowForRelease('WS-2604');
 if (byId('WS-2604').stage !== 'pending_approval') bad('submit failed');
 else ok('submitted → pending_approval');

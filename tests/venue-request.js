@@ -253,18 +253,25 @@ if (!boxWithHead('dshow','The Venue Has Quoted')) bad('host detail has no quote 
 else if (!paneText('dshow').includes('1,400')) bad('host detail does not show the amount');
 else ok('host detail carries the amount and what happens next');
 
-/* ── 6. readiness: asked is not settled (A16.10) ────────────────- */
-console.log('\n── a requested venue is not a venue');
+/* ── 6. the publish precondition: a QUOTE is not a venue either ──
+   The bar moved with D38. It used to be enough that the venue had
+   moved at all, because a quote was as far as the relation could get.
+   Now the binding answer exists, so the precondition asks for it: a
+   quote nobody accepted settles nothing (A16.11 step 6, A16.14c). */
+console.log('\n── neither a request nor a quote is an accepted venue');
 {
-  const settled = w.eval('venueSettled');
-  if (!settled({ venueType:'host_premises' })) bad('own premises should always count as settled');
-  if (settled({ venueType:'partner_venue', venueStatus:'requested' })) bad('a mere request must not satisfy readiness');
-  if (settled({ venueType:'partner_venue', venueStatus:'declined' })) bad('a declined venue must not satisfy readiness');
-  if (!settled({ venueType:'partner_venue', venueStatus:'quoted' })) bad('a quote should settle the venue check');
-  if (!settled({ venueType:'partner_venue', venueStatus:'accepted' })) bad('an accepted venue should settle the check');
-  else ok('venueSettled: requested ✗ declined ✗ quoted ✓ accepted ✓ own premises ✓');
-  if (!w.eval('showReadiness')(S('WS-2604')).venue) bad('WS-2604 venue check should pass after the quote');
-  else ok('the quote flips the readiness venue check');
+  const V = st => w.eval('publishReadiness')({ venueType:'partner_venue', venueStatus:st,
+                                               venueName:'x', exhibitors:[] }).venue;
+  if (!w.eval('publishReadiness')({ venueType:'host_premises', venueName:'x', exhibitors:[] }).venue)
+    bad('own premises should always satisfy the venue precondition');
+  if (V('requested')) bad('a mere request must not satisfy the precondition');
+  if (V('quoted'))    bad('a quote nobody accepted must not satisfy the precondition');
+  if (V('declined'))  bad('a declined venue must not satisfy the precondition');
+  if (!V('accepted')) bad('an accepted offer should satisfy the precondition');
+  else ok('venue precondition: requested ✗ quoted ✗ declined ✗ accepted ✓ own premises ✓');
+  if (w.eval('publishReadiness')(S('WS-2604')).venue)
+    bad('WS-2604 has only a quote — the venue line must still be red');
+  else ok('a quote alone leaves the venue line red, and the host is told to accept');
 }
 
 /* ── 7. THE DISCLOSURE DECISION — the producer never sees the quote

@@ -69,30 +69,28 @@ w.showWineShows('distributor','current');
   else ok('every chip matches showAwaits(), in both directions');
 }
 
-/* WS-2604 is the draft this file drives to `planning`, and its venue is
-   a partner that has been asked but has not answered. Settle that first
-   — otherwise the promotion checked further down cannot happen for a
-   reason that has nothing to do with the wine handshake (A16.11).
+/* THE HANDSHAKE NO LONGER HAS A STAGE TO PROVE.
+   This file used to force WS-2604 back into `draft` so it could watch
+   the promotion at the end of the handshake. D38 moved that promotion
+   to the basics, so the wine handshake and the stage are now unrelated
+   — and forcing a draft would test a state the show cannot reach. What
+   is left is what this file was always about: who is at turn, whose
+   yes settles a wine, and that neither side can settle it alone.
 
-   IT SHIPS IN `planning` NOW (D38) — recruiting is what that stage is
-   for, and a show recruiting its first exhibitor may not be held in
-   `draft` waiting for one. The promotion this file measures is still
-   live code, so the draft it needs is built here rather than borrowed
-   from a fixture that has moved for reasons of its own. */
-w.eval("(function(){var s=wineShows.find(x=>x.id==='WS-2604');s.stage='draft';})()");
-if (S('WS-2604').stage !== 'draft') { console.log('  ✗ could not put WS-2604 back into draft'); process.exit(1); }
-console.log('\n── the venue answers first, so the wine can be the only variable');
+   The venue is still quoted first, because the checklist further down
+   reads the total and a missing one would be a second variable. */
+console.log('\n── the venue quotes first, so the wine can be the only variable');
 w.showWineShows('restaurant','current');
 w.openShowDetail('WS-2604');
 w.openVenueQuoteModal('WS-2604');
 d.getElementById('vq-amount').value = '900';
 w.saveVenueQuote();
-if (!w.eval('venueSettled')(S('WS-2604'))) bad('venue still unsettled after the quote');
-else ok('Bistro Laurent quoted — the venue is no longer the blocker');
+if (!(S('WS-2604').cateringTotal > 0)) bad('the quote did not reach the show');
+else ok('Bistro Laurent quoted — the total is on the record');
 
 console.log('\n── THE REPORTED BUG: invite without a wine, then confirm');
 w.showWineShows('distributor','current');
-w.openShowDetail('WS-2604');                      // draft, no exhibitors
+w.openShowDetail('WS-2604');                      // planning, no exhibitors
 w.openInviteModal('WS-2604');
 d.getElementById('if-producer').value = 'Cantina Rossi'; w.onInviteProducerChange();
 d.getElementById('if-product').value = '';        // "No preference — let the producer choose"
@@ -115,7 +113,7 @@ w.respondToInvite('WS-2604','confirm');
 let e = EX('WS-2604','Cantina Rossi');
 if (e.status === 'confirmed' && !e.products.length) bad('REGRESSION: confirmed with empty products — the dead-end is back');
 else ok('direct confirm without a proposal is refused');
-if (S('WS-2604').stage !== 'draft') bad('show should still be draft');
+if (S('WS-2604').stage !== 'planning') bad('a refused confirm must not move the stage');
 
 console.log('\n── producer picks a wine → host must confirm');
 w.openCounterModal('WS-2604');
@@ -128,8 +126,8 @@ if (e.status !== 'confirmed') bad('producer place not taken');
 if (e.products[0].status !== 'proposed' || e.products[0].proposedBy !== 'producer')
   bad('producer wine should be proposed, got ' + JSON.stringify(e.products));
 else ok('wine is proposed by the producer, not self-confirmed');
-if (S('WS-2604').stage !== 'draft') bad('show promoted on a one-sided proposal!');
-else ok('show stays draft — a proposal is not an agreement');
+if (S('WS-2604').stage !== 'planning') bad('a one-sided proposal moved the stage!');
+else ok('a proposal is not an agreement, and neither moves the stage');
 if (w.eval('exhibitorTurn')(S('WS-2604'), e) !== 'host') bad('turn should be host');
 else ok('exhibitorTurn → host');
 // producer now sees a waiting box, no buttons
@@ -217,10 +215,14 @@ const wBadge = d.getElementById('wshow-badge').textContent;
 if (String(wWaiting || '') !== wBadge) bad('winery badge ' + JSON.stringify(wBadge) + ' != turns owed ' + wWaiting);
 else ok('winery badge matches its own open turns (' + (wBadge || '0') + ')');
 
-console.log('\n── readiness still counts only confirmed wines');
-const rd = w.eval('showReadiness')(S('WS-2604'));
-if (!rd.ready) bad('WS-2604 should be ready now');
-else ok('showReadiness unchanged and satisfied by the two-sided yes');
+console.log('\n── the publish checklist counts only confirmed wines');
+const rd = w.eval('publishReadiness')(S('WS-2604'));
+if (!rd.exhibitor || !rd.product) bad('the two-sided yes should tick the exhibitor and wine lines');
+else ok('the exhibitor and wine lines are ticked by the two-sided yes');
+/* And the show is still NOT publishable: nobody accepted the venue's
+   offer and no cost split is named. A green half is not a green box. */
+if (rd.ready) bad('the checklist is green with an unaccepted venue and no cost split');
+else ok('a wine alone does not make a show publishable — venue and split are still red');
 
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -281,7 +283,12 @@ d.getElementById('sf-city').value  = 'Bremen';
 d.getElementById('sf-focus').value = 'Testing the decline loop';
 w.saveShow();
 const RT = w.eval('wineShows')[0].id;
-if (S(RT).stage !== 'draft') bad('new show should start as draft');
+/* A show created with its basics is LISTED on the spot (D38) — `draft`
+   lasts exactly as long as the form does. */
+if (S(RT).stage !== 'planning') bad('a show created with its basics should list at once, is ' + S(RT).stage);
+else ok('created with title, date, city and focus → listed in planning immediately');
+if (!/^\d{4}-\d{2}-\d{2}$/.test(S(RT).date)) bad('a created show must carry an ISO date, got ' + S(RT).date);
+else ok('the created show carries an ISO date like every other record');
 
 // invite Cantina Rossi without naming a wine
 w.openInviteModal(RT);
@@ -298,7 +305,7 @@ pickWine(d, 'cf-product', 'Rosato di Sicilia 2023');
 w.saveCounter();
 if (EX(RT,'Cantina Rossi').products.slice(-1)[0].status !== 'proposed') bad('first pick should be proposed');
 else ok('producer proposes Rosato di Sicilia 2023');
-if (S(RT).stage !== 'draft') bad('must not promote on a proposal alone');
+if (S(RT).stage !== 'planning') bad('a proposal must not move the stage');
 
 // host declines it
 w.showWineShows('distributor','current');
@@ -342,9 +349,9 @@ if (live.length !== 1 || plabel(live[0]) !== 'Catarratto Biologico 2023') bad('s
 else ok('producer proposes Catarratto Biologico 2023');
 if (w.eval('exhibitorTurn')(S(RT), rt) !== 'host') bad('turn should be the host again');
 else ok('turn with the host again');
-if (S(RT).stage !== 'draft') bad('still must not have promoted');
+if (S(RT).stage !== 'planning') bad('a second proposal must not move the stage either');
 
-// host confirms → both sides agree → planning
+// host confirms → both sides agree; the stage was never the point
 w.showWineShows('distributor','current');
 w.openShowDetail(RT);
 w.hostRespondToProduct(RT,'Cantina Rossi','confirm');
@@ -352,8 +359,8 @@ rt = EX(RT,'Cantina Rossi');
 if (!rt.products.some(p => p.status === 'confirmed' && plabel(p) === 'Catarratto Biologico 2023'))
   bad('host confirm did not stick: ' + JSON.stringify(rt.products));
 else ok('host confirmed the second wine');
-if (S(RT).stage !== 'planning') bad('show should now be planning, is ' + S(RT).stage);
-else ok('round trip complete → planning');
+if (S(RT).stage !== 'planning') bad('the show should still be planning, is ' + S(RT).stage);
+else ok('round trip complete, and the stage moved for none of it');
 if (w.eval('exhibitorTurn')(S(RT), rt) !== null) bad('nobody should be at turn');
 else ok('nobody at turn');
 // the declined wine stays in the record as history, not silently dropped
