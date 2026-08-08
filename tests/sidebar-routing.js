@@ -33,11 +33,12 @@ const bad = m => { console.log('  FAIL ' + m); fail++; };
    rename would have left one of the two right and the other wrong,
    and nothing would have turned red.
 
-   This is the state after the rename pass. The Events *sections* all
-   exist already; what B8 still expects and the prototype does not yet
-   have is the **My Events** nav ITEM in Winery / Distributor /
-   Restaurant — that is a later pass and adds items, not section
-   labels, so this list is complete as it stands. */
+   This is the state after the rename pass, and the **My Events** items
+   B8 asks for now exist in all four navs (A16.8) — they added items,
+   not section labels, so this list is unchanged by that pass and stays
+   complete as it stands. The items themselves are measured where they
+   belong, in tests/member-events.js: a nav entry that opens nothing is
+   what Retail's had been, and a section label cannot see that. */
 const NAV_SECTIONS = {
   winery:     ['Overview','Commerce','My Portfolio','Network','Community','Market','Events','Services','Account'],
   distributor:['Overview','Commerce','My Portfolio','Network','Community','Intelligence','Events','Account'],

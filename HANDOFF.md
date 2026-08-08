@@ -31,12 +31,12 @@ Kein Build-Command, Publish-Directory = Repo-Root.
 > Dauerhafte Regeln gehoeren in `BOTTLE-LOBBY-SPEC.md`, kurze Invarianten in
 > `CLAUDE.md`. Findet sich hier eine Regel, ist sie am falschen Ort.
 
-**Baum sauber, `main` gepusht, 25 Harnesses gruen** (nachgezaehlt 08.08. — `shows-reach.js` und `shows-release.js` kamen mit den Durchgaengen 5 und 6 dazu, `member-events.js` mit Durchgang 7). **`BLStore.VERSION` steht auf 5** — Durchgang 7 hat ihn NICHT gebraucht, siehe den Block zu Durchgang 7 unten.
+**Baum sauber, `main` gepusht, 25 Harnesses gruen** (nachgezaehlt 08.08. — `shows-reach.js` und `shows-release.js` kamen mit den Durchgaengen 5 und 6 dazu, `member-events.js` mit Durchgang 7; Durchgang 8 hat **keine** neue Datei gebracht, sondern `member-events.js` geweitet). **`BLStore.VERSION` steht auf 6** — Durchgang 7 hat ihn nicht gebraucht, Durchgang 8 schon; die Begruendung steht im Block zu Durchgang 8 unten.
 
 ### Womit eine Sitzung anfaengt
 
 ```
-node tests/run-all.js        →  22 Harnesses, muss gruen sein, bevor irgendetwas beginnt
+node tests/run-all.js        →  25 Harnesses, muss gruen sein, bevor irgendetwas beginnt
 node tests/serve.js          →  http://localhost:8765   (no-store — NIE python http.server)
 node tests/stamp-assets.js   →  nach jeder Aenderung an assets/, sonst wird check-static rot
 ```
@@ -92,8 +92,8 @@ Wahrheiten stabilisieren, dann nach aussen bauen.
 | 5 | **Shows: Reichweite + Recruiting** | `reach[]`, `applications_open`, Deadline, Bewerbungsablauf ueber die vorhandenen A16.9-Status, Discover-Unteransicht, Mitgliederstufe |
 | 6 | **Shows: Final Review + Freigabe** | Veroeffentlichungs-Checkliste inkl. Contributions, gespeicherter Review, Reset bei materieller Aenderung, WS-6/WS-7 |
 | 7 | ~~**Member Events, Basis + Cockpit (Distributor)**~~ | **Gebaut am 08.08.** — siehe den Block unter der Tabelle. Externe Messen (`event_kind:'external_fair'`) sind bewusst NICHT dabei |
-| 8 | **Member Events, Ausrollen** | Cockpits Winery/Restaurant/Retail + deren Events-Sektionen |
-| 9 | **Wine Guide → Events** | Verzeichnis-Tab, Filter nur ueber echte Daten, Karten wiederverwendet, die drei oeffentlichen Flaechen gleichgezogen |
+| 8 | ~~**Member Events, Ausrollen**~~ | **Gebaut am 08.08.** — siehe den Block unter der Tabelle. Die Bewerberseite ist bewusst NICHT dabei (Durchgang 9) |
+| 9 | **Wine Guide → Events + Bewerberseite** | Verzeichnis-Tab, Filter nur ueber echte Daten, Karten wiederverwendet, die drei oeffentlichen Flaechen gleichgezogen — **plus** die Oberflaeche, von der aus ein Mitglied sich auf ein Event bewirbt (`applyToEvent()` steht seit Durchgang 7) |
 | 10 | **Kampagnen + Benachrichtigungen** | Ankuendigung/Erinnerung getrennt, Empfaenger-Snapshot, C9-Bedingungen |
 | 11 | **`bottle-lobby-own-label.html` neu** | Die Seite behauptet das alte Modell in ~20 Passagen (Zeilen 206–453) — **das alte Modell IST ihr Argument**, also Neuschrift, nicht Korrektur. Die zwei *konkreten* Falschaussagen sind mit dem A17-Fixture-Durchgang weg (siehe den Block unter der Tabelle); die **Argumentation** steht unveraendert. **Muss nach dem A17-Fixture-Durchgang**, sonst wird die Seite zweimal geschrieben |
 
@@ -212,17 +212,12 @@ Funktionen aufrufen, `transferSize` vorher lesen (C7).
 >   selbst. Das gilt nur, solange keine Zeile in eine BESTEHENDE Sammlung
 >   kommt; dann greift die Regel aus C8 wieder.
 >
-> **Benannte Reste aus Durchgang 7, jeder mit Ziel-Durchgang:**
-> · **Durchgang 8** — Retails toter Nav-Eintrag *My Events* bleibt tot, bis das
->   Retail-Cockpit steht; die zwei Retail-Dashboard-Flaechen (KPI + Widget)
->   rendern seit 08.08. aus `memberEvents` und sind damit erledigt.
-> · **Durchgang 8** — die zweite getippte *Cantina Rossi Tasting* sitzt im
->   **Wine-Shows-Widget** des Distributor-Dashboards (`show-card`, „Sept 12 ·
->   Munich"). A16.8 nennt sie, aber sie ist eine **Wine-Show-Flaeche**: sie aus
->   `wineShows` zu rendern ist kein Event-Umbau und war nicht im Zuschnitt.
+> **Benannte Reste aus Durchgang 7 — die beiden mit Ziel 8 sind mit Durchgang 8
+> erledigt** (toter Retail-Nav-Eintrag · getippte *Cantina Rossi Tasting*); was
+> danach offen bleibt, steht im Block zu Durchgang 8 unten.
 > · **Durchgang 9** — Bewerbungen von der Bewerberseite. `applyToEvent()` steht
 >   und ist getestet; es gibt nur noch keine Oberflaeche, von der aus ein Winzer
->   sich bewirbt, weil dessen Cockpit Durchgang 8 ist.
+>   sich bewirbt. Durchgang 8 hat sie bewusst NICHT vorgezogen.
 > · **Durchgang 10** — `event_campaigns` und damit **ME-4** sind nicht gebaut,
 >   und `tests/member-events.js` sagt das ausdruecklich, statt eine Pruefung
 >   ueber ein nicht existierendes Feature zu fuehren.
@@ -230,6 +225,67 @@ Funktionen aufrufen, `transferSize` vorher lesen (C7).
 >   sind nicht gebaut. A16.8 beschreibt sie als Minimalmodell; sie haengen an
 >   keinem der oben Genannten und bekommen einen eigenen kleinen Durchgang,
 >   wenn ein Anlass dafuer da ist.
+
+> **Durchgang 8 ist gebaut (08.08.), fuenf einzeln committete Schritte, ein
+> Push.** Was Git nicht selbst sagt:
+>
+> - **Der Zuschnitt ist beim Messen kleiner geworden, nicht groesser.** Die
+>   Discover-Kartensorte war auf allen vier Rollen schon da: `renderWineShows()`
+>   ist seit Durchgang 7 rollenparametrisiert und mountet die zweite Sorte
+>   selbst. Punkt 4 des Auftrags war damit eine **Abnahme, kein Bau** — und das
+>   ist genau der Ertrag daraus, dass Durchgang 7 sein Cockpit von Anfang an
+>   ueber `role` geschrieben hat, obwohl nur eine Rolle verdrahtet war.
+> - **Ein neuer Tab, und er hat einen Grund.** A16.8 nennt fuenf Listen; Durchgang
+>   7 hatte vier. **Upcoming** ist die Liste der Events, auf denen man IST, ohne
+>   sie zu veranstalten — ohne sie verschwindet eine angenommene Einladung im
+>   Moment des Annehmens aus dem Cockpit, und die Rolle, die zu jemand anderem
+>   geht, hat keine Flaeche, die das sagt.
+> - **Der Detailbereich trennt sich, und die Host-Akte sind ABWESEND statt
+>   deaktiviert.** Ein ausgegrauter *Publish*-Knopf auf fremdem Event behauptet,
+>   es gaebe den Akt fuer diesen Leser. Angenommen und abgesagt wird ueber
+>   `respondToEventInvite()` / `rsvpToEvent()` — dieselben zwei Funktionen, die
+>   das Host-Pane zum Simulieren ruft; ein zweiter Annahmeweg waere ein zweiter
+>   Ort, an dem `accepted` etwas bedeutet.
+> - **Ein einziges Fixture, und nur weil es fehlte.** Restaurant und Retail
+>   veranstalten seit Durchgang 7 (ME-3102, ME-3101), Hawesko zwei. Das Weingut
+>   veranstaltete nichts, also haette sein Cockpit den Leerzustand vorgefuehrt
+>   und sonst nichts — **ME-3105** (Harvest Days in Contrada Ferla) schliesst
+>   genau diese Luecke und traegt die eine offene Einladung auf der Retail-Seite.
+>   Nichts wurde verdraengt oder umklassifiziert.
+> - **`BLStore.VERSION` steht auf 6, und die Messung spricht gegen die
+>   Notwendigkeit.** Beide Fingerabdruck-Saetze wurden verglichen: genau EINE der
+>   26 Sammlungen hat sich geaendert, `memberEvents` (`92c5d5c0` → `2de22954`).
+>   Wache 2 haette den Alt-Snapshot also selbst verworfen — der Bump steht
+>   trotzdem, wegen des **Grundes**: ME-3105 ist die erste Zeile mit
+>   `reachCountry:null`, und haette das Weingut wie die anderen auf ein Land
+>   eingeengt, waere gar nichts passiert und die Zeile waere bei jedem
+>   Rueckkehrer verschwunden. Ein Schutz, der an einem zufaellig leeren Feld
+>   haengt, ist keiner.
+> - **Die *Cantina Rossi Tasting* ist ERSATZLOS weg, und das war ein Messbefund.**
+>   Das Fixture hatte laengst entschieden, was der Abend ist: ME-3101, veranstaltet
+>   von Weinhaus Müller, Hawesko als bestaetigter Gast darauf. Ihn im
+>   Wine-Shows-Widget unter einem zweiten Gastgeber nachzubauen waere die Kopie
+>   aus ME-1 gewesen und haette ein Member Event unter eine Ueberschrift
+>   gestellt, die *Wine Shows* verspricht (ME-3). Die zweite getippte Karte des
+>   Widgets (*French Whites Showcase*) ist unberuehrt.
+> - **Ein Fehler nebenbei, weil der neue Nav-Eintrag ihn geerbt haette:** aus den
+>   Wine Shows in die Orders zu gehen liess *Wine Shows* markiert. `ORDER_ROLES`
+>   und die drei Rollen-Router kennen die beiden Events-Eintraege jetzt.
+>
+> **Was Durchgang 8 bewusst NICHT gebaut hat:** die Bewerberseite (9), der
+> Wine-Guide-Events-Tab (9), Kampagnen und ME-4 (10), oeffentliche
+> Event-Flaechen, externe Messen. `applyToEvent()` wird weiterhin nur ueber das
+> Host-Pane erreicht — Annehmen und Ablehnen einer Bewerbung —, und das ist die
+> Wiederverwendung, nicht ein halber Bewerbungsablauf.
+>
+> **Browser-Abnahme, mit einer genannten Einschraenkung:** Screenshots kommen in
+> dieser Erweiterungsumgebung nicht zustande (Injection-Timeout bei ~950 KB
+> Dokument, zweimal, dann nicht weiter versucht — C7). Abgenommen wurde ueber
+> gerenderten DOM, berechnete Darstellung und echte Klicks auf echte Elemente:
+> voller Anlegen-und-Publizieren-Pfad auf dem Weingut (ME-3106, danach ueber
+> `BLStore.reset()` wieder entfernt), Host-Rechte und Gast-Antwort je Rolle,
+> Retail-Navigation, Discover-Karten samt Rahmenfarbe (kein geborgtes Show-Gold),
+> und WS-2604 unveraendert.
 
 ---
 
