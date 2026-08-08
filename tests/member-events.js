@@ -1002,5 +1002,168 @@ console.log('\n── Wines & Program: the host names wines, and only out of his
   ROLES().forEach(r => { w.eval('eventState')[r].openId = null; });
 }
 
+/* ══════════════════════════════════════════════════════════════════
+   THE APPLICATION, DRIVEN FROM THE APPLICANT'S OWN COCKPIT (A16.8,
+   ME-2, Durchgang 9). applyToEvent() has existed since Durchgang 7;
+   what was missing was the surface the applicant acts FROM. The route
+   is: Discover card → "Open this event" → the detail pane's You box →
+   Apply. One click writes ONE row — source 'application', status
+   'applied' — and nothing else in the world moves: no participation,
+   no place, no order, no partnership. The host answers on the SAME
+   row, and a decline stays readable on it.
+
+   Retail is the applicant on purpose: Weinhaus Müller is not involved
+   in ME-3102, and the event's reach (members, Germany) admits it —
+   while Cantina Rossi, outside the Germany narrowing, cannot even
+   find it. Eligibility is the visibility derivation, not a role list.
+══════════════════════════════════════════════════════════════════ */
+console.log('\n── applying: one click, one row, and the world does not move');
+{
+  const ROLE = 'retail', ME = CFG(ROLE).entity, ID = 'ME-3102';
+  const ev = EV(ID);
+  const paneBtn = (role, label) => [...d.getElementById(CFG(role).prefix + '-detail-pane')
+    .querySelectorAll('button')].find(b => b.textContent.trim() === label);
+
+  if (w.myEventRow(ROLE, ev)) bad(ME + ' is already on ' + ID + ' — the applicant case is gone');
+  else if (!ev.applicationsOpen || ev.status !== 'published')
+    bad(ID + ' is not an open published event — nothing to apply to');
+  else if (!w.discoverEvents(ROLE).some(e => e.id === ID))
+    bad(ID + ' is not on the retail Discover pane — the route cannot start');
+  else ok('the fixture holds the case: ' + ME + ', uninvolved, finds the open ' + ID);
+
+  /* The route starts on the Discover card, not on a function. */
+  w.showWineShows(ROLE, 'discover');
+  const cell = d.querySelector('#' + w.eval('SHOW_ROLES')[ROLE].prefix +
+    '-discover-events .me-cell[data-event-id="' + ID + '"]');
+  const openBtn = cell && [...cell.querySelectorAll('button')]
+    .find(b => b.textContent.indexOf('Open this event') !== -1);
+  if (!openBtn) bad('the Discover card has no way into the event');
+  else {
+    openBtn.click();
+    if (w.eval('eventState')[ROLE].openId !== ID) bad('the card opened nothing');
+    else ok('the Discover card opens the event in the cockpit\'s own detail pane');
+  }
+
+  const world = () => ({
+    parts:  ev.participants.length,
+    places: w.eventTakenPlaces(ev),
+    orders: w.eval('orders').length,
+    pships: w.eval('partnerships').length
+  });
+  const before = world();
+
+  const apply = paneBtn(ROLE, 'Apply to take part');
+  if (!apply) bad('no Apply action on the visible open event');
+  else {
+    apply.click();
+    const row = w.myEventRow(ROLE, ev);
+    if (!row) bad('the click wrote no row');
+    else if (row.source !== 'application' || row.status !== 'applied')
+      bad('the row is ' + row.source + '/' + row.status + ' — not source application, status applied');
+    else if (ev.participants.length !== before.parts + 1)
+      bad('the click wrote ' + (ev.participants.length - before.parts) + ' rows, not one');
+    else ok('one click, exactly one row: source application, status applied');
+
+    const after = world();
+    if (after.places !== before.places) bad('applying took a place (' + before.places + ' → ' + after.places + ')');
+    else if (after.orders !== before.orders) bad('applying created an order');
+    else if (after.pships !== before.pships) bad('applying created a partnership');
+    else ok('and no place, no order, no partnership came out of it');
+
+    /* The applicant reads the wait state; the line-up does not read
+       the applicant. */
+    const paneText = d.getElementById(CFG(ROLE).prefix + '-detail-pane').textContent;
+    if (paneText.indexOf('has not answered yet') === -1)
+      bad('the applicant\'s own pane does not say it is waiting for the host');
+    else ok('the applicant reads "waiting for ' + ev.host + '" on their own pane');
+    if (w.eventParties(ev).indexOf(ME) !== -1)
+      bad('an applicant already counts as a party of the event');
+    else if (w.memberEventCard(ev).indexOf(ME) !== -1)
+      bad('an applicant is named on the public card');
+    else ok('and stays off the parties, the line-up and the card until the host answers');
+    if (!w.eventsForTab(ROLE, 'invites').some(e => e.id === ID))
+      bad('the open application is in no cockpit tab — the applicant cannot find their own ask');
+    else ok('and the ask is findable under Invitations & Applications');
+
+    /* The host sees the SAME row as a task and answers on it. */
+    w.showMyEvents('restaurant', 'invites');
+    w.openEventDetail(ID);
+    const acceptBtn = [...d.getElementById(CFG('restaurant').prefix + '-detail-pane')
+      .querySelectorAll('.odt-kv')].filter(kv => kv.textContent.indexOf(ME) !== -1)
+      .map(kv => [...kv.querySelectorAll('button')].find(b => b.textContent.trim() === 'Accept'))
+      .filter(Boolean)[0];
+    if (!acceptBtn) bad('the host reads no Accept task for the application');
+    else {
+      acceptBtn.click();
+      const row2 = w.myEventRow(ROLE, ev);
+      if (row2.status !== 'accepted') bad('the host\'s Accept did not land');
+      else if (ev.participants.length !== before.parts + 1)
+        bad('accepting grew a second row — D32, one level down');
+      else if (row2.source !== 'application')
+        bad('accepting rewrote the origin — the row no longer says it began as an application');
+      else ok('accepted: the SAME row, origin kept, now an ordinary participation');
+      /* accepted and confirmed stay two facts: being on the event in a
+         role is not holding a place, and no place moved. */
+      if (row2.status === 'accepted' && w.eventTakenPlaces(ev) === before.places)
+        ok('and accepted ≠ confirmed: no place is held by it (' + before.places + ' unchanged)');
+      else bad('acceptance moved the place arithmetic');
+    }
+
+    /* The other answer, on the same row: rewind and decline. */
+    const row3 = w.myEventRow(ROLE, ev);
+    row3.status = 'applied';
+    w.refreshEvents();
+    const declineBtn = [...d.getElementById(CFG('restaurant').prefix + '-detail-pane')
+      .querySelectorAll('.odt-kv')].filter(kv => kv.textContent.indexOf(ME) !== -1)
+      .map(kv => [...kv.querySelectorAll('button')].find(b => b.textContent.trim() === 'Decline'))
+      .filter(Boolean)[0];
+    if (!declineBtn) bad('the host cannot decline the application');
+    else {
+      declineBtn.click();
+      if (row3.status !== 'declined') bad('the decline did not land');
+      else if (ev.participants.indexOf(row3) === -1) bad('the declined row was deleted — the answer is gone');
+      else {
+        w.showMyEvents(ROLE);
+        w.openEventDetail(ID);
+        const t = d.getElementById(CFG(ROLE).prefix + '-detail-pane').textContent;
+        if (t.indexOf('declined your application') === -1)
+          bad('the applicant cannot read the decline on their own pane');
+        else ok('declined: same row, still readable on the applicant\'s own pane');
+      }
+    }
+  }
+
+  expectRed('let an application take a place', () => {
+    const n = w.eventTakenPlaces(ev);
+    ev.participants.push({ stakeholder:'Osteria Marconi', role:'guest', source:'application',
+                           status:'confirmed', requestedAt:'2026-08-08' });
+    try { if (w.eventTakenPlaces(ev) !== n) bad('places moved'); }
+    finally { ev.participants.pop(); }
+  });
+  expectRed('answer the application with a second row', () => {
+    const real = w.decideEventApplication;
+    const count = ev.participants.length;
+    w.decideEventApplication = (id, who, action) => {
+      real(id, who, action);
+      EV(id).participants.push({ stakeholder: who, role:'participant', source:'own',
+                                 status:'accepted', requestedAt:'2026-08-08' });
+    };
+    const mine = w.myEventRow(ROLE, ev);
+    mine.status = 'applied';
+    try {
+      w.decideEventApplication(ID, ME, 'accept');
+      if (ev.participants.length !== count) bad('a second row appeared');
+    } finally {
+      w.decideEventApplication = real;
+      ev.participants = ev.participants.filter(p => !(p.stakeholder === ME && p.source === 'own'));
+    }
+  });
+
+  /* The row this section wrote is test state, not fixture state. */
+  ev.participants = ev.participants.filter(p => p.stakeholder !== ME);
+  w.refreshEvents();
+  ROLES().forEach(r => { w.eval('eventState')[r].openId = null; });
+}
+
 console.log(fail ? '\n' + fail + ' failure(s)' : '\nmember events: all checks passed');
 process.exit(fail ? 1 : 0);

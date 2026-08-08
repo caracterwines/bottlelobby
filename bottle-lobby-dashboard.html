@@ -11919,7 +11919,24 @@ function renderWineShows(role) {
           ? 'Nothing matches those filters. Clear them to see everything you can find.'
           : 'Nothing you can find right now. A host decides who may find a show or an event — you see it ' +
             'when their reach names you, and always when you are on it.') + '</div></div>');
-    if (events.length) mountEventCards(document.getElementById(p + '-discover-events'), events);
+    if (events.length) {
+      const egrid = document.getElementById(p + '-discover-events');
+      mountEventCards(egrid, events);
+      /* THE SAME APPEND THE SHOW CELLS GET, for the same reason: a way
+         into the dashboard's own detail pane — where a member reads
+         their standing and, on an open event, applies — belongs to the
+         dashboard alone. The public pages render the same card and
+         must not grow a dead link to a pane they do not have. */
+      [...egrid.querySelectorAll('.me-cell')].forEach((cell, i) => {
+        const e = events[i]; if (!e) return;
+        const open = document.createElement('button');
+        open.className = 'btn-sm btn-outline';
+        open.style.cssText = 'width:100%;margin-top:0.5rem';
+        open.textContent = 'Open this event →';
+        open.onclick = () => openEventFromDiscover(role, e.id);
+        cell.appendChild(open);
+      });
+    }
     if (list.length) {
       const grid = document.getElementById(p + '-discover');
       mountShowCards(grid, list, null, roleViewer(role));
@@ -14669,6 +14686,18 @@ function eventsAwaitingMe(role) {
     return !!p && (p.status === 'sent' || p.status === 'viewed');
   }).sort((a, b) => blDateValue(a.date) - blDateValue(b.date));
 }
+/* My own open applications — the other direction of the same tab. An
+   application waits on the HOST, so it is deliberately NOT part of
+   "Waiting for You" (eventKpis): it is listed so the applicant can see
+   where their ask stands, not counted as an answer they owe. */
+function eventsIAppliedTo(role) {
+  return memberEvents.filter(e => {
+    if (isEventHost(role, e) || e.moderation) return false;
+    if (['published', 'postponed'].indexOf(e.status) === -1) return false;
+    const p = myEventRow(role, e);
+    return !!p && p.status === 'applied';
+  }).sort((a, b) => blDateValue(a.date) - blDateValue(b.date));
+}
 
 function eventsForTab(role, tab) {
   const mine = myEvents(role);
@@ -14684,7 +14713,8 @@ function eventsForTab(role, tab) {
      one question however the arrow points. */
   return mine
     .filter(e => (e.participants || []).some(p => p.status === 'applied' || p.status === 'sent'))
-    .concat(eventsAwaitingMe(role));
+    .concat(eventsAwaitingMe(role))
+    .concat(eventsIAppliedTo(role));
 }
 function eventOpenTasks(ev) {
   return (ev.participants || []).filter(p => p.status === 'applied').length;
@@ -14799,6 +14829,7 @@ function renderMyEvents(role) {
       : '<span class="ord-chip chip-manual">' + (
           mineP.status === 'sent' || mineP.status === 'viewed'
             ? 'Invited as ' + mineP.role.replace('_', '-') + ' — waiting for you'
+          : mineP.status === 'applied' ? 'Applied — waiting for the host'
           : standing === 'waitlist' ? 'Waitlist #' + eventWaitlistPosition(ev, mineP)
           : standing === 'seat'     ? 'You have a place'
           : 'You are on it as ' + mineP.role.replace('_', '-')) + '</span>';
@@ -14829,6 +14860,15 @@ function renderMyEvents(role) {
     const ev = eventById(st.openId);
     if (ev) renderEventDetail(role, ev); else st.openId = null;
   }
+}
+
+/* From a Discover card into the events cockpit's own detail pane —
+   the surface a not-yet-involved member reads an open event on, and
+   the one the Apply action lives in (A16.14d: finding is not acting;
+   the act has its own place). */
+function openEventFromDiscover(role, id) {
+  showMyEvents(role);
+  openEventDetail(id);
 }
 
 function openEventDetail(id) {
@@ -14945,10 +14985,26 @@ function eventMyParticipationBox(role, ev) {
   const me = EVENT_ROLES[role].entity, p = myEventRow(role, ev);
   const q = s => "'" + ev.id + "','" + me + "','" + s + "'";
   if (!p) {
+    /* THE APPLICANT'S WAY IN (A16.8: "per event the host may allow
+       applications"). Any of the four roles may ask; the gate is the
+       event's own state — published, taking applications, not
+       delisted. The act is applyToEvent(), the same function the
+       host's pane has answered since Durchgang 7: one mechanism, two
+       ends, no second workflow. */
+    const openForMe = ev.applicationsOpen && !ev.moderation &&
+      (ev.status === 'published' || ev.status === 'postponed');
+    const applyBit = openForMe
+      ? '<div class="edit-section-sub" style="margin:0.8rem 0">' + ev.host + ' is taking applications' +
+          (ev.applicationDeadline ? ' until ' + blDate(ev.applicationDeadline) : '') +
+          '. Applying asks to be let in — it creates no participation, no place, no order and no ' +
+          'partnership until the host answers (ME-2).</div>' +
+        '<button class="btn-sm btn-gold" onclick="applyToEvent(' + q('participant') + ')">Apply to take part</button>'
+      : '';
     return '<div class="odt-box"><div class="odt-box-head">You</div><div class="odt-box-body">' +
       '<div class="ws-demo-note" style="margin-bottom:0.8rem">' + MEMBER_EVENT_DISCLAIMER + '</div>' +
       '<div class="edit-section-sub" style="margin:0">You are not on this event. You can find it because ' +
         ev.host + ' chose a reach that names you — being able to find an event is not being on one.</div>' +
+      applyBit +
     '</div></div>';
   }
   const standing = eventStanding(ev, p);
@@ -14956,7 +15012,15 @@ function eventMyParticipationBox(role, ev) {
   const line = waiting
     ? ev.host + ' invited you as <strong style="color:var(--paper)">' + p.role.replace('_', '-') +
       '</strong>. Accepting puts you on the event; it creates no order and no partnership.'
-    : p.status === 'declined'  ? 'You declined this invitation.'
+    /* The applicant's wait state, and the host's answer on the SAME
+       row — an application is never a second record (A16.9). */
+    : p.status === 'applied'
+      ? 'You applied to take part and <strong style="color:var(--paper)">' + ev.host +
+        '</strong> has not answered yet. Applying created no participation, no place, no order and no partnership (ME-2).'
+    : p.status === 'declined'
+      ? (p.source === 'application'
+          ? ev.host + ' declined your application. The row stays as the answer — nothing else came of it (ME-2).'
+          : 'You declined this invitation.')
     : p.status === 'withdrawn' ? 'You withdrew from the guest list. The place went back to the room.'
     : p.role === 'guest'
       ? (standing === 'waitlist'
