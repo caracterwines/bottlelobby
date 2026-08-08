@@ -378,9 +378,16 @@ console.log("\n── WS-4: a pure reach:['wineries'] show, for restaurant and r
   w.showWineShows('restaurant', 'discover');
   const tab = [...d.querySelectorAll('#rshow-tabs .ord-tab')].find(b => b.textContent.startsWith('Discover'));
   const n = Number((tab.textContent.match(/\((\d+)\)/) || [])[1]);
-  const want = w.eval("discoverShows('restaurant')").length;
-  if (n !== want) bad('the Discover tab count says ' + n + ', the list holds ' + want);
-  else ok('the tab count (' + n + ') counts what is there, not what was excluded');
+  /* Discover holds TWO card sorts since A16.8 — Wine Shows and member
+     events — so the count is over both. What WS-4 is about is unchanged
+     and is the reason this assertion is derived rather than typed: the
+     number must count what is on the pane, never what was excluded from
+     it. A hardcoded total would have gone on passing while an excluded
+     show was still being announced by the tab. */
+  const want = w.eval("discoverShows('restaurant')").length +
+               w.eval("discoverEvents('restaurant')").length;
+  if (n !== want) bad('the Discover tab count says ' + n + ', the two lists hold ' + want);
+  else ok('the tab count (' + n + ') counts both sorts, and not what was excluded');
 
   /* And the winery, whom this reach DOES name, still finds it — so the
      absence above is the reach and not a broken renderer. */

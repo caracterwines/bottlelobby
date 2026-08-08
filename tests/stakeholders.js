@@ -152,10 +152,27 @@ console.log('\n── no second copy of a house');
   const rest = SRC.slice(0, start) + SRC.slice(end)
     .replace(/return \{ name:name,[^\n]*\n/, '');
 
-  const BANNED = ['avatar:', 'location:', 'roleLabel:', 'followerType:', 'followedType:'];
+  const BANNED = ['avatar:', 'roleLabel:', 'followerType:', 'followedType:'];
   const found = BANNED.filter(k => rest.indexOf(k) !== -1);
   if (found.length) bad('profile fields living outside the master table: ' + found.join(', '));
-  else ok('no array carries avatar, location, roleLabel or a follow type any more');
+  else ok('no array carries avatar, roleLabel or a follow type any more');
+
+  /* `location:` LEFT THIS LIST ON 8 AUG 2026, and the narrowing is the
+     point rather than a concession. The rule is about a HOUSE's own
+     profile data being copied out of the master table. A member event's
+     `location` is a different fact about a different subject: the
+     free-text address of one occasion (A16.9 `events.location`), which
+     A16.8 says is all an event needs — and which no house owns.
+
+     So it is checked the way `region:` below already is: banned when it
+     sits beside a house-shaped key, allowed when it does not. A flat
+     substring ban would have forced the event record to invent a second
+     word for "where this happens", which is how one fact gets two
+     names. */
+  const houseLocation = rest.split('\n').filter(l =>
+    /\blocation:/.test(l) && /\b(winery|partner|follower|distributor|name):\s*'/.test(l));
+  if (houseLocation.length) bad("a house's location outside the master table: " + houseLocation[0].trim().slice(0, 80));
+  else ok('and no location sits beside a house key — an event address is not one');
 
   /* `region:` also occurs legitimately on a WINE (country/region/
      appellation, A4), so it is only a copy when it sits next to a

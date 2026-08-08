@@ -520,6 +520,7 @@ console.log('\n── the one list stays the one list');
   const TRANSIENT = {
     activeOrderRole:       'which Orders sub-view is on screen — a reload starts on the default',
     activeShowRole:        'which Wine Shows sub-view is on screen — same',
+    activeEventRole:       'which My Events sub-view is on screen — same. What HAS to survive is memberEvents and eventSeq, and both are registered (A16.8)',
     activeNotifRole:       'which Notifications sub-view is on screen — same. What HAS to survive is notifSeen, and that is registered (C9)',
     acceptingId:           'the partnership request an open modal is about',
     acceptingIncomingId:   'ditto, distributor side',
@@ -588,6 +589,7 @@ console.log('\n── the one list stays the one list');
     filters:           'which filter pill is active in the distributor network view — a reload starts on "All"',
     ordState:          'per-role Orders view state: open tab, status filter, open order, whether the shell was built',
     showState:         'the same for Wine Shows, plus which visibility preview is open',
+    eventState:        'the same for My Events: open tab, open event, whether the shell was built. The event RECORDS persist; which one you had open does not',
     notifState:        'the same for Notifications. What has to survive is notifSeen, and that is registered (C9)'
   };
 
