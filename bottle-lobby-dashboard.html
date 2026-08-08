@@ -13183,7 +13183,92 @@ function renderShowDetail(id) {
 }
 
 /* ══ ACTIONS ═════════════════════════════════════════════════════ */
+/* ══ MATERIAL CHANGE UNDER FINAL REVIEW (A16.2, WS-7) ════════════
+   A show under review is a show somebody at Bottle Lobby is reading.
+   Move the date, the city, the venue, the line-up or the money while
+   they read, and what they are deciding on no longer exists — so the
+   show falls back to `planning` and the open review is CLOSED, by a new
+   row, never by editing the old one.
+
+   WHY THIS IS A WATCH AND NOT A CALL AT EACH MUTATION SITE. There are a
+   dozen actions that can touch a material field and there will be more;
+   a rule spelled out at each of them holds until somebody adds the
+   thirteenth. This asks the only question that cannot be answered
+   wrongly — is the show still what it was when it was submitted? — and
+   it asks it after every action, which is the same reasoning the store's
+   heartbeat rests on (C8).
+
+   WHAT COUNTS AS MATERIAL: what a reviewer decided on and what a
+   participant consented to. The date and the city (a producer agreed to
+   a day and a place), the venue relation, the confirmed line-up, and
+   the money. NOT the title, the focus, the hero image or the reach —
+   those are the host's own presentation, and nobody consented to them.
+
+   `published` is NOT handled here and must not be: A16.2 asks for
+   notification, renewed consent and a NEW release there, which is a
+   different mechanism and its own pass. A silent reset of a public show
+   would un-publish something people have already been told about. */
+const MATERIAL_FIELDS = {
+  date:         'the date',
+  city:         'the city',
+  venueType:    'the kind of venue',
+  venueEntity:  'the venue',
+  venueName:    'the venue',
+  venueStatus:  'the venue\'s standing',
+  cateringTotal:'the room and catering cost',
+  cateringMode: 'the cost split'
+};
+function materialSnapshot(show) {
+  const o = {};
+  Object.keys(MATERIAL_FIELDS).forEach(f => { o[f] = show[f] === undefined ? null : show[f]; });
+  /* The line-up as a reviewer reads it: who is confirmed, with which
+     wines. Sorted, so a reordering of the array is not a change. */
+  o.lineUp = confirmedExhibitors(show).map(e => e.producer + ':' +
+    e.products.filter(p => p.status === 'confirmed').map(p => p.productId).sort().join('+')
+  ).sort().join(' | ');
+  return o;
+}
+function materialDiff(before, after) {
+  const named = [];
+  Object.keys(MATERIAL_FIELDS).forEach(f => {
+    if (before[f] !== after[f] && named.indexOf(MATERIAL_FIELDS[f]) === -1) named.push(MATERIAL_FIELDS[f]);
+  });
+  if (before.lineUp !== after.lineUp) named.push('the confirmed line-up');
+  return named;
+}
+let materialWatch = {};
+function watchMaterial() {
+  const next = {};
+  wineShows.forEach(s => { if (s.stage === 'pending_approval') next[s.id] = materialSnapshot(s); });
+  materialWatch = next;
+}
+function checkMaterialChanges() {
+  wineShows.forEach(function (s) {
+    if (s.stage !== 'pending_approval') return;
+    const before = materialWatch[s.id];
+    if (!before) return;                       /* nothing to compare against yet */
+    const changed = materialDiff(before, materialSnapshot(s));
+    if (!changed.length) return;
+    const what = changed.join(' and ');
+    /* THE OPEN REVIEW IS CLOSED BY A NEW ROW. Nobody at Bottle Lobby
+       decided anything, so neither `approved` nor `changes_requested`
+       may be written — the request lapsed, and `superseded` says so
+       with the field that caused it on the record. */
+    if (showReviewOpen(s))
+      writeReview('show', s.id, 'superseded', s.leadHost,
+        'Closed without a decision — ' + what + ' changed while the show was under review.', 'show_release');
+    s.stage = 'planning';
+    logShow(s, s.leadHost, 'Withdrawn from Final Review — ' + what +
+      ' changed, so the review no longer had the show in front of it', 'show');
+    showToast('Back in Planning — ' + what + ' changed under review. Submit again when it stands.');
+  });
+}
+
 function refreshShows() {
+  /* Before anything is drawn: a show that moved under its own review
+     has to fall back first, or the pane would render a Final Review
+     that is no longer true. */
+  checkMaterialChanges();
   const role = activeShowRole, st = showState[role];
   if (st.openId) renderShowDetail(st.openId); else renderWineShows(role);
   /* Keep the other role's badge honest — both sides read one record. */
@@ -13199,6 +13284,9 @@ function refreshShows() {
   /* A stage change is the moment a show becomes announceable — release
      it and every follower's feed must already say so (A16.7). */
   renderAppearanceWidgets();
+  /* What the next action will be compared against. Taken last, so a
+     fallback that just happened is not immediately re-detected. */
+  watchMaterial();
 }
 
 function submitShowForRelease(id) {
@@ -14951,6 +15039,14 @@ function hideNotifsView(role) {
 notifBadges();
 paintNotifWidget('wnotif-widget', 'winery');
 
+/* The first reading of every show under Final Review, before anybody
+   has clicked anything. Without it the first action of the session
+   would find no snapshot to compare against and a real change would
+   pass unnoticed exactly once — the worst possible frequency for a
+   guard. WS-2602 ships in `pending_approval`, so this is not
+   hypothetical. */
+watchMaterial();
+
 BLStore.register({
   /* Wine Shows, with their exhibitors, guests, products, interests,
      venue and event log (A16). Lives in assets/bottle-lobby-data.js. */
@@ -15046,7 +15142,17 @@ BLStore.start({
   /* A restored order predates nothing, but normalizeOrder() is the one
      thing that ran over the fixtures after they were declared, and it
      is idempotent — so run it again rather than assume. */
-  afterRestore: function () { orders.forEach(normalizeOrder); },
+  /* A restored order predates nothing, but normalizeOrder() is the one
+     thing that ran over the fixtures after they were declared, and it
+     is idempotent — so run it again rather than assume.
+
+     The material watch is re-seeded for the same class of reason and
+     the opposite one: it is DERIVED from wineShows and holds no truth
+     of its own, so after a restore it must be re-read off the restored
+     shows. Left as it was, the first action in a restored session would
+     compare a restored show against the fixture it replaced and read a
+     material change that nobody made. */
+  afterRestore: function () { orders.forEach(normalizeOrder); watchMaterial(); },
   onSaved:    demoSavedFlash,
   notify:     showToast,
   onExternal: function () { showToast('↻ Updated in another tab'); }
