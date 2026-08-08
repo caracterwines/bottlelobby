@@ -908,8 +908,30 @@ let memberEvents = [
     heroImage:'images/hamburg-tasting-room.jpg',
     status:'published',
     capacity:24,
-    reach:['members','wineries'],
-    reachCountry:'Germany', reachRegion:null, reachCity:null,
+    /* `public` ADDED IN DURCHGANG 9, and this row is the one place it
+       is honest: this is A16.8's paid END-CUSTOMER evening, and the
+       external booking link's audience is by definition not the
+       membership — a consumer dinner announced only to members and
+       wineries advertises to everyone except the people meant to book
+       it. The original pair stays: `members` finds the trade guests,
+       `wineries` the appliers. Reach is a multi-select and every entry
+       permits (A16.14b), so nothing narrows by this.
+       It is also, deliberately, the ONE public member event: the
+       anonymous Wine Guide directory (A16.14d) has a member-event card
+       to show because a member event really is public, not because a
+       fixture was reclassified for test coverage.
+
+       THE GERMANY NARROWING IS GONE IN THE SAME BREATH, and the row's
+       own documentation had already decided that: the `city` note
+       above describes ME-3102 as the event that "narrows to nothing"
+       — the stored country was the one field contradicting it. A
+       narrowing fails every viewer without a known location, the
+       anonymous reader first of all (eventNarrowsOut, the protective
+       direction), so `public` beside a country narrowing would be a
+       reach no reader can ever pass. People travel to a five-course
+       dinner as they travel to a harvest (ME-3105's own argument). */
+    reach:['public','members','wineries'],
+    reachCountry:null, reachRegion:null, reachCity:null,
     registrationMode:'application',
     applicationsOpen:true, applicationDeadline:'2026-09-30',
     /* A16.8's paid end-customer case, and deliberately the whole of it:
@@ -933,7 +955,7 @@ let memberEvents = [
       { at:'2026-07-20', actor:'Bistro Laurent',       text:'Event created as a draft' },
       { at:'2026-07-22', actor:'Bistro Laurent',       text:'Invitation sent to Henri Dubois Domaine as winemaker' },
       { at:'2026-07-23', actor:'Henri Dubois Domaine', text:'Accepted as winemaker' },
-      { at:'2026-07-26', actor:'Bistro Laurent',       text:'Published to members and wineries, Germany', scope:'event' },
+      { at:'2026-07-26', actor:'Bistro Laurent',       text:'Published to public, members and wineries', scope:'event' },
       { at:'2026-07-26', actor:'Bistro Laurent',       text:'Opened for applications until 30 Sep 2026' },
       { at:'2026-08-01', actor:'Château Belrieu',      text:'Applied to take part' } ] },
 

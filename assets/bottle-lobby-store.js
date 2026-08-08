@@ -210,8 +210,20 @@ window.BLStore = (function () {
      every returning visitor. A protection that rests on one field
      happening to be null is not a protection; Durchgang 7 could skip
      the bump because `memberEvents` was a NEW registration, and this
-     is the case its own note said would bring the C8 rule back. */
-  var VERSION   = 6;
+     is the case its own note said would bring the C8 rule back.
+
+     7 — Wine Guide → Events (09.08.2026). VALUE changes on one row of
+     an existing collection, no shape change at all: ME-3102 gains
+     `public` in its reach and drops the Germany narrowing (its own
+     `city` note had already described it as narrowing to nothing).
+     This is guard 2's blind spot by construction — every key is in
+     place, `reachCountry:null` already exists on ME-3105, so both
+     fingerprint sets hash identically. A returning visitor would keep
+     the old values for good and the anonymous Events directory would
+     show them no member event, which looks exactly like the feature
+     being broken. The C8 rule in one line: change the FORMAT or the
+     VALUES stored state depends on, bump VERSION in the same commit. */
+  var VERSION   = 7;
   var DEBOUNCE  = 200;   /* ms after the last event before a write */
   var HEARTBEAT = 2000;  /* ms between "does storage still match?" checks */
   var POLL      = 500;   /* ms between retries while the tab is busy */
