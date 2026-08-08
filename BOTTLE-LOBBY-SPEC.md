@@ -1906,17 +1906,41 @@ flag, a price note, an external booking or contact link, and the host
 information — and nothing else. **No consumer ticketing, no consumer accounts,
 no checkout** without a separate decision (ME-7).
 
-**External fairs — a minimal model, and deliberately minimal.** ProWein,
-Vinitaly and the rest exist in this repo today only as marketing prose and as
-*award* strings; no structured fair data exists anywhere, so the model starts
-clean. One **canonical record per fair** (`events.event_kind = 'external_fair'`,
-no host) and separate **participation** records per member: booth number and
-information, presented wines as product-key references, optional meeting slots
-and invitations. If a fair exists canonically, a winery records a
-**participation**, never a copy of the fair. Explicitly out of scope: running a
-fair, ticketing, or organiser management. The existing Vinitaly award strings
-stay what they are — recognition (A5), not participation — and nothing is
-migrated into fair records.
+**External fairs — a later model, stated now so nothing substitutes for it.**
+ProWein, Vinitaly and the rest exist in this repo today only as marketing prose
+and as *award* strings; no structured fair data exists anywhere, so the model
+starts clean — and none of it is built yet. This block is the shape it takes
+when its own pass comes, written down so that no stand-in gets modelled in the
+meantime:
+
+- One **canonical record per fair** (`events.event_kind = 'external_fair'`),
+  and **no member is its host**. If a fair exists canonically, a member records
+  a **participation**, never a copy of the fair.
+- A separate **participation row per exhibiting member**: hall, booth, the fair
+  days the member attends, a description, and the presented wines as
+  `productId` references (ME-6). Nothing about the fair itself is repeated on
+  the participation row.
+- **Optional meeting slots and invitations** hang off the participation. A
+  **booked booth appointment does not make the booking house a fair
+  participant** — exhibiting and holding an appointment are two different
+  facts.
+- The appointment has its **own two-sided flow** — request · confirmation ·
+  counter-proposal — and it is a calendar act, not a commercial one: **a booth
+  appointment creates no order**. A later order may reference the fair or the
+  appointment as **provenance** only, exactly as A16.12 lets an order carry a
+  show id.
+- **Visibility:** public are the participation, the booth, the days, the
+  presented wines and the fact that meetings can be requested. Concrete slots
+  and the booking act are for entitled members. What was discussed, who the
+  counterpart was and the full calendar belong to the two sides of each
+  appointment and to nobody else.
+- Explicitly out of scope: running a fair, ticketing, organiser management. The
+  existing Vinitaly award strings stay what they are — recognition (A5), not
+  participation — and nothing is migrated into fair records.
+- **A ProWein participation is never modelled as a member event of a winery** —
+  not as a stopgap and not for a demo. That stand-in would put a host on a fair
+  that has none and a self-published card on somebody else's format; the
+  canonical fair plus a participation row is the only shape this ever takes.
 
 **The cockpit.** The list splits into Drafts · Published · Upcoming ·
 Invitations & Applications · Past. The detail level carries Overview · Event
@@ -3110,8 +3134,14 @@ Member events:
   block is not a release act.
 - **ME-4 — campaigns carry a recipient snapshot**, deduplicated, and resolve no
   foreign community.
-- **ME-5 — venue and participant surfaces show head counts, never identities**,
-  until `completed`.
+- **ME-5 — guests, general participants, applicants and unanswered invitations
+  are never named on venue or participant surfaces** — those show head counts,
+  never identities. One naming is allowed: a confirmed **`winemaker` or
+  `exhibitor`** may be named on the public surfaces of a **published** member
+  event, after their explicit acceptance and never before it — until then the
+  name appears only in their own view and the host's. The event itself stays
+  gated by its stored reach (A16.14b), and a public naming is neither a release
+  act nor a guarantee (ME-3). The first, blanket form of this rule is D42.
 - **ME-6 — event wines resolve to product keys.** A typed wine name is a harness
   failure (A15.2a).
 - **ME-7 — no consumer checkout or ticketing structures exist.**
@@ -5735,6 +5765,7 @@ Without it the badge cannot be honest.
 | D39 | The sidebar sections **My Partners** and **Network** (B8, all four roles); and, from the withdrawn A16.14 draft, `'network'` as a **reach value** | **B8 / A16.14b** — **Network** = the business relations (former My Partners: My Partnerships / My Distributors · My Requests). **Community** = the follow side (former Network: Matchmaking · My Opportunities · My Stars · My Fans). The reach taxonomy names those two levels `partners` and `community`; the generic value `network` does not exist | Two sections did not shift by one, they **swapped meanings**, so any split delivery leaves a window in which the word "Network" means the old section on one screen and the new one on another — which is why the rename is one commit across all four navs and this spec table. The reach value went for the same reason one level down: a nav section and a reach level may not be the same word, or a reader has to know which of the two a filter is talking about. Note the hazard the rename pass inherits: in the dashboard code the string `network` **already** names two different things — the partnerships *section key* (with its `*nav-network` ids) and the Matchmaking/Stars/Fans *group key* — so the rename goes by map position and id, never by string replacement. |
 | D40 | **A3's chain as the complete sourcing rule** — `WINERY → DISTRIBUTOR → RESTAURANT/RETAIL` and nothing else — together with **A14.1's narrow sentence** *"a Distributor buys from a Winery"*, and A3's own leftover reading of own label as *"a separate flag/relation layered on top of the winery→distributor wine link"* | **A3** *Where a distributor sources* — a distributor buys from a winery **or from another distributor**; A may sell ordinary wines he lawfully carries to B on an active A↔B partnership within his own distribution agreement; sub-distribution is not an own-label privilege; B gets his own listing on the same `productId` with his own `tradePrice` and article number; producer stays the winery and B's seller is A; the A→B order creates no relation; A17 grants are checked for **own-label products only**; the ordinary distribution agreement is **named, not modelled**; Restaurant and Retail still buy exclusively from a distributor. A14.1 widened to match; the own-label sentence now points at A17 (D36, D37) | The rule was never meant to forbid this and three places already assumed it did not: **A8** has named Distributor↔Distributor portfolio supplementation since it was written, **A17.9b** describes the downstream holder in full, and `ORDER_ROLES` names roles rather than pairings — only the chain diagram and one sentence in A14.1 said otherwise. Left as written, the platform would have permitted a distributor to resell an **own label** while forbidding him to resell an **ordinary wine**, which is exactly backwards: the own-label route is the constrained one, and ordinary trade is the case the whole model rests on. Serge named the contradiction from the business side — the Saparavi case (HANDOFF pass 4) and plain sub-distribution both need this route, and neither is an own label. What is deliberately NOT added: a second grant construct for ordinary distribution terms — A17.9a exists for own-label grants, and building its twin for ordinary contracts would be D36 a third time, so point 8 names the agreement and stops there. |
 | D41 | **The six bridged listings read as finished own labels** — PRD-1020 Sauvignon Blanc — Sancerre · PRD-1021 Chardonnay — Chablis Premier Cru · PRD-1022 Primitivo — Alcamo DOC · PRD-1023 Tempranillo — Rioja Crianza · PRD-1024 Riesling Spätlese — Mosel · PRD-1025 Merlot — Bordeaux Supérieur. Carried at **three spec locations**: the A17.0 re-measurement of 5 Aug 2026 (*"27 distinct products, 6 of which are finished own labels"*, and *"14 wines, 6 of them own label and 8 ordinary"*) · the A17.14 migration sentence (*"the existing `ownLabel:true` on PRD-1020, PRD-1021, PRD-1022 becomes derived … the pass that gives those wines real projects"*) · and, in the prototype, `legacyOwnLabel:'active'`/`'pending'` on six listings, `status:'Own-Label'` on ten Wine Guide rows, an *Own Label* ribbon on six article pages, a six-row typed *Own-Label Portfolio* widget, two typed counters reading **5** and a *Real Example* on `bottle-lobby-own-label.html` | **A17.0b last paragraph** — none of the six is an own label. Each is the producer's own appellation wine, under the producer's brand, on an article page written in the producer's name; five of those pages give the ribbon the reason *exclusive distribution through Hawesko*, which is **a producer-owned brand plus a distribution exclusivity and explicitly out of scope**. The six become: five ordinary wines keeping every A17.0 ability; **PRD-1020** additionally the `sourceWineId` of a relabel project (A17.0b's own example); **PRD-1022** and **PRD-1024** carrying `ownLabelAvailability:'on_request'`. Hawesko's real own labels are **two new `PRD-` records** with `brandOwner:'Hawesko GmbH'`, each out of a gate-2-approved project, one active and one created-but-undelivered. A17.0's counts and A17.14's migration sentence are corrected accordingly | **The definition beats the fixture observation, and the fixtures said so themselves.** A17.0b was written on 4 Aug and its closing paragraph excludes this exact arrangement by name; the 5 Aug re-measurement counted the flags it found instead of testing them against it, and A17.14 then wrote the count into a migration plan. **The article pages are the evidence, and they were always public**: `bottle-lobby-wine-sauvignon-blanc-sancerre.html` describes the wine as *"Henri Dubois Domaine farms its Sauvignon Blanc …"* and justifies the ribbon with *"Exclusive to Hawesko in northern Germany and Scandinavia"* — brand and exclusivity in one sentence, and only the second one is true. **PRD-1022 contradicted the flag on its own page**, which reads *Own-Label Available* — a capability where three other surfaces claimed a product, which is D36 surviving inside its own replacement. **The strongest counter-argument refuted itself**: the six are absent from `partnerWinesPool`, and A17.9 does forbid an own-label product from appearing in another distributor's picker — but **PRD-1026 sat in exactly the same gap with no own-label claim anywhere**, so the gap is seven mockup rows that lived only in the distributor's book, not six own labels; `assets/bottle-lobby-data.js` recorded the doubt in writing (*"the open question is not whether to loosen A17.9 but whether all six are own labels at all"*). **What the misreading would have cost, measured**: those six wines are named by 7 of 11 orders, 4 of 5 promo materials, 3 of 3 exclusive deals and both buyers' wine lists. As own labels every one of those movements would need a covering Market Grant under MG-1 — the model would have started refusing ordinary trade in order to protect a brand nobody owns, which is D40's error one level down. As ordinary wines, not one of those fixtures changes. |
+| D42 | **ME-5 as first written: "venue and participant surfaces show head counts, never identities, until `completed`"** — no name on any public member-event surface before the event was over, the confirmed winemaker's included | **A16.15 ME-5** — differentiated: guests, general participants, applicants and unanswered invitations stay unnamed and stay head counts; a confirmed **`winemaker` or `exhibitor`** may be named on the public surfaces of a **published** member event after their explicit acceptance and never before it; until acceptance the name appears only in the invitee's own view and the host's; the event itself stays gated by its stored reach (A16.14b); and a public naming is neither a release act nor a guarantee (ME-3) | **The blanket rule protected the one party A16.6's logic does not apply to.** Anonymisation exists for the invited-but-undecided, whose later decline would read as a withdrawal — and that protection stays in full: `sent`, `viewed`, `applied`, declined and withdrawn names appear on no public surface. But a winemaker dinner whose card may not say which winemaker is coming advertises nothing — naming the confirmed producer is the point of the event, and being named on a published event is part of what the producer says yes to when accepting. Confirmed business decision, 8 Aug 2026: **acceptance is the consent line; `completed` was one event too late.** The naming is a permission, not an obligation, and it is not the Bottle Lobby release vocabulary — a member event still promises nothing (ME-3). |
 
 ---
 
