@@ -11042,12 +11042,12 @@ function showAwaits(role, show) {
   /* An attendee request waits on the host exactly as a proposed wine
      does — same shape, same single answer (A16.5). */
   if (cfg.side === 'host' && attendeesOf(show).some(a => a.status === 'requested')) return true;
-  /* A quote genuinely waits on the host — venueTurn() says so — but
-     accepting it is A16.11 step 6 and does not exist yet. Counting it
-     here would badge a show the host cannot move, so the quote is
-     announced instead: a chip naming the amount on the list row and a
-     box in the detail. ADD IT HERE in the pass that builds the binding
-     acceptance, and the badge starts clearing itself. */
+  /* A quote waits on the host, and now the host can answer it: the
+     binding acceptance is built (A16.11 step 6), so the badge clears
+     itself the moment they do. It was deliberately not counted while
+     the answer did not exist — a badge on a show nobody can move is a
+     task that cannot be completed. */
+  if (cfg.side === 'host' && venueTurn(show) === 'host') return true;
   return show.exhibitors.some(e => exhibitorTurn(show, e) === cfg.side &&
     (cfg.side === 'host' || e.producer === cfg.entity));
 }
@@ -11294,6 +11294,21 @@ function prepaymentDefault(buyer, seller) {
 function venueSettled(show) {
   return show.venueType === 'host_premises' ||
          show.venueStatus === 'quoted' || show.venueStatus === 'accepted';
+}
+/* WHETHER THE SHOW IS COMMITTED — derived, never a flag (A16.10).
+   True from the first consent: the host's acceptance of the venue's
+   offer, or a producer's confirmation of their contribution, whichever
+   lands first. Today only the first exists; the second is written the
+   same way when A16.11 steps 4–6 land, and this function is the one
+   place that has to learn about it.
+
+   What it closes off is `cancelled` and `rescheduled` (A16.2). Neither
+   is built as an action yet, which is why nothing calls this to bar a
+   button — it is stated here so the next pass finds the rule rather
+   than re-deriving it from the venue field. */
+function isCommitted(show) {
+  return !!show.venueAcceptedAt ||
+         show.exhibitors.some(e => !!e.contributionConsentedAt);
 }
 function showReadiness(show) {
   /* A partner venue that has only been ASKED is not a venue yet — it
@@ -12006,11 +12021,13 @@ function hostVenueBox(s) {
     body = '<strong style="color:var(--paper)">' + who + '</strong> quoted <strong style="color:var(--gold)">' +
            eur(s.cateringTotal || 0) + '</strong> for room and catering on ' + orderDate(s.venueQuotedAt || SHOW_TODAY) +
            '. The figure came straight from them — you never retype it.<br><br>' +
-           'Next comes choosing how that cost reaches your exhibitors and accepting the offer bindingly. ' +
-           'Both are the catering settlement (A16.11) and are built in the next pass.';
+           'Accepting is binding and commits the show. How that cost reaches your exhibitors is ' +
+           'your separate decision and the venue is never party to it.';
+    acts = '<button class="btn-sm btn-gold" onclick="openVenueAcceptModal(\'' + s.id + '\')">Accept the offer →</button>' + askBtn;
   } else if (s.venueStatus === 'accepted') {
     body = '<strong style="color:var(--paper)">' + who + '</strong> · ' + eur(s.cateringTotal || 0) +
-           ' for room and catering, accepted on ' + orderDate(s.venueAcceptedAt) + '.';
+           ' for room and catering, accepted on ' + orderDate(s.venueAcceptedAt) + '. ' +
+           'The show is committed from that date: it can no longer be cancelled or rescheduled here (A16.2).';
     acts = '';
   } else if (s.venueStatus === 'declined') {
     head = 'Venue Declined';
@@ -13414,6 +13431,51 @@ function saveVenueQuote() {
   closeVenueQuoteModal();
   refreshShows();
   showToast('✓ ' + eur(amount) + ' quoted — ' + s.leadHost + ' has been notified');
+}
+
+/* ── A16.11 step 6, the host's half ─────────────────────────────
+   The venue named a price; accepting it is the binding answer. It is
+   an ACT WITH A DATE, not a computed state, which is why it writes
+   `venueAcceptedAt` and why `isCommitted()` reads that field rather
+   than re-deriving the moment from the quote.
+
+   The mechanics are A6's on purpose (A16.11 step 6 says so in as many
+   words): the obligation stated, a checkbox, a confirm disabled until
+   it is ticked. A one-click accept would make the commitment point —
+   the thing that closes off `cancelled` and `rescheduled` — something
+   a host passes through without reading. */
+let venueAcceptShowId = null;
+function openVenueAcceptModal(id) {
+  const s = actionShow(id); if (!s) return;
+  if (s.venueStatus !== 'quoted') { actionSay('There is no quote from ' + (s.venueEntity || 'the venue') + ' to accept'); return; }
+  venueAcceptShowId = id;
+  document.getElementById('va-lead').innerHTML = 'You are about to accept the offer for <strong style="color:#f7f3ee">' +
+    s.title + '</strong> · ' + orderDate(s.date) + ' · ' + s.city + '.';
+  document.getElementById('va-who').textContent    = s.venueEntity || '';
+  document.getElementById('va-amount').textContent = eur(s.cateringTotal || 0);
+  /* Reopened after a cancel, the tick must be gone with it — a modal
+     that remembers a consent is a consent nobody gave twice. */
+  document.getElementById('va-cb').checked   = false;
+  document.getElementById('va-confirm').disabled = true;
+  document.getElementById('wine-show-venue-accept-modal').classList.add('active');
+}
+function closeVenueAcceptModal() {
+  document.getElementById('wine-show-venue-accept-modal').classList.remove('active');
+}
+function acceptVenueOffer() {
+  const s = actionShow(venueAcceptShowId); if (!s) return;
+  /* Asked again rather than trusted: the modal was opened against a
+     state that may have moved since (B12). */
+  if (s.venueStatus !== 'quoted') { actionSay('There is no quote from ' + (s.venueEntity || 'the venue') + ' to accept'); return; }
+  if (!document.getElementById('va-cb').checked) { actionSay('Tick the box first — this is a binding acceptance'); return; }
+  s.venueStatus     = 'accepted';
+  s.venueAcceptedAt = SHOW_TODAY;
+  logShow(s, s.leadHost, 'Accepted ' + s.venueEntity + "'s offer of " + eur(s.cateringTotal || 0) +
+    ' for room and catering — the show is committed', 'show');
+  closeVenueAcceptModal();
+  refreshShows();
+  refreshNotifications();
+  showToast('✓ Offer accepted — ' + s.venueEntity + ' is the venue');
 }
 
 function declineVenueRequest(id) {
@@ -14929,6 +14991,39 @@ BLStore.start({
     <div class="modal-footer">
       <button class="btn-sm btn-outline" onclick="closeVenueQuoteModal()">Cancel</button>
       <button class="btn-sm btn-gold" onclick="saveVenueQuote()">Send Price →</button>
+    </div>
+  </div>
+</div>
+
+<!-- Host accepts the venue's offer (A16.11 step 6, host half).
+     A6 MECHANICS, DELIBERATELY: the obligation in words, a checkbox,
+     and a confirm hard-disabled until it is ticked. This is the act
+     that commits the show (A16.10) — it may not be a bare button. -->
+<div class="pr-overlay" id="wine-show-venue-accept-modal" onclick="if(event.target===this) closeVenueAcceptModal()">
+  <div class="pr-panel">
+    <div class="pr-head">
+      <div class="pr-title">Accept the <span>Venue's Offer</span></div>
+      <button class="pr-close" onclick="closeVenueAcceptModal()">✕</button>
+    </div>
+    <div class="pr-body">
+      <p class="pr-lead" id="va-lead"></p>
+
+      <div class="pr-clause">
+        <div class="pr-clause-title">What accepting means</div>
+        <p>I accept <strong style="color:#f7f3ee" id="va-who"></strong>'s offer of <strong style="color:#f7f3ee" id="va-amount"></strong> for room and catering, in full and as quoted. The venue organises the catering; the amount is theirs and is not renegotiated per exhibitor.</p>
+        <p>From this moment the show is <strong style="color:#f7f3ee">committed</strong>: it can no longer be cancelled or rescheduled from the platform, because the venue books staff and space against this acceptance. Unwinding a committed show is a commercial reversal handled by Bottle&nbsp;Lobby, not a button here.</p>
+        <p>How this cost reaches my exhibitors is a separate decision of mine, and the venue is never party to it.</p>
+      </div>
+
+      <label class="pr-agree">
+        <input type="checkbox" id="va-cb" onchange="document.getElementById('va-confirm').disabled = !this.checked">
+        <span class="pr-agree-text">I have read the above, accept the offer bindingly on behalf of the host, and understand the show is committed from now on.</span>
+      </label>
+
+      <div class="pr-foot">
+        <button class="pr-btn pr-cancel" onclick="closeVenueAcceptModal()">Cancel</button>
+        <button class="pr-btn pr-confirm" id="va-confirm" disabled onclick="acceptVenueOffer()">Confirm &amp; Accept</button>
+      </div>
     </div>
   </div>
 </div>

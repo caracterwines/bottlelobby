@@ -197,12 +197,19 @@ const stillOwed = w.eval('showsAwaiting')('distributor');
 const owedWine = stillOwed.filter(sh => sh.exhibitors.some(e => w.eval('exhibitorTurn')(sh, e) === 'host'));
 if (owedWine.length !== 0) bad('host should owe no WINE now, owes ' + owedWine.length);
 else ok('host owes no wine after answering');
-if (stillOwed.length !== 1 || stillOwed[0].id !== 'WS-2603')
-  bad('what remains should be exactly the attendee request on WS-2603, got ' + stillOwed.map(x => x.id));
-else ok('what remains is the request for a place — the other relation, still counted');
-if (d.getElementById('dshow-badge').textContent !== '2')
-  bad('host badge should be 2 (the request + the pending_approval show), got ' + d.getElementById('dshow-badge').textContent);
-else ok('host badge = 2, the request for a place and the show awaiting Bottle Lobby');
+/* Three relations remain and none of them is a wine: the attendee
+   request on WS-2603, and TWO unaccepted venue quotes — the one this
+   file wrote onto WS-2604 at line 89, and WS-2602's from the fixtures.
+   A quote waiting on the host is a turn the host can now answer
+   (A16.11 step 6), so it is counted; it was not, for as long as there
+   was no answer to give. */
+const owedIds = stillOwed.map(x => x.id).sort().join(',');
+if (owedIds !== 'WS-2602,WS-2603,WS-2604')
+  bad('what remains should be the attendee request plus the two venue quotes, got ' + owedIds);
+else ok('what remains is the request for a place and two venue quotes — other relations, still counted');
+if (d.getElementById('dshow-badge').textContent !== '4')
+  bad('host badge should be 4 (the request + two venue quotes + the pending_approval show), got ' + d.getElementById('dshow-badge').textContent);
+else ok('host badge = 4, the request for a place, two venue quotes and the show awaiting Bottle Lobby');
 // the winery's own turn is what its badge shows
 w.showWineShows('winery','current');
 const wWaiting = w.eval('showsAwaiting')('winery','producer').length;

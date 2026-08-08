@@ -322,5 +322,83 @@ w.showWineShows('retail','current');
   else ok('the request moved to Weinhaus Müller, who now sees it');
 }
 
+/* ═══════════════════════════════════════════════════════════════════
+   STEP 6, THE HOST'S HALF — accepting the offer commits the show
+   -------------------------------------------------------------------
+   The venue names a price; accepting it is binding, and A16.11 asks
+   for A6's mechanics by name: the obligation in words, a checkbox, a
+   confirm that cannot be pressed before it is ticked. So the tick is
+   measured as a GATE, not as decoration — the check drives the real
+   handler with the box unticked and requires the state not to move.
+═══════════════════════════════════════════════════════════════════ */
+console.log('\n── A16.11 step 6: the host accepts, and the show is committed');
+{
+  /* WS-2602's venue has quoted in the fixtures — the state this act
+     answers, built here rather than assumed anywhere else (C7). */
+  const s = S('WS-2602');
+  if (s.venueStatus !== 'quoted') bad('WS-2602 must ship with a quote for this section to mean anything');
+  if (w.eval('isCommitted')(s)) bad('a show with nothing but a quote is NOT committed yet (A16.10)');
+  else ok('a quote alone does not commit the show');
+
+  w.showWineShows('distributor','current');
+  w.openShowDetail('WS-2602');
+  const box = boxWithHead('dshow','The Venue Has Quoted');
+  if (!box) bad('the host is not offered the acceptance');
+  else if (![...box.querySelectorAll('button')].some(b => b.textContent.includes('Accept the offer')))
+    bad('the quoted box carries no Accept button');
+  else ok('the host reads the quote and is offered the binding acceptance');
+
+  w.openVenueAcceptModal('WS-2602');
+  if (!d.getElementById('wine-show-venue-accept-modal').classList.contains('active'))
+    bad('the acceptance modal did not open');
+  else ok('the acceptance modal opens on the quote');
+  if (!d.getElementById('va-confirm').disabled) bad('the confirm is live before the box is ticked (A6 mechanics)');
+  else ok('confirm is hard-disabled until the box is ticked');
+  if (!d.getElementById('va-amount').textContent.includes('1,250'))
+    bad('the modal must state the amount being accepted, got ' + d.getElementById('va-amount').textContent);
+  else ok('the amount being accepted is stated in the modal');
+
+  /* THE GATE ITSELF. Driving the handler past a disabled button is what
+     the console and the next entry point do; a check that only reads
+     the `disabled` attribute proves the styling, not the rule. */
+  w.acceptVenueOffer();
+  if (S('WS-2602').venueStatus !== 'quoted')
+    bad('the offer was accepted with the consent box unticked');
+  else ok('accepting without the tick changes nothing — the rule is in the handler, not the attribute');
+
+  d.getElementById('va-cb').checked = true;
+  w.acceptVenueOffer();
+  const a = S('WS-2602');
+  if (a.venueStatus !== 'accepted') bad('the acceptance did not take, status is ' + a.venueStatus);
+  else ok('venueStatus → accepted');
+  if (!a.venueAcceptedAt) bad('the acceptance is an act with a date — venueAcceptedAt is empty');
+  else ok('venueAcceptedAt is written — an act, not a derivation');
+  if (!w.eval('isCommitted')(a)) bad('an accepted venue offer must commit the show (A16.10)');
+  else ok('the show is committed from the acceptance');
+  if (!a.events.some(e => e.text.includes('committed'))) bad('the commitment is not in the show log');
+  else ok('the log names the acceptance and the commitment');
+  if (w.eval('venueTurn')(a) !== null) bad('an accepted offer waits on nobody');
+  else ok('venueTurn → nobody once accepted');
+
+  /* Both sides read the one record. WS-2602's venue is Vinstuen
+     København, which has no demo dashboard, so the venue's reading is
+     measured on WS-2604 instead — where this file has already moved
+     the request to Weinhaus Müller, a role that does. */
+  w.openVenueQuoteModal('WS-2604');
+  d.getElementById('vq-amount').value = '900';
+  w.saveVenueQuote();
+  w.showWineShows('distributor','current');
+  w.openShowDetail('WS-2604');
+  w.openVenueAcceptModal('WS-2604');
+  d.getElementById('va-cb').checked = true;
+  w.acceptVenueOffer();
+  w.showWineShows('retail','current');
+  w.openShowDetail('WS-2604');
+  const vBox = boxWithHead('tshow','You Are the Venue');
+  if (!vBox) bad('the venue is not told the offer was accepted');
+  else if (!vBox.textContent.includes('900')) bad('the venue is told, but not what was accepted: ' + vBox.textContent.trim());
+  else ok('the venue reads the acceptance and the amount off the same record');
+}
+
 console.log(fail ? `\n✗ ${fail} failure(s)` : '\n✓ all checks passed');
 process.exit(fail ? 1 : 0);
