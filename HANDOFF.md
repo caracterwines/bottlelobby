@@ -4,7 +4,7 @@
 > Dateiliste, Dateianzahl und Aenderungshistorie stehen in der Git-Historie — nicht hier.
 > Dauerhafte Regeln stehen in `BOTTLE-LOBBY-SPEC.md`, kurze Invarianten in `CLAUDE.md` — nicht hier.
 
-**Letzte Aktualisierung:** 8. August 2026
+**Letzte Aktualisierung:** 9. August 2026
 
 ---
 
@@ -21,7 +21,7 @@ Kein Build-Command, Publish-Directory = Repo-Root.
 
 ---
 
-## ▶ EINSTIEG — Stand 7. August 2026
+## ▶ EINSTIEG — Stand 9. August 2026
 
 > **Was Git nicht weiss, steht hier. Alles andere nicht.** Diese Datei fuehrt
 > keine Chronik: was gebaut wurde, wann und von wem, beantwortet `git log`
@@ -31,12 +31,12 @@ Kein Build-Command, Publish-Directory = Repo-Root.
 > Dauerhafte Regeln gehoeren in `BOTTLE-LOBBY-SPEC.md`, kurze Invarianten in
 > `CLAUDE.md`. Findet sich hier eine Regel, ist sie am falschen Ort.
 
-**Baum sauber, `main` gepusht, 25 Harnesses gruen** (nachgezaehlt 08.08. — `shows-reach.js` und `shows-release.js` kamen mit den Durchgaengen 5 und 6 dazu, `member-events.js` mit Durchgang 7; Durchgang 8 hat **keine** neue Datei gebracht, sondern `member-events.js` geweitet). **`BLStore.VERSION` steht auf 6** — Durchgang 7 hat ihn nicht gebraucht, Durchgang 8 schon; die Begruendung steht im Block zu Durchgang 8 unten.
+**Baum sauber, `main` gepusht, 26 Harnesses gruen** (nachgezaehlt 09.08. — `wine-guide-page.js` kam mit Durchgang 9 dazu, davor `member-events.js` mit 7, `shows-reach.js`/`shows-release.js` mit 5 und 6). **`BLStore.VERSION` steht auf 7** — die Begruendung samt korrigierter Vorhersage steht am `VERSION` in `assets/bottle-lobby-store.js` und im Block zu Durchgang 9 unten.
 
 ### Womit eine Sitzung anfaengt
 
 ```
-node tests/run-all.js        →  25 Harnesses, muss gruen sein, bevor irgendetwas beginnt
+node tests/run-all.js        →  26 Harnesses, muss gruen sein, bevor irgendetwas beginnt
 node tests/serve.js          →  http://localhost:8765   (no-store — NIE python http.server)
 node tests/stamp-assets.js   →  nach jeder Aenderung an assets/, sonst wird check-static rot
 ```
@@ -50,7 +50,7 @@ Fehlmessungen an einem Tag kamen genau daher** (Spec C7, „Browser acceptance")
 `BOTTLE-LOBBY-SPEC.md` ist die Autoritaet und waechst. **Niemand liest sie ganz —
 also je Durchgang die geltenden Abschnitte benennen**, sonst wird nach
 Plausibilitaet statt nach Spec gebaut. `CLAUDE.md` hat die acht Invarianten,
-Anhang D die abgeloesten Entscheidungen (**D1–D41** — nie ohne Blick dorthin
+Anhang D die abgeloesten Entscheidungen (**D1–D42** — nie ohne Blick dorthin
 etwas wiedervorschlagen).
 
 Arbeitsregeln, die diesen Tag ueberdauern und in **C3/C7** stehen: jeden Commit
@@ -93,7 +93,7 @@ Wahrheiten stabilisieren, dann nach aussen bauen.
 | 6 | **Shows: Final Review + Freigabe** | Veroeffentlichungs-Checkliste inkl. Contributions, gespeicherter Review, Reset bei materieller Aenderung, WS-6/WS-7 |
 | 7 | ~~**Member Events, Basis + Cockpit (Distributor)**~~ | **Gebaut am 08.08.** — siehe den Block unter der Tabelle. Externe Messen (`event_kind:'external_fair'`) sind bewusst NICHT dabei |
 | 8 | ~~**Member Events, Ausrollen**~~ | **Gebaut am 08.08.** — siehe den Block unter der Tabelle. Die Bewerberseite ist bewusst NICHT dabei (Durchgang 9) |
-| 9 | **Wine Guide → Events + Bewerberseite** | Verzeichnis-Tab, Filter nur ueber echte Daten, Karten wiederverwendet, die drei oeffentlichen Flaechen gleichgezogen — **plus** die Oberflaeche, von der aus ein Mitglied sich auf ein Event bewirbt (`applyToEvent()` steht seit Durchgang 7) |
+| 9 | ~~**Wine Guide → Events + Bewerberseite**~~ | **Gebaut am 09.08.** — siehe den Block unter der Tabelle. Dazu die ME-5-Korrektur (D42) und das ausgeschriebene Messe-Modell in der Spec |
 | 10 | **Kampagnen + Benachrichtigungen** | Ankuendigung/Erinnerung getrennt, Empfaenger-Snapshot, C9-Bedingungen |
 | 11 | **`bottle-lobby-own-label.html` neu** | Die Seite behauptet das alte Modell in ~20 Passagen (Zeilen 206–453) — **das alte Modell IST ihr Argument**, also Neuschrift, nicht Korrektur. Die zwei *konkreten* Falschaussagen sind mit dem A17-Fixture-Durchgang weg (siehe den Block unter der Tabelle); die **Argumentation** steht unveraendert. **Muss nach dem A17-Fixture-Durchgang**, sonst wird die Seite zweimal geschrieben |
 
@@ -213,18 +213,17 @@ Funktionen aufrufen, `transferSize` vorher lesen (C7).
 >   kommt; dann greift die Regel aus C8 wieder.
 >
 > **Benannte Reste aus Durchgang 7 — die beiden mit Ziel 8 sind mit Durchgang 8
-> erledigt** (toter Retail-Nav-Eintrag · getippte *Cantina Rossi Tasting*); was
-> danach offen bleibt, steht im Block zu Durchgang 8 unten.
-> · **Durchgang 9** — Bewerbungen von der Bewerberseite. `applyToEvent()` steht
->   und ist getestet; es gibt nur noch keine Oberflaeche, von der aus ein Winzer
->   sich bewirbt. Durchgang 8 hat sie bewusst NICHT vorgezogen.
+> erledigt** (toter Retail-Nav-Eintrag · getippte *Cantina Rossi Tasting*), die
+> Bewerberseite mit Durchgang 9; was danach offen bleibt, steht im Block zu
+> Durchgang 9 unten.
 > · **Durchgang 10** — `event_campaigns` und damit **ME-4** sind nicht gebaut,
 >   und `tests/member-events.js` sagt das ausdruecklich, statt eine Pruefung
 >   ueber ein nicht existierendes Feature zu fuehren.
-> · **Externe Messen** (`event_kind:'external_fair'`, Teilnahmen, Standnummern)
->   sind nicht gebaut. A16.8 beschreibt sie als Minimalmodell; sie haengen an
->   keinem der oben Genannten und bekommen einen eigenen kleinen Durchgang,
->   wenn ein Anlass dafuer da ist.
+> · **Externe Messen** sind nicht gebaut und bekommen einen eigenen Durchgang —
+>   **das Modell steht seit Durchgang 9 ausgeschrieben in A16.8** (kanonische
+>   Messe ohne Mitglieds-Host, Teilnahmezeile je Aussteller, Standtermine als
+>   eigener beidseitiger Ablauf ohne Order), damit bis dahin nichts als
+>   Ersatzkonstruktion modelliert wird.
 
 > **Durchgang 8 ist gebaut (08.08.), fuenf einzeln committete Schritte, ein
 > Push.** Was Git nicht selbst sagt:
@@ -286,6 +285,79 @@ Funktionen aufrufen, `transferSize` vorher lesen (C7).
 > `BLStore.reset()` wieder entfernt), Host-Rechte und Gast-Antwort je Rolle,
 > Retail-Navigation, Discover-Karten samt Rahmenfarbe (kein geborgtes Show-Gold),
 > und WS-2604 unveraendert.
+
+> **Durchgang 9 ist gebaut (09.08.), sieben lokal committete Schritte, ein
+> Push.** Wine Guide → Events, die Bewerberansicht, die Host-Weinauswahl und
+> die ME-5-Korrektur. Was Git nicht selbst sagt:
+>
+> - **Die Spec ging voraus, und sie muss ins Projektwissen.** ME-5 ist ersetzt
+>   (bestaetigte Geschaeftsentscheidung, alte Fassung als **D42** in Anhang D):
+>   ein bestaetigter `winemaker`/`exhibitor` wird nach ausdruecklicher Annahme
+>   auf den oeffentlichen Flaechen eines VEROEFFENTLICHTEN Events genannt;
+>   Gaeste, Bewerber, offene Einladungen, Sponsoren und allgemeine Teilnehmer
+>   bleiben Kopfzahlen. Dazu ist das Modell **externer Messen** in A16.8
+>   ausgeschrieben — nur Text, kein Code, damit keine Ersatzkonstruktion
+>   entsteht (eine ProWein-Teilnahme wird NIE als Member Event modelliert).
+> - **Wines & Program: der Host entscheidet, aus dem eigenen Buch** —
+>   `eventAssortment(role)` liest je Rolle Katalogzeilen, Portfolio, Wine List
+>   oder Selection; gespeichert wird nur `{productId}`. Bewusst KEIN
+>   Show-Vorschlagsmodell. **ME-3101s sortimentsfremde Zeilen bleiben**: es
+>   sind die Weine des akzeptierten Gastwinzers, einmal vom Host benannt; ein
+>   Mechanismus dafuer ist bewusst nicht gebaut (Spekulationsverbot).
+> - **Die Nennung sitzt im Asset** (`eventNamedLineup()` neben der Karte):
+>   Status-Tor ist `eventListable()` — published/postponed/completed sind
+>   alles Host-Publikationen, ein Draft nennt niemanden, ein delisteter
+>   rendert keine Karte. Papier-Ton, kein Show-Gold, Disclaimer unveraendert.
+> - **Der Bewerberweg ist die Wiederverwendung, kein zweiter Ablauf:**
+>   Discover-Karte → „Open this event" (Dashboard-Append wie bei den Shows,
+>   damit die oeffentlichen Seiten keinen toten Link erben) → Apply im
+>   You-Kasten. Eine Zeile source `application`/status `applied`; der Host
+>   antwortet auf DERSELBEN Zeile; declined bleibt lesbar.
+>   `eventsIAppliedTo()` LISTET die eigene Bewerbung im Invitations-Tab,
+>   zaehlt sie aber nicht in „Waiting for You" — sie wartet auf den Host.
+> - **Der Guide laedt erstmals die Assets** (data + public-shows, gestempelt)
+>   und bekommt den sechsten Tab `#events`: EIN gemischt chronologisches
+>   Verzeichnis, `directoryEntries()`/`mountDirectory()` DELEGIEREN an die
+>   faktorierten Zellbauer (`showCellHtml`/`wireShowCells`/`eventCellHtml`) —
+>   kein kopiertes Kartenmarkup. Filter nur ueber echte Daten: Art (nur
+>   solange beide Sorten vorkommen) und Stadt (nur Staedte mit Eintraegen).
+>   Alle Alt-Hashes und `?grape=<name>#wines` gemessen unveraendert.
+>   Neuer Harness **`tests/wine-guide-page.js`** (der 26.).
+> - **Ein Fixture-Eingriff, begruendet:** ME-3102 traegt `public` — das
+>   bezahlte Endkunden-Dinner, dessen externer Buchungslink gerade NICHT auf
+>   die Mitgliedschaft zielt — und verliert die Deutschland-Einengung, die
+>   der eigenen `city`-Notiz („narrows to nothing") widersprach und mit der
+>   `public` kein Leser je passiert haette (eine Einengung laesst jeden ohne
+>   bekannten Ort durchfallen, den Anonymen zuerst).
+> - **`VERSION` 6 → 7, und die Messung korrigierte die Vorhersage:** der
+>   Fingerprint bewegte sich DOCH (die Union faltet GANZE Zeilen-Shapes,
+>   `memberEvents` 2de22954 → 39a547a0, als einzige von 26). Der Bump steht
+>   trotzdem — der `public`-String selbst ist unsichtbar, und ein Schutz, der
+>   an einer zufaelligen Feldkombination haengt, ist keiner. Begruendung am
+>   `VERSION` in `assets/bottle-lobby-store.js`.
+> - **Browser-Abnahme mit derselben genannten Einschraenkung wie Durchgang 8:**
+>   Screenshots scheitern am Injection-Timeout (auch auf der 77-KB-Guide-
+>   Seite, zweimal, dann nicht weiter versucht). Abgenommen ueber gerenderten
+>   DOM, berechnete Darstellung und echte Klicks, `transferSize` vorher
+>   gelesen: Host-Weinauswahl mit Gegenprobe (PRD-1002 nie im Picker) ·
+>   publish → invite → Annahme aus der Winery-Ansicht mit Vorher/Nachher der
+>   Nennung · ME-3103-Karte nennt Akzeptierte und weder den offen
+>   Eingeladenen noch Gaeste · voller Bewerbungsweg samt Decline-Lesbarkeit ·
+>   Guide `#events` anonym (Reach, Mischsortierung, Filter, beide
+>   Kartensorten, Join-Hinweis, Papier-Rahmen statt Gold) ·
+>   `?grape=Chardonnay#wines` unveraendert · WS-2604 unveraendert ·
+>   Durchgang-8-Gastantwort auf ME-3105 unveraendert. Danach `BLStore.reset()`.
+>   Ein Kuriosum dieser Umgebung: das JavaScript-Tool blockte einmal die
+>   AUSGABE eines Schritts (DLP-Filter), der Schritt selbst war gelaufen —
+>   nachgeprueft ueber den Datenzustand, bevor weitergemacht wurde.
+>
+> **Was Durchgang 9 bewusst NICHT gebaut hat:** Kampagnen und **ME-4** (→ 10) ·
+> externe Messen (eigener Durchgang; das Modell steht jetzt in A16.8) ·
+> oeffentliche Member-Event-Detailseiten (benannt offen; die Karte ist die
+> ganze oeffentliche Flaeche) · eine Automatik fuer Gastwinzer-Weine
+> ausserhalb des Host-Sortiments (Spekulationsverbot, ME-3101 bleibt der
+> dokumentierte Fall) · ein Ruecknahmeweg fuer Bewerbungen (nicht beauftragt,
+> nicht erfunden).
 
 ---
 
