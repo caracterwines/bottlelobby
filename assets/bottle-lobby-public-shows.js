@@ -128,7 +128,11 @@ function showParties(show) {
    could never have admitted them anyway. Absent book, empty book. */
 const REACH_BOOKS = {
   partnerships: function () { return []; },
-  follows:      function () { return []; }
+  follows:      function () { return []; },
+  /* Where a house sits, for the geographic narrowing member events add
+     on top of the levels (A16.8). See eventNarrowsOut(): an absent book
+     answers null, and null fails a narrowing rather than passing it. */
+  viewerCity:   function () { return null; }
 };
 function registerReachBooks(map) {
   Object.keys(map).forEach(function (k) {
@@ -160,8 +164,16 @@ function hostCommunity(host) {
    multi-select and not a ladder — so this is an `.some()` over the
    selected values and can never be anything else. An unknown value
    permits nothing rather than everything: the safe direction for a
-   level this code has not been taught yet. */
-function reachAdmits(show, level, viewer) {
+   level this code has not been taught yet.
+
+   IT TAKES A HOST, NOT A SHOW, and that is the whole of what member
+   events needed from this function (A16.14b: the taxonomy is
+   referenced, never redefined). It only ever read `show.leadHost`, so
+   widening the parameter is a rename rather than a generalisation —
+   and it is what stops a second admission arithmetic from being
+   written for the second event kind. One taxonomy, one reader, two
+   kinds of record asking it. */
+function reachAdmits(host, level, viewer) {
   switch (level) {
     case 'public':       return true;
     case 'members':      return !!viewer.role;
@@ -170,9 +182,9 @@ function reachAdmits(show, level, viewer) {
     case 'restaurants':
     case 'retail':       return REACH_ROLE_VALUE[viewer.role] === level;
     case 'partners':     return !!viewer.entity &&
-                                hostPartners(show.leadHost).indexOf(viewer.entity) !== -1;
+                                hostPartners(host).indexOf(viewer.entity) !== -1;
     case 'community':    return !!viewer.entity &&
-                                hostCommunity(show.leadHost).indexOf(viewer.entity) !== -1;
+                                hostCommunity(host).indexOf(viewer.entity) !== -1;
     default:             return false;
   }
 }
@@ -206,7 +218,134 @@ function showVisibleTo(show, viewer) {
   if (!showListable(show)) return false;
   if (viewer.entity && showParties(show).indexOf(viewer.entity) !== -1) return true;
   if (publicLevelFor(show) === 'full') return true;
-  return showReach(show).some(function (l) { return reachAdmits(show, l, viewer); });
+  return showReach(show).some(function (l) { return reachAdmits(show.leadHost, l, viewer); });
+}
+
+/* ══ MEMBER EVENTS — THE SECOND KIND (A16.8) ═════════════════════ */
+/* THE SISTER OF showVisibleTo(), AND IT IS A SISTER RATHER THAN A
+   GENERALISATION FOR ONE REASON, WHICH IS THE THIRD GATE.
+
+   What the two kinds SHARE is everything below the gates: the reach
+   taxonomy (REACH_LEVELS), the role map, the books, and reachAdmits()
+   itself. A16.14b says the levels are defined once and referenced;
+   nothing here defines a level, adds one, or reads a second list.
+
+   What they do NOT share is the order and the meaning of the gates:
+
+     1. LISTABLE. A show's listable stages are `planning` and
+        `published`, because `planning` is where recruiting happens.
+        An event has no recruiting stage — `draft` is the host still
+        writing, and it is on no directory at all.
+     2. THE PARTIES. A show's are host, confirmed exhibitors, confirmed
+        attendees and an accepted venue. An event's are its host and
+        whoever is actually on it. Same rule (WS-2's: you cannot be
+        locked out of your own event), different membership.
+     3. AND THIS ONE IS INVERTED. WS-3 makes reach fall away from
+        `published`, because a RELEASED SHOW STANDS ON THE OPEN
+        WEBSITE — Bottle Lobby put it there, and filtering a public URL
+        for members is a promise the URL cannot keep.
+
+        A member event's `published` is not that act. The host
+        published it himself; nobody released anything and no
+        guarantee was given (A16.8, ME-3). So the stored reach GOES ON
+        DECIDING after publication, and an event that named only its
+        partners stays unfindable by everybody else for good. Folding
+        this into showVisibleTo() with a `kind` flag would put the two
+        opposite answers inside one branch, and the branch would be
+        read as an accident within a week.
+
+   `invited-only` is not a ninth reach value: it is `reach:[]`, which
+   admits nobody, while the houses actually asked reach the event
+   through gate 2. A level that means "nobody except" would be a
+   private level, and A16.14b forbids adding one. */
+const EVENT_UPCOMING_STATUS = ['published', 'postponed'];
+const EVENT_PAST_STATUS     = ['completed'];
+
+/* Delisting is a MODERATION act (A16.8). It takes the event off every
+   directory surface and it writes nothing into `reviews` — that
+   register carries release semantics, and a moderation decision
+   wearing a release row would be the very confusion ME-3 exists to
+   prevent. The record keeps its own `moderation` field and its own log
+   line, and reads as what it is. */
+function eventListable(ev) {
+  if (ev.moderation && ev.moderation.status === 'delisted') return false;
+  return EVENT_UPCOMING_STATUS.indexOf(ev.status) !== -1 ||
+         EVENT_PAST_STATUS.indexOf(ev.status) !== -1;
+}
+
+/* Whose event it is. `sent` and `viewed` are deliberately NOT here: a
+   house that has merely been asked has not joined anything, and it
+   reaches the invitation through its own relation rather than through
+   the directory. Membership only — nothing here is ever rendered. */
+const EVENT_ON_IT = ['accepted', 'confirmed', 'attended'];
+function eventParties(ev) {
+  const out = [ev.host];
+  (ev.participants || []).forEach(function (p) {
+    if (EVENT_ON_IT.indexOf(p.status) !== -1) out.push(p.stakeholder);
+  });
+  return out;
+}
+
+/* Geographic narrowing (A16.8), and it NARROWS — it never widens. A
+   level that did not admit this viewer is not rescued by them being in
+   the right city.
+
+   The viewer's city comes from a registered book for the same JS
+   reason the partnership book exists: `stakeholders` is a top-level
+   `let` in the dashboard and not a property of `window`. A public page
+   registers nothing, so an absent book answers `undefined` — and an
+   unknown city fails a narrowing rather than passing it. That is the
+   protective direction and it is also the honest one: `stakeholders`
+   records `city` only where it is actually known, so "no city" is a
+   real state of the data, not a lookup failure to route around. */
+function eventNarrowsOut(ev, viewer) {
+  if (!ev.reachCity && !ev.reachRegion && !ev.reachCountry) return false;
+  const here = viewer.entity ? REACH_BOOKS.viewerCity(viewer.entity) : null;
+  if (ev.reachCity)   return !here || here.city    !== ev.reachCity;
+  if (ev.reachRegion) return !here || here.region  !== ev.reachRegion;
+  return !here || here.country !== ev.reachCountry;
+}
+
+function eventReach(ev) {
+  if (!Array.isArray(ev.reach)) return [];
+  const seen = {}, out = [];
+  ev.reach.forEach(function (v) { if (!seen[v]) { seen[v] = 1; out.push(v); } });
+  return out;
+}
+
+function eventVisibleTo(ev, viewer) {
+  viewer = viewer || SHOW_ANON;
+  if (!eventListable(ev)) return false;
+  if (viewer.entity && eventParties(ev).indexOf(viewer.entity) !== -1) return true;
+  if (eventNarrowsOut(ev, viewer)) return false;
+  return eventReach(ev).some(function (l) { return reachAdmits(ev.host, l, viewer); });
+}
+
+/* Upcoming soonest first, past most recent first — publicShows()' own
+   shape, over the second collection. Nothing else is shared: the two
+   lists stay two lists and are only ever joined by a caller that wants
+   a directory, which is what "the directory is derived" means (ME-1). */
+function visibleEvents(all, past, viewer) {
+  const statuses = past ? EVENT_PAST_STATUS : EVENT_UPCOMING_STATUS;
+  return (all || []).filter(function (e) {
+    return statuses.indexOf(e.status) !== -1 && eventVisibleTo(e, viewer);
+  }).sort(function (a, b) {
+    return past ? blDateValue(b.date) - blDateValue(a.date)
+                : blDateValue(a.date) - blDateValue(b.date);
+  });
+}
+
+/* A place at a member event, computed and never stored — the same
+   arithmetic as a Wine Show's, over `requestedAt` against `capacity`
+   (A16.10, D28). Only a CONFIRMED guest consumes a place, or a host
+   could fill his own room by inviting sixty people who never replied. */
+function eventTakenPlaces(ev) {
+  return (ev.participants || []).filter(function (p) {
+    return p.role === 'guest' && p.status === 'confirmed';
+  }).length;
+}
+function eventFreePlaces(ev) {
+  return Math.max(0, (ev.capacity || 0) - eventTakenPlaces(ev));
 }
 
 /* ONE date formatter, and it lives here because this is the file every
@@ -241,9 +380,15 @@ function blDate(v) {
    list. Widening the reader BEFORE the data moves is the whole point;
    the other order leaves the sort broken in between, and broken
    without a symptom. */
-function showDateValue(show) {
+/* THE COMPARATOR TAKES THE DATE, and the two record kinds each pass
+   their own field in. Member events sort by exactly this arithmetic
+   (A16.14d sorts one derived directory by date), and a second parser
+   for the second kind would be the fourth copy of blDate()'s own
+   lesson — a sort that disagrees with itself across two card sorts in
+   one list is worse than one that is simply wrong. */
+function blDateValue(raw) {
   const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const raw = show.date || '';
+  raw = raw || '';
   const iso = /^(\d{4})-(\d{2})-(\d{2})$/.exec(raw);
   if (iso) return Number(iso[1]) * 10000 + Number(iso[2]) * 100 + Number(iso[3]);
   const m = /^(\d{1,2})\s+([A-Za-z]{3})\s+(\d{4})$/.exec(raw);
@@ -252,6 +397,7 @@ function showDateValue(show) {
   if (mi === -1) return Number.MAX_SAFE_INTEGER;
   return Number(m[3]) * 10000 + (mi + 1) * 100 + Number(m[1]);
 }
+function showDateValue(show) { return blDateValue(show.date); }
 /* Upcoming soonest first; past most recent first — and only what this
    viewer may find at all (A16.14b). `viewer` defaults to the anonymous
    one, so the public Wine Shows page and the fifteen public profiles
@@ -489,5 +635,84 @@ function mountShowCards(host, list, entity, viewer) {
       btn.querySelector('.ws-teaser-more').textContent = open ? 'Close ↑' : 'Full listing →';
     });
   });
+  return list.length;
+}
+
+/* ══ THE MEMBER-EVENT CARD (A16.14d, ME-3) ═══════════════════════ */
+/* "Cards are reused, never copied. Wine Shows keep their card; member
+   events get a MATCHING one that must not assert the Bottle Lobby
+   guarantee." Matching, not identical — and the difference is the
+   point of the whole section: a reviewed, platform-released show and a
+   self-published event may sit in one list and MAY NOT MAKE THE SAME
+   PROMISE (A16.8).
+
+   So this is a second card sort with its own marker and its own
+   markup, deliberately not the show teaser with different words in it.
+   The guarantee a Wine Show sells is what a member event borrowing its
+   look would spend, and a look is borrowed by reusing a class long
+   before anybody rewrites a sentence.
+
+   THE MARKERS BELOW ARE THE MEASUREMENT. They are the phrases and the
+   classes by which the show card asserts the platform's promise, named
+   here rather than typed into a harness, so the rule is checked
+   against what the show card ACTUALLY says (C7: a contract test over
+   vocabulary). Add a guarantee phrase to publicShowCard() and add it
+   here in the same breath — tests/member-events.js asserts the event
+   card carries none of them. */
+const SHOW_GUARANTEE_MARKERS = [
+  'Bottle&nbsp;Lobby releases the show',
+  'Exhibitors, wines and venue confirmed.'
+];
+const SHOW_CARD_CLASSES = ['ws-teaser', 'ws-public', 'ws-listing'];
+
+/* THE NON-RELEASE WORDING, from the A16.8 box, in one place because it
+   appears in two: on the card here, and at the publish act in the host
+   cockpit. A host reads it before he publishes and a reader reads it
+   on the result — the same sentence, or the two drift and one of them
+   becomes the reassuring version. */
+const MEMBER_EVENT_DISCLAIMER =
+  'A member event, published by its host. Bottle Lobby neither reviews nor releases it ' +
+  'and gives no guarantee for it — that is what a Wine Show is and this is not.';
+
+function memberEventCard(ev) {
+  const free = eventFreePlaces(ev);
+  const note = ev.applicationsOpen
+    ? (ev.applicationDeadline
+        ? 'Open for applications until ' + blDate(ev.applicationDeadline)
+        : 'Open for applications')
+    : (ev.registrationMode === 'rsvp'
+        ? free + ' place(s) left of ' + (ev.capacity || 0)
+        : 'By invitation');
+  const paid = ev.isPaid && ev.priceNote
+    ? '<div class="me-card-paid">' + ev.priceNote + '</div>' : '';
+
+  return '<div class="me-card">' +
+    '<img class="me-card-hero" src="' + (ev.heroImage || SHOW_HERO_FALLBACK) + '" alt="' + ev.title + '">' +
+    '<div class="me-card-body">' +
+      /* THE MARKER. It leads, before the date and the title, because a
+         reader scanning a mixed directory decides what kind of thing
+         he is looking at first and reads the rest second. */
+      '<div class="me-card-kind"><span class="me-kind-dot"></span>Member Event</div>' +
+      '<div class="me-card-date">' + blDate(ev.date) + (ev.city ? ' · ' + ev.city : '') + '</div>' +
+      '<div class="me-card-title">' + ev.title + '</div>' +
+      '<div class="me-card-host">Hosted by ' + ev.host + '</div>' +
+      '<div class="me-card-note">' + note + '</div>' +
+      paid +
+      '<div class="me-card-disclaim">' + MEMBER_EVENT_DISCLAIMER + '</div>' +
+    '</div>' +
+  '</div>';
+}
+
+/* Cards into a container, the mountShowCards() shape for the second
+   kind. No fold-out listing: everything a member event grants a reader
+   is on the card, because there is no anonymisation to unfold — that
+   mechanism protects an invited producer at a show under review, and
+   an event under review does not exist. Returns how many were
+   rendered. */
+function mountEventCards(host, list) {
+  if (!host) return 0;
+  host.innerHTML = list.map(function (ev) {
+    return '<div class="me-cell" data-event-id="' + ev.id + '">' + memberEventCard(ev) + '</div>';
+  }).join('');
   return list.length;
 }

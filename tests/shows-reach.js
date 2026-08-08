@@ -341,7 +341,7 @@ console.log('\n── WS-3 (b): from published, no reach gates the public route'
     p.showVisibleTo = function (show, viewer) {
       viewer = viewer || p.eval('SHOW_ANON');
       if (!p.showListable(show)) return false;
-      return p.showReach(show).some(l => p.reachAdmits(show, l, viewer));   /* the WS-3 branch removed */
+      return p.showReach(show).some(l => p.reachAdmits(show.leadHost, l, viewer));   /* the WS-3 branch removed */
     };
     const before = s.reach;
     s.reach = ['wineries'];

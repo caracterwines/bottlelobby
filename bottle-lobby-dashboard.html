@@ -1105,7 +1105,7 @@ body {
 </style>
 <!-- The classes the shared public renderer emits. Defined once, loaded
      by every surface that renders a show (A16.7). -->
-<link rel="stylesheet" href="assets/bottle-lobby-public-shows.css?v=a20c3eec">
+<link rel="stylesheet" href="assets/bottle-lobby-public-shows.css?v=9fc4e464">
 </head>
 <body>
 
@@ -3996,8 +3996,8 @@ With an annual production capacity of over 1.2 million bottles, Cantina Rossi is
      also switches persistence off for every harness. See tests/README.
 -->
 <script src="assets/bottle-lobby-store.js?v=26125d6d"></script>
-<script src="assets/bottle-lobby-data.js?v=b2d18201"></script>
-<script src="assets/bottle-lobby-public-shows.js?v=11643e57"></script>
+<script src="assets/bottle-lobby-data.js?v=808628ea"></script>
+<script src="assets/bottle-lobby-public-shows.js?v=fb934a45"></script>
 
 <script>
 
@@ -10886,7 +10886,24 @@ const SHOW_PAST_STAGES = ['completed','cancelled'];
    it restores a snapshot and a captured array would be yesterday's. */
 registerReachBooks({
   partnerships: function () { return partnerships; },
-  follows:      function () { return wineFollowGraph; }
+  follows:      function () { return wineFollowGraph; },
+  /* Where a house sits, for the geographic narrowing member events add
+     on top of the reach levels (A16.8). It resolves through
+     stakeholder(), which is the master record and the only place a
+     house's city is kept (A1) — never a second table of towns.
+
+     `country` is derived from `region`'s display line ("Munich,
+     Germany"), because that is where the fact actually is; inventing a
+     `country` column to hold the same word twice is the copy invariant
+     1 forbids. An unknown city comes back undefined and FAILS a
+     narrowing, which is the protective direction. */
+  viewerCity:   function (name) {
+    const s = stakeholder(name);
+    if (!s || s.unknown) return null;
+    const parts = (s.region || '').split(',');
+    return { city:s.city, region:s.region,
+             country:(parts.length > 1 ? parts[parts.length - 1] : '').trim() || null };
+  }
 });
 
 /* The reader, as the class-1 surfaces have to declare them. A logged-in
@@ -15060,6 +15077,15 @@ BLStore.register({
   /* Wine Shows, with their exhibitors, guests, products, interests,
      venue and event log (A16). Lives in assets/bottle-lobby-data.js. */
   wineShows:              [function () { return wineShows; },              function (v) { wineShows = v; }],
+
+  /* Member events — the SECOND kind, its own collection, never folded
+     into `wineShows` (ME-1). It is registered as its own entry for
+     that reason and not only for persistence: `restore()` walks the
+     registered names and discards the whole snapshot when one of them
+     is missing, so adding this collection invalidates every snapshot
+     written before it existed, by itself and without a VERSION bump
+     (C8). */
+  memberEvents:           [function () { return memberEvents; },           function (v) { memberEvents = v; }],
 
   /* Orders — one record, both perspectives (invariant 8). The two
      counters have to travel with them: without them a reload would

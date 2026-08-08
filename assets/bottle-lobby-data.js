@@ -759,3 +759,252 @@ let wineShows = [
       { at:'2026-03-01', actor:'Bottle Lobby', text:'Released — full details are now public', scope:'show' },
       { at:'2026-04-13', actor:'Bottle Lobby', text:'Show completed', scope:'show' } ] }
 ];
+
+/* ══════════════════════════════════════════════════════════════════
+   MEMBER EVENTS (A16.8, A16.9 `events`)
+   ------------------------------------------------------------------
+   THE SECOND KIND, AND IT IS A SEPARATE RECORD. `wineShows` and
+   `memberEvents` are two truths of two different kinds; the directory
+   that shows them together is DERIVED and holds neither (ME-1). No
+   show is copied in here, no event is copied into `wineShows`, and no
+   surface keeps a third copy of either.
+
+   WHAT SEPARATES THEM IS THE PROMISE, NOT THE SIZE. A Wine Show is a
+   Bottle Lobby format: pipeline, contracts, cost release, a stored
+   `reviews` row and the platform's guarantee (A16.1). A member event
+   is created by a member and PUBLISHED BY THAT MEMBER — no gate, no
+   Final Review, no release row, and therefore no guarantee marker
+   anywhere on it (ME-3). Bottle Lobby may delist one on moderation
+   grounds; that is a moderation act and must never look like a
+   release.
+
+   ONE MODEL FOR ALL FOUR ROLES. `host` + `hostRole` is the only thing
+   that differs between a distributor's house fair and a restaurant's
+   winemaker dinner. There is no per-role event model, and building
+   four would be D21 before the fact rather than after.
+
+   Field names follow A16.9's `events` table; the nesting stands in for
+   the join tables — `participants` for event_participants (which
+   EXTENDS event_invitations, see below), `products` for event_products,
+   `log` for the append-only history.
+
+   PARTICIPANTS: ONE TABLE, FIVE FACTS. A16.9 is explicit that
+   `event_participants` extends `event_invitations` rather than standing
+   beside it — two tables holding the same pair with two status chains
+   would be D32 one level down. So an invitation is not a second row: it
+   is the ORIGIN of a participant row, recorded as `source:'invitation'`
+   with `status:'sent'`. The five facts A16.8 names read off one row:
+
+     invitation   source:'invitation', status 'sent' → 'viewed'
+     application  source:'application', status 'applied'
+     acceptance   status:'accepted'      (as a participant, in a role)
+     RSVP         status:'confirmed'     (as a guest, holding a place)
+     attendance   status:'attended' | 'no_show'
+
+   `waitlisted` IS NOT A STORED VALUE, exactly as for a Wine Show
+   (D28, A16.10): a place is computed from `requestedAt` against
+   `capacity`. Array order is request order, as it is for attendees.
+
+   WINES ARE `productId` REFERENCES AND NOTHING ELSE (ME-6, invariant
+   2, A15.2a). A typed wine name here would be a copy of somebody
+   else's product record, and tests/member-events.js fails on one.
+
+   REACH is the taxonomy of A16.14b BY REFERENCE — the same eight
+   values the shows use, read by the same admission arithmetic in
+   bottle-lobby-public-shows.js. There is no event-only level and no
+   private one. `invited-only` is not a ninth value: it is `reach:[]`,
+   which admits nobody, while the people actually asked reach the event
+   through their own participant row.
+
+   `reachCity` / `reachRegion` / `reachCountry` narrow within a level;
+   they never widen one.
+
+   `city` IS NOT `reachCity` AND IS NOT A VENUE. A16.9 gives `events` a
+   free-text `location` and A16.8 forbids formalising the venue on
+   speculation — neither of which says what city the evening is in, and
+   A16.14d filters the directory by city in as many words. So the
+   record carries the one string that answers it. Where the event
+   happens and whom the host wants to reach are two facts: ME-3102 is
+   in Frankfurt and narrows to nothing, ME-3101 is in Munich and
+   narrows to Munich, and only the second pair happens to agree.
+
+   DATES. Today is 8 Aug 2026 (C7). The two published events sit in the
+   coming autumn, the draft in the following spring — a draft that a
+   host is still writing is naturally further out than the two he has
+   already announced. The `log` rows are bounded by them.
+══════════════════════════════════════════════════════════════════ */
+let memberEvents = [
+  /* A16.8's own first example: "a retailer's vintage presentation with
+     the winemaker present". Weinhaus Müller hosts, Cantina Rossi comes
+     as the winemaker — and Weinhaus Müller follows Cantina Rossi in
+     `wineFollowGraph` (03.05.2026), so the relation the invitation
+     rests on already exists in the data rather than being asserted
+     here for the first time.
+
+     REACH is `partners` + `community`: an in-store evening is for the
+     houses this retailer actually trades with and the ones that follow
+     him. Narrowed to Munich, which is Weinhaus Müller's own city — the
+     narrowing is honest here because an in-store evening genuinely
+     cannot be attended from Copenhagen. */
+  { id:'ME-3101', title:'Sicilia — Vintage Presentation with the Winemaker',
+    host:'Weinhaus Müller', hostRole:'retail',
+    category:'seasonal presentation',
+    date:'2026-11-14', time:'18:30', city:'Munich',
+    description:'Four Sicilian vintages poured and talked through by the producer, in the shop after hours. ' +
+                'Trade guests and regular customers of the house.',
+    location:'Weinhaus Müller, Sendlinger Str. 22, 80331 Munich',
+    locationEntity:'Weinhaus Müller',
+    heroImage:'images/duesseldorf-pouring.jpg',
+    status:'published',
+    capacity:35,
+    reach:['partners','community'],
+    reachCountry:'Germany', reachRegion:null, reachCity:'Munich',
+    registrationMode:'rsvp',
+    applicationsOpen:false, applicationDeadline:null,
+    isPaid:false, priceNote:null, externalLink:null,
+    moderation:null,
+    /* Cantina Rossi's own range, by key. The host names which of the
+       producer's wines are poured; he never describes them. */
+    products:[ { productId:'PRD-1022' }, { productId:'PRD-1003' },
+               { productId:'PRD-1001' }, { productId:'PRD-1004' } ],
+    participants:[
+      { stakeholder:'Weinhaus Müller', role:'host',      source:'own',        status:'confirmed', requestedAt:'2026-08-03' },
+      /* The winemaker: invited, and he accepted. `accepted` is being ON
+         the event in a role; `confirmed` below is holding a place as a
+         guest. A16.8 keeps them apart on purpose. */
+      { stakeholder:'Cantina Rossi',   role:'winemaker', source:'invitation', status:'accepted',  requestedAt:'2026-08-04' },
+      { stakeholder:'Hawesko GmbH',    role:'guest',     source:'invitation', status:'confirmed', requestedAt:'2026-08-05' },
+      /* Asked, has opened it, has not answered. The state that exists
+         so the host can see the difference between silence and a no. */
+      { stakeholder:'Bistro Laurent',  role:'guest',     source:'invitation', status:'viewed',    requestedAt:'2026-08-05' }
+    ],
+    log:[
+      { at:'2026-08-03', actor:'Weinhaus Müller', text:'Event created as a draft' },
+      { at:'2026-08-04', actor:'Weinhaus Müller', text:'Invitation sent to Cantina Rossi as winemaker' },
+      { at:'2026-08-04', actor:'Cantina Rossi',   text:'Accepted as winemaker' },
+      { at:'2026-08-05', actor:'Weinhaus Müller', text:'Published to partners and community, Munich', scope:'event' },
+      { at:'2026-08-06', actor:'Hawesko GmbH',    text:'RSVP — attending as a guest' } ] },
+
+  /* A16.8's second example: a restaurant's winemaker dinner. Bistro
+     Laurent hosts, Henri Dubois Domaine pours — and Hawesko carries
+     Henri Dubois (partnership 17.02.2026), so the wines on the table
+     are ones this room can actually order afterwards (invariant 3).
+     That is provenance, not an order: ME-2 says the evening creates
+     none.
+
+     APPLICATIONS ARE OPEN, which is the other shape A16.8 names — "a
+     restaurant's Rioja evening where wineries apply as participants".
+     Château Belrieu has applied and is waiting; the application is a
+     task on the host's side and nothing else has happened because of
+     it (ME-2). */
+  { id:'ME-3102', title:'Winemaker Dinner — Loire, Five Courses',
+    host:'Bistro Laurent', hostRole:'restaurant',
+    category:'winemaker dinner',
+    date:'2026-10-09', time:'19:00', city:'Frankfurt',
+    description:'Five courses against five Loire bottles, with the producer at the table. ' +
+                'A second producer may still join — applications are open until the end of September.',
+    location:'Bistro Laurent, Bockenheimer Landstr. 12, 60323 Frankfurt am Main',
+    locationEntity:'Bistro Laurent',
+    heroImage:'images/hamburg-tasting-room.jpg',
+    status:'published',
+    capacity:24,
+    reach:['members','wineries'],
+    reachCountry:'Germany', reachRegion:null, reachCity:null,
+    registrationMode:'application',
+    applicationsOpen:true, applicationDeadline:'2026-09-30',
+    /* A16.8's paid end-customer case, and deliberately the whole of it:
+       a flag, a price note and an off-platform link. No checkout, no
+       consumer account, no ticket record anywhere (ME-7). */
+    isPaid:true, priceNote:'€ 95 per guest, wines included — booked with the restaurant directly',
+    externalLink:'https://bistro-laurent.example/winemaker-dinner',
+    moderation:null,
+    products:[ { productId:'PRD-1015' }, { productId:'PRD-1014' }, { productId:'PRD-1020' } ],
+    participants:[
+      { stakeholder:'Bistro Laurent',        role:'host',        source:'own',         status:'confirmed', requestedAt:'2026-07-20' },
+      { stakeholder:'Henri Dubois Domaine',  role:'winemaker',   source:'invitation',  status:'accepted',  requestedAt:'2026-07-22' },
+      { stakeholder:'Hawesko GmbH',          role:'sponsor',     source:'invitation',  status:'accepted',  requestedAt:'2026-07-24' },
+      /* APPLIED, and it stops there. No participant role is granted, no
+         place is held, no order exists — the row says "asked to be let
+         in" and the host has not answered (ME-2). */
+      { stakeholder:'Château Belrieu',       role:'participant', source:'application', status:'applied',   requestedAt:'2026-08-01' },
+      { stakeholder:'Vinstuen København',    role:'guest',       source:'invitation',  status:'declined',  requestedAt:'2026-07-25' }
+    ],
+    log:[
+      { at:'2026-07-20', actor:'Bistro Laurent',       text:'Event created as a draft' },
+      { at:'2026-07-22', actor:'Bistro Laurent',       text:'Invitation sent to Henri Dubois Domaine as winemaker' },
+      { at:'2026-07-23', actor:'Henri Dubois Domaine', text:'Accepted as winemaker' },
+      { at:'2026-07-26', actor:'Bistro Laurent',       text:'Published to members and wineries, Germany', scope:'event' },
+      { at:'2026-07-26', actor:'Bistro Laurent',       text:'Opened for applications until 30 Sep 2026' },
+      { at:'2026-08-01', actor:'Château Belrieu',      text:'Applied to take part' } ] },
+
+  /* THE DISTRIBUTOR'S OWN TWO, because the first full cockpit is built
+     on his dashboard (A16.8, D21) and a cockpit with nothing in two of
+     its three lists demonstrates nothing.
+
+     Published: the house fair from A16.8's distributor row. Reach is
+     `partners` + `restaurants` + `retail` — his own trade, plus the two
+     buying roles he wants in the room. No `public`: a trade fair for
+     one distributor's customers is not a public announcement. */
+  { id:'ME-3103', title:'Hanseatic House Fair — Autumn Portfolio',
+    host:'Hawesko GmbH', hostRole:'distributor',
+    category:'house fair',
+    date:'2026-09-24', time:'11:00', city:'Hamburg',
+    description:'The full autumn portfolio open all day, producers present at their own tables. ' +
+                'For customers of the house and the restaurants and retailers we work with.',
+    location:'Speicherstadt Kesselhaus, Am Sandtorkai 30, 20457 Hamburg',
+    locationEntity:null,
+    heroImage:'images/hamburg-glasses.jpg',
+    status:'published',
+    capacity:120,
+    reach:['partners','restaurants','retail'],
+    reachCountry:'Germany', reachRegion:null, reachCity:null,
+    registrationMode:'rsvp',
+    applicationsOpen:false, applicationDeadline:null,
+    isPaid:false, priceNote:null, externalLink:null,
+    moderation:null,
+    products:[ { productId:'PRD-1022' }, { productId:'PRD-1013' },
+               { productId:'PRD-1020' }, { productId:'PRD-1024' } ],
+    participants:[
+      { stakeholder:'Hawesko GmbH',         role:'host',        source:'own',        status:'confirmed', requestedAt:'2026-06-15' },
+      { stakeholder:'Cantina Rossi',        role:'exhibitor',   source:'invitation', status:'accepted',  requestedAt:'2026-06-18' },
+      { stakeholder:'Domaine Lefèvre',      role:'exhibitor',   source:'invitation', status:'accepted',  requestedAt:'2026-06-18' },
+      { stakeholder:'Henri Dubois Domaine', role:'exhibitor',   source:'invitation', status:'sent',      requestedAt:'2026-06-18' },
+      { stakeholder:'Bistro Laurent',       role:'guest',       source:'invitation', status:'confirmed', requestedAt:'2026-06-22' },
+      { stakeholder:'Weinhaus Müller',      role:'guest',       source:'invitation', status:'confirmed', requestedAt:'2026-06-23' },
+      { stakeholder:'Osteria Marconi',      role:'guest',       source:'invitation', status:'viewed',    requestedAt:'2026-06-23' }
+    ],
+    log:[
+      { at:'2026-06-15', actor:'Hawesko GmbH',    text:'Event created as a draft' },
+      { at:'2026-06-18', actor:'Hawesko GmbH',    text:'Invitations sent to three producers as exhibitors' },
+      { at:'2026-06-19', actor:'Cantina Rossi',   text:'Accepted as exhibitor' },
+      { at:'2026-06-19', actor:'Domaine Lefèvre', text:'Accepted as exhibitor' },
+      { at:'2026-06-25', actor:'Hawesko GmbH',    text:'Published to partners, restaurants and retail', scope:'event' } ] },
+
+  /* THE DRAFT, and the cockpit needs one: `draft` is on no directory at
+     all, so this is the row that proves the Discover list is filtered
+     by status rather than merely sorted by it. Its reach is already
+     chosen — a host picks the audience while writing, and publishing is
+     what makes the choice bite. */
+  { id:'ME-3104', title:'Own Label Presentation — Spring Lines',
+    host:'Hawesko GmbH', hostRole:'distributor',
+    category:'own-label presentation',
+    date:'2027-03-11', time:'17:00', city:'Tornesch',
+    description:'First pour of the spring own-label lines for the restaurants and retailers carrying them.',
+    location:'Hawesko GmbH, Tornesch',
+    locationEntity:'Hawesko GmbH',
+    heroImage:'images/duesseldorf-tasting-wide.jpg',
+    status:'draft',
+    capacity:40,
+    reach:['partners'],
+    reachCountry:'Germany', reachRegion:null, reachCity:null,
+    registrationMode:'rsvp',
+    applicationsOpen:false, applicationDeadline:null,
+    isPaid:false, priceNote:null, externalLink:null,
+    moderation:null,
+    products:[],
+    participants:[
+      { stakeholder:'Hawesko GmbH', role:'host', source:'own', status:'confirmed', requestedAt:'2026-08-07' }
+    ],
+    log:[
+      { at:'2026-08-07', actor:'Hawesko GmbH', text:'Event created as a draft' } ] }
+];
