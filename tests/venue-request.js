@@ -46,13 +46,24 @@ const boxWithHead = (pre, h) => [...d.querySelectorAll('#' + pre + '-detail-pane
   .find(b => b.querySelector('.odt-box-head').textContent.includes(h));
 
 /* ── 1. the demo data exercises every state of the relation ────── */
-console.log('── fixtures cover all three states');
+console.log('── fixtures cover the states a shipped show can be in');
 {
   const seen = new Set(w.eval('wineShows').map(s => s.venueStatus));
-  ['requested','quoted','accepted','not_required'].forEach(st => {
+  ['requested','accepted','not_required'].forEach(st => {
     if (!seen.has(st)) bad('no show in the demo data is venueStatus=' + st + ' — that branch is untested');
     else ok('a fixture exists for ' + st);
   });
+  /* `quoted` DELIBERATELY DOES NOT SHIP, and that is a consequence of
+     D38 rather than a gap. A quote nobody answered is a transient state
+     between two acts: the publish precondition is the host's binding
+     ACCEPTANCE (A16.11 step 6), so a shipped `quoted` show under Final
+     Review would be a state the platform cannot produce, and one in
+     `planning` would be a fixture frozen mid-handshake for no reason.
+     The branch is exercised by being DRIVEN, twice, further down this
+     file — which is a stronger statement than a fixture sitting in it,
+     because it proves the state is reachable and answerable. */
+  if (seen.has('quoted')) bad('a show ships at venueStatus=quoted — a quote is an unanswered act, not a resting state');
+  else ok('no show ships mid-handshake at quoted — the state is reached by driving it, below');
 }
 
 /* ── 2. the venue roles have a working sub-view ────────────────── */
@@ -363,22 +374,36 @@ w.showWineShows('retail','current');
 ═══════════════════════════════════════════════════════════════════ */
 console.log('\n── A16.11 step 6: the host accepts, and the show is committed');
 {
-  /* WS-2602's venue has quoted in the fixtures — the state this act
-     answers, built here rather than assumed anywhere else (C7). */
-  const s = S('WS-2602');
-  if (s.venueStatus !== 'quoted') bad('WS-2602 must ship with a quote for this section to mean anything');
+  /* THE STATE IS BUILT, NOT BORROWED (C7). This file re-asked WS-2604's
+     venue a few lines up, so Weinhaus Müller is sitting on an unanswered
+     request — the venue prices it here, and the host answers. */
+  w.showWineShows('retail','current');
+  w.openShowDetail('WS-2604');
+  w.openVenueQuoteModal('WS-2604');
+  d.getElementById('vq-amount').value = '1250';
+  w.saveVenueQuote();
+  const s = S('WS-2604');
+  if (s.venueStatus !== 'quoted') bad('the quote did not land: ' + s.venueStatus);
+  else ok('Weinhaus Müller quoted — the branch that no fixture ships is reached by driving it');
   if (w.eval('isCommitted')(s)) bad('a show with nothing but a quote is NOT committed yet (A16.10)');
   else ok('a quote alone does not commit the show');
 
   w.showWineShows('distributor','current');
-  w.openShowDetail('WS-2602');
+  /* THE BADGE PICKS IT UP. A quote waiting on the host is a turn the
+     host can now answer, so it counts — the assertion lives here rather
+     than in a fixture-count file because this is where the state is
+     actually created. */
+  const before = parseInt(d.getElementById('dshow-badge').textContent || '0', 10);
+  if (!w.eval('showAwaits')('distributor', s)) bad('a quote waiting on the host is not counted as a turn');
+  else ok('the host badge counts the unanswered quote (' + before + ')');
+  w.openShowDetail('WS-2604');
   const box = boxWithHead('dshow','The Venue Has Quoted');
   if (!box) bad('the host is not offered the acceptance');
   else if (![...box.querySelectorAll('button')].some(b => b.textContent.includes('Accept the offer')))
     bad('the quoted box carries no Accept button');
   else ok('the host reads the quote and is offered the binding acceptance');
 
-  w.openVenueAcceptModal('WS-2602');
+  w.openVenueAcceptModal('WS-2604');
   if (!d.getElementById('wine-show-venue-accept-modal').classList.contains('active'))
     bad('the acceptance modal did not open');
   else ok('the acceptance modal opens on the quote');
@@ -392,13 +417,13 @@ console.log('\n── A16.11 step 6: the host accepts, and the show is committed
      the console and the next entry point do; a check that only reads
      the `disabled` attribute proves the styling, not the rule. */
   w.acceptVenueOffer();
-  if (S('WS-2602').venueStatus !== 'quoted')
+  if (S('WS-2604').venueStatus !== 'quoted')
     bad('the offer was accepted with the consent box unticked');
   else ok('accepting without the tick changes nothing — the rule is in the handler, not the attribute');
 
   d.getElementById('va-cb').checked = true;
   w.acceptVenueOffer();
-  const a = S('WS-2602');
+  const a = S('WS-2604');
   if (a.venueStatus !== 'accepted') bad('the acceptance did not take, status is ' + a.venueStatus);
   else ok('venueStatus → accepted');
   if (!a.venueAcceptedAt) bad('the acceptance is an act with a date — venueAcceptedAt is empty');
@@ -410,23 +435,12 @@ console.log('\n── A16.11 step 6: the host accepts, and the show is committed
   if (w.eval('venueTurn')(a) !== null) bad('an accepted offer waits on nobody');
   else ok('venueTurn → nobody once accepted');
 
-  /* Both sides read the one record. WS-2602's venue is Vinstuen
-     København, which has no demo dashboard, so the venue's reading is
-     measured on WS-2604 instead — where this file has already moved
-     the request to Weinhaus Müller, a role that does. */
-  w.openVenueQuoteModal('WS-2604');
-  d.getElementById('vq-amount').value = '900';
-  w.saveVenueQuote();
-  w.showWineShows('distributor','current');
-  w.openShowDetail('WS-2604');
-  w.openVenueAcceptModal('WS-2604');
-  d.getElementById('va-cb').checked = true;
-  w.acceptVenueOffer();
+  /* Both sides read the one record. */
   w.showWineShows('retail','current');
   w.openShowDetail('WS-2604');
   const vBox = boxWithHead('tshow','You Are the Venue');
   if (!vBox) bad('the venue is not told the offer was accepted');
-  else if (!vBox.textContent.includes('900')) bad('the venue is told, but not what was accepted: ' + vBox.textContent.trim());
+  else if (!vBox.textContent.includes('1,250')) bad('the venue is told, but not what was accepted: ' + vBox.textContent.trim());
   else ok('the venue reads the acceptance and the amount off the same record');
 }
 

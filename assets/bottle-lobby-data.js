@@ -602,9 +602,17 @@ let wineShows = [
     stage:'pending_approval', leadHost:'Hawesko GmbH',
     reach:['public'],
     applications_open:false, application_deadline:null,
+    /* ACCEPTED, not merely quoted, and that is a D38 consequence: the
+       publish precondition is now the host's binding acceptance of the
+       venue's offer (A16.11 step 6, A16.14c). A show sitting under Final
+       Review with an unanswered quote would be a state the platform
+       cannot produce. `host_covers` for the same reason — a cost split
+       has to be named before a show may be submitted, and this one
+       charges nobody. */
     venueType:'partner_venue', venueEntity:'Vinstuen København',
-    venueName:'Vinstuen København, Copenhagen', venueStatus:'quoted',
-    cateringTotal:1250, venueQuotedAt:'2026-07-27',
+    venueName:'Vinstuen København, Copenhagen', venueStatus:'accepted',
+    cateringTotal:1250, venueQuotedAt:'2026-07-27', venueAcceptedAt:'2026-07-29',
+    cateringMode:'host_covers',
     capacity:50, attendees:[],
     exhibitors:[
       { producer:'Cantina Rossi', status:'confirmed', source:'invitation',
@@ -616,9 +624,15 @@ let wineShows = [
       { at:'2026-07-02', actor:'Hawesko GmbH', text:'Show created as a draft' },
       { at:'2026-07-08', actor:'Cantina Rossi', text:'Confirmed with Grillo Sicilia DOC 2023 instead of the proposed wine' },
       { at:'2026-07-09', actor:'Henri Dubois Domaine', text:'Confirmed with Pouilly-Fumé 2023' },
-      { at:'2026-07-21', actor:'Hawesko GmbH', text:'Submitted to Bottle Lobby for release', scope:'show' },
       { at:'2026-07-24', actor:'Hawesko GmbH', text:'Venue request sent to Vinstuen København' },
-      { at:'2026-07-27', actor:'Vinstuen København', text:'Quoted € 1,250 for room and catering' } ] },
+      { at:'2026-07-27', actor:'Vinstuen København', text:'Quoted € 1,250 for room and catering' },
+      { at:'2026-07-29', actor:'Hawesko GmbH', text:"Accepted Vinstuen København's offer of € 1,250 for room and catering — the show is committed", scope:'show' },
+      { at:'2026-07-29', actor:'Hawesko GmbH', text:'Set the cost split: I carry the cost — no contribution is charged' },
+      /* Last, because it is: nothing may be submitted before the
+         checklist stands, so the submission cannot predate the
+         acceptance and the split (A16.14c). It was dated 21 Jul while
+         the preconditions sat at `planning`. */
+      { at:'2026-07-30', actor:'Hawesko GmbH', text:'Submitted to Bottle Lobby for Final Review', scope:'show' } ] },
 
   { id:'WS-2603', title:'Loire & Mosel', date:'2026-09-18', city:'Hamburg',
     focus:'Cool-climate whites, two rivers',
@@ -632,6 +646,10 @@ let wineShows = [
     applications_open:false, application_deadline:null,
     venueType:'host_premises', venueEntity:null,
     venueName:'Hawesko Tasting Loft, Hamburg', venueStatus:'not_required',
+    /* A released show has to satisfy the checklist that released it, and
+       naming who carries the cost is one of its lines (A16.14c). Its own
+       premises and nobody charged — which is what RVW-3001 records. */
+    cateringMode:'host_covers',
     /* Deliberately small so the waitlist is reachable in the demo: three
        seats, three confirmed, one more asking. A real tasting seats more;
        a fixture that never fills its room cannot show the one behaviour
@@ -686,6 +704,7 @@ let wineShows = [
     venueType:'partner_venue', venueEntity:'Weinhaus Müller',
     venueName:'Weinhaus Müller, Munich', venueStatus:'accepted',
     cateringTotal:780, venueQuotedAt:'2026-02-09', venueAcceptedAt:'2026-02-11',
+    cateringMode:'host_covers',
     capacity:65,
     attendees:[
       { stakeholder:'Bistro Laurent',  source:'invitation', status:'confirmed', at:'2026-02-20' },

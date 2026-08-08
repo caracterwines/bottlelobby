@@ -37,11 +37,14 @@ const byId  = id => shows().find(s => s.id === id);
 console.log('── initial badges');
 if (d.getElementById('wshow-badge').textContent !== '1') bad('winery badge should be 1 pending invitation');
 else ok('winery badge = 1 open invitation');
-/* 4, not 3: WS-2602's venue has quoted and the host now owes the
-   binding acceptance (A16.11 step 6). That turn was uncounted only for
-   as long as the host had no way to answer it. */
-if (d.getElementById('dshow-badge').textContent !== '4') bad('distributor badge should be 4 (1 wine + 1 attendee request + 1 venue quote to accept + 1 awaiting release), got ' + d.getElementById('dshow-badge').textContent);
-else ok('distributor badge = 4 (a wine, a request for a place, a venue quote to accept, a show awaiting release)');
+/* Back to 3. It briefly read 4 while WS-2602 shipped at `quoted` and
+   the host owed an acceptance; the fixture is now `accepted`, because a
+   show under Final Review with an unanswered quote is a state the
+   publish precondition makes unreachable (A16.14c). The venue-quote
+   turn is real and counted — tests/venue-request.js drives one and
+   watches the badge pick it up. */
+if (d.getElementById('dshow-badge').textContent !== '3') bad('distributor badge should be 3 (1 wine + 1 attendee request + 1 awaiting release), got ' + d.getElementById('dshow-badge').textContent);
+else ok('distributor badge = 3 (a wine, a request for a place, a show awaiting release)');
 
 // ── 2. view isolation: opening shows hides dashboard/profile/orders
 console.log('\n── view switching');
