@@ -14859,6 +14859,69 @@ function eventInvitables(ev) {
     .filter(n => n !== ev.host && !eventParticipant(ev, n));
 }
 
+/* ── WINES & PROGRAM — THE HOST DECIDES (A16.8, ME-6) ────────────
+   Member events deliberately do NOT follow the Wine Show model here.
+   A show's wines are negotiated per exhibitor — proposed, countered,
+   confirmed (A16.4) — because the show is a joint format under the
+   platform's guarantee. A member event is the host's own evening: the
+   host names the wines, and there is no proposal loop, no per-wine
+   status and no second confirmation path.
+
+   WHAT THE HOST MAY NAME IS HIS OWN CURRENT RANGE, per A16.8's role
+   table: the winery its own wines, the distributor his Wine Portfolio,
+   the restaurant its Wine List, the retailer his Wine Selection. What
+   lands on the record is a `productId` REFERENCE and nothing else
+   (invariant 2, ME-6) — the books below already hold real keys.
+
+   PRODUCT CHOICE AND PARTICIPATION ARE TWO FACTS. Naming a producer's
+   wine puts nobody on the event, and an accepted winemaker brings no
+   wines with him. The one case that crosses the line — an accepted
+   guest winemaker's wines from OUTSIDE the host's range, which
+   ME-3101's fixture already shows — has no mechanism yet, on purpose:
+   automating it now would be speculation, and the fixture rows stay
+   as the record of what the host once named. */
+function eventAssortment(role) {
+  const me = EVENT_ROLES[role].entity;
+  if (role === 'winery')      return partnerWinesPool.filter(w => w.winery === me);
+  if (role === 'distributor') return currentWinePortfolio;
+  if (role === 'restaurant')  return rCurrentWineList;
+  return tCurrentWineSelection;
+}
+function addEventProduct(id, productId) {
+  const ev = actionEvent(id); if (!ev) return;
+  /* The gate is the HOST's book, not the caller's: whoever reaches
+     this function, an event never names a wine its host does not
+     carry (B12 — the refusal says why). */
+  if (!eventAssortment(ev.hostRole).some(w => w.id === productId)) {
+    actionSay('Not in your own range — an event names wines from the host\'s own book');
+    return;
+  }
+  ev.products = ev.products || [];
+  if (ev.products.some(p => p.productId === productId)) {
+    actionSay(wineLabel(productId) + ' is already on this event');
+    return;
+  }
+  ev.products.push({ productId: productId });
+  logEventRow(ev, ev.host, 'Added ' + wineLabel(productId) + ' to Wines & Program');
+  refreshEvents();
+  showToast('✓ ' + wineLabel(productId) + ' is on the program');
+}
+function removeEventProduct(id, productId) {
+  const ev = actionEvent(id); if (!ev) return;
+  const before = (ev.products || []).length;
+  ev.products = (ev.products || []).filter(p => p.productId !== productId);
+  if (ev.products.length === before) { actionSay('That wine is not on this event'); return; }
+  logEventRow(ev, ev.host, 'Removed ' + wineLabel(productId) + ' from Wines & Program');
+  refreshEvents();
+  showToast(wineLabel(productId) + ' taken off the program');
+}
+function addEventProductFromDetail(id) {
+  const p = EVENT_ROLES[activeEventRole].prefix;
+  const sel = document.getElementById(p + '-wine-add');
+  if (!sel || !sel.value) { actionSay('Choose a wine from your own range first'); return; }
+  addEventProduct(id, sel.value);
+}
+
 
 /* ── MY OWN SIDE OF SOMEBODY ELSE'S EVENT (A16.8) ────────────────
    THE ACTIONS ARE THE ONES DURCHGANG 7 ALREADY WROTE. This box adds
@@ -14990,11 +15053,34 @@ function renderEventDetail(role, ev) {
         '</div></div>'
       : '';
 
-  const wines = (ev.products || []).length
+  const wineRows = (ev.products || []).length
     ? (ev.products || []).map(x => '<div class="odt-kv"><span>' + wineLabel(x.productId) +
-        '</span><span class="otbl-dim" style="text-align:right;flex:1">' + x.productId + '</span></div>').join('')
+        '</span><span style="text-align:right;flex:1"><span class="otbl-dim">' + x.productId + '</span>' +
+        (host
+          ? '<button class="btn-sm btn-outline" style="margin-left:0.5rem" ' +
+            'onclick="removeEventProduct(\'' + ev.id + '\',\'' + x.productId + '\')">Remove</button>'
+          : '') +
+        '</span></div>').join('')
     : '<div class="edit-section-sub" style="margin:0">No wines named yet. They are references into the ' +
       "producer's own range — a wine is never described here (invariant 2).</div>";
+  /* THE PICKER IS THE HOST'S OWN BOOK AND NOTHING WIDER. A wine
+     outside it is not greyed out, it is absent — offering it would
+     suggest the act exists (the same absence rule as the host acts). */
+  const winePool = host
+    ? eventAssortment(role).filter(w => !(ev.products || []).some(x => x.productId === w.id))
+    : [];
+  const winePicker = !host ? ''
+    : winePool.length
+    ? '<div style="margin-top:0.8rem">' +
+        '<select class="field-input" id="' + p + '-wine-add" style="margin:0 0 0.5rem">' +
+          winePool.map(w => '<option value="' + w.id + '">' + wineLabel(w) + '</option>').join('') +
+        '</select>' +
+        '<button class="btn-sm btn-gold" onclick="addEventProductFromDetail(\'' + ev.id + '\')">Add to the program</button>' +
+        '<div class="edit-section-sub" style="margin:0.6rem 0 0">Your own current range — you decide the wines. ' +
+          'The event stores a reference, never a copy, and naming a wine puts nobody on the event.</div>' +
+      '</div>'
+    : '<div class="edit-section-sub" style="margin:0.8rem 0 0">Your whole current range is on the program already.</div>';
+  const wines = wineRows + winePicker;
 
   const modBox = !host ? ''
     : ev.moderation

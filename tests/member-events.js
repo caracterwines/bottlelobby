@@ -774,5 +774,159 @@ console.log('\n── reach: the events reference the taxonomy, they do not rede
   else ok('the Munich narrowing holds, and it narrows rather than widens');
 }
 
+/* ══════════════════════════════════════════════════════════════════
+   WINES & PROGRAM — THE HOST DECIDES, OUT OF HIS OWN BOOK (A16.8).
+   Member events do not follow the Wine Show model here: no proposal
+   loop, no per-wine status. The host names wines from his OWN current
+   range — winery: own catalogue rows · distributor: Wine Portfolio ·
+   restaurant: Wine List · retail: Wine Selection — and what lands on
+   the record is a productId reference and nothing else (ME-6).
+
+   PRODUCT CHOICE AND PARTICIPATION ARE TWO FACTS, asserted in both
+   directions: a chosen wine adds no participant, an accepted
+   winemaker adds no wine. ME-3101's fixture rows OUTSIDE the retail
+   host's selection stay untouched — they are the accepted guest
+   winemaker's wines, named once by the host, and automating that case
+   is deliberately not built (Durchgang 9's own scope line).
+══════════════════════════════════════════════════════════════════ */
+console.log('\n── Wines & Program: the host names wines, and only out of his own range');
+{
+  const paneBtn = (role, label) => [...d.getElementById(CFG(role).prefix + '-detail-pane')
+    .querySelectorAll('button')].find(b => b.textContent.trim() === label);
+  const openMine = role => {
+    const mine = EVENTS().find(e => e.host === CFG(role).entity);
+    w.showMyEvents(role, 'drafts');
+    w.openEventDetail(mine.id);
+    return mine;
+  };
+  const pickerCheck = role => {
+    const mine = openMine(role);
+    const sel = d.getElementById(CFG(role).prefix + '-wine-add');
+    const book = w.eventAssortment(role).map(x => x.id);
+    const chosen = (mine.products || []).map(x => x.productId);
+    const eligible = book.filter(id => chosen.indexOf(id) === -1);
+    if (!book.length) { bad(role + ': its own book is empty — nothing is measured'); return; }
+    if (!sel) {
+      if (eligible.length) bad(role + ': no picker although ' + eligible.length + ' own wine(s) are unchosen');
+      else ok(role + ': whole range already on the program, and the pane says so');
+      return;
+    }
+    const opts = [...sel.options].map(o => o.value);
+    const alien = opts.filter(id => book.indexOf(id) === -1);
+    const dupes = opts.filter(id => chosen.indexOf(id) !== -1);
+    if (alien.length) bad(role + ': the picker offers wines outside the own book — ' + alien.join(', '));
+    else if (dupes.length) bad(role + ': the picker re-offers wines already on the program');
+    else ok(role + ': the picker is exactly the own range minus the chosen (' + opts.length + ' option(s))');
+  };
+  ROLES().forEach(pickerCheck);
+
+  /* The mutation widens what the RENDERER reads, and the check compares
+     the rendered options against the real book — widening both sides at
+     once would compare the mutation with itself and stay green. */
+  expectRed('widen the picker to the whole catalogue', () => {
+    const real = w.eventAssortment;
+    w.eventAssortment = () => w.allProducts();
+    try { openMine('retail'); } finally { w.eventAssortment = real; }
+    const sel = d.getElementById(CFG('retail').prefix + '-wine-add');
+    const book = real('retail').map(x => x.id);
+    const alien = [...sel.options].map(o => o.value).filter(id => book.indexOf(id) === -1);
+    if (alien.length) bad('the picker offers wines outside the own book — ' + alien.length + ' of them');
+  });
+
+  /* The add, as a CLICK. Retail's own selection is PRD-1020/1021/1022;
+     ME-3101 already names PRD-1022, so the picker holds the other two. */
+  const ROLE = 'retail';
+  const ev = openMine(ROLE);
+  const pick = d.getElementById(CFG(ROLE).prefix + '-wine-add');
+  const partsBefore  = JSON.stringify(ev.participants);
+  const ordersBefore = w.eval('orders').length;
+  const countBefore  = (ev.products || []).length;
+  const target = pick.options[0].value;
+  pick.value = target;
+  paneBtn(ROLE, 'Add to the program').click();
+
+  const row = ev.products[ev.products.length - 1];
+  if (ev.products.length !== countBefore + 1 || row.productId !== target)
+    bad('the click did not put the chosen wine on the program');
+  else if (Object.keys(row).join(',') !== 'productId')
+    bad('the new row carries more than the reference: ' + Object.keys(row).join(', '));
+  else ok('one click, one new row, and it is {productId} and nothing else (' + target + ')');
+
+  const producer = w.wineByRef(target).winery;
+  if (JSON.stringify(ev.participants) !== partsBefore)
+    bad('choosing a wine changed the participants');
+  else if (w.eventParticipant(ev, producer))
+    bad('choosing ' + target + ' put its producer ' + producer + ' on the event');
+  else ok('and ' + producer + ', whose wine it is, is on no participant row because of it');
+  if (w.eval('orders').length !== ordersBefore) bad('choosing a wine created an order');
+  else ok('and no order came out of it (' + ordersBefore + ' unchanged)');
+
+  expectRed('let a chosen wine bring its producer onto the event', () => {
+    const real = w.addEventProduct;
+    const partsSnap = JSON.stringify(ev.participants);
+    const prodCount = ev.products.length;
+    w.addEventProduct = (id, pid) => {
+      real(id, pid);
+      EVENTS().find(x => x.id === id).participants.push({
+        stakeholder: w.wineByRef(pid).winery, role:'winemaker',
+        source:'invitation', status:'accepted', requestedAt:'2026-08-08' });
+    };
+    try {
+      /* PRD-1021 is in the retail book and definitely not yet chosen. */
+      w.addEventProduct(ev.id, 'PRD-1021');
+      if (JSON.stringify(ev.participants) !== partsSnap) bad('participants changed');
+    } finally {
+      w.addEventProduct = real;
+      ev.participants = JSON.parse(partsSnap);
+      ev.products.length = prodCount;
+      w.refreshEvents();
+    }
+  });
+
+  /* Outside the own range: refused by the function AND absent from the
+     picker. PRD-1002 is real, resolvable — and Cantina Rossi's, not in
+     any retail selection. */
+  const foreignBefore = ev.products.length;
+  w.addEventProduct(ev.id, 'PRD-1002');
+  if (ev.products.length !== foreignBefore) bad('a wine outside the own range was added');
+  else ok('PRD-1002 — real, but outside the own range — is refused');
+  if ([...d.getElementById(CFG(ROLE).prefix + '-wine-add').options].some(o => o.value === 'PRD-1002'))
+    bad('and yet the picker offers it');
+  else ok('and the picker never offered it');
+
+  /* The remove, as a click on the row the add created. */
+  const removeBtn = [...d.getElementById(CFG(ROLE).prefix + '-detail-pane')
+    .querySelectorAll('.odt-kv')].filter(kv => kv.textContent.indexOf(target) !== -1)
+    .map(kv => [...kv.querySelectorAll('button')].find(b => b.textContent.trim() === 'Remove'))
+    .filter(Boolean)[0];
+  if (!removeBtn) bad('the host has no way to take ' + target + ' off the program again');
+  else {
+    removeBtn.click();
+    if (ev.products.length !== countBefore) bad('the remove did not restore the program');
+    else if (JSON.stringify(ev.participants) !== partsBefore) bad('removing a wine changed the participants');
+    else ok('one click removes it again, participants untouched — the fixture state is restored');
+  }
+
+  /* The other direction: an accepted winemaker brings no wines along.
+     Henri Dubois Domaine holds ME-3103's one unanswered exhibitor
+     invitation; the status is put back afterwards so the fixture keeps
+     carrying an open invitation for everything after this file. */
+  const fair = EV('ME-3103');
+  const hdd = fair.participants.find(x => x.stakeholder === 'Henri Dubois Domaine');
+  if (!hdd || hdd.status !== 'sent') bad('ME-3103 no longer holds the unanswered exhibitor invitation');
+  else {
+    const winesBefore = JSON.stringify(fair.products);
+    w.respondToEventInvite('ME-3103', 'Henri Dubois Domaine', 'accept');
+    if (hdd.status !== 'accepted') bad('the acceptance did not land');
+    else if (JSON.stringify(fair.products) !== winesBefore)
+      bad('accepting as exhibitor changed the Wines & Program list');
+    else ok('Henri Dubois accepts as exhibitor and the program does not move — participation adds no wine');
+    hdd.status = 'sent';
+    w.refreshEvents();
+  }
+
+  ROLES().forEach(r => { w.eval('eventState')[r].openId = null; });
+}
+
 console.log(fail ? '\n' + fail + ' failure(s)' : '\nmember events: all checks passed');
 process.exit(fail ? 1 : 0);
