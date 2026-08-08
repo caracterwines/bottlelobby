@@ -25,6 +25,16 @@
    ME-4 (campaign recipient snapshots) is NOT covered: campaigns are
    A16.14e and are not built. There is nothing to measure, and a check
    over a feature that does not exist is a check that cannot fail.
+
+   SINCE THE COCKPIT WENT TO ALL FOUR ROLES, so has this file. A16.8's
+   "one model for all four roles" was a claim nothing measured while
+   exactly one role was wired, and the rules most likely to be broken
+   by a rollout are the ones that used to be checked on the one role
+   that had the feature. So the directory checks, the moderation
+   check, the card checks and the host/guest split all run over
+   `EVENT_ROLES` rather than over a name — and the registry itself is
+   measured for sameness, because D21 is what happens when four
+   dashboards drift apart by accident.
 ═══════════════════════════════════════════════════════════════════ */
 const path = require('path');
 const { loadDashboard } = require('./load-dashboard');
@@ -67,6 +77,13 @@ function discoverText(role) {
   w.showWineShows(role, 'discover');
   return d.getElementById(w.eval('SHOW_ROLES')[role].prefix + '-list-pane').textContent;
 }
+/* ALL FOUR, ALWAYS. A16.8's "one model for all four roles" is the
+   sentence this file now measures rather than assumes: every rule
+   below that used to be checked on one role is checked on the list.
+   Read from the page so that a fifth role — or a role quietly dropped
+   from the cockpit — turns up here rather than being missed. */
+const ROLES  = () => Object.keys(w.eval('EVENT_ROLES'));
+const CFG    = role => w.eval('EVENT_ROLES')[role];
 const EV     = id => w.eval('memberEvents').find(e => e.id === id);
 const EVENTS = () => w.eval('memberEvents');
 const SHOWS  = () => w.eval('wineShows');
@@ -122,15 +139,292 @@ console.log('── ME-1: two records of two kinds, and a directory that holds n
      it on the array alone would prove nothing: the array IS the record. */
   const ev = EV('ME-3103');
   const was = ev.title;
-  if (discoverText('restaurant').indexOf(was) === -1)
-    bad('ME-3103 is not on the restaurant Discover pane at all — nothing would be measured');
+  /* ON EVERY ROLE, not on one. Four Discover panes are four chances
+     for a per-surface copy to exist, and a copy on the role nobody
+     measured is the one that survives. ME-3103's reach is partners +
+     restaurants + retail, so the winery reaches it as an accepted
+     exhibitor — gate 2 — which is the second way onto a directory and
+     worth having in the same loop. */
+  const blind = ROLES().filter(r => discoverText(r).indexOf(was) === -1);
+  if (blind.length)
+    bad('ME-3103 is on no Discover pane for ' + blind.join(', ') + ' — nothing would be measured there');
   else {
     ev.title = 'Renamed In Place';
-    const after = discoverText('restaurant');
+    const stale = ROLES().filter(r => discoverText(r).indexOf('Renamed In Place') === -1);
     ev.title = was;
-    if (after.indexOf('Renamed In Place') === -1) bad('the pane kept the old title — it is a copy, not a derivation');
-    else ok('the rendered directory follows an edit to the record: derived, not stored');
+    if (stale.length) bad('the pane kept the old title on ' + stale.join(', ') + ' — a copy, not a derivation');
+    else ok('the rendered directory follows an edit to the record on all ' + ROLES().length +
+            ' roles: derived, not stored');
   }
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   ONE COCKPIT FOR FOUR ROLES (A16.8, D21).
+
+   "There is no per-role event data model — the first full cockpit is
+   built on the distributor dashboard, and the same components are then
+   reused role-dependently." D21 is the lesson behind it: four
+   dashboards behaving differently taught the user four navigations for
+   one product, and the divergence was accidental rather than intended.
+
+   So this section measures SAMENESS, which is unusual and is the
+   point. Everything that differs between the four entries has to be a
+   thing that MUST differ — which house, which container, which id
+   prefix, which category seeds — and everything else has to be
+   identical, because it is the same code answering.
+══════════════════════════════════════════════════════════════════ */
+console.log('\n── one cockpit, four roles: what may differ, and what may not');
+{
+  const roles = ROLES();
+  if (roles.length !== 4) bad('EVENT_ROLES has ' + roles.length + ' entries, not four — A16.8 names four roles');
+  else ok('all four roles are in the registry: ' + roles.join(', '));
+
+  /* Reachable at all: a nav item that calls the cockpit, and a
+     container for it to build into. Retail's item was a label with no
+     handler for exactly as long as nothing measured this. */
+  roles.forEach(r => {
+    const cfg = CFG(r);
+    const nav = d.getElementById(cfg.nav), view = d.getElementById(cfg.view);
+    if (!nav) bad(r + ': no nav element #' + cfg.nav);
+    else if (!/showMyEvents\(/.test(nav.getAttribute('onclick') || ''))
+      bad(r + ': the ' + cfg.nav + ' item does not open the cockpit — it is a dead label');
+    else if (!view) bad(r + ': no container #' + cfg.view);
+    else ok(r + ': ' + cfg.nav + ' opens ' + cfg.view);
+  });
+
+  /* THE IDENTITY IS ONE FACT. A second copy of "Weinhaus Müller" in a
+     second registry is the duplication invariant 1 is about, one level
+     down: the cockpit and the Wine Shows view would disagree about who
+     is logged in the day one of them is edited. */
+  const split = roles.filter(r => CFG(r).entity !== w.eval('SHOW_ROLES')[r].entity);
+  if (split.length) bad('EVENT_ROLES and SHOW_ROLES name different houses for ' + split.join(', '));
+  else ok('every role is the same house in both registries');
+
+  /* One tab set, four roles. A per-role list is how "the same product"
+     becomes four navigations — D21, before the fact. */
+  const tabsOf = r => CFG(r).tabs.map(t => t.key).join(',');
+  const odd = roles.filter(r => tabsOf(r) !== tabsOf(roles[0]));
+  if (odd.length) bad('these roles have their own tab set: ' + odd.join(', '));
+  else ok('one tab set for all four: ' + tabsOf(roles[0]));
+
+  /* And it really builds, for each of them, out of the same shell. */
+  roles.forEach(r => {
+    w.showMyEvents(r, 'drafts');
+    const p = CFG(r).prefix;
+    const missing = ['-list-pane', '-detail-pane', '-tabs', '-kpis', '-table']
+      .filter(s => !d.getElementById(p + s));
+    if (missing.length) bad(r + ': the shell is missing ' + missing.join(', '));
+    else ok(r + ': the shell builds — ' + p + '-list-pane and four panes beside it');
+  });
+
+  /* The one thing A16.8 DOES let differ, and it differs. "Role
+     examples, for fixtures and category seeds" is the only per-role
+     vocabulary the section grants. */
+  const cats = w.eval('EVENT_CATEGORIES');
+  const shared = roles.filter(r => r !== 'distributor' &&
+    cats[r].join(',') === cats.distributor.join(','));
+  if (!roles.every(r => (cats[r] || []).length)) bad('a role has no category seeds at all');
+  else if (shared.length) bad('these roles were handed the distributor list: ' + shared.join(', '));
+  else ok('each role offers its own kinds of event (A16.8\'s role table)');
+
+  expectRed('give one role a cockpit of its own', () => {
+    const reg = w.eval('EVENT_ROLES'), real = reg.retail.tabs;
+    reg.retail.tabs = [{ key:'everything', label:'Everything' }];
+    try {
+      const t = r => reg[r].tabs.map(x => x.key).join(',');
+      const o = Object.keys(reg).filter(r => t(r) !== t('distributor'));
+      if (o.length) bad('own tab set: ' + o.join(', '));
+    } finally { reg.retail.tabs = real; }
+  });
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   HOSTING IS NOT THE SAME AS BEING ON IT (A16.8).
+
+   The host publishes, invites, opens applications, answers them and is
+   the one Bottle Lobby's moderation shortcut is aimed at. Nobody else
+   does any of that. A16.8's lifecycle sentence — "the host publishes
+   himself" — is a statement about WHO, and a cockpit that offered the
+   act to a guest would make it a statement about nothing.
+
+   Measured on the RENDERED pane rather than on a flag, because the
+   flag is not what a user clicks.
+══════════════════════════════════════════════════════════════════ */
+console.log('\n── the host acts, and the invited house answers');
+{
+  /* Every phrase here is a host act, and each is a real button. */
+  const HOST_ACTS = ['Publish this event', 'Withdraw the publication', 'Send invitation',
+                     'Allow applications', 'Simulate delisting'];
+  const paneText = (role, id) => {
+    w.showMyEvents(role, 'upcoming');
+    w.openEventDetail(id);
+    return d.getElementById(CFG(role).prefix + '-detail-pane').textContent;
+  };
+
+  ROLES().forEach(role => {
+    const me = CFG(role).entity;
+    const mine  = EVENTS().find(e => e.host === me);
+    const other = EVENTS().find(e => e.host !== me && w.myEventRow(role, e));
+    if (!mine)  { bad(role + ' hosts nothing — the host half is unmeasured for it'); return; }
+    if (!other) { bad(role + ' is on nobody else\'s event — the guest half is unmeasured'); return; }
+
+    const guestPane = paneText(role, other.id);
+    const leaked = HOST_ACTS.filter(a => guestPane.indexOf(a) !== -1);
+    if (leaked.length) bad(role + ' is offered the host\'s acts on ' + other.id + ': ' + leaked.join(', '));
+    else if (guestPane.indexOf('Your row') === -1)
+      bad(role + ' reads no row of its own on ' + other.id + ' — it is on the event and cannot see so');
+    else ok(role + ': on ' + other.id + ' it reads its own row and none of the host\'s acts');
+
+    const hostPane = paneText(role, mine.id);
+    if (hostPane.indexOf('Send invitation') === -1)
+      bad(role + ' cannot invite anybody to ' + mine.id + ', which it hosts');
+    else if (hostPane.indexOf('Your row') !== -1)
+      bad(role + ' is shown a guest box on its own event ' + mine.id);
+    else ok(role + ': on its own ' + mine.id + ' it hosts — invitations, applications, publishing');
+  });
+
+  /* THE NON-RELEASE WORDING REACHES THE GUEST TOO. A16.8's box is a
+     rule about what a member event may never look like, and the house
+     that was invited is exactly the reader who might otherwise take a
+     published event for a released one. */
+  const disc = w.eval('MEMBER_EVENT_DISCLAIMER');
+  const silent = ROLES().filter(role => {
+    const other = EVENTS().find(e => e.host !== CFG(role).entity && w.myEventRow(role, e));
+    return other && paneText(role, other.id).indexOf(disc) === -1;
+  });
+  if (silent.length) bad('the guest pane omits the non-release wording on ' + silent.join(', '));
+  else ok('and every guest pane carries the A16.8 wording in full');
+
+  expectRed('let a guest publish somebody else\'s event', () => {
+    const real = w.isEventHost;
+    w.isEventHost = () => true;
+    try {
+      ROLES().forEach(role => {
+        const other = EVENTS().find(e => e.host !== CFG(role).entity && w.myEventRow(role, e));
+        if (!other) return;
+        const t = paneText(role, other.id);
+        const l = HOST_ACTS.filter(a => t.indexOf(a) !== -1);
+        if (l.length) bad(role + ' is offered ' + l.join(', ') + ' on ' + other.id);
+      });
+    } finally { w.isEventHost = real; }
+  });
+  ROLES().forEach(r => { w.eval('eventState')[r].openId = null; });
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   THE FIVE FACTS, ANSWERED FROM THE INVITED HOUSE'S OWN COCKPIT
+   (A16.8: invitation · application · acceptance as participant · RSVP
+   as guest · attendance).
+
+   Durchgang 7 could only simulate the answer from the host's pane.
+   The acts are the same two functions; what is new is that the house
+   the answer is ABOUT now reaches them, so this drives the real
+   buttons rather than calling the functions — the C8 rule about never
+   supplying the event the mechanism should notice, applied to a click.
+══════════════════════════════════════════════════════════════════ */
+console.log('\n── invitation, acceptance and RSVP, driven from the invited cockpit');
+{
+  const btn = (role, label) => [...d.getElementById(CFG(role).prefix + '-detail-pane')
+    .querySelectorAll('button')].find(b => b.textContent.trim() === label);
+  /* Retail is the role with an open invitation in the fixtures:
+     Weinhaus Müller is asked to ME-3105 and has not answered. */
+  const ROLE = 'retail', ID = 'ME-3105', ME = CFG(ROLE).entity;
+  const start = w.myEventRow(ROLE, EV(ID));
+  if (!start || start.status !== 'sent')
+    bad(ME + ' has no unanswered invitation to ' + ID + ' — the whole section has nothing to drive');
+  else {
+    ok('the fixture holds one unanswered invitation: ' + ME + ' as ' + start.role + ' on ' + ID);
+    if (!w.eventsForTab(ROLE, 'invites').some(e => e.id === ID))
+      bad('the invitation is not in the Invitations tab — it cannot be found, so it cannot be answered');
+    else ok('and it is in the Invitations & Applications tab, where an answer is owed');
+
+    w.showMyEvents(ROLE, 'invites');
+    w.openEventDetail(ID);
+    const ordersBefore = w.eval('orders').length, partsBefore = w.eval('partnerships').length;
+
+    const accept = btn(ROLE, 'Accept');
+    if (!accept) bad('no Accept button on the invited house\'s own pane');
+    else {
+      accept.click();
+      const p = w.myEventRow(ROLE, EV(ID));
+      if (p.status !== 'confirmed')
+        bad('accepting as a guest left the row at "' + p.status + '" — a guest invitation accepted IS the RSVP');
+      else ok('accepted from its own cockpit: the row is confirmed and holds a place');
+      if (!w.eventsForTab(ROLE, 'upcoming').some(e => e.id === ID))
+        bad('the accepted event is in no list — the answer led nowhere');
+      else ok('and it moved to Upcoming, where the house can see it is going');
+    }
+
+    const give = btn(ROLE, 'Give up your place');
+    if (!give) bad('no way to give the place back');
+    else {
+      give.click();
+      if (w.myEventRow(ROLE, EV(ID)).status !== 'withdrawn') bad('the place was not given back');
+      else ok('and the place goes back to the room — withdrawn, not declined');
+      const again = btn(ROLE, 'RSVP — take a place');
+      if (!again) bad('a withdrawn guest cannot RSVP again');
+      else { again.click();
+        if (w.myEventRow(ROLE, EV(ID)).status !== 'confirmed') bad('the second RSVP did not take');
+        else ok('and RSVPing again takes a place back'); }
+    }
+
+    /* ME-2, one role over: none of that made a transaction. */
+    if (w.eval('orders').length !== ordersBefore || w.eval('partnerships').length !== partsBefore)
+      bad('answering an invitation created an order or a partnership (ME-2)');
+    else ok('and none of it created an order or a partnership (' + ordersBefore + ' orders, ' +
+            partsBefore + ' partnerships, unchanged)');
+
+    expectRed('let an accepted invitation write an order', () => {
+      const o = w.eval('orders'), n = o.length;
+      o.push({ id:'ORD-9999', buyer:ME, note:'from ' + ID });
+      try { if (o.length !== n) bad('orders grew'); } finally { o.pop(); }
+    });
+  }
+  ROLES().forEach(r => { w.eval('eventState')[r].openId = null; });
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   THE TYPED DUPLICATE A16.8 NAMES BY NAME.
+
+   "Cantina Rossi Tasting" existed twice, with two different dates, on
+   two hardcoded surfaces and with no shared record — and A16.8 leaves
+   it to the fixture to decide what the evening actually is. It did:
+   ME-3101, hosted by Weinhaus Müller, with Hawesko on it as a guest.
+   A second surface claiming the same evening under a different host is
+   the copy ME-1 forbids, so the typed row is gone rather than rebuilt.
+
+   Measured on rendered TEXT — what a reader sees — and the two
+   `<script>` blocks are cut out first. Not a convenience: the page
+   EXPLAINS the removal in a comment that names the phrase, and script
+   text is part of `textContent`, so without the cut this check would
+   be failed by its own documentation.
+══════════════════════════════════════════════════════════════════ */
+console.log('\n── the evening with two hosts now has one');
+{
+  const GONE = 'Cantina Rossi Tasting';
+  const visible = () => {
+    const clone = d.body.cloneNode(true);
+    [...clone.querySelectorAll('script,style')].forEach(n => n.remove());
+    return clone.textContent;
+  };
+  if (visible().indexOf(GONE) !== -1)
+    bad('"' + GONE + '" is still typed onto a dashboard surface — no record backs it');
+  else ok('"' + GONE + '" appears on no dashboard surface');
+
+  const real = EVENTS().filter(e => (e.participants || [])
+    .some(p => p.stakeholder === 'Cantina Rossi' && p.role !== 'host') &&
+    e.host === 'Weinhaus Müller');
+  if (real.length !== 1) bad('the evening the fixture decided on is in ' + real.length + ' records, not one');
+  else ok('the evening is one record: ' + real[0].id + ', hosted by ' + real[0].host +
+          ', with Cantina Rossi on it');
+
+  expectRed('type the evening back onto a surface', () => {
+    const div = d.createElement('div');
+    div.textContent = GONE;
+    d.body.appendChild(div);
+    try { if (visible().indexOf(GONE) !== -1) bad('typed row present'); }
+    finally { d.body.removeChild(div); }
+  });
 }
 
 /* ══════════════════════════════════════════════════════════════════
@@ -225,6 +519,30 @@ console.log('\n── ME-3: the two cards may share a list and may not share a p
   if (nomark.length) bad('no kind marker on ' + nomark.map(e => e.id).join(', '));
   else ok('and every card leads with its own Member Event marker');
 
+  /* ON THE FOUR RENDERED DISCOVER PANES, not only on the card in
+     isolation. A16.14d lets the two kinds share a directory; A16.8
+     forbids them sharing a promise — and a promise is broken on a
+     SURFACE. A role whose pane rendered the sort under the Wine Shows
+     heading, or with no heading at all, would put a self-published
+     evening under the platform's guarantee without any card having
+     changed. */
+  ROLES().forEach(role => {
+    const found = w.discoverEvents(role);
+    const text  = discoverText(role);
+    if (!found.length) { bad(role + ': no member event is findable at all — its Discover sort is unmeasured'); return; }
+    const shown = found.filter(e => text.indexOf(e.title) !== -1);
+    if (shown.length !== found.length)
+      bad(role + ': ' + (found.length - shown.length) + ' findable event(s) are on no card');
+    else if (text.indexOf('Member Events') === -1)
+      bad(role + ': the events are rendered under no heading of their own');
+    else if (text.indexOf(disc) === -1)
+      bad(role + ': the member-event sort carries no non-release wording');
+    else if (MARKERS.some(m => text.replace(/&nbsp;/g, ' ').indexOf(m.replace(/&nbsp;/g, ' ')) !== -1) &&
+             !w.discoverShows(role).length)
+      bad(role + ': a guarantee phrase is on a pane that has no released show to earn it');
+    else ok(role + ': ' + found.length + ' member event(s) on their own cards, under their own heading');
+  });
+
   expectRed('give the event card the show card\'s sentence', () => {
     const real = w.memberEventCard;
     w.memberEventCard = ev => real(ev).replace('</div></div>',
@@ -255,9 +573,9 @@ console.log('\n── ME-3: the two cards may share a list and may not share a p
     bad('the event was not actually delisted — nothing was measured');
   else if (!ev.moderation.reason) bad('delisted without a reason on the record');
   else ok('the event carries its own moderation record, with the reason: "' + ev.moderation.reason + '"');
-  if (w.discoverEvents('restaurant').some(e => e.id === 'ME-3103'))
-    bad('a delisted event is still in the directory');
-  else ok('and it is off the directory');
+  const stillThere = ROLES().filter(r => w.discoverEvents(r).some(e => e.id === 'ME-3103'));
+  if (stillThere.length) bad('a delisted event is still in the directory of ' + stillThere.join(', '));
+  else ok('and it is off the directory of all ' + ROLES().length + ' roles — including its own host\'s');
 
   expectRed('record the delisting as a reviews row', () => {
     const r = w.eval('reviews');
