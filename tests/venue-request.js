@@ -400,5 +400,66 @@ console.log('\n── A16.11 step 6: the host accepts, and the show is committed
   else ok('the venue reads the acceptance and the amount off the same record');
 }
 
+console.log('\n── A16.11 step 3: the cost split is the host\'s decision, and the venue never sees it');
+{
+  w.showWineShows('distributor','current');
+  w.openShowDetail('WS-2602');
+  const sel = d.getElementById('cm-mode-WS-2602');
+  if (!sel) { bad('the host has no cost-split control'); }
+  else {
+    const values = [...sel.options].map(o => o.value).filter(Boolean);
+    const known  = Object.keys(w.eval('CATERING_MODES'));
+    if (values.some(v => known.indexOf(v) === -1))
+      bad('the control offers a split the platform does not know: ' + values);
+    else ok('every offered split is one of the four A16.11 modes');
+
+    /* Re-read the control between saves: the detail pane is rebuilt on
+       every render, so a reference held across one is a detached node
+       and the second save would silently write nothing. */
+    const setMode = m => { d.getElementById('cm-mode-WS-2602').value = m; w.saveCateringMode('WS-2602'); };
+
+    setMode('host_covers');
+    if (S('WS-2602').cateringMode !== 'host_covers') bad('host_covers did not save');
+    else ok('the host can say they carry the cost');
+    if (w.eval('cateringCharges')(S('WS-2602'))) bad('host_covers must charge nobody');
+    else ok('host_covers charges nobody — nothing to consent to');
+
+    setMode('split_by_products');
+    if (!w.eval('cateringCharges')(S('WS-2602'))) bad('split_by_products must charge the exhibitors');
+    else ok('split_by_products charges the exhibitors');
+  }
+}
+/* WS-2605 runs on the host's own premises, so there is no venue total
+   to divide — the option must be ABSENT rather than offered and then
+   refused. Measured on a show that really has no total (C7). */
+{
+  w.openShowDetail('WS-2605');
+  const s5 = S('WS-2605');
+  if (s5.cateringTotal) bad('WS-2605 must ship without a venue total for this check to mean anything');
+  const sel5 = d.getElementById('cm-mode-WS-2605');
+  if (!sel5) bad('no cost-split control on the own-premises show');
+  else if ([...sel5.options].some(o => o.value === 'split_by_products'))
+    bad('a split by wines is offered with no total to divide');
+  else ok('with no venue total, the divide-the-total split is absent, not offered');
+  /* And the handler refuses it too — the option list is the courtesy,
+     the guard is the rule (B12). */
+  w.eval("(function(){var e=document.createElement('select');e.id='cm-mode-WS-2605';" +
+         "e.innerHTML='<option value=\"split_by_products\" selected></option>';" +
+         "document.getElementById('cm-mode-WS-2605').replaceWith(e);})()");
+  w.saveCateringMode('WS-2605');
+  if (S('WS-2605').cateringMode === 'split_by_products')
+    bad('the handler accepted a split by wines with nothing to divide');
+  else ok('the handler refuses it as well, not only the option list');
+}
+/* The venue is never party to the split (A16.11). */
+{
+  w.showWineShows('retail','current');
+  w.openShowDetail('WS-2604');
+  const seen = paneText('tshow');
+  const leaked = Object.keys(w.eval('CATERING_MODES')).filter(m => seen.includes(w.eval('CATERING_MODES')[m]));
+  if (leaked.length) bad('the venue is shown the host\'s cost split: ' + leaked.join(', '));
+  else ok('the venue never reads how the host splits the cost');
+}
+
 console.log(fail ? `\n✗ ${fail} failure(s)` : '\n✓ all checks passed');
 process.exit(fail ? 1 : 0);

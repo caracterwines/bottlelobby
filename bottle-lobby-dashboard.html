@@ -12040,6 +12040,111 @@ function hostVenueBox(s) {
   '</div></div>';
 }
 
+/* ── A16.11 step 3: how the cost reaches the exhibitors ──────────
+   ONE FIELD, and the host's decision alone — the venue is never party
+   to it and never learns what a producer paid. The four modes are the
+   spec's, not a menu invented here, and two of them mean nobody is
+   charged: `host_covers` (there is a cost and the host carries it) and
+   `free` (no contribution arises at all). That distinction is kept
+   because it is the host's own commercial reading of the same fact,
+   and because a checklist that collapses them would tell a host who
+   chose "I'll carry it" that they had chosen nothing.
+
+   Dispatching the contributions and collecting the consents is A16.11
+   steps 4–6 and is NOT built here. What this field does today is make
+   the publish checklist answerable: a mode that charges nobody has no
+   consents outstanding, and a mode that charges somebody names who is
+   still missing. */
+const CATERING_MODES = {
+  host_covers:        'I carry the cost — no contribution is charged',
+  free:               'No contribution arises at all',
+  fixed_per_product:  'A fixed rate per wine, the same for everyone',
+  split_by_products:  'The venue\'s total, divided by the number of wines'
+};
+/* Whether a mode charges the exhibitors. Everything the checklist and
+   the consent derivation ask goes through this one answer. */
+function cateringCharges(show) {
+  return show.cateringMode === 'fixed_per_product' ||
+         show.cateringMode === 'split_by_products';
+}
+/* `split_by_products` divides the venue's total, so without a total
+   there is nothing to divide — the option is absent rather than
+   offered and then refused (A16.14d: no empty categories). */
+function cateringModeAvailable(show, mode) {
+  return mode !== 'split_by_products' || show.cateringTotal > 0;
+}
+function hostCateringBox(s) {
+  const mode = s.cateringMode || '';
+  const opts = Object.keys(CATERING_MODES)
+    .filter(m => cateringModeAvailable(s, m) || m === mode)
+    .map(m => '<option value="' + m + '"' + (m === mode ? ' selected' : '') + '>' +
+      CATERING_MODES[m] + '</option>').join('');
+  const rate = mode === 'fixed_per_product'
+    ? '<div class="form-row" style="margin-top:0.7rem"><div class="form-field">' +
+        '<div class="field-label">Rate per wine (€)</div>' +
+        '<input class="field-input" id="cm-rate-' + s.id + '" type="number" min="0" step="10" value="' +
+          (s.cateringRatePerProduct || '') + '" placeholder="e.g. 250">' +
+      '</div></div>'
+    : '';
+  /* What the host is shown about their own position. Under
+     `split_by_products` the coverage is zero until they absorb a gap;
+     under a fixed rate it swings with every dropout, which is exactly
+     why the exhibitors are never shown it (A16.11). */
+  const total = s.cateringTotal || 0;
+  const wines = showProductCount(s);
+  let effect = '';
+  if (mode === 'split_by_products' && wines)
+    effect = 'Today that is ' + eur(Math.round(total / wines)) + ' per exhibited wine, over ' + wines +
+             ' confirmed wine(s). It moves with the line-up until the quotes go out.';
+  else if (mode === 'fixed_per_product' && s.cateringRatePerProduct)
+    effect = wines + ' confirmed wine(s) × ' + eur(s.cateringRatePerProduct) + ' = ' +
+             eur(wines * s.cateringRatePerProduct) + ' recovered, against ' + eur(total) +
+             ' quoted. The difference is yours either way — and no exhibitor is ever shown it.';
+  else if (mode === 'host_covers' || mode === 'free')
+    effect = 'Nobody is charged, so there is no contribution to consent to and nothing to settle before release.';
+
+  return '<div class="odt-box"><div class="odt-box-head">How the Cost Is Split' +
+    '<span class="right"><button class="btn-sm btn-gold" onclick="saveCateringMode(\'' + s.id + '\')">Save</button></span>' +
+    '</div><div class="odt-box-body">' +
+    '<div class="edit-section-sub" style="margin:0 0 0.9rem">Your decision alone. ' +
+      (s.venueEntity ? s.venueEntity + ' quotes one price and never learns what a producer paid.'
+                     : 'The show runs on your own premises, so what it costs you is your own book.') +
+    '</div>' +
+    '<div class="form-row"><div class="form-field"><div class="field-label">Cost split</div>' +
+      '<select class="field-input" id="cm-mode-' + s.id + '" onchange="saveCateringMode(\'' + s.id + '\')">' +
+        '<option value="">— not decided yet —</option>' + opts +
+      '</select></div></div>' + rate +
+    (effect ? '<div class="ord-track" style="margin-top:0.9rem">' + effect + '</div>' : '') +
+    '<div class="edit-section-sub" style="margin:0.9rem 0 0">Sending the quotes out and collecting each ' +
+      'producer\'s consent is the rest of the settlement (A16.11 steps 4–6) and is built in its own pass. ' +
+      'Until then a charging split cannot be released — the checklist says who is missing.</div>' +
+  '</div></div>';
+}
+function saveCateringMode(id) {
+  const s = actionShow(id); if (!s) return;
+  const sel  = document.getElementById('cm-mode-' + id);
+  const rEl  = document.getElementById('cm-rate-' + id);
+  if (!sel) { actionSay('The cost split is not on screen'); return; }
+  const mode = sel.value;
+  if (mode && !CATERING_MODES.hasOwnProperty(mode)) { actionSay('That is not a cost split this platform knows'); return; }
+  if (mode && !cateringModeAvailable(s, mode)) { actionSay('A split by wines needs the venue\'s total first'); return; }
+  const rate = rEl ? parseFloat(rEl.value) : NaN;
+  if (mode === 'fixed_per_product' && rEl && rEl.value !== '' && !(rate >= 0)) {
+    actionSay('A rate per wine cannot be negative'); return;
+  }
+  const before = s.cateringMode || '', beforeRate = s.cateringRatePerProduct;
+  if (mode) s.cateringMode = mode; else delete s.cateringMode;
+  if (mode === 'fixed_per_product' && rate >= 0) s.cateringRatePerProduct = rate;
+  else if (mode !== 'fixed_per_product') delete s.cateringRatePerProduct;
+  if (before === (s.cateringMode || '') && beforeRate === s.cateringRatePerProduct) { refreshShows(); return; }
+  logShow(s, s.leadHost, s.cateringMode
+    ? 'Set the cost split: ' + CATERING_MODES[s.cateringMode] +
+      (s.cateringMode === 'fixed_per_product' && s.cateringRatePerProduct ? ' (' + eur(s.cateringRatePerProduct) + ' per wine)' : '')
+    : 'Cleared the cost split');
+  refreshShows();
+  showToast(s.cateringMode ? '✓ Cost split saved' : 'Cost split cleared');
+}
+
 function venueRequestBox(s) {
   let head, body, acts = '';
   if (s.venueStatus === 'requested') {
@@ -12776,6 +12881,7 @@ function renderShowDetail(id) {
         (isVenue ? myOrderListBox(role, s) : '') +
         (isHost  ? hostReachBox(s)    : '') +
         (isHost  ? hostVenueBox(s)    : '') +
+        (isHost  ? hostCateringBox(s) : '') +
         exhActions + (cfg.side === 'producer' ? producerHeldBox(role, s) : '') +
         (isHost ? hostApplicationBox(s) : '') +
         hostProposalBox + readinessBox + gateBox +

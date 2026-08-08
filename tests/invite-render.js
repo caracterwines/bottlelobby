@@ -29,7 +29,10 @@ let fail = 0; const bad = m => { console.log('  ✗ ' + m); fail++; }; const ok 
 function exhibitorPaneText() {
   const boxes = [...d.querySelectorAll('#dshow-detail-pane .odt-box')];
   const box = boxes.find(b => b.querySelector('.odt-box-head') &&
-                              b.querySelector('.odt-box-head').textContent.includes('Exhibitors'));
+                              /* startsWith, not includes: a second box whose HEAD merely
+                                 mentions exhibitors would otherwise be matched first and
+                                 this file would report the wrong pane as empty. */
+                              b.querySelector('.odt-box-head').textContent.trim().startsWith('Exhibitors'));
   return box ? box.querySelector('.odt-box-body').textContent : '(box not found)';
 }
 
