@@ -4,7 +4,7 @@
 > Dateiliste, Dateianzahl und Aenderungshistorie stehen in der Git-Historie — nicht hier.
 > Dauerhafte Regeln stehen in `BOTTLE-LOBBY-SPEC.md`, kurze Invarianten in `CLAUDE.md` — nicht hier.
 
-**Letzte Aktualisierung:** 7. August 2026
+**Letzte Aktualisierung:** 8. August 2026
 
 ---
 
@@ -31,7 +31,7 @@ Kein Build-Command, Publish-Directory = Repo-Root.
 > Dauerhafte Regeln gehoeren in `BOTTLE-LOBBY-SPEC.md`, kurze Invarianten in
 > `CLAUDE.md`. Findet sich hier eine Regel, ist sie am falschen Ort.
 
-**Baum sauber, `main` gepusht, 22 Harnesses gruen** (nachgezaehlt 07.08. — `own-label-grants.js` kam mit Durchgang 3 dazu, `own-label-program.js` mit dem A17-Fixture-Durchgang). **`BLStore.VERSION` steht auf 5.**
+**Baum sauber, `main` gepusht, 25 Harnesses gruen** (nachgezaehlt 08.08. — `shows-reach.js` und `shows-release.js` kamen mit den Durchgaengen 5 und 6 dazu, `member-events.js` mit Durchgang 7). **`BLStore.VERSION` steht auf 5** — Durchgang 7 hat ihn NICHT gebraucht, siehe den Block zu Durchgang 7 unten.
 
 ### Womit eine Sitzung anfaengt
 
@@ -91,7 +91,7 @@ Wahrheiten stabilisieren, dann nach aussen bauen.
 | 4 | ~~**Saparavi-Fixtures**~~ | **Gebaut am 06.08. als D2D-Grundlage** — siehe den Block unter der Tabelle |
 | 5 | **Shows: Reichweite + Recruiting** | `reach[]`, `applications_open`, Deadline, Bewerbungsablauf ueber die vorhandenen A16.9-Status, Discover-Unteransicht, Mitgliederstufe |
 | 6 | **Shows: Final Review + Freigabe** | Veroeffentlichungs-Checkliste inkl. Contributions, gespeicherter Review, Reset bei materieller Aenderung, WS-6/WS-7 |
-| 7 | **Member Events, Basis + Cockpit (Distributor)** | `events`-Erweiterung, `event_participants`, Lebenszyklus, Sichtbarkeit, Cockpit, Nav *Client Events → My Events*, Minimalmodell externe Messen, Retails getippte Event-Flaechen aus Daten gerendert. **Der groesste Durchgang** |
+| 7 | ~~**Member Events, Basis + Cockpit (Distributor)**~~ | **Gebaut am 08.08.** — siehe den Block unter der Tabelle. Externe Messen (`event_kind:'external_fair'`) sind bewusst NICHT dabei |
 | 8 | **Member Events, Ausrollen** | Cockpits Winery/Restaurant/Retail + deren Events-Sektionen |
 | 9 | **Wine Guide → Events** | Verzeichnis-Tab, Filter nur ueber echte Daten, Karten wiederverwendet, die drei oeffentlichen Flaechen gleichgezogen |
 | 10 | **Kampagnen + Benachrichtigungen** | Ankuendigung/Erinnerung getrennt, Empfaenger-Snapshot, C9-Bedingungen |
@@ -177,6 +177,91 @@ Funktionen aufrufen, `transferSize` vorher lesen (C7).
 > · **Cantina Rossis Winery-Flaechen** rendern ihre elf Portfoliozeilen weiter
 >   getippt statt aus dem Buch; die Zeilen tragen seit diesem Durchgang
 >   `data-product`, der Vollrender ist damit vorbereitet, aber nicht gebaut.
+
+> **Durchgang 7 ist gebaut (08.08.), drei einzeln committete Schritte, ein
+> Push.** Was Git nicht selbst sagt:
+>
+> - **`reachAdmits()` nimmt jetzt einen HOST statt einer Show.** Es hat immer nur
+>   `show.leadHost` gelesen, also ist die Weitung eine Umbenennung — und sie ist
+>   der Grund, warum fuer die zweite Art **keine zweite Reichweiten-Arithmetik**
+>   entstanden ist. Die Taxonomie aus A16.14b wird referenziert, nicht kopiert.
+> - **`eventVisibleTo()` ist eine Schwesterfunktion und kein Flag, weil das
+>   dritte Tor INVERTIERT ist.** WS-3 laesst die Reichweite ab `published`
+>   fallen, weil Bottle Lobby die Show auf die offene Website gestellt hat. Beim
+>   Member Event ist `published` der Akt des Hosts — die gespeicherte Reichweite
+>   entscheidet weiter. Beides in einen Zweig zu falten haette zwei
+>   entgegengesetzte Antworten in eine Bedingung gelegt.
+> - **Moderation schreibt KEINE `reviews`-Zeile**, und das ist die Entscheidung,
+>   nicht das Weglassen einer Zeile: das Register traegt Release-Semantik
+>   (WS-6), eine Sperre darin waere ein Eintrag im Freigaberegister fuer etwas,
+>   das nie freigegeben wurde. Das Delisting liegt mit Grund auf dem Event
+>   selbst (`moderation`) und im eigenen Log.
+> - **Drei Harnesses haben echte Luecken gefunden** und wurden dort geweitet, wo
+>   die Regel wirklich verschoben ist: die Discover-Zaehlung leitet jetzt ueber
+>   BEIDE Kartensorten ab statt ueber eine · der neue transiente Zustand
+>   (`activeEventRole`, `eventState`) ist mit Begruendung klassifiziert ·
+>   `location:` ist in `tests/stakeholders.js` **neben einem Haus-Schluessel**
+>   verboten statt als Teilstring. Die Adresse eines Abends ist keine Kopie
+>   eines Hauses; ein flaches Verbot haette das Event-Record gezwungen, ein
+>   zweites Wort fuer „wo das stattfindet" zu erfinden.
+> - **C8 gemessen, nicht gelesen:** die 24 vorhandenen Sammlungen hashen
+>   identisch, `memberEvents` und `eventSeq` sind neu. Ein Snapshot im Format
+>   des Vorstands wurde eingespielt und kam mit
+>   `discarded — memberEvents (missing), eventSeq (missing)` zurueck. **Kein
+>   VERSION-Bump noetig** — eine neue Registrierung verwirft Alt-Snapshots
+>   selbst. Das gilt nur, solange keine Zeile in eine BESTEHENDE Sammlung
+>   kommt; dann greift die Regel aus C8 wieder.
+>
+> **Benannte Reste aus Durchgang 7, jeder mit Ziel-Durchgang:**
+> · **Durchgang 8** — Retails toter Nav-Eintrag *My Events* bleibt tot, bis das
+>   Retail-Cockpit steht; die zwei Retail-Dashboard-Flaechen (KPI + Widget)
+>   rendern seit 08.08. aus `memberEvents` und sind damit erledigt.
+> · **Durchgang 8** — die zweite getippte *Cantina Rossi Tasting* sitzt im
+>   **Wine-Shows-Widget** des Distributor-Dashboards (`show-card`, „Sept 12 ·
+>   Munich"). A16.8 nennt sie, aber sie ist eine **Wine-Show-Flaeche**: sie aus
+>   `wineShows` zu rendern ist kein Event-Umbau und war nicht im Zuschnitt.
+> · **Durchgang 9** — Bewerbungen von der Bewerberseite. `applyToEvent()` steht
+>   und ist getestet; es gibt nur noch keine Oberflaeche, von der aus ein Winzer
+>   sich bewirbt, weil dessen Cockpit Durchgang 8 ist.
+> · **Durchgang 10** — `event_campaigns` und damit **ME-4** sind nicht gebaut,
+>   und `tests/member-events.js` sagt das ausdruecklich, statt eine Pruefung
+>   ueber ein nicht existierendes Feature zu fuehren.
+> · **Externe Messen** (`event_kind:'external_fair'`, Teilnahmen, Standnummern)
+>   sind nicht gebaut. A16.8 beschreibt sie als Minimalmodell; sie haengen an
+>   keinem der oben Genannten und bekommen einen eigenen kleinen Durchgang,
+>   wenn ein Anlass dafuer da ist.
+
+---
+
+### Arbeitsorganisation — Serges Vorgabe vom 08.08.
+
+Dauerhafte Konvention, nicht der Stand einer Sitzung. Sie steht hier und nicht
+in der Spec, weil sie regelt, **wie** gearbeitet wird, nicht was gilt.
+
+1. **`/clear` vor jedem Durchgang.** Ein Durchgang faengt mit leerem Kontext an
+   und mit einem Auftrag, der seinen Zuschnitt selbst nennt. Was aus dem
+   Zuschnitt herausfaellt, bekommt einen **benannten Ziel-Durchgang**, nie ein
+   „spaeter".
+2. **Gezielt messen, nicht neu vermessen.** Am Anfang werden **nur die
+   Unbekannten** gemessen, kompakt; was in Spec oder HANDOFF steht, wird
+   gelesen und nicht nachgezaehlt. **Ein Widerspruch stoppt den Teilschritt** —
+   mit einem kurzen, entscheidungsreifen Befund statt einer Umgehung.
+3. **Lokale Commits, ein Sammel-Push.** Atomar committen, waehrend gebaut wird;
+   **ein** Push am Ende. Ein Zwischen-Push als Wiederherstellungspunkt ist
+   erlaubt, wenn ein Durchgang lang ist.
+4. **Testumfang: `node tests/run-all.js` einmal am Ende, vollstaendig gruen.**
+   Eine neue Zusicherung geht in denselben Commit wie das, was sie motiviert
+   hat (C7). Jede Invariante mit **`expectRed`-Gegenprobe** — eine Pruefung, die
+   unter ihrer eigenen Gegenmutation gruen bleibt, ist keine.
+5. **Gezielte Browser-Abnahme am Ende**, nicht nach jedem Schritt: die
+   Hauptpfade des Durchgangs, geklickt statt aufgerufen, plus eine Stichprobe
+   auf etwas, das unveraendert geblieben sein muss.
+6. **Ein kompakter Abschlussbericht.** Finaler SHA · Commit-Liste kurz ·
+   zuschnittsaendernde Messbefunde · Testergebnis · Browser-Ergebnis · offene
+   Restpunkte · C8-Ergebnis · Spec-Hinweis. Im Sendevermerk ausserdem **Modell
+   und Denkaufwand**.
+
+---
 
 **Nicht Teil dieser Konsolidierung:** das **Matchmaking-Cockpit** (A8, Seek/Offer).
 Eigener vermessener Durchgang danach; bis dahin bleibt `matchmaking` als
