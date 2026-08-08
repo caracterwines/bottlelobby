@@ -611,22 +611,24 @@ function showApplicationsLine(show) {
    what decides between the anonymised and the member level; omitting
    it is the strangers' answer, which is what the public pages want.
    Returns how many were rendered. */
-function mountShowCards(host, list, entity, viewer) {
-  if (!host) return 0;
-  host.innerHTML = list.map(function (s) {
-    const level = publicLevelFor(s, viewer);
-    const id = 'ws-listing-' + s.id + (entity ? '-' + entity.replace(/\W+/g, '') : '');
-    const role = entity ? publicParticipation(s, entity) : null;
-    return '<div class="ws-cell">' +
-      publicShowTeaser(s, level, role).replace('<button type="button"',
-        '<button type="button" aria-expanded="false" aria-controls="' + id + '"') +
-      '<div class="ws-listing" id="' + id + '">' + publicShowCard(s, level) + '</div>' +
-    '</div>';
-  }).join('');
-
-  /* One handler per card rather than one on the container: the cards
-     are buttons, and a delegated listener would have to re-derive
-     which one was hit. */
+/* The cell and its wiring, factored so the derived directory below can
+   DELEGATE to them rather than carry a second copy of the show cell —
+   a fourth renderer of the A16.6 promise is always the one that
+   discloses something the others do not. */
+function showCellHtml(s, entity, viewer) {
+  const level = publicLevelFor(s, viewer);
+  const id = 'ws-listing-' + s.id + (entity ? '-' + entity.replace(/\W+/g, '') : '');
+  const role = entity ? publicParticipation(s, entity) : null;
+  return '<div class="ws-cell">' +
+    publicShowTeaser(s, level, role).replace('<button type="button"',
+      '<button type="button" aria-expanded="false" aria-controls="' + id + '"') +
+    '<div class="ws-listing" id="' + id + '">' + publicShowCard(s, level) + '</div>' +
+  '</div>';
+}
+/* One handler per card rather than one on the container: the cards
+   are buttons, and a delegated listener would have to re-derive
+   which one was hit. */
+function wireShowCells(host) {
   Array.prototype.forEach.call(host.querySelectorAll('.ws-teaser'), function (btn) {
     btn.addEventListener('click', function () {
       const panel = btn.nextElementSibling;
@@ -635,6 +637,11 @@ function mountShowCards(host, list, entity, viewer) {
       btn.querySelector('.ws-teaser-more').textContent = open ? 'Close ↑' : 'Full listing →';
     });
   });
+}
+function mountShowCards(host, list, entity, viewer) {
+  if (!host) return 0;
+  host.innerHTML = list.map(function (s) { return showCellHtml(s, entity, viewer); }).join('');
+  wireShowCells(host);
   return list.length;
 }
 
@@ -741,10 +748,41 @@ function memberEventCard(ev) {
    mechanism protects an invited producer at a show under review, and
    an event under review does not exist. Returns how many were
    rendered. */
+function eventCellHtml(ev) {
+  return '<div class="me-cell" data-event-id="' + ev.id + '">' + memberEventCard(ev) + '</div>';
+}
 function mountEventCards(host, list) {
   if (!host) return 0;
-  host.innerHTML = list.map(function (ev) {
-    return '<div class="me-cell" data-event-id="' + ev.id + '">' + memberEventCard(ev) + '</div>';
-  }).join('');
+  host.innerHTML = list.map(eventCellHtml).join('');
   return list.length;
+}
+
+/* ══ THE DERIVED DIRECTORY (A16.14d, ME-1) ═══════════════════════ */
+/* Wine Guide → Events: ONE mixed, chronological list over the two
+   record kinds. It is a COMPOSITION, not a store — the entries are
+   the same records publicShows() and visibleEvents() answer with, in
+   one date order, and the cells delegate to the two existing
+   renderers. Nothing here holds a copy, invents a field or gives the
+   two kinds one card (ME-1, ME-3).
+
+   Upcoming sorts soonest first, past most recent first — the shape
+   both source lists already have, applied across the join so the
+   directory cannot disagree with itself between two card sorts. */
+function directoryEntries(shows, events, past, viewer) {
+  const out = publicShows(shows || [], past, viewer)
+    .map(function (rec) { return { kind: 'show', rec: rec }; })
+    .concat(visibleEvents(events || [], past, viewer)
+    .map(function (rec) { return { kind: 'event', rec: rec }; }));
+  return out.sort(function (a, b) {
+    return past ? blDateValue(b.rec.date) - blDateValue(a.rec.date)
+                : blDateValue(a.rec.date) - blDateValue(b.rec.date);
+  });
+}
+function mountDirectory(host, entries, viewer) {
+  if (!host) return 0;
+  host.innerHTML = entries.map(function (en) {
+    return en.kind === 'show' ? showCellHtml(en.rec, null, viewer) : eventCellHtml(en.rec);
+  }).join('');
+  wireShowCells(host);
+  return entries.length;
 }

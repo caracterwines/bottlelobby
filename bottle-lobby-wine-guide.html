@@ -221,7 +221,19 @@ h1 em { font-style: italic; color: var(--gold); }
     .floating-cta { right: 1.2rem; bottom: 1.2rem; padding: 0.45rem; gap: 0.5rem; }
     .floating-cta .btn { padding: 0.5rem 1rem; font-size: 0.65rem; }
   }
+/* ── Events tab (A16.14d) — layout only; the cards themselves come
+   from assets/bottle-lobby-public-shows.css, shared with every other
+   public surface. */
+.guide-events-wrap { max-width: 1200px; margin: 0 auto; padding: 2.2rem 2rem 3rem; }
+.events-join-note { font-size: 0.78rem; color: rgba(247,243,238,0.65); border: 1px solid var(--line);
+  border-left: 2px solid var(--gold); padding: 0.9rem 1.1rem; margin-bottom: 1.4rem; }
+.events-join-note a { color: var(--gold); }
+.events-section-head { display: flex; align-items: center; gap: 0.8rem; font-size: 0.62rem;
+  letter-spacing: 0.25em; text-transform: uppercase; color: var(--dim); margin: 1.8rem 0 1rem; }
+.events-section-head::after { content: ''; flex: 1; height: 1px; background: var(--line); }
+.events-empty { font-size: 0.8rem; color: var(--dim); padding: 1rem 0; }
 </style>
+<link rel="stylesheet" href="assets/bottle-lobby-public-shows.css?v=9c6ae562">
 </head>
 <body>
 
@@ -274,6 +286,7 @@ h1 em { font-style: italic; color: var(--gold); }
     <button class="guide-tab" id="gtab-distributors" onclick="switchGuideTab('distributors',this)">🚚 Distributors</button>
     <button class="guide-tab" id="gtab-restaurants" onclick="switchGuideTab('restaurants',this)">🍽 Restaurants</button>
     <button class="guide-tab" id="gtab-retailers" onclick="switchGuideTab('retailers',this)">🏪 Retailers</button>
+    <button class="guide-tab" id="gtab-events" onclick="switchGuideTab('events',this)">📅 Events</button>
   </div>
 </div>
 
@@ -381,6 +394,35 @@ h1 em { font-style: italic; color: var(--gold); }
   </div>
 </div>
 
+<!-- EVENTS PANEL — Wine Guide → Events (A16.14d): the full derived
+     directory over Wine Shows and member events. Everything here
+     renders live from assets/bottle-lobby-data.js through the same
+     renderers every other public surface uses — no show and no event
+     is typed onto this page (ME-1), and the two kinds keep their own
+     cards and their own promises (ME-3). -->
+<div class="guide-panel" id="gpanel-events">
+  <div class="guide-events-wrap">
+    <div class="network-note">✦ <strong>How this works:</strong> one directory, two kinds of record. <strong>Wine Shows</strong> are the Bottle&nbsp;Lobby format — reviewed and released by Bottle&nbsp;Lobby before anything is promised. <strong>Member Events</strong> are members' own occasions, published by their hosts; Bottle&nbsp;Lobby neither reviews nor releases them and gives no guarantee for them. Both render live from the same records the member dashboards read — nothing is copied onto this page.</div>
+    <div class="events-join-note">This is the public view: it lists only what hosts chose to make public. <strong>Members see more</strong> — the shows and events their partnerships, community and each host's chosen reach unlock. <a href="bottle-lobby-contact.html">Join Bottle&nbsp;Lobby</a> to see the rest.</div>
+    <div class="results-toolbar">
+      <div><div class="results-count" id="count-events"></div></div>
+      <div style="display:flex;gap:0.6rem;flex-wrap:wrap">
+        <select class="sort-select" id="filter-events-kind" onchange="renderEventsDirectory()"></select>
+        <select class="sort-select" id="filter-events-city" onchange="renderEventsDirectory()"></select>
+      </div>
+    </div>
+    <div class="events-section-head">Coming up</div>
+    <div class="ws-grid" id="events-upcoming"></div>
+    <div class="events-empty" id="events-upcoming-empty" style="display:none">Nothing upcoming matches those filters.</div>
+    <div id="events-past-wrap">
+      <div class="events-section-head">Previously</div>
+      <div class="ws-grid" id="events-past"></div>
+    </div>
+  </div>
+</div>
+
+<script src="assets/bottle-lobby-data.js?v=7f5648ae"></script>
+<script src="assets/bottle-lobby-public-shows.js?v=4ccc01f7"></script>
 <script>
 /* ══════════════════════════════════════════════════
    DATA — this is the "single source of truth" every
@@ -944,9 +986,62 @@ function initGuide() {
 }
 initGuide();
 
-// Deep link: #wineries or #distributors opens that tab directly
+/* ══════════════════════════════════════════════════════════════════
+   EVENTS — THE DERIVED DIRECTORY (A16.14d, ME-1)
+   ------------------------------------------------------------------
+   The one tab on this page that does NOT read the page's own arrays:
+   `wineShows` and `memberEvents` come from assets/bottle-lobby-data.js,
+   the visibility answers from publicShows()/visibleEvents(), and the
+   cells from the shared renderers — the same records and the same
+   card code the dashboards and the Wine Shows page use. This page
+   adds a viewer and two filters, nothing else.
+
+   THE VIEWER IS THE ANONYMOUS ONE (SHOW_ANON). No relation filter, no
+   member level: a stranger gets the strangers' answer, and the join
+   note above the list says in words that members see more.
+
+   FILTERS ONLY WHERE REAL DATA COVERS THEM (A16.14d): kind and city,
+   both read off the records this viewer can actually see — the city
+   list can never offer a city with nothing behind it, and the kind
+   filter only exists while both kinds are present. */
+function eventsDirEntries(past) {
+  return directoryEntries(wineShows, memberEvents, past, SHOW_ANON);
+}
+function renderEventsDirectory() {
+  const kind = document.getElementById('filter-events-kind').value;
+  const city = document.getElementById('filter-events-city').value;
+  const match = en => (!kind || en.kind === kind) && (!city || (en.rec.city || '') === city);
+  const up   = eventsDirEntries(false).filter(match);
+  const past = eventsDirEntries(true).filter(match);
+  mountDirectory(document.getElementById('events-upcoming'), up, SHOW_ANON);
+  mountDirectory(document.getElementById('events-past'), past, SHOW_ANON);
+  document.getElementById('events-upcoming-empty').style.display = up.length ? 'none' : '';
+  document.getElementById('events-past-wrap').style.display = past.length ? '' : 'none';
+  const n = up.length + past.length;
+  document.getElementById('count-events').innerHTML =
+    `<strong>${n}</strong> ${n === 1 ? 'listing' : 'listings'} — upcoming and past, soonest first`;
+}
+function initEventsDirectory() {
+  const all = eventsDirEntries(false).concat(eventsDirEntries(true));
+  const kindSel = document.getElementById('filter-events-kind');
+  const kinds = [...new Set(all.map(en => en.kind))];
+  kindSel.innerHTML = '<option value="">Shows & member events</option>' +
+    (kinds.includes('show') ? '<option value="show">Wine Shows</option>' : '') +
+    (kinds.includes('event') ? '<option value="event">Member Events</option>' : '');
+  /* One kind on offer is no choice — the filter hides rather than
+     standing there with a single answer (no empty categories). */
+  kindSel.style.display = kinds.length > 1 ? '' : 'none';
+  const cities = [...new Set(all.map(en => en.rec.city).filter(Boolean))].sort();
+  document.getElementById('filter-events-city').innerHTML =
+    '<option value="">Every city</option>' +
+    cities.map(c => `<option value="${c}">${c}</option>`).join('');
+  renderEventsDirectory();
+}
+initEventsDirectory();
+
+// Deep link: #wineries, #distributors or #events opens that tab directly
 const guideHash = window.location.hash.replace('#','');
-if (['wines','wineries','distributors','restaurants','retailers'].includes(guideHash)) {
+if (['wines','wineries','distributors','restaurants','retailers','events'].includes(guideHash)) {
   switchGuideTab(guideHash, document.getElementById('gtab-'+guideHash));
 }
 
