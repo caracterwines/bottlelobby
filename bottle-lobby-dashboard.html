@@ -4024,7 +4024,7 @@ With an annual production capacity of over 1.2 million bottles, Cantina Rossi is
      also switches persistence off for every harness. See tests/README.
 -->
 <script src="assets/bottle-lobby-store.js?v=a83615c9"></script>
-<script src="assets/bottle-lobby-data.js?v=7f5648ae"></script>
+<script src="assets/bottle-lobby-data.js?v=6e161d3b"></script>
 <script src="assets/bottle-lobby-public-shows.js?v=4ccc01f7"></script>
 
 <script>
@@ -13245,6 +13245,7 @@ function renderShowDetail(id) {
           '<div class="edit-section-sub" style="margin:1rem 0 0">Every wine here is a reference to the producer\'s own ' +
           'record — the show never holds a copy.</div>' +
         '</div></div>' +
+        (isHost ? campaignBox(role, 'show', s) : '') +
         (isHost ? orderListBook(s) : '') +
         (isHost ? closingBox(s) : '') +
         (isHost ? attendeeBook(s) : '') +
@@ -15212,6 +15213,9 @@ function renderEventDetail(role, ev) {
           (applied.length ? '<div style="margin-top:0.8rem">' + applied.map(partRow).join('') + '</div>' : '') +
           (asked.length   ? '<div style="margin-top:0.8rem">' + asked.map(partRow).join('') + '</div>' : '') +
         '</div></div>' : '') +
+        /* Campaigns are a host act like publishing — absent, not
+           disabled, for everybody else (A16.14e). */
+        (host ? campaignBox(role, 'event', ev) : '') +
         /* WHO IS ON IT, for both readers — but only the houses that are
            actually on it. The host's worklist above (who has applied,
            who has not answered) is his alone: a pending application is
@@ -15440,6 +15444,369 @@ function redrawAll() {
      redrawn last — and the badges of the three roles whose view is
      closed are refreshed with them (C9). */
   refreshNotifications();
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   EVENT CAMPAIGNS (A16.14e, ME-4) — one mechanism, two carrier kinds
+
+   A campaign is a HOST addressing houses, and everything here is
+   built so the wrong audience is not merely filtered out but
+   structurally unreachable: the resolvers take a host and read only
+   his own two books (incoming follows, own partnerships). No
+   parameter names a third party's graph, a role group or a reach
+   level — the reach taxonomy gates FINDING and never feeds an
+   audience (A16.14b, D43).
+
+   What a send stores is a SNAPSHOT: deduplicated, suppressions
+   subtracted, every name checked against the carrier's own
+   visibility. The list is internal — every surface shows the count,
+   never the names. A send changes nothing else: no invitation,
+   participation, RSVP, application, order or partnership arises from
+   one (A16.14e, ME-2).
+══════════════════════════════════════════════════════════════════ */
+
+/* The id counter persists with the collection, like eventSeq: without
+   it a reload would hand out CMP- ids that already exist. */
+let campaignSeq = 4001;
+function nextCampaignId() { return 'CMP-' + (++campaignSeq); }
+
+/* The incoming half of the A7 graph: who follows `entity`. The edge's
+   `winery` field holds the FOLLOWED account of any type — the recorded
+   naming debt at the graph declaration, read here, not repaired here. */
+function fansOf(entity) {
+  const seen = {}, out = [];
+  wineFollowGraph.forEach(function (f) {
+    if (f.winery !== entity || seen[f.follower]) return;
+    seen[f.follower] = 1; out.push(f.follower);
+  });
+  return out;
+}
+
+/* Every `partnerships` row IS an active partnership — activation is
+   the manual Bottle Lobby confirmation (invariant 6), and pending
+   requests live in their own request books, never here. */
+function activePartnersOf(entity) {
+  const seen = {}, out = [];
+  partnershipsOf(entity).forEach(function (p) {
+    const other = partnerSide(p, entity);
+    if (!seen[other]) { seen[other] = 1; out.push(other); }
+  });
+  return out;
+}
+
+/* ── S1: ONE resolver over the suppression record (A16.14e) ──────
+   Three kinds — block · unsubscribe · preference — and deliberately
+   ONE reader for all of them: a second reader per kind would be three
+   chances to forget one. A row scopes itself: `sender` null means any
+   sender, `campaignKind` null means both kinds. */
+function suppressed(recipient, sender, campaignKind) {
+  return communicationSuppressions.some(function (s) {
+    if (s.recipient !== recipient) return false;
+    if (s.sender && s.sender !== sender) return false;
+    if (s.campaignKind && s.campaignKind !== campaignKind) return false;
+    return true;
+  });
+}
+
+/* The viewer a named house is, for the carrier visibility check. An
+   unknown house (a walk-in attendee) has no role and appears in no
+   book — it can still be admitted through its own row below. */
+function stakeholderViewer(name) {
+  const s = stakeholder(name);
+  return showViewer(name, s && !s.unknown ? s.type : null);
+}
+
+function campaignSubject(subjectType, subjectId) {
+  return subjectType === 'show'
+    ? wineShows.find(function (s) { return s.id === subjectId; })
+    : memberEvents.find(function (e) { return e.id === subjectId; });
+}
+function campaignHostOf(subjectType, subject) {
+  return subjectType === 'show' ? subject.leadHost : subject.host;
+}
+
+/* C9's visibility condition, per recipient. A house holding its OWN
+   row on the carrier reaches it through that relation — the
+   invitations surface — even where the directory would not admit it;
+   for everybody else the class-1 derivation decides, the same one the
+   directories use. Never a third answer to "may this reader find it". */
+function carrierRowOf(subjectType, subject, name) {
+  if (subjectType === 'show')
+    return (subject.exhibitors || []).some(function (x) { return x.producer === name; }) ||
+           (subject.attendees  || []).some(function (a) { return a.stakeholder === name; });
+  return (subject.participants || []).some(function (p) { return p.stakeholder === name; });
+}
+function carrierAdmitsRecipient(subjectType, subject, name) {
+  if (carrierRowOf(subjectType, subject, name)) return true;
+  const v = stakeholderViewer(name);
+  return subjectType === 'show' ? showVisibleTo(subject, v) : eventVisibleTo(subject, v);
+}
+
+/* Dedupe · minus the host · minus suppressions · minus everybody the
+   carrier itself would not show. The order matters only for reading:
+   each gate is independent and none widens. */
+function campaignAudienceFilter(subjectType, subject, names, kind) {
+  const host = campaignHostOf(subjectType, subject);
+  const seen = {}, out = [];
+  names.forEach(function (n) {
+    if (n === host || seen[n]) return;
+    seen[n] = 1;
+    if (suppressed(n, host, kind)) return;
+    if (!carrierAdmitsRecipient(subjectType, subject, n)) return;
+    out.push(n);
+  });
+  return out;
+}
+
+/* ── S2: the announcement audience — own fans, and nothing wider ──
+   Incoming edges only, optionally plus the host's own active
+   partners. The outgoing half of the graph (My Stars) is not an
+   audience: following somebody is not their consent to be addressed
+   (A7), and no foreign community is reachable from a function that
+   reads only the host's own books. */
+function announcementAudience(subjectType, subject, includePartners) {
+  const host = campaignHostOf(subjectType, subject);
+  let names = fansOf(host);
+  if (includePartners) names = names.concat(activePartnersOf(host));
+  return campaignAudienceFilter(subjectType, subject, names, 'announcement');
+}
+
+/* ── S3: the reminder audience never re-resolves a community ──────
+   Those already ON the carrier plus the open invitations, read off
+   the carrier's own rows. Excluded, and the exclusions are the rule:
+   applicants (`requested`/`applied` asked, nobody answered — a
+   reminder would treat the question as granted), the declined, the
+   withdrawn, no-shows, the host himself, and a venue without an
+   explicit participation row — providing the room is not being on
+   the guest list (A16.5 rule 4). */
+function reminderAudience(subjectType, subject) {
+  const names = [];
+  if (subjectType === 'show') {
+    (subject.exhibitors || []).forEach(function (x) {
+      if (x.status === 'confirmed' || x.status === 'invited') names.push(x.producer);
+    });
+    (subject.attendees || []).forEach(function (a) {
+      if (a.status === 'confirmed' || a.status === 'invited') names.push(a.stakeholder);
+    });
+  } else {
+    (subject.participants || []).forEach(function (p) {
+      if (p.role === 'host') return;
+      if (p.status === 'accepted' || p.status === 'confirmed' ||
+          p.status === 'sent' || p.status === 'viewed') names.push(p.stakeholder);
+    });
+  }
+  return campaignAudienceFilter(subjectType, subject, names, 'reminder');
+}
+
+/* ── S4: stage rules, computed, with the reason on the answer ─────
+   An announcement needs an upcoming, VISIBLE carrier — a show in
+   planning or published, a member event published or postponed and
+   not delisted. A reminder needs a carrier that is not over. Neither
+   is ever a substitute for a material-change consent (A16.2, WS-7). */
+const CAMPAIGN_SHOW_STAGES  = ['planning', 'published'];
+const CAMPAIGN_EVENT_STATUS = ['published', 'postponed'];
+function campaignPermission(subjectType, subject, kind) {
+  const label = subjectType === 'show'
+    ? (SHOW_STAGE_LABEL[subject.stage] || subject.stage)
+    : (EVENT_STATUS_LABEL[subject.status] || subject.status);
+  if (kind === 'announcement') {
+    const visible = subjectType === 'show'
+      ? CAMPAIGN_SHOW_STAGES.indexOf(subject.stage) !== -1
+      : CAMPAIGN_EVENT_STATUS.indexOf(subject.status) !== -1 && eventListable(subject);
+    if (!visible)
+      return { ok:false, reason:'No announcement on a carrier in "' + label +
+               '" — it needs an upcoming, visible one (A16.14e)' };
+    if (blDateValue(subject.date) < blDateValue(SHOW_TODAY))
+      return { ok:false, reason:'This date is past — an announcement needs an upcoming carrier (A16.14e)' };
+    return { ok:true };
+  }
+  const over = subjectType === 'show'
+    ? SHOW_PAST_STAGES.indexOf(subject.stage) !== -1
+    : (subject.status === 'completed' || subject.status === 'cancelled');
+  if (over)
+    return { ok:false, reason:'This ' + (subjectType === 'show' ? 'show' : 'event') +
+             ' is over ("' + label + '") — a reminder needs one still to come (A16.14e)' };
+  return { ok:true };
+}
+
+/* ── S5: ONE central, configurable volume limit ───────────────────
+   A demo constant, deliberately not derived from the fixtures: a
+   limit that adjusted itself to the data would never fire. Crossing
+   it rejects the send IN FULL, with the limit named — no silent
+   capping, no partial send (A16.14e). `let` only so the campaigns
+   harness can prove the rejection; nothing on the page writes it. */
+let CAMPAIGN_MAX_RECIPIENTS = 200;
+
+/* ── The send ─────────────────────────────────────────────────────
+   Resolves the audience at the moment of sending, freezes it, writes
+   the append-only log — and touches NOTHING else. The returned
+   reason is the named answer the surface shows on a refusal. */
+function sendCampaign(subjectType, subjectId, kind, includePartners, message) {
+  const subject = campaignSubject(subjectType, subjectId);
+  if (!subject) return { ok:false, reason:'No such carrier' };
+  const perm = campaignPermission(subjectType, subject, kind);
+  if (!perm.ok) return perm;
+  const audience = kind === 'announcement'
+    ? announcementAudience(subjectType, subject, includePartners)
+    : reminderAudience(subjectType, subject);
+  if (!audience.length)
+    return { ok:false, reason:'This would reach nobody — there is nothing to send' };
+  if (audience.length > CAMPAIGN_MAX_RECIPIENTS)
+    return { ok:false, reason:'Not sent: ' + audience.length + ' recipients exceed the limit of ' +
+             CAMPAIGN_MAX_RECIPIENTS + '. The send is rejected in full — never capped, never split (A16.14e)' };
+  const host = campaignHostOf(subjectType, subject);
+  const c = {
+    id: nextCampaignId(), subjectType: subjectType, subjectId: subjectId,
+    kind: kind, includePartners: kind === 'announcement' && !!includePartners,
+    message: message || '',
+    recipients: audience,
+    sentAt: SHOW_TODAY, sentBy: host,
+    log: [ { at: SHOW_TODAY, actor: host,
+             text: (kind === 'announcement' ? 'Announcement' : 'Reminder') +
+                   ' sent to ' + audience.length + ' recipient' + (audience.length === 1 ? '' : 's') } ]
+  };
+  eventCampaigns.push(c);
+  return { ok:true, campaign:c };
+}
+
+function campaignsFor(subjectType, subjectId) {
+  return eventCampaigns.filter(function (c) {
+    return c.subjectType === subjectType && c.subjectId === subjectId;
+  });
+}
+
+/* ── The host surface — ONE parameterised box, two mounts ─────────
+   The show pane and the event pane each mount this for their host;
+   the mechanism, the wording and the arithmetic are one. The flow is
+   preview → EXPLICIT confirmation → send: the preview shows the
+   count, the carrier, the kind and the text — never a name — and an
+   abandoned preview stores nothing. */
+let campaignDraft = null;
+
+function campaignKindsAllowed(subjectType, subject) {
+  return ['announcement', 'reminder'].filter(function (k) {
+    return campaignPermission(subjectType, subject, k).ok;
+  });
+}
+
+function campaignBox(role, subjectType, subject) {
+  const prefix = (subjectType === 'show' ? SHOW_ROLES[role].prefix : EVENT_ROLES[role].prefix) + '-camp';
+  const sent = campaignsFor(subjectType, subject.id);
+  const sentRows = sent.length
+    ? sent.map(function (c) {
+        return '<div class="odt-kv"><span>' + (c.kind === 'announcement' ? 'Announcement' : 'Reminder') +
+          '<span class="otbl-dim"> · ' + c.id + '</span></span>' +
+          '<span style="text-align:right;flex:1">' + c.recipients.length + ' recipient' +
+          (c.recipients.length === 1 ? '' : 's') + ' · ' + blDate(c.sentAt) + '</span></div>' +
+          (c.log || []).map(function (l) {
+            return '<div class="odt-kv"><span class="otbl-dim">' + blDate(l.at) + ' · ' + l.actor +
+              '</span><span class="otbl-dim" style="text-align:right;flex:1">' + l.text + '</span></div>';
+          }).join('');
+      }).join('')
+    : '<div class="edit-section-sub" style="margin:0">Nothing sent yet.</div>';
+
+  const kinds = campaignKindsAllowed(subjectType, subject);
+  const blocked = ['announcement', 'reminder'].filter(function (k) { return kinds.indexOf(k) === -1; })
+    .map(function (k) {
+      return '<div class="edit-section-sub" style="margin:0.6rem 0 0">' +
+        campaignPermission(subjectType, subject, k).reason + '</div>';
+    }).join('');
+
+  const draft = campaignDraft &&
+                campaignDraft.subjectType === subjectType &&
+                campaignDraft.subjectId === subject.id ? campaignDraft : null;
+
+  const form = !kinds.length ? '' : draft
+    ? /* THE PREVIEW — count, carrier, kind, text. Names are internal. */
+      '<div style="margin-top:0.8rem">' +
+        '<div class="odt-kv"><span>Carrier</span><span style="text-align:right;flex:1">' + subject.title + '</span></div>' +
+        '<div class="odt-kv"><span>Kind</span><span style="text-align:right;flex:1">' +
+          (draft.kind === 'announcement'
+            ? 'Announcement' + (draft.includePartners ? ' · fans + my partners' : ' · fans only')
+            : 'Reminder') + '</span></div>' +
+        '<div class="odt-kv"><span>Recipients</span><span style="text-align:right;flex:1">' +
+          draft.count + ' — resolved from your own relations, shown only as a number</span></div>' +
+        '<div class="odt-kv"><span>Message</span><span style="text-align:right;flex:1">' +
+          (draft.message || '<span class="otbl-dim">(none)</span>') + '</span></div>' +
+        (draft.count > CAMPAIGN_MAX_RECIPIENTS
+          ? '<div class="edit-section-sub" style="margin:0.8rem 0 0">Not sendable: ' + draft.count +
+            ' recipients exceed the limit of ' + CAMPAIGN_MAX_RECIPIENTS +
+            '. The send is rejected in full — never capped, never split.</div>' +
+            '<button class="btn-sm btn-outline" style="margin-top:0.8rem" onclick="cancelCampaign()">Back</button>'
+          : '<div style="margin-top:0.8rem">' +
+              '<button class="btn-sm btn-gold" onclick="confirmCampaign()">Send to ' + draft.count +
+                ' recipient' + (draft.count === 1 ? '' : 's') + '</button>' +
+              '<button class="btn-sm btn-outline" style="margin-left:0.5rem" onclick="cancelCampaign()">Cancel</button>' +
+            '</div>') +
+        '<div class="edit-section-sub" style="margin:0.8rem 0 0">Nothing is sent without this confirmation. ' +
+          'A send freezes the recipient list as a snapshot and creates no invitation, participation or order.</div>' +
+      '</div>'
+    : '<div style="margin-top:0.8rem">' +
+        '<select class="field-input" id="' + prefix + '-kind" style="margin:0 0 0.5rem">' +
+          kinds.map(function (k) {
+            return '<option value="' + k + '">' + (k === 'announcement' ? 'Announcement — my fans' : 'Reminder — those on it') + '</option>';
+          }).join('') +
+        '</select>' +
+        (kinds.indexOf('announcement') !== -1
+          ? '<label class="cb-item"><input type="checkbox" id="' + prefix + '-partners">' +
+            '<span class="cb-label">Announcement: include my active partners</span></label>'
+          : '') +
+        '<input class="field-input" id="' + prefix + '-msg" style="margin:0.5rem 0" placeholder="Message (shown to each recipient)">' +
+        '<button class="btn-sm btn-outline" onclick="previewCampaign(\'' + role + '\',\'' + subjectType + '\',\'' + subject.id + '\')">Preview recipients</button>' +
+        '<div class="edit-section-sub" style="margin:0.8rem 0 0">An announcement goes to your own fans — the houses that follow you — ' +
+          'optionally plus your own partners. A reminder goes to those already on it and the open invitations. ' +
+          'Nobody else\'s community is reachable from here (A16.14e).</div>' +
+      '</div>';
+
+  return '<div class="odt-box"><div class="odt-box-head">Campaigns</div><div class="odt-box-body">' +
+    sentRows + blocked + form + '</div></div>';
+}
+
+function campaignRepaint(role, subjectType, subjectId) {
+  if (subjectType === 'show') { renderShowDetail(subjectId); return; }
+  const ev = campaignSubject('event', subjectId);
+  if (ev) renderEventDetail(role, ev);
+}
+
+function previewCampaign(role, subjectType, subjectId) {
+  const subject = campaignSubject(subjectType, subjectId);
+  if (!subject) return;
+  const prefix = (subjectType === 'show' ? SHOW_ROLES[role].prefix : EVENT_ROLES[role].prefix) + '-camp';
+  const kindEl = document.getElementById(prefix + '-kind');
+  const kind = kindEl ? kindEl.value : 'announcement';
+  const perm = campaignPermission(subjectType, subject, kind);
+  if (!perm.ok) { showToast('✗ ' + perm.reason); return; }
+  const partnersEl = document.getElementById(prefix + '-partners');
+  const includePartners = kind === 'announcement' && !!(partnersEl && partnersEl.checked);
+  const msgEl = document.getElementById(prefix + '-msg');
+  const audience = kind === 'announcement'
+    ? announcementAudience(subjectType, subject, includePartners)
+    : reminderAudience(subjectType, subject);
+  campaignDraft = {
+    role: role, subjectType: subjectType, subjectId: subjectId,
+    kind: kind, includePartners: includePartners,
+    message: msgEl ? msgEl.value.trim() : '',
+    count: audience.length
+  };
+  campaignRepaint(role, subjectType, subjectId);
+}
+
+function cancelCampaign() {
+  const d = campaignDraft;
+  campaignDraft = null;
+  if (d) campaignRepaint(d.role, d.subjectType, d.subjectId);
+}
+
+function confirmCampaign() {
+  const d = campaignDraft;
+  if (!d) return;
+  const r = sendCampaign(d.subjectType, d.subjectId, d.kind, d.includePartners, d.message);
+  campaignDraft = null;
+  if (!r.ok) { showToast('✗ ' + r.reason); campaignRepaint(d.role, d.subjectType, d.subjectId); return; }
+  campaignRepaint(d.role, d.subjectType, d.subjectId);
+  refreshNotifications();
+  showToast('✓ ' + (d.kind === 'announcement' ? 'Announcement' : 'Reminder') + ' sent to ' +
+            r.campaign.recipients.length + ' recipient' + (r.campaign.recipients.length === 1 ? '' : 's'));
 }
 
 /* The one list. A top-level `let` that is neither here nor on the
@@ -15767,6 +16134,28 @@ function notificationsFor(role) {
   /* 7. The named exception. */
   notifRegional(role, out);
 
+  /* 8. Campaigns (A16.14e, ME-4) — derived from the SNAPSHOT, which
+     is the record a send is answerable for. Condition 2 is snapshot
+     membership: the audience was resolved from my own relation to the
+     sender (fan, partner, or my row on the carrier) at the moment of
+     sending. Condition 3 is re-checked against TODAY's visibility, so
+     a delisted carrier takes its campaign rows off this list with it.
+     The id is built from the campaign AND the send act, so a re-sent
+     campaign is a new row and a re-derivation is not. */
+  eventCampaigns.forEach(function (c) {
+    if (!c.sentAt || (c.recipients || []).indexOf(me) === -1) return;
+    const subject = campaignSubject(c.subjectType, c.subjectId);
+    if (!subject) return;
+    if (!carrierAdmitsRecipient(c.subjectType, subject, me)) return;
+    notifPush(out, me, {
+      id: notifId('campaign', c.id, c.sentAt),
+      kind: 'campaign', cls: 'info', at: c.sentAt, actor: c.sentBy,
+      title: (c.kind === 'announcement' ? 'Announcement — ' : 'Reminder — ') + subject.title,
+      text: c.message || (subject.title + ' · ' + (subject.city || '')),
+      target: { type: c.subjectType === 'show' ? 'show' : 'event', id: subject.id }
+    });
+  });
+
   return out.sort(function (a, b) { return notifTime(b.at) - notifTime(a.at); });
 }
 
@@ -15928,7 +16317,7 @@ function notifEsc(v) {
 /* A glyph per source, in the sidebar's vocabulary. "Awaiting you"
    overrides it: what the row wants is more important than where it
    came from. */
-const NOTIF_ICON = { show:'✦', regional:'✦', order:'◐', follow:'♥', request:'✉', wine:'◈', supply:'⇄' };
+const NOTIF_ICON = { show:'✦', regional:'✦', order:'◐', follow:'♥', request:'✉', wine:'◈', supply:'⇄', campaign:'❖' };
 
 function notifRowHtml(n, unread) {
   const await_ = n.cls === 'await';
@@ -15976,6 +16365,9 @@ function notifDestination(role, n) {
   const t = n.target;
   if (!t) return;
   if (t.type === 'show')    { openNotifShow(role, t.id); return; }
+  /* A member event opens the EXISTING Discover route — the same two
+     calls the Discover card makes. No new surface (A16.14e, C9). */
+  if (t.type === 'event')   { openEventFromDiscover(role, t.id); return; }
   if (t.type === 'profile') { openEmbedPreview(t.url, 'Public Profile'); return; }
   if (t.type === 'order')   { openNotifOrder(role, t.id); return; }
   if (t.type === 'request') { openNotifRequests(role); return; }
@@ -16263,6 +16655,16 @@ BLStore.register({
      out ME- ids that already exist — the fact orderSeq records. */
   memberEvents:           [function () { return memberEvents; },           function (v) { memberEvents = v; }],
   eventSeq:               [function () { return eventSeq; },               function (v) { eventSeq = v; }],
+
+  /* Campaigns (A16.14e, ME-4) — the frozen recipient snapshots are
+     the record a send is answerable for, so they persist like any
+     order does; the counter travels for the orderSeq reason. The
+     suppression record is the recipient's declaration (C9) and
+     persists with them. All three are NEW registrations: restore()
+     discards every older snapshot by itself, no VERSION bump (C8). */
+  eventCampaigns:         [function () { return eventCampaigns; },         function (v) { eventCampaigns = v; }],
+  campaignSeq:            [function () { return campaignSeq; },            function (v) { campaignSeq = v; }],
+  communicationSuppressions: [function () { return communicationSuppressions; }, function (v) { communicationSuppressions = v; }],
 
   /* Orders — one record, both perspectives (invariant 8). The two
      counters have to travel with them: without them a reload would

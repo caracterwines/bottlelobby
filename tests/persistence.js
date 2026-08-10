@@ -536,6 +536,8 @@ console.log('\n── the one list stays the one list');
     venueAcceptShowId:     'the show an open venue-acceptance modal is about — the ACCEPTANCE writes venueAcceptedAt onto the show and persists with it',
     materialWatch:         'the last-seen material shape of every show under Final Review — DERIVED from wineShows and re-read after every restore, so persisting it would store a second answer to a question the shows already answer (invariant 1)',
     notifShowId:           'the show an open notification popup is about',
+    campaignDraft:         'the campaign preview awaiting its explicit confirmation — an abandoned preview stores nothing, which is the A16.14e rule, not an accident. What HAS to survive is the sent campaign, and eventCampaigns is registered',
+    CAMPAIGN_MAX_RECIPIENTS: 'the A16.14e volume limit — a configurable demo constant, not state. `let` only so the campaigns harness can prove the full rejection; nothing on the page writes it',
     addLineOrderId:        'the order an open add-lines modal is about',
     shippingOrderId:       'the order an open ship modal is about',
     payingOrderId:         'the order an open payment modal is about',

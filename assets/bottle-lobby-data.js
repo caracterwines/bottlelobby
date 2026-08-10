@@ -1090,3 +1090,73 @@ let memberEvents = [
       { at:'2026-08-02', actor:'Cantina Rossi', text:'Published to partners and community', scope:'event' },
       { at:'2026-08-04', actor:'Cantina Rossi', text:'Invitation sent to Weinhaus Müller as guest' } ] }
 ];
+
+/* ══════════════════════════════════════════════════════════════════
+   COMMUNICATION SUPPRESSIONS (A16.14e, A16.9)
+   ------------------------------------------------------------------
+   The recipient's DECLARATION, not notification state (C9): each row
+   says "do not address me" — for one sender or for all, for one
+   campaign kind or for both. ONE resolver reads all three kinds
+   (suppressed() in the dashboard); there is no settings surface yet,
+   and that is a named rest, not an oversight.
+
+   Three rows, one per kind, each subtracting from a real audience so
+   none of them is decorative:
+
+   · Bistro Laurent set a PREFERENCE — no announcements, from anybody.
+     It follows both Hawesko (04.07.) and Cantina Rossi (12.04.), so
+     without this row it would be in BOTH demo announcement audiences;
+     with it, in neither. Reminders still reach it: it is an invited
+     guest on ME-3101, and a preference against announcements is not a
+     preference against the events it is actually on.
+   · Weinhaus Müller UNSUBSCRIBED from Cantina Rossi — both kinds. It
+     follows the estate (03.05.) and holds the open ME-3105 guest
+     invitation (04.08.), so this is the row proving a suppression
+     beats BOTH resolvers while the relation itself stays untouched.
+   · Vinoteca Roma BLOCKED Cantina Rossi — both kinds. It follows the
+     estate (02.06.); the block outranks the follow without deleting
+     it (A7: a follow is not marketing consent).
+
+   Dates: today is 8 Aug 2026 (C7). Every row postdates the follow
+   edge it suppresses — a declaration about a sender is made by a
+   house that had the relation first — and predates CMP-4001's send
+   (05.08.), which is what makes that snapshot derivable. */
+let communicationSuppressions = [
+  { recipient:'Bistro Laurent',  kind:'preference',  sender:null,            campaignKind:'announcement', at:'2026-07-18' },
+  { recipient:'Weinhaus Müller', kind:'unsubscribe', sender:'Cantina Rossi', campaignKind:null,           at:'2026-07-26' },
+  { recipient:'Vinoteca Roma',   kind:'block',       sender:'Cantina Rossi', campaignKind:null,           at:'2026-07-12' }
+];
+
+/* ══════════════════════════════════════════════════════════════════
+   EVENT CAMPAIGNS (A16.14e, ME-4) — one mechanism, two carrier kinds
+   ------------------------------------------------------------------
+   A campaign is answerable for who it ACTUALLY reached, so the
+   recipients are a SNAPSHOT frozen at send — deduplicated,
+   suppressions subtracted, every name checked against the carrier's
+   own visibility. The list is internal: every surface shows the
+   count and never the names (A16.14e). `log` is append-only.
+
+   ONE fixture row, and its snapshot is derived, not asserted:
+   Hawesko's announcement on ME-3103 (published 25.06., an allowed
+   stage) to its fans plus its own active partners. The candidates
+   are 10 — 3 incoming follow edges (Cantina Rossi, Château Belrieu,
+   Bistro Laurent) united with 10 partners, deduplicated. Bistro
+   Laurent falls to its announcement preference (18.07.). Four fall
+   to ME-3103's Germany narrowing, holding no row of their own on the
+   event (Château Belrieu F, Bodegas Ruiz E, Vinstuen København DK,
+   Enoteca Milano I). Five remain: three with their own participant
+   row (Cantina Rossi, Domaine Lefèvre, Henri Dubois Domaine — an
+   open invitation is still a row of one's own), and two admitted by
+   reach within Germany (Weingut Schmitt via `partners`, Weinhaus
+   Müller as confirmed guest). Sent 5 Aug 2026: after the youngest
+   edge it relies on (Weingut Schmitt's partnership, 06.07.) and
+   before C7's today. */
+let eventCampaigns = [
+  { id:'CMP-4001', subjectType:'event', subjectId:'ME-3103',
+    kind:'announcement', includePartners:true,
+    message:'The autumn portfolio stands — producers at their own tables, the full range open. We would be glad to see you in the Speicherstadt.',
+    recipients:[ 'Cantina Rossi', 'Domaine Lefèvre', 'Henri Dubois Domaine',
+                 'Weingut Schmitt', 'Weinhaus Müller' ],
+    sentAt:'2026-08-05', sentBy:'Hawesko GmbH',
+    log:[ { at:'2026-08-05', actor:'Hawesko GmbH', text:'Announcement sent to 5 recipients' } ] }
+];
