@@ -31,12 +31,12 @@ Kein Build-Command, Publish-Directory = Repo-Root.
 > Dauerhafte Regeln gehoeren in `BOTTLE-LOBBY-SPEC.md`, kurze Invarianten in
 > `CLAUDE.md`. Findet sich hier eine Regel, ist sie am falschen Ort.
 
-**Baum sauber, `main` gepusht, 28 Harnesses gruen** (nachgezaehlt 10.08. — `platform-partners.js` kam mit Durchgang 11 dazu, davor `campaigns.js` mit 10, `wine-guide-page.js` mit 9, `member-events.js` mit 7, `shows-reach.js`/`shows-release.js` mit 5 und 6). **`BLStore.VERSION` steht auf 8** — Durchgang 11 hat gemessen einen Bump gebraucht (eine Fixture-Zeile in der BESTEHENDEN Sammlung `reviews`; Begruendung im Block zu Durchgang 11 unten und am `VERSION` selbst).
+**Baum sauber, `main` gepusht, 29 Harnesses gruen** (nachgezaehlt 10.08. — `fairs.js` kam mit Durchgang 12 dazu, davor `platform-partners.js` mit 11, `campaigns.js` mit 10, `wine-guide-page.js` mit 9, `member-events.js` mit 7). **`BLStore.VERSION` steht auf 9** — Durchgang 12 hat gemessen einen Bump gebraucht (RVW-3005, eine Fixture-Zeile in der BESTEHENDEN Sammlung `reviews` — dieselbe Konstellation wie Durchgang 11; Begruendung im Block zu Durchgang 12 unten und am `VERSION` selbst).
 
 ### Womit eine Sitzung anfaengt
 
 ```
-node tests/run-all.js        →  28 Harnesses, muss gruen sein, bevor irgendetwas beginnt
+node tests/run-all.js        →  29 Harnesses, muss gruen sein, bevor irgendetwas beginnt
 node tests/serve.js          →  http://localhost:8765   (no-store — NIE python http.server)
 node tests/stamp-assets.js   →  nach jeder Aenderung an assets/, sonst wird check-static rot
 ```
@@ -50,7 +50,7 @@ Fehlmessungen an einem Tag kamen genau daher** (Spec C7, „Browser acceptance")
 `BOTTLE-LOBBY-SPEC.md` ist die Autoritaet und waechst. **Niemand liest sie ganz —
 also je Durchgang die geltenden Abschnitte benennen**, sonst wird nach
 Plausibilitaet statt nach Spec gebaut. `CLAUDE.md` hat die acht Invarianten,
-Anhang D die abgeloesten Entscheidungen (**D1–D44** — nie ohne Blick dorthin
+Anhang D die abgeloesten Entscheidungen (**D1–D45** — nie ohne Blick dorthin
 etwas wiedervorschlagen).
 
 Arbeitsregeln, die diesen Tag ueberdauern und in **C3/C7** stehen: jeden Commit
@@ -515,7 +515,8 @@ Funktionen aufrufen, `transferSize` vorher lesen (C7).
 >   RVW-3004; danach `BLStore.reset()`, Fixtures nachgemessen unberuehrt.
 >
 > **Roadmap Fair-Track (V4, O2–O15) — spaetere Ziel-Durchgaenge, kein
-> Auftragsbestand:** Fair Series & Editions · Exhibitor Recruiting mit
+> Auftragsbestand:** ~~Fair Series & Editions~~ (**O2 — gebaut, Durchgang 12,
+> Block unten**) · Exhibitor Recruiting mit
 > Bewerbungs-/Zulassungsworkflow · Staende & Hallen · Fair Participation
 > Pages · Termine & Agenda · **O9: oeffentliches Organizer-Profil & Follow,
 > einschliesslich vorgelagertem Follow-Messdurchgang** · **O10:
@@ -529,6 +530,94 @@ Funktionen aufrufen, `transferSize` vorher lesen (C7).
 > Media-Partner-Oberflaechen jeder Art (Wert reserviert, sonst nichts) ·
 > Aenderungen an Wine-Show-, Member-Event-, Kampagnen- und A7-Mechanik ausser
 > der einen praezisen A16.8-Ersetzung (D44).
+
+> **Durchgang 12 ist gebaut (10.08.), fuenf lokal committete Schritte, ein
+> Push.** Roadmap-Anker **O2**: Fair Series & Fair Editions als kleinstes
+> tragfaehiges Fundament plus die Organizer-Flaeche **„My Fairs"** (der bisher
+> gesperrte Eintrag „Fair Series & Editions", ERSETZT, kein Doppel; die
+> uebrigen SIEBEN Zielnavigations-Eintraege bleiben gesperrt). Die Spec ging
+> voraus (**A19** neu, A16.8/A16.9-Ersetzung, **D45**) **und muss ins
+> Projektwissen.** Was Git nicht selbst sagt:
+>
+> - **Die A16.8-Ersetzung hatte DREI Fundstellen, nicht zwei — ein
+>   Messbefund:** die Klammer im External-fairs-Block, der pauschale
+>   Out-of-scope-Satz UND das `event_kind`-Enum in der A16.9-DDL trugen
+>   dieselbe abgeloeste Aussage. Alle drei als EINE zusammengehoerige
+>   Ersetzung in **D45**; Teilnahmezeilen, Termin-Trennung, Provenienz-Regel
+>   und ProWein-Verbot stehen woertlich unveraendert.
+> - **Felder-Minimum, je Feld begruendet:** kein `year` (aus `startDate`
+>   abgeleitet, Invariante 7) · kein gespeicherter Anzeigetitel (Series-Name
+>   + Jahr, Invariante 1) · kein `cancelReason`-Feld — der Pflichtgrund lebt
+>   als EINE strukturierte Zeile in der append-only `history`
+>   (created/rescheduled/published/cancelled), der gerenderte Satz leitet ab
+>   · `endDate` null = eintaegig. **Verschoben:** Hallen/Staende (O3) ·
+>   Aussteller-/Teilnehmerzaehler (abgeleitet aus O4-Teilnahmezeilen, wenn es
+>   sie gibt) · Termine/Slots (O7) · Agenda (O12) · Hero-Medien (eigener
+>   Durchgang). **Ausgeschlossen:** jedes Preis-/Checkout-Feld — der EXTERNE
+>   Ticket-/Akkreditierungslink ist das Maximum: EIN nullable URL-Feld
+>   (`externalTicketingUrl`), dessen BEDEUTUNG aus dem Messetyp abgeleitet
+>   wird (Tickets/Akkreditierung/beides — Invariante 7, nie zweites Feld).
+> - **Statusmengen-Befund (Messung 7):** gespeichert nur
+>   `draft · published · cancelled`; „vergangen" wird aus den Messetagen
+>   gegen SHOW_TODAY abgeleitet; **kein** postponed-/rescheduled-Status —
+>   eine Datumsaenderung vor Veroeffentlichung ist ein Edit mit Grund, kein
+>   Zustand.
+> - **Ableitungs-Ort: das Dashboard, nicht das geteilte Asset.** Gemessen:
+>   `bottle-lobby-data.js` haengt an 25 gestempelten Seiten — jede Beruehrung
+>   ist eine Stempel-Kaskade, und in O2 lesen NUR die Organizer-Flaeche und
+>   `tests/fairs.js` die Ableitung (`fairEditionDiscoverable()`). **O5
+>   VERSCHIEBT** Sammlungen + Ableitung ins Asset, wenn das Verzeichnis sie
+>   erstmals oeffentlich liest — ein Umzug, nie eine Kopie (steht so im
+>   A19.7-Blueprint).
+> - **Zwei Publikationsvoraussetzungen, beide Last Word (PP-4-Praezedenz),
+>   beide entziehbar:** `partnerVerificationApproved()` (Workspace) UND
+>   `seriesBrandApproved()` (Serie; `subjectType 'fair_series'`,
+>   `approvalType 'series_brand_review'` im BESTEHENDEN Register, kein
+>   zweites). Badges getrennt benannt — „✓ Verified Platform Partner" vs.
+>   „✓ Fair brand approved" — und der Harness haelt die Trennung mit
+>   Gegenmutationen je Ebene rot. Der Simulations-Handgriff ist auf dem
+>   Schirm als **Demo-Abkuerzung einer Bottle-Lobby-Staff-Entscheidung**
+>   gekennzeichnet; ein Organizer gibt seine eigene Serie nie selbst frei.
+> - **Der Pflichtgrund der Absage laeuft ueber `window.prompt`** — die in C7
+>   benannte Schuld, wiederverwendet statt neu erfunden (3 → 4 Stellen); der
+>   Reschedule-Grund ist ein Modal-Feld und keine fuenfte.
+> - **`VERSION` 8 → 9, gemessen:** alle 30 Bestandssammlungen hashen
+>   identisch, die vier neuen Prints sind `fairSeries`, `fairSeriesSeq`,
+>   `fairEditions`, `fairEditionSeq`. Der Bump kommt von **RVW-3005 in der
+>   BESTEHENDEN Sammlung `reviews`** (D2D-Klasse, gleiche Zeilenform wie
+>   RVW-3004; `reviewSeq` 3005 → 3006 wandert mit) — die
+>   Durchgang-11-Konstellation woertlich, Begruendung am `VERSION`.
+> - **Browser-Abnahme am finalen Stand, mit der bekannten Einschraenkung:**
+>   die Injection-basierten Werkzeuge (find/screenshot) liefen am
+>   ~1-MB-Dokument in den 45-s-Timeout (EIN Versuch, keine Serie — C7);
+>   abgenommen ueber gerenderten DOM, berechnete Darstellung und echte
+>   Element-Klicks per DevTools-JS, `transferSize` vorher gelesen (1.034.927
+>   ≈ dekodiert, frisch). Voller Bogen: neue Serie → Markenpruefung pending →
+>   Publish VOR Freigabe verweigert → gekennzeichnete Staff-Demo pending →
+>   approved → Edition (consumer, dritter Typ) als privater Entwurf → Datum
+>   ohne Grund verweigert, mit Grund verschoben, History-Zeile lesbar →
+>   Publish → danach nur noch „Cancel This Edition…" angeboten (keine
+>   Datumsaenderung, kein Delete) → Absage ohne Grund verweigert, mit Grund
+>   `cancelled`, Datensatz + History bleiben. Gegenprobe Entzug: spaetere
+>   rejected-Zeile auf Series-Ebene nimmt das Veroeffentlichungsrecht, am
+>   Datenzustand nachgeprueft, Badge faellt mit. Organizer-Sicht ohne
+>   erreichbare Handelsflaeche. Stichproben unveraendert: Distributor (Fans
+>   3 = abgeleitet, Portfolio (15)), WS-2604 (planning, Bewerbungen bis
+>   31.01.2027), Guide `#events` (5 Listings, kein Fair-Inhalt, kein
+>   Ticket-Link ausserhalb der Organizer-Flaeche). C8-Roundtrip: v9-Snapshot
+>   traegt den ganzen Abnahme-Bogen ueber einen Reload; danach
+>   `BLStore.reset()`, Fixtures nachgemessen unberuehrt.
+>
+> **Was Durchgang 12 bewusst NICHT gebaut hat, mit Ziel-Durchgaengen:**
+> Recruiting/Bewerbungen/Zulassungen (**O3**) · Fair Participation +
+> Participation Pages samt der verschobenen Zaehler-Felder (**O4**) ·
+> oeffentliches Verzeichnis/Eventkarten — rendert auch die Ticket-Links und
+> zieht Sammlungen + Ableitung ins Asset um (**O5**) · B2B-Termine (**O7**)
+> · Agenda (**O12**) · Hero-Medien (eigener Durchgang) · Hallen/Staende
+> (**O3**) · Consumer-Ticketing-Checkout (ausgeschlossen, der externe Link
+> ist das Maximum). Die Auffindbarkeits-Ableitung hat in O2 KEINEN
+> oeffentlichen Leser — das ist der Ist-Zustand, den `tests/fairs.js` §5
+> sichert, ohne O3/O7 zu verbieten.
 
 ---
 
