@@ -4023,7 +4023,7 @@ With an annual production capacity of over 1.2 million bottles, Cantina Rossi is
      fails the run if any asset is missing or empty. That same file
      also switches persistence off for every harness. See tests/README.
 -->
-<script src="assets/bottle-lobby-store.js?v=a83615c9"></script>
+<script src="assets/bottle-lobby-store.js?v=0cab891b"></script>
 <script src="assets/bottle-lobby-data.js?v=6e161d3b"></script>
 <script src="assets/bottle-lobby-public-shows.js?v=4ccc01f7"></script>
 
@@ -5592,7 +5592,12 @@ function contractApproved(id) {
    a programme admission or a gate: a person at Bottle Lobby decided,
    on a date, about a subject. A second table would be a second place
    the platform's authority lives, and invariant 6 says there is one. */
-const REVIEW_SUBJECT_TYPES = ['membership', 'contract', 'project', 'show'];
+/* 'partner' joins for the A16.14c reason one subject later (A18.4): a
+   platform-partner verification is the same act as an admission, a gate
+   or a release — a person at Bottle Lobby decided, on a date, about a
+   subject. The partner row itself stores no verified flag; every badge
+   derives from this register's last word (PP-4). */
+const REVIEW_SUBJECT_TYPES = ['membership', 'contract', 'project', 'show', 'partner'];
 /* `superseded` is the fifth, and it is not a decision: it is what
    happens to an OPEN review whose subject moved underneath it (A16.2's
    material-change rule). Nobody at Bottle Lobby said yes or no, so
@@ -5711,13 +5716,24 @@ let reviews = [
     approvalType:'show_release' },
   { id:'RVW-3003', subjectType:'show', subjectId:'WS-2602', gateNumber:null,
     reviewStatus:'pending', reviewedBy:null, reviewedAt:null,
-    reviewNotes:null, approvalType:'show_release' }
+    reviewNotes:null, approvalType:'show_release' },
+
+  /* ── PLATFORM PARTNER VERIFICATION (A18.4) ────────────────────────
+     One row, and it is the whole verification record: PP-9001's badge
+     derives from this row and from nothing else (PP-4). The date is
+     fixture authorship (C7): nothing depends on it yet, and its
+     ceiling is SHOW_TODAY — the cockpit shows a verified organizer
+     "today", so the decision cannot postdate today. */
+  { id:'RVW-3004', subjectType:'partner', subjectId:'PP-9001', gateNumber:null,
+    reviewStatus:'approved', reviewedBy:'Bottle Lobby', reviewedAt:'2026-07-15',
+    reviewNotes:'Organisation register extract checked, signatory authority confirmed, organizer capability evidenced by two past trade tastings.',
+    approvalType:'partner_verification' }
 ];
 /* Ids for releases decided in the demo. Separate from the own-label
    3000-block above only by where the counter starts; it travels with
    the reviews for the same reason orderSeq travels with the orders —
    without it a reload would hand out an id that already exists. */
-let reviewSeq = 3004;
+let reviewSeq = 3005;
 
 function reviewById(id) {
   if (typeof id !== 'string') return null;
@@ -5782,6 +5798,62 @@ function showReviewOpen(show) {
 function showReleaseApproved(show) {
   return reviewsFor('show', show.id).some(r =>
     r.approvalType === 'show_release' && r.reviewStatus === 'approved');
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   VERIFIED PLATFORM PARTNERS (A18) — a category, not a fifth role
+   ------------------------------------------------------------------
+   A partner workspace is NOT a stakeholder: it has no row in
+   `stakeholders`, no key in ORDER_ROLES / SHOW_ROLES / EVENT_ROLES,
+   no value in the reach taxonomy and no place in the campaign
+   resolver — and tests/platform-partners.js goes red if it gains one
+   (PP-1, PP-3, as-is state of the foundation pass; a later measured
+   pass may open a named read path).
+
+   CAPABILITIES ARE A LIST, NOT A TYPE (A18.2), so the category grows
+   by adding a value, never by a schema change. `media_partner` is a
+   permitted VALUE and nothing else anywhere: no fixture carries it,
+   no surface renders it (PP-5) — the word is reserved here so no
+   stand-in model grows around it later, the A16.8 external-fair
+   reasoning applied to a capability.
+
+   THERE IS NO `verified` FIELD, and that is the model, not thrift:
+   verification is a Bottle Lobby decision, so it lives where every
+   Bottle Lobby decision lives — one `reviews` row, subjectType
+   'partner' (A18.4, invariant 6). The badge derives; remove the row
+   and the badge falls (PP-4). */
+const PARTNER_CAPABILITIES = ['organizer', 'media_partner'];
+const PARTNER_CAPABILITY_LABEL = { organizer: 'Fair & Event Organizer' };
+/* One sentence, one place, rendered wherever the badge appears
+   (A18.4) — the MEMBER_EVENT_DISCLAIMER discipline. */
+const PARTNER_VERIFIED_DISCLAIMER =
+  'Verified confirms the organisation’s identity and its representative’s ' +
+  'authority — it is not a quality judgement, a release or a recommendation ' +
+  'by Bottle Lobby.';
+let platformPartners = [
+  /* THE ONE FIXTURE, AND IT IS FICTITIOUS ON PURPOSE: no real fair or
+     media brand ever becomes demo data — real names (ProWein,
+     Vinitaly) stay spec prose and award strings (A16.8). "Atrium
+     Fairs GmbH" is invented for this demo.
+     C7 derivation: the organisation predates its verification
+     (2026-07-15, RVW-3004), which predates SHOW_TODAY — the earliest
+     dependent fact is the cockpit showing a verified organizer
+     "today", so the row needs nothing earlier and claims nothing
+     else. No fair series, no editions, no events: those records
+     arrive with the fair passes, and inventing one here would be the
+     stand-in A16.8 forbids. */
+  { id:'PP-9001', name:'Atrium Fairs GmbH', capabilities:['organizer'],
+    city:'Wiesbaden', country:'Germany',
+    about:'Independent organiser of regional wine trade fairs and portfolio tastings.' }
+];
+function platformPartner(id) {
+  return platformPartners.find(function (p) { return p.id === id; }) || null;
+}
+/* PP-4 IN ONE FUNCTION — the showReleaseApproved() shape on the new
+   subject: asked of the register, never of a flag. */
+function partnerVerificationApproved(partner) {
+  return reviewsFor('partner', partner.id).some(r =>
+    r.approvalType === 'partner_verification' && r.reviewStatus === 'approved');
 }
 
 /* ══════════════════════════════════════════════════════════════════
@@ -16682,6 +16754,13 @@ BLStore.register({
      travels with the orders. */
   reviews:                [function () { return reviews; },                function (v) { reviews = v; }],
   reviewSeq:              [function () { return reviewSeq; },              function (v) { reviewSeq = v; }],
+
+  /* Platform partners (A18) — a NEW registration, which discards older
+     snapshots by itself (C8). The VERSION bump this pass carries is
+     NOT for this entry: it is for RVW-3004, a fixture row added to the
+     EXISTING `reviews` collection — the D2D class of blindness, a row
+     of a known shape that guard 2 cannot see by construction. */
+  platformPartners:       [function () { return platformPartners; },       function (v) { platformPartners = v; }],
 
   /* Partnerships — one row, four dashboards read it (A6). It replaced
      wineryPartners, which was registered here, plus three `const`

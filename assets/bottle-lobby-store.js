@@ -232,8 +232,32 @@ window.BLStore = (function () {
      happen to make it unique. A protection that rests on a
      coincidental field combination is not a protection. The C8 rule
      in one line: change the FORMAT or the VALUES stored state depends
-     on, bump VERSION in the same commit. */
-  var VERSION   = 7;
+     on, bump VERSION in the same commit.
+
+     8 — the platform-partner pass (10.08.2026). One fixture row added
+     to an EXISTING collection: RVW-3004, the partner verification in
+     `reviews` (subjectType 'partner', A18.4), plus `reviewSeq` moving
+     3004 → 3005 with it.
+
+     MEASURED: the two fingerprint sets were compared collection by
+     collection — all 29 existing collections hash identically, the
+     only difference is the NEW registration `platformPartners`
+     (8d34c198). So guard 2 cannot see the row (the D2D class, by
+     construction), and a restored old snapshot would drop the one row
+     the Verified badge derives from (PP-4) while handing `reviewSeq`
+     back an id that already exists.
+
+     THE COUNTER-ARGUMENT IS ON THE TABLE AND LOSES: the same commit
+     registers `platformPartners`, and restore() discards any snapshot
+     missing a registered name — so every pre-pass snapshot dies at
+     that gate first, and the bump looks redundant. It stands anyway,
+     for the Durchgang-7 note's own reason: the new-registration
+     discard protects only as long as no row lands in an EXISTING
+     collection, and this pass is exactly that case. A protection that
+     rests on a neighbouring registration in the same commit is a
+     protection that silently vanishes the day either half is
+     reverted, split or cherry-picked alone. */
+  var VERSION   = 8;
   var DEBOUNCE  = 200;   /* ms after the last event before a write */
   var HEARTBEAT = 2000;  /* ms between "does storage still match?" checks */
   var POLL      = 500;   /* ms between retries while the tab is busy */
