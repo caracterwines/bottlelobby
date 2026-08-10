@@ -5691,7 +5691,7 @@ function contractApproved(id) {
    or a release — a person at Bottle Lobby decided, on a date, about a
    subject. The partner row itself stores no verified flag; every badge
    derives from this register's last word (PP-4). */
-const REVIEW_SUBJECT_TYPES = ['membership', 'contract', 'project', 'show', 'partner'];
+const REVIEW_SUBJECT_TYPES = ['membership', 'contract', 'project', 'show', 'partner', 'fair_series'];
 /* `superseded` is the fifth, and it is not a decision: it is what
    happens to an OPEN review whose subject moved underneath it (A16.2's
    material-change rule). Nobody at Bottle Lobby said yes or no, so
@@ -5821,13 +5821,27 @@ let reviews = [
   { id:'RVW-3004', subjectType:'partner', subjectId:'PP-9001', gateNumber:null,
     reviewStatus:'approved', reviewedBy:'Bottle Lobby', reviewedAt:'2026-07-15',
     reviewNotes:'Organisation register extract checked, signatory authority confirmed, organizer capability evidenced by two past trade tastings.',
-    approvalType:'partner_verification' }
+    approvalType:'partner_verification' },
+
+  /* ── FAIR SERIES BRAND REVIEW (A19.4) ─────────────────────────────
+     The SECOND of the two publication preconditions, and it is its own
+     row about its own subject: the workspace check above says who the
+     organizer is, this one says the fair BRAND is real and theirs —
+     two meanings, two rows, never one badge (FS-4). C7 derivation: the
+     brand is reviewed AFTER the workspace that submitted it was
+     verified (15 Jul) and BEFORE the edition that depends on it was
+     published (25 Jul, FE-7101's history) — the publication is the
+     earliest dependent event, so the decision cannot postdate it. */
+  { id:'RVW-3005', subjectType:'fair_series', subjectId:'FS-7001', gateNumber:null,
+    reviewStatus:'approved', reviewedBy:'Bottle Lobby', reviewedAt:'2026-07-20',
+    reviewNotes:'Fair brand "Atrium Wine Days" checked: name and prior editions evidenced, brand held by the organisation, no conflicting claim.',
+    approvalType:'series_brand_review' }
 ];
 /* Ids for releases decided in the demo. Separate from the own-label
    3000-block above only by where the counter starts; it travels with
    the reviews for the same reason orderSeq travels with the orders —
    without it a reload would hand out an id that already exists. */
-let reviewSeq = 3005;
+let reviewSeq = 3006;
 
 function reviewById(id) {
   if (typeof id !== 'string') return null;
@@ -5957,6 +5971,268 @@ function partnerVerificationLatest(partner) {
 function partnerVerificationApproved(partner) {
   const last = partnerVerificationLatest(partner);
   return !!last && last.reviewStatus === 'approved';
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   FAIR SERIES & FAIR EDITIONS (A19) — the canonical fair, pass O2
+   ------------------------------------------------------------------
+   A SERIES is the durable fair brand, an EDITION is one concrete run:
+   year, date or fair days, place, fair type. An edition belongs to
+   exactly ONE series (`seriesId`), and only the series' owning
+   organizer workspace manages either record (FS-1). No trade role
+   ever owns, hosts or manages one (FS-2, D44) — a member's presence
+   at a fair becomes a later fair_participation row (O4), never a copy
+   of the fair and never a member event (A16.8's ProWein ban).
+
+   STORED STATUS IS MINIMAL: draft · published · cancelled. "Past" is
+   DERIVED from the edition's own dates (invariant 7), and there is no
+   stored postponed/rescheduled state — a date change before
+   publication is an EDIT WITH A REASON, recorded as a history row,
+   not a state the record waits in (A19.3).
+
+   THE HISTORY IS THE RECORD OF THE REASON. Every act appends one row
+   — created · rescheduled (reason, from → to) · published · cancelled
+   (reason) — and nothing rewrites one (the logEventRow discipline).
+   The rendered line is DERIVED from the row (fairHistoryText); a
+   second prose copy of the reason would be invariant 1's mistake.
+
+   THESE COLLECTIONS LIVE HERE, NOT IN THE SHARED ASSET, on purpose:
+   in O2 only the organizer surface and tests/fairs.js read them, and
+   assets/bottle-lobby-data.js is referenced by 25 stamped pages — a
+   restamp cascade for a derivation nothing public reads yet. O5 MOVES
+   them into the asset when the directory first renders them — a move,
+   never a copy (A19.7 blueprint). */
+const FAIR_TYPES = ['trade', 'consumer', 'hybrid'];
+const FAIR_TYPE_LABEL = { trade:'Trade Fair', consumer:'Consumer Fair', hybrid:'Hybrid Fair' };
+/* What the external link IS derives from the fair type and is never
+   stored beside it (A19.5, invariant 7): a consumer fair sells
+   tickets, a trade fair accredits, a hybrid does both. */
+const FAIR_TICKETING_LABEL = {
+  trade:'Accreditation link', consumer:'Ticket link', hybrid:'Tickets & accreditation link'
+};
+const FAIR_STATUS_LABEL = { draft:'Draft', published:'Published', cancelled:'Cancelled' };
+
+let fairSeries = [
+  /* THE ONE SERIES, AND IT IS FICTITIOUS ON PURPOSE: "Atrium Wine
+     Days" is invented for this demo, under the invented organizer
+     Atrium Fairs GmbH — real fair brands (ProWein, Vinitaly) stay
+     spec prose and award strings (A16.8). C7: the brand predates its
+     review (RVW-3005, 20 Jul), which predates the published edition
+     below. */
+  { id:'FS-7001', organizerId:'PP-9001', name:'Atrium Wine Days',
+    about:'Regional wine trade fair — portfolio tastings and trade contacts under one roof, run twice a year.' }
+];
+let fairSeriesSeq = 7002;
+
+let fairEditions = [
+  /* The published upcoming run: created 18 Jul (a draft needs no
+     approval to exist), published 25 Jul — AFTER both preconditions'
+     last words (workspace 15 Jul, brand 20 Jul) and before SHOW_TODAY
+     (31 Jul), because the cockpit shows a published edition "today".
+     The dates sit in the coming spring, like every upcoming fixture. */
+  { id:'FE-7101', seriesId:'FS-7001', fairType:'trade',
+    startDate:'2027-02-08', endDate:'2027-02-09',
+    city:'Wiesbaden', venue:'Atrium Halle, Wiesbaden',
+    description:'Two trade days: open tasting floor, importer round tables, focus region Rheingau.',
+    status:'published',
+    externalTicketingUrl:'https://atrium-wine-days.example/accreditation',
+    history:[
+      { at:'2026-07-18', actor:'Atrium Fairs GmbH', action:'created',   reason:null },
+      { at:'2026-07-25', actor:'Atrium Fairs GmbH', action:'published', reason:null }
+    ] },
+  /* The draft: private, visible only inside the owning workspace
+     (FS-6) — the harness proves its title absent from every other
+     view. A hybrid, so the third fair type is data, not prose. */
+  { id:'FE-7102', seriesId:'FS-7001', fairType:'hybrid',
+    startDate:'2027-09-04', endDate:null,
+    city:'Wiesbaden', venue:'Atrium Halle, Wiesbaden',
+    description:'Autumn edition — trade morning, public afternoon. Concept in planning.',
+    status:'draft',
+    externalTicketingUrl:null,
+    history:[
+      { at:'2026-07-28', actor:'Atrium Fairs GmbH', action:'created', reason:null }
+    ] }
+];
+let fairEditionSeq = 7103;
+
+function fairSeriesById(id) { return fairSeries.find(s => s.id === id) || null; }
+function fairEditionById(id) { return fairEditions.find(e => e.id === id) || null; }
+function fairSeriesOf(workspaceId) {
+  return fairSeries.filter(s => s.organizerId === workspaceId);
+}
+function editionsOfSeries(seriesId) {
+  return fairEditions.filter(e => e.seriesId === seriesId);
+}
+/* FS-1's gate, asked by every management act: the demo's organizer
+   view IS PP-9001, so "managed here" means owned by that workspace.
+   A series owned by anyone else refuses the act instead of serving
+   it — the real build asks the session the same question. */
+function fairSeriesManagedHere(series) {
+  const ws = platformPartners[0];
+  return !!series && !!ws && series.organizerId === ws.id;
+}
+
+/* ── The register's last word, on the series' OWN subject (A19.4) ──
+   The partnerVerificationLatest() discipline one subject over: the
+   brand review is rows about the SERIES, filtered to its own
+   approvalType, and the current state is the LAST of them — a later
+   rejection pulls the approval (FS-3), which an any-row reading would
+   survive. */
+function seriesBrandLatest(series) {
+  const rows = reviewsFor('fair_series', series.id)
+    .filter(r => r.approvalType === 'series_brand_review');
+  return rows.length ? rows[rows.length - 1] : null;
+}
+function seriesBrandApproved(series) {
+  const last = seriesBrandLatest(series);
+  return !!last && last.reviewStatus === 'approved';
+}
+
+/* ── THE ONE FINDABILITY DERIVATION (A19.3, FS-6) ─────────────────
+   Published → publicly findable by default, all three fair types; a
+   draft is findable by nobody outside the owning workspace, and a
+   cancelled edition is no longer a published one. Read by the
+   organizer surface and tests/fairs.js and by NOTHING else in O2 —
+   the public directory (O5) becomes this function's first public
+   caller, not a second answer. Findability is NOT entitlement: no
+   application, appointment or other business action hangs off it. */
+function fairEditionDiscoverable(ed) {
+  return !!ed && ed.status === 'published';
+}
+/* "Past" is derived, never stored (A19.3): the edition is over when
+   its last fair day is behind the demo's today. */
+function fairEditionPast(ed) {
+  return (ed.endDate || ed.startDate) < SHOW_TODAY;
+}
+
+/* Append-only, like logEventRow — every act one row, no rewrite. */
+function logFairEdition(ed, action, reason, fromDate, toDate) {
+  ed.history = ed.history || [];
+  ed.history.push({ at: todayISO(), actor: platformPartners[0].name, action: action,
+                    reason: reason || null,
+                    fromDate: fromDate || undefined, toDate: toDate || undefined });
+}
+/* The rendered line DERIVES from the row — the reason is stored once. */
+function fairHistoryText(row) {
+  if (row.action === 'created')     return 'Edition created as a draft';
+  if (row.action === 'published')   return 'Published — publicly findable from here on';
+  if (row.action === 'rescheduled') return 'Rescheduled ' + (row.fromDate || '?') + ' → ' + (row.toDate || '?') + ' — ' + row.reason;
+  if (row.action === 'cancelled')   return 'Cancelled — ' + row.reason;
+  return row.action;
+}
+
+/* ── MANAGEMENT ACTS (A19.3) — each one gated by FS-1 ───────────── */
+function createFairSeries(name, about) {
+  const ws = platformPartners[0];
+  if (!ws) return null;
+  if (!name) { showToast('✗ A fair series needs its brand name'); return null; }
+  const s = { id:'FS-' + (fairSeriesSeq++), organizerId: ws.id,
+              name: name, about: about || '' };
+  fairSeries.push(s);
+  /* The asking is a row (A16.14c's discipline): a new brand starts
+     PENDING, and only a Bottle Lobby decision approves it — the demo
+     shortcut below stands in for staff, never for the organizer. */
+  writeReview('fair_series', s.id, 'pending', null, null, 'series_brand_review');
+  return s;
+}
+/* DEMO SHORTCUT for a BOTTLE LOBBY STAFF decision (the
+   simulateStaffRelease pattern): in the live platform the brand
+   review is decided in the internal admin panel and is never operable
+   by the organizer — the button says so on screen. */
+function simulateSeriesBrandApproval(seriesId) {
+  const s = fairSeriesById(seriesId); if (!s) return;
+  const last = seriesBrandLatest(s);
+  if (!last || last.reviewStatus !== 'pending') { actionSay('There is no open brand review on this series'); return; }
+  writeReview('fair_series', s.id, 'approved', 'Bottle Lobby',
+    'Brand and identity checked — demo shortcut for the staff decision.', 'series_brand_review');
+  renderPartnerFairs();
+  showToast('✓ Fair brand approved (staff demo) — ' + s.name);
+}
+function createFairEdition(seriesId, fields) {
+  const s = fairSeriesById(seriesId);
+  if (!s) { actionSay('That fair series no longer exists'); return null; }
+  if (!fairSeriesManagedHere(s)) { actionSay('Only the organizer workspace that owns this series manages its editions'); return null; }
+  if (FAIR_TYPES.indexOf(fields.fairType) === -1) { showToast('✗ Pick a fair type'); return null; }
+  if (!fields.startDate) { showToast('✗ An edition needs its first fair day'); return null; }
+  const ed = { id:'FE-' + (fairEditionSeq++), seriesId: s.id,
+               fairType: fields.fairType,
+               startDate: fields.startDate, endDate: fields.endDate || null,
+               city: fields.city || '', venue: fields.venue || '',
+               description: fields.description || '',
+               status:'draft',
+               externalTicketingUrl: fields.externalTicketingUrl || null,
+               history: [] };
+  logFairEdition(ed, 'created', null);
+  fairEditions.push(ed);
+  return ed;
+}
+/* Basics in a DRAFT only (A19.3): after publication nothing here is
+   edited — O2 offers no published-edit surface at all, so the bar is
+   in the act, not just in the buttons. The DATE is deliberately not a
+   basic: it moves only through rescheduleFairEdition, with a reason. */
+function updateFairEditionBasics(id, fields) {
+  const ed = fairEditionById(id); if (!ed) { actionSay('That edition no longer exists'); return false; }
+  const s = fairSeriesById(ed.seriesId);
+  if (!fairSeriesManagedHere(s)) { actionSay('Only the organizer workspace that owns this series manages its editions'); return false; }
+  if (ed.status !== 'draft') { actionSay('A published edition is not edited here — cancel it with a reason if it will not run'); return false; }
+  if (fields.fairType !== undefined) {
+    if (FAIR_TYPES.indexOf(fields.fairType) === -1) { showToast('✗ Unknown fair type'); return false; }
+    ed.fairType = fields.fairType;
+  }
+  ['city', 'venue', 'description'].forEach(k => {
+    if (fields[k] !== undefined) ed[k] = fields[k];
+  });
+  if (fields.externalTicketingUrl !== undefined)
+    ed.externalTicketingUrl = fields.externalTicketingUrl || null;
+  return true;
+}
+/* A date change ONLY BEFORE publication, with a mandatory reason and
+   an append-only history row (A19.3) — afterwards the date is not
+   changed silently or freely, and O2 gives it no door at all. */
+function rescheduleFairEdition(id, startDate, endDate, reason) {
+  const ed = fairEditionById(id); if (!ed) { actionSay('That edition no longer exists'); return false; }
+  const s = fairSeriesById(ed.seriesId);
+  if (!fairSeriesManagedHere(s)) { actionSay('Only the organizer workspace that owns this series manages its editions'); return false; }
+  if (ed.status !== 'draft') { actionSay('A published edition keeps its date — a date can only move before publication (A19.3)'); return false; }
+  if (!startDate) { showToast('✗ An edition needs its first fair day'); return false; }
+  if (!reason || !reason.trim()) { showToast('✗ A date change needs a reason — it goes on the record'); return false; }
+  const from = ed.startDate + (ed.endDate ? '–' + ed.endDate : '');
+  const to   = startDate + (endDate ? '–' + endDate : '');
+  ed.startDate = startDate; ed.endDate = endDate || null;
+  logFairEdition(ed, 'rescheduled', reason.trim(), from, to);
+  return true;
+}
+/* Publishing takes BOTH last words at the moment of the act (A19.4):
+   the workspace's current verification AND the series' current brand
+   approval. A later rejection on either level withdraws this right —
+   asked of the register here, so the withdrawal needs no cleanup. */
+function publishFairEdition(id) {
+  const ed = fairEditionById(id); if (!ed) { actionSay('That edition no longer exists'); return false; }
+  const s = fairSeriesById(ed.seriesId);
+  if (!fairSeriesManagedHere(s)) { actionSay('Only the organizer workspace that owns this series manages its editions'); return false; }
+  if (ed.status !== 'draft') { actionSay('Only a draft can be published'); return false; }
+  if (!partnerVerificationApproved(platformPartners[0])) {
+    actionSay('Publishing needs the workspace verification — its last word is not "approved" (A19.4a)'); return false;
+  }
+  if (!seriesBrandApproved(s)) {
+    actionSay('Publishing needs the series brand approval — its last word is not "approved" (A19.4b)'); return false;
+  }
+  ed.status = 'published';
+  logFairEdition(ed, 'published', null);
+  return true;
+}
+/* A published edition is CANCELLED with a mandatory reason — record
+   and history remain, nothing is deleted (A19.3). There is no delete
+   function in this file on purpose. */
+function cancelFairEdition(id, reason) {
+  const ed = fairEditionById(id); if (!ed) { actionSay('That edition no longer exists'); return false; }
+  const s = fairSeriesById(ed.seriesId);
+  if (!fairSeriesManagedHere(s)) { actionSay('Only the organizer workspace that owns this series manages its editions'); return false; }
+  if (ed.status !== 'published') { actionSay('Only a published edition is cancelled — a draft is simply not published'); return false; }
+  if (!reason || !reason.trim()) { showToast('✗ A cancellation needs a reason — it goes on the record'); return false; }
+  ed.status = 'cancelled';
+  logFairEdition(ed, 'cancelled', reason.trim());
+  return true;
 }
 
 /* ── The organizer cockpit — a hull, honestly empty (A18.7) ────────
@@ -16969,6 +17245,18 @@ BLStore.register({
      EXISTING `reviews` collection — the D2D class of blindness, a row
      of a known shape that guard 2 cannot see by construction. */
   platformPartners:       [function () { return platformPartners; },       function (v) { platformPartners = v; }],
+
+  /* Fair series & editions (A19) — NEW registrations, which discard
+     older snapshots by themselves (C8). The VERSION decision of this
+     pass is measured at the VERSION constant, not predicted here: the
+     candidate is RVW-3005, a fixture row added to the EXISTING
+     `reviews` collection (the D2D class again), with `reviewSeq`
+     moving 3005 → 3006 beside it. The two counters travel with their
+     collections for the orderSeq reason. */
+  fairSeries:             [function () { return fairSeries; },             function (v) { fairSeries = v; }],
+  fairSeriesSeq:          [function () { return fairSeriesSeq; },          function (v) { fairSeriesSeq = v; }],
+  fairEditions:           [function () { return fairEditions; },           function (v) { fairEditions = v; }],
+  fairEditionSeq:         [function () { return fairEditionSeq; },         function (v) { fairEditionSeq = v; }],
 
   /* Partnerships — one row, four dashboards read it (A6). It replaced
      wineryPartners, which was registered here, plus three `const`
