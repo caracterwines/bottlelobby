@@ -1918,8 +1918,11 @@ when its own pass comes, written down so that no stand-in gets modelled in the
 meantime:
 
 - One **canonical record per fair** (`events.event_kind = 'external_fair'`),
-  and **no member is its host**. If a fair exists canonically, a member records
-  a **participation**, never a copy of the fair.
+  and **none of the four trade roles is its host** — the fair's owner and
+  manager is a **verified organizer workspace (A18)**, a platform partner
+  outside the trade enumeration. The first wording, *"no member is its
+  host"*, is D44. If a fair exists canonically, a member records a
+  **participation**, never a copy of the fair.
 - A separate **participation row per exhibiting member**: hall, booth, the fair
   days the member attends, a description, and the presented wines as
   `productId` references (ME-6). Nothing about the fair itself is repeated on
@@ -4250,6 +4253,180 @@ Two consequences inside this section:
 
 ---
 
+## A18. Verified Platform Partners
+
+> Serge's architecture decision of 10 Aug 2026 (V4). Wine is traded by four
+> roles and by nobody else. What the platform hosts beyond trade — first of
+> all the organisers of fairs and events — is carried by a **separate,
+> extensible partner category**, never by a fifth trade role. This chapter is
+> the smallest coherent foundation: the category, its capability model, the
+> workspace separation, the verification semantics and the follow semantics.
+> The fair model itself — series, editions, exhibitor recruitment, stands and
+> halls, participation pages, schedules — follows in its own passes and is
+> deliberately **not** specified here; A16.8's external-fair block remains the
+> guard against stand-in constructions in the meantime.
+
+### A18.1 A separate category, not a fifth trade role
+
+**A Verified Platform Partner is not a stakeholder type.** Producer,
+Distributor, Restaurant and Retail remain the complete enumeration of who
+trades here, and nothing about them changes. A platform partner:
+
+- **takes no part in the A6 workflow** — no partnership request, no stage, no
+  activation, and therefore none of what an active partnership gates;
+- **neither buys nor sells wine** — no orders, no listings, no portfolio, no
+  prices, in either direction;
+- **appears in no trade enumeration.** The order registry, the show and event
+  registries, the reach taxonomy (A16.14b), the partner counters and the
+  campaign audience resolver (A16.14e) neither count nor address a partner
+  workspace. This states the situation as of the foundation pass; a later
+  pass may open a **named, measured** read path (A18.5 names the first
+  candidate), but nothing opens by accident.
+
+The first active capability is **Organizer** (written out: *Fair & Event
+Organizer*) — the party that owns and runs a canonical fair (A16.8). What an
+organizer can *do* beyond existing arrives with the fair passes; what an
+organizer *is* is settled here.
+
+### A18.2 The capability model — extensible, one entry active
+
+A partner workspace carries a **list of capabilities**, not a single type, so
+that the category can grow without a schema change:
+
+    platform_partners:
+      { id, name, capabilities: ['organizer', …], … }
+
+- **`organizer` is active** — the only capability with any surface, fixture
+  or workflow.
+- **`media_partner` is reserved** — a permitted value in the capability
+  model and **nothing else anywhere**: no surface, no dashboard, no fixture,
+  no registration route, no marketing mention, no workflow. Reserving the
+  word here is what prevents a stand-in model later — the same reasoning
+  that wrote the external-fair block into A16.8 before any fair existed.
+
+Verification state is **not a field on the partner row** — it is derived from
+the reviews register (A18.4). A stored `verified` flag would be invariant 7's
+stale-flag mistake on the first record the category owns.
+
+### A18.3 Hard workspace separation
+
+**An operational workspace is either exactly one trade role or a partner
+workspace with one or more partner capabilities — never both.** There is no
+mixed workspace and no inheritance between workspaces.
+
+One **legal organisation** may own several **separately verified**
+workspaces — a company that distributes wine and also organises a fair holds
+a distributor workspace *and* an organizer workspace. Permissions, data and
+actions are never mixed and never inherited: nothing the trade workspace may
+do accrues to the partner workspace, nothing verified on one carries to the
+other, and no surface renders the two as one account.
+
+**Prototype deviation, named so it never reads as the model:** the demo
+prototype hosts all workspaces in **one** dashboard behind the *View as*
+switcher; the separation there is view and permission logic — the organizer
+view renders no trade surface and no trade logic counts it. The real build
+gives every workspace its own separate account. The switcher entry is a demo
+convenience, not a statement that one login owns five hats.
+
+### A18.4 Verification — what "Verified" means, and where it lives
+
+Bottle Lobby verifies **three facts** before a partner workspace is active:
+the organisation exists, the acting person is entitled to represent it, and
+the claimed capability is real — an organizer actually organises fairs or
+events. When a **fair series** later enters the platform, its brand and
+identity are verified **once, additionally** — named here so nothing
+substitutes for it; the fair model itself follows in the fair passes.
+
+**"Verified" is an identity and authority check and nothing more.** It is not
+a quality guarantee, not a Wine Show release (A16.1's vocabulary is
+untouched), not a recommendation. The disclaimer is one fixed sentence, held
+in one place and rendered wherever the badge appears:
+
+> *Verified confirms the organisation's identity and its representative's
+> authority — it is not a quality judgement, a release or a recommendation
+> by Bottle Lobby.*
+
+**Storage: the `reviews` register, nothing new.** `reviews.subjectType`
+(A17.8) gains **`partner`** alongside `membership · contract · project ·
+show`, with `approvalType: 'partner_verification'`. A partner verification is
+the same act as a programme admission or a show release: a person at Bottle
+Lobby decided, on a date, about a subject — same table, same shape, same
+authority (invariant 6). A second register would be a second place the
+platform's authority lives. Every surface derives the badge from the
+register's last word; without an approved row the badge falls.
+
+### A18.5 Follow — business semantics now, storage measured later
+
+Following an organizer — and later a fair series or edition — is a
+**directed relation**: the follower chooses it, the followed side consents to
+nothing, and it creates no commercial right (A7's sentence applies word for
+word). It is **not a trade partnership and creates no partnership request** —
+*Request Partnership* remains reserved for trade relations between trade
+roles.
+
+**A7 stays technically unchanged and trade-related in this pass.** Whether
+the existing follow store can safely generalise to partner targets, or
+whether a separately bounded storage path is needed, is the subject of its
+own later **measured** follow pass. Until that measurement exists, no
+parallel workflow is built — and this chapter deliberately fixes **no field
+name and no storage form** for the partner follow.
+
+### A18.6 Public wording — fixed formulas, no rollout now
+
+For the later marketing pass, fixed EN wordings — recorded here so the pass
+copies instead of inventing:
+
+> **"Four trade roles. One connected partner ecosystem."**
+>
+> **"Bottle Lobby connects wineries, distributors, restaurants and
+> retailers—and extends the network through verified platform partners."**
+
+The language keeps the categories apart: the four trade roles are **Trade
+Members**, the new category is **Platform Partners**. **A blanket four→five
+replacement is forbidden** — nothing anywhere becomes "five roles", and
+*"Four pillars"* stays wherever the four product pillars are meant. No public
+page, homepage, Why-Join or marketing surface changes in the foundation
+pass.
+
+### A18.7 Invariants
+
+- **PP-1 — a partner workspace is not a trade role.** No A6 stage, no order,
+  no listing and no portfolio row names a partner workspace, and the
+  organizer view renders no trade surface.
+- **PP-2 — one workspace, one nature.** Exactly one trade role, or partner
+  capabilities — never both on one workspace; an organisation with both
+  holds two separately verified workspaces.
+- **PP-3 — no trade enumeration counts a partner workspace.** Asserted as
+  the state of the foundation pass — a later measured pass may open a named
+  read path; none opens by accident.
+- **PP-4 — verification is the register's last word.** No stored flag; the
+  badge derives from the approved `partner_verification` row and falls
+  without it.
+- **PP-5 — `media_partner` is a value, not a feature.** Permitted in the
+  capability model, instantiated nowhere, rendered nowhere.
+- **PP-6 — a follow toward a partner is directed and non-commercial** and
+  creates no partnership request. (Semantics only in this pass — no build.)
+
+**Prototype blueprint:** `platformPartners` array and
+`PARTNER_CAPABILITIES` in `bottle-lobby-dashboard.html`, verification derived
+by `partnerVerificationApproved()` from the `reviews` register; a fifth,
+visually separated *View as* entry (**Platform Partner · Organizer**) with
+its own sidebar and view, the coming fair features as **named, shown,
+locked** rows with the reason on the row (the C2 pattern, like
+`matchmaking` in the reach modal); no trade section reachable from the
+organizer view.
+
+**Harness home:** `tests/platform-partners.js` — PP-1..PP-5 with effective
+counter-mutations: the structural workspace separation on the rendered
+surface, absence from every trade enumeration (securing the as-is state of
+the foundation pass, not forbidding a later measured organizer follow),
+`media_partner` permitted-but-never-instantiated, the badge falling with the
+review row, and unchanged samples of the four trade dashboards. PP-6 is
+business semantics without a build and is asserted as absence: no partner
+surface offers *Request Partnership*.
+
+---
+
 # PART B — PROTOTYPE CONVENTIONS
 
 > These are the rules that keep the static mockup consistent. Every one exists because something broke.
@@ -5830,6 +6007,7 @@ mechanism itself stores.
 | D41 | **The six bridged listings read as finished own labels** — PRD-1020 Sauvignon Blanc — Sancerre · PRD-1021 Chardonnay — Chablis Premier Cru · PRD-1022 Primitivo — Alcamo DOC · PRD-1023 Tempranillo — Rioja Crianza · PRD-1024 Riesling Spätlese — Mosel · PRD-1025 Merlot — Bordeaux Supérieur. Carried at **three spec locations**: the A17.0 re-measurement of 5 Aug 2026 (*"27 distinct products, 6 of which are finished own labels"*, and *"14 wines, 6 of them own label and 8 ordinary"*) · the A17.14 migration sentence (*"the existing `ownLabel:true` on PRD-1020, PRD-1021, PRD-1022 becomes derived … the pass that gives those wines real projects"*) · and, in the prototype, `legacyOwnLabel:'active'`/`'pending'` on six listings, `status:'Own-Label'` on ten Wine Guide rows, an *Own Label* ribbon on six article pages, a six-row typed *Own-Label Portfolio* widget, two typed counters reading **5** and a *Real Example* on `bottle-lobby-own-label.html` | **A17.0b last paragraph** — none of the six is an own label. Each is the producer's own appellation wine, under the producer's brand, on an article page written in the producer's name; five of those pages give the ribbon the reason *exclusive distribution through Hawesko*, which is **a producer-owned brand plus a distribution exclusivity and explicitly out of scope**. The six become: five ordinary wines keeping every A17.0 ability; **PRD-1020** additionally the `sourceWineId` of a relabel project (A17.0b's own example); **PRD-1022** and **PRD-1024** carrying `ownLabelAvailability:'on_request'`. Hawesko's real own labels are **two new `PRD-` records** with `brandOwner:'Hawesko GmbH'`, each out of a gate-2-approved project, one active and one created-but-undelivered. A17.0's counts and A17.14's migration sentence are corrected accordingly | **The definition beats the fixture observation, and the fixtures said so themselves.** A17.0b was written on 4 Aug and its closing paragraph excludes this exact arrangement by name; the 5 Aug re-measurement counted the flags it found instead of testing them against it, and A17.14 then wrote the count into a migration plan. **The article pages are the evidence, and they were always public**: `bottle-lobby-wine-sauvignon-blanc-sancerre.html` describes the wine as *"Henri Dubois Domaine farms its Sauvignon Blanc …"* and justifies the ribbon with *"Exclusive to Hawesko in northern Germany and Scandinavia"* — brand and exclusivity in one sentence, and only the second one is true. **PRD-1022 contradicted the flag on its own page**, which reads *Own-Label Available* — a capability where three other surfaces claimed a product, which is D36 surviving inside its own replacement. **The strongest counter-argument refuted itself**: the six are absent from `partnerWinesPool`, and A17.9 does forbid an own-label product from appearing in another distributor's picker — but **PRD-1026 sat in exactly the same gap with no own-label claim anywhere**, so the gap is seven mockup rows that lived only in the distributor's book, not six own labels; `assets/bottle-lobby-data.js` recorded the doubt in writing (*"the open question is not whether to loosen A17.9 but whether all six are own labels at all"*). **What the misreading would have cost, measured**: those six wines are named by 7 of 11 orders, 4 of 5 promo materials, 3 of 3 exclusive deals and both buyers' wine lists. As own labels every one of those movements would need a covering Market Grant under MG-1 — the model would have started refusing ordinary trade in order to protect a brand nobody owns, which is D40's error one level down. As ordinary wines, not one of those fixtures changes. |
 | D42 | **ME-5 as first written: "venue and participant surfaces show head counts, never identities, until `completed`"** — no name on any public member-event surface before the event was over, the confirmed winemaker's included | **A16.15 ME-5** — differentiated: guests, general participants, applicants and unanswered invitations stay unnamed and stay head counts; a confirmed **`winemaker` or `exhibitor`** may be named on the public surfaces of a **published** member event after their explicit acceptance and never before it; until acceptance the name appears only in the invitee's own view and the host's; the event itself stays gated by its stored reach (A16.14b); and a public naming is neither a release act nor a guarantee (ME-3) | **The blanket rule protected the one party A16.6's logic does not apply to.** Anonymisation exists for the invited-but-undecided, whose later decline would read as a withdrawal — and that protection stays in full: `sent`, `viewed`, `applied`, declined and withdrawn names appear on no public surface. But a winemaker dinner whose card may not say which winemaker is coming advertises nothing — naming the confirmed producer is the point of the event, and being named on a published event is part of what the producer says yes to when accepting. Confirmed business decision, 8 Aug 2026: **acceptance is the consent line; `completed` was one event too late.** The naming is a permission, not an obligation, and it is not the Bottle Lobby release vocabulary — a member event still promises nothing (ME-3). |
 | D43 | **The announcement audience as first written: a Community Announcement "goes to a reach segment (A16.14b)"** — A16.14b listed campaigns among the features that resolve against the reach taxonomy, and A16.8 said *"the follow graph carries the announcement further"*, so an announcement could have addressed `public`, `members`, a whole role group, or hopped beyond the host's own fans | **A16.14e / A16.14b / A16.8** — an announcement goes to the host's **own fans** (the incoming edges of his A7 graph), optionally plus his **own active partners** (A6), and to nobody else; outgoing edges, role and member groups, and the community or partners of a participant, winery, exhibitor or venue are structurally out; reach keeps deciding who may *find* the carrier and never feeds the audience; every recipient must still pass C9's visibility | Serge's decision, 10 Aug 2026. Reach answers *"who may find this?"* — a permission the reader exercises; an audience answers *"whom may I address?"* — an act the sender performs, and A7 had already said both that a follow is not marketing consent and that no foreign graph resolves into a recipient list for a third party. Reading the audience off the reach taxonomy collided with its own neighbours: `public` and `members` would have made a campaign a broadcast over people with no relation to the sender, and WS-3 — reach falls away from `published` — would have left a published show with **no defined audience at the exact stage where announcing matters most**. The incoming follow edge is the one relation where the recipient himself chose the sender; that is why it, and not the taxonomy, is the audience. |
+| D44 | **A16.8's external-fair host rule as first written: "no member is its host"** — the canonical fair (`events.event_kind = 'external_fair'`) simply had no host, and nothing in the model could own or manage it | **A16.8 / A18** — precise instead of blank: **none of the four trade roles is the host** of a canonical fair; its **owner and manager is a verified organizer workspace (A18)**, a platform partner outside the trade enumeration. The ProWein rule — a fair participation is never modelled as a member event — stands word for word | Serge's V4 architecture decision, 10 Aug 2026. The first wording was written (Durchgang 9) when nobody *could* be the host: its job was to block the stand-in — a fair modelled as some member's event — and it did that by leaving the fair ownerless. With A18 the owner exists as a category, and the blank wording would have blocked the wrong party: an organizer is a platform member in the ordinary sense of the word, so *"no member"* read literally would exclude exactly the workspace the fair model is being built for. The precision keeps the protective half (no trade role ever hosts a canonical fair) and adds the ownership half instead of leaving it to inference. Nothing else in the block moved — participation rows, booth appointments and the out-of-scope list are untouched. |
 
 ---
 
