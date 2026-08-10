@@ -1910,15 +1910,17 @@ flag, a price note, an external booking or contact link, and the host
 information — and nothing else. **No consumer ticketing, no consumer accounts,
 no checkout** without a separate decision (ME-7).
 
-**External fairs — a later model, stated now so nothing substitutes for it.**
-ProWein, Vinitaly and the rest exist in this repo today only as marketing prose
-and as *award* strings; no structured fair data exists anywhere, so the model
-starts clean — and none of it is built yet. This block is the shape it takes
-when its own pass comes, written down so that no stand-in gets modelled in the
-meantime:
+**External fairs — the canonical core is now A19; the rest of this block is
+still a later model.** ProWein, Vinitaly and the rest exist in this repo today
+only as marketing prose and as *award* strings. The series/edition core and
+its organizer management are **built (A19, pass O2)**; everything else below —
+participations, booth appointments, their visibility — is still unbuilt and
+stays written down so that no stand-in gets modelled in the meantime:
 
-- One **canonical record per fair** (`events.event_kind = 'external_fair'`),
-  and **none of the four trade roles is its host** — the fair's owner and
+- One **canonical record per fair** — since A19 that is a **Fair Series with
+  its Fair Editions**, its own record pair, never an `events` row (the
+  earlier `events.event_kind = 'external_fair'` sketch is **D45**) — and
+  **none of the four trade roles is its host**: the fair's owner and
   manager is a **verified organizer workspace (A18)**, a platform partner
   outside the trade enumeration. The first wording, *"no member is its
   host"*, is D44. If a fair exists canonically, a member records a
@@ -1941,7 +1943,11 @@ meantime:
   and the booking act are for entitled members. What was discussed, who the
   counterpart was and the full calendar belong to the two sides of each
   appointment and to nobody else.
-- Explicitly out of scope: running a fair, ticketing, organiser management. The
+- Explicitly out of scope HERE — narrowed by O2 (**D45**): managing a fair
+  series, its edition basics and its edition lifecycle is now **in** scope
+  and lives in **A19**; still out are exhibitor recruiting, admission,
+  participations, halls and stands, appointments, agenda, ticket checkout
+  and every further fair feature — each in its own later pass. The
   existing Vinitaly award strings stay what they are — recognition (A5), not
   participation — and nothing is migrated into fair records.
 - **A ProWein participation is never modelled as a member event of a winery** —
@@ -2035,7 +2041,9 @@ wine_show_attendees  ( show_id FK, stakeholder_id FK,
 wine_show_events     ( show_id FK, at, actor, text )    -- append-only trail
 
 events            ( id, owner_id, owner_type,      -- = host, hostRole (A16.8)
-                    event_kind enum('member_event','external_fair'),
+                                                   -- member events only: the
+                                                   -- canonical fair is its own
+                                                   -- record pair (A19, D45)
                     title, description, theme,
                     event_date, event_time, timezone,
                     location,                      -- free-text address …
@@ -4261,10 +4269,10 @@ Two consequences inside this section:
 > extensible partner category**, never by a fifth trade role. This chapter is
 > the smallest coherent foundation: the category, its capability model, the
 > workspace separation, the verification semantics and the follow semantics.
-> The fair model itself — series, editions, exhibitor recruitment, stands and
-> halls, participation pages, schedules — follows in its own passes and is
-> deliberately **not** specified here; A16.8's external-fair block remains the
-> guard against stand-in constructions in the meantime.
+> The fair model's series/edition foundation is now **A19**; exhibitor
+> recruitment, stands and halls, participation pages and schedules follow in
+> their own passes, and A16.8's external-fair block keeps guarding what A19
+> does not yet cover.
 
 ### A18.1 A separate category, not a fifth trade role
 
@@ -4333,9 +4341,10 @@ convenience, not a statement that one login owns five hats.
 Bottle Lobby verifies **three facts** before a partner workspace is active:
 the organisation exists, the acting person is entitled to represent it, and
 the claimed capability is real — an organizer actually organises fairs or
-events. When a **fair series** later enters the platform, its brand and
-identity are verified **once, additionally** — named here so nothing
-substitutes for it; the fair model itself follows in the fair passes.
+events. When a **fair series** enters the platform, its brand and identity
+are verified **once, additionally** — that check is now real: A19.4's
+series brand review (`subjectType 'fair_series'`), separate from this
+workspace verification in data and in wording.
 
 **"Verified" is an identity and authority check and nothing more.** It is not
 a quality guarantee, not a Wine Show release (A16.1's vocabulary is
@@ -4414,7 +4423,8 @@ visually separated *View as* entry (**Platform Partner · Organizer**) with
 its own sidebar and view, the coming fair features as **named, shown,
 locked** rows with the reason on the row (the C2 pattern, like
 `matchmaking` in the reach modal); no trade section reachable from the
-organizer view.
+organizer view. Since O2 the first fair entry is live as **My Fairs**
+(A19); the remaining target-navigation entries stay locked rows.
 
 **Harness home:** `tests/platform-partners.js` — PP-1..PP-5 with effective
 counter-mutations: the structural workspace separation on the rendered
@@ -4424,6 +4434,174 @@ the foundation pass, not forbidding a later measured organizer follow),
 review row, and unchanged samples of the four trade dashboards. PP-6 is
 business semantics without a build and is asserted as absence: no partner
 surface offers *Request Partnership*.
+
+---
+
+## A19. Fair Series & Fair Editions
+
+> Serge's decision of 10 Aug 2026 — fair-track anchor **O2**. The smallest
+> viable foundation of the canonical fair model that A16.8 announced and
+> A18/D44 gave an owner: the durable fair brand as a **Fair Series**, the
+> concrete run as a **Fair Edition**, ownership by the verified organizer
+> workspace, the three fair types, the lifecycle with its two publication
+> preconditions, and the external ticketing link. Everything beyond this —
+> recruiting, admission, participations, halls and stands, appointments,
+> agenda, the public directory — stays in its own later passes, and A16.8's
+> external-fair block keeps guarding those parts against stand-ins.
+
+### A19.1 Series and Edition — two records, one owner
+
+A **Fair Series** is the durable, verified fair brand or event line — "the
+fair" as the trade names it across the years. A **Fair Edition** is one
+concrete run of that series: year, one date or several fair days, place,
+and fair type.
+
+- **An edition belongs to exactly ONE series**, by key
+  (`fair_editions.series_id`), and is **managed only by the verified
+  organizer workspace (A18) that owns the series.** No other workspace —
+  partner or trade — creates, edits, publishes, reschedules or cancels it.
+- **Ownership (D44, carried forward):** a series' owner and manager is an
+  organizer workspace. **None of the four trade roles ever owns, hosts or
+  manages a canonical fair** — not a series, not an edition. A trade
+  member's presence at a fair is a later **fair participation row**
+  (A16.8), never a copy of the fair and never a member event.
+
+### A19.2 Three fair types
+
+`trade` · `consumer` · `hybrid` — **Trade Fair**, **Consumer Fair**,
+**Hybrid Fair** — distinguishable as data. The type sits on the
+**edition**, not on the series: the same brand can run a trade edition one
+year and a hybrid one the next.
+
+### A19.3 Status, lifecycle and visibility
+
+Stored status is minimal: `draft · published · cancelled`. **"Past" is
+derived** from the edition's own dates against today, never stored as a
+helper status (the spirit of invariant 7); there is no stored
+`postponed`/`rescheduled` status without proven need — a date change before
+publication is an **edit with a reason**, not a state.
+
+Binding rules (Serge, 10 Aug 2026):
+
+- **Draft: private, visible only inside the owning workspace;** basics AND
+  the date may be edited.
+- **Rescheduling / date changes ONLY BEFORE publication**, with a mandatory
+  reason and an **append-only history entry**.
+- **After publication the date is not changed silently or freely.**
+- A published edition may be **cancelled with a mandatory reason**; the
+  record and its history remain; **no deletion**.
+- **Publication makes the edition publicly findable by default, for all
+  three types.** Findability is not a permission to act: who may apply,
+  request appointments or take any other business action is defined by
+  later passes — **findability and entitlement stay separate questions.**
+
+The edition history is **append-only**: each act writes one row — created ·
+rescheduled (reason, from → to) · published · cancelled (reason) — and
+nothing ever rewrites one. The row IS the record of the reason; a second
+reason field beside it would be a copy (invariant 1).
+
+**In pass O2 there is no public surface.** The findability rule exists as
+this rule, as **ONE derivation** read by the organizer surface and the
+harness, and as nothing else. The public directory and its cards arrive
+with O5, which also renders the external ticketing links.
+
+### A19.4 Two publication preconditions — both the register's last word
+
+Publishing an edition requires **both**, at the moment of the act, each
+read per the last-word principle (the PP-4 precedent) and each revocable:
+
+- **(a) the owning organizer workspace is currently verified** — the last
+  `partner_verification` row about the workspace is `approved`
+  (A18.4, PP-4);
+- **(b) the fair series is currently approved after the last word of its
+  OWN brand-review rows** — the one-time series brand review announced in
+  A18.4, kept as rows in the existing `reviews` register:
+  `subjectType 'fair_series'`, `approvalType 'series_brand_review'`. No
+  second register — the platform's authority lives in one place
+  (invariant 6).
+
+**A later relevant rejection on either level withdraws the right to
+publish.** Badge and wording keep the two meanings distinguishable: the
+series brand check **never looks like the general "Verified Platform
+Partner" status** — two different subjects, two different words. The
+prototype's approval shortcut is marked as a **demo shortcut for a Bottle
+Lobby staff decision**; an organizer never approves his own series.
+
+### A19.5 External ticket / accreditation links
+
+Consumer ticketing stays external. An edition carries **one minimal typed
+field**, `external_ticketing_url` (nullable) — the off-platform ticket shop
+or accreditation portal. What the link *is* derives from the fair type and
+is not stored a second time (invariant 7): tickets for a consumer fair,
+accreditation for a trade fair, both for a hybrid. It is maintained in the
+organizer's edition basics. **No checkout, no internal ticketing, no public
+rendering in this pass** — O5 renders the link on the public surfaces.
+
+### A19.6 Tables
+
+    fair_series          ( id, organizer_id FK → platform_partners,
+                           name, about )
+    fair_editions        ( id, series_id FK → fair_series,
+                           fair_type enum('trade','consumer','hybrid'),
+                           start_date, end_date,    -- end_date NULL = one day
+                           city, venue,             -- free text, as events.location
+                           description,
+                           status enum('draft','published','cancelled'),
+                           external_ticketing_url ) -- nullable, off-platform
+    fair_edition_history ( edition_id FK, at, actor,
+                           action enum('created','rescheduled',
+                                       'published','cancelled'),
+                           reason,             -- mandatory for rescheduled/cancelled
+                           from_date, to_date )-- rescheduled only; append-only
+
+Deliberately **not** here yet, each with its reason: a `year` column
+(derived from `start_date`, invariant 7) · a stored display title (derived
+as series name + year — storing one would copy the series name, invariant
+1) · halls, stands, floor space (O3) · exhibitor and participant counts
+(derived from O4's participation rows once they exist) · appointment slots
+(O7) · agenda (O12) · hero media (its own pass) · any ticket price or
+checkout field (excluded by decision — the external link is the maximum).
+
+### A19.7 Invariants
+
+- **FS-1 — one series per edition, one managing workspace.** Every edition
+  references exactly one series, and only the series' owning organizer
+  workspace manages it.
+- **FS-2 — no trade role owns a fair.** `organizer_id` names a platform
+  partner with the organizer capability, never a trade stakeholder (D44).
+- **FS-3 — publishing takes both last words.** Workspace verification AND
+  series brand review, each the register's last word; a later rejection on
+  either level withdraws the right to publish.
+- **FS-4 — the two badges never merge.** The series brand check is named
+  distinguishably from "Verified Platform Partner" on every surface.
+- **FS-5 — the lifecycle is the record.** No date change after
+  publication; rescheduling and cancellation only with a reason; history
+  append-only; a published edition is never deleted; "past" is derived.
+- **FS-6 — drafts are invisible outside the owning workspace**; published
+  editions of all three types are publicly findable by default; findability
+  grants no action.
+- **FS-7 — the ticketing link is external.** One nullable URL, maintained
+  in the edition basics; no checkout, and no public rendering before O5.
+
+**Prototype blueprint:** `fairSeries` and `fairEditions` arrays (+ their id
+counters) in `bottle-lobby-dashboard.html`, beside `platformPartners` — O5
+moves them into `assets/bottle-lobby-data.js` when public pages first read
+them (a move, never a copy). `fairEditionDiscoverable()` is the ONE
+findability derivation; `seriesBrandApproved()` reads the register's last
+word like `partnerVerificationApproved()` does. The organizer surface is
+**My Fairs** — the activated first entry of the former locked target
+navigation — with the series list, edition drafts, the reason-bound
+reschedule/cancel acts and the marked staff-demo shortcut for the brand
+review.
+
+**Harness home:** `tests/fairs.js` — FS-1..FS-7 with effective
+counter-mutations: foreign-workspace management refused, a trade role
+smuggled in as owner, each of the two publication preconditions withdrawn
+by a later rejected row (one counter-mutation per level), the lifecycle
+bars (date change after publication, reschedule or cancellation without a
+reason, deletion), draft absence outside the workspace, published
+findability per fair type, the ticketing link stored but not publicly
+rendered, and unchanged samples of the four trade dashboards.
 
 ---
 
@@ -6008,7 +6186,7 @@ mechanism itself stores.
 | D42 | **ME-5 as first written: "venue and participant surfaces show head counts, never identities, until `completed`"** — no name on any public member-event surface before the event was over, the confirmed winemaker's included | **A16.15 ME-5** — differentiated: guests, general participants, applicants and unanswered invitations stay unnamed and stay head counts; a confirmed **`winemaker` or `exhibitor`** may be named on the public surfaces of a **published** member event after their explicit acceptance and never before it; until acceptance the name appears only in the invitee's own view and the host's; the event itself stays gated by its stored reach (A16.14b); and a public naming is neither a release act nor a guarantee (ME-3) | **The blanket rule protected the one party A16.6's logic does not apply to.** Anonymisation exists for the invited-but-undecided, whose later decline would read as a withdrawal — and that protection stays in full: `sent`, `viewed`, `applied`, declined and withdrawn names appear on no public surface. But a winemaker dinner whose card may not say which winemaker is coming advertises nothing — naming the confirmed producer is the point of the event, and being named on a published event is part of what the producer says yes to when accepting. Confirmed business decision, 8 Aug 2026: **acceptance is the consent line; `completed` was one event too late.** The naming is a permission, not an obligation, and it is not the Bottle Lobby release vocabulary — a member event still promises nothing (ME-3). |
 | D43 | **The announcement audience as first written: a Community Announcement "goes to a reach segment (A16.14b)"** — A16.14b listed campaigns among the features that resolve against the reach taxonomy, and A16.8 said *"the follow graph carries the announcement further"*, so an announcement could have addressed `public`, `members`, a whole role group, or hopped beyond the host's own fans | **A16.14e / A16.14b / A16.8** — an announcement goes to the host's **own fans** (the incoming edges of his A7 graph), optionally plus his **own active partners** (A6), and to nobody else; outgoing edges, role and member groups, and the community or partners of a participant, winery, exhibitor or venue are structurally out; reach keeps deciding who may *find* the carrier and never feeds the audience; every recipient must still pass C9's visibility | Serge's decision, 10 Aug 2026. Reach answers *"who may find this?"* — a permission the reader exercises; an audience answers *"whom may I address?"* — an act the sender performs, and A7 had already said both that a follow is not marketing consent and that no foreign graph resolves into a recipient list for a third party. Reading the audience off the reach taxonomy collided with its own neighbours: `public` and `members` would have made a campaign a broadcast over people with no relation to the sender, and WS-3 — reach falls away from `published` — would have left a published show with **no defined audience at the exact stage where announcing matters most**. The incoming follow edge is the one relation where the recipient himself chose the sender; that is why it, and not the taxonomy, is the audience. |
 | D44 | **A16.8's external-fair host rule as first written: "no member is its host"** — the canonical fair (`events.event_kind = 'external_fair'`) simply had no host, and nothing in the model could own or manage it | **A16.8 / A18** — precise instead of blank: **none of the four trade roles is the host** of a canonical fair; its **owner and manager is a verified organizer workspace (A18)**, a platform partner outside the trade enumeration. The ProWein rule — a fair participation is never modelled as a member event — stands word for word | Serge's V4 architecture decision, 10 Aug 2026. The first wording was written (Durchgang 9) when nobody *could* be the host: its job was to block the stand-in — a fair modelled as some member's event — and it did that by leaving the fair ownerless. With A18 the owner exists as a category, and the blank wording would have blocked the wrong party: an organizer is a platform member in the ordinary sense of the word, so *"no member"* read literally would exclude exactly the workspace the fair model is being built for. The precision keeps the protective half (no trade role ever hosts a canonical fair) and adds the ownership half instead of leaving it to inference. Nothing else in the block moved — participation rows, booth appointments and the out-of-scope list are untouched. |
-
+| D45 | **The external-fair sketch's storage and scope as first written** — the canonical fair parked as an `events` row via `events.event_kind = 'external_fair'` (A16.8's first bullet and A16.9's `events` DDL), and A16.8's blanket sentence *"Explicitly out of scope: running a fair, ticketing, organiser management"* | **A19 / A16.8 / A16.9** — the canonical fair is its own record pair, **`fair_series` + `fair_editions`**, owned and managed by the verified organizer workspace (A18, D44); `events` carries member events only and `event_kind` is gone. The out-of-scope sentence is **narrowed, not deleted**: managing a series, its edition basics and its edition lifecycle is in scope (A19, pass O2); exhibitor recruiting, admission, participations, halls and stands, appointments, agenda and ticket checkout stay out until their own passes. Participation rows, the appointment separation, the provenance rule and the ProWein ban stand word for word | Serge's O2 decision, 10 Aug 2026 — one coherent replacement with two halves. The `event_kind` sketch predates A18: with no owner category in the model, an `events` row was the only place a fair could live, and its job was to block the stand-in. With an owning organizer workspace the fair is not anybody's event — a durable brand (series) with concrete runs (editions) is a two-level shape one `events` row cannot carry, and leaving the enum standing would have invited exactly the substitute construction the block exists to forbid. The blanket out-of-scope sentence, written to stop premature fair features, had started to forbid the pass that builds the real thing; the narrowing keeps its protective half — everything beyond series/edition management stays out — while admitting the canonical core it was guarding the door for. |
 ---
 
 # APPENDIX E — HOW THIS DOCUMENTATION IS ORGANISED
