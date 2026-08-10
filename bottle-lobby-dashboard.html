@@ -6029,6 +6029,28 @@ const FAIR_TICKETING_LABEL = {
 };
 const FAIR_STATUS_LABEL = { draft:'Draft', published:'Published', cancelled:'Cancelled' };
 
+/* ONE validation for BOTH acts that set fair days (A19.3): a NULL end
+   means a one-day edition; a set end lies on or after the start.
+   Asked BEFORE anything is written, so a refusal leaves record, dates
+   and history untouched — never a partial change. */
+function fairDatesValid(startDate, endDate) {
+  if (!startDate) return { ok:false, why:'An edition needs its first fair day' };
+  if (endDate && endDate < startDate)
+    return { ok:false, why:'The last fair day cannot lie before the first — leave it empty for a one-day edition' };
+  return { ok:true };
+}
+/* The external link is nullable; a SET value must be an absolute
+   http(s) URL (A19.5). Any other scheme — javascript:, data:, a bare
+   word — is refused without touching the record. */
+function fairTicketingUrlValid(url) {
+  if (url == null || url === '') return true;
+  if (typeof url !== 'string' || !/^https?:\/\//i.test(url)) return false;
+  try {
+    const u = new URL(url);
+    return u.protocol === 'http:' || u.protocol === 'https:';
+  } catch (e) { return false; }
+}
+
 let fairSeries = [
   /* THE ONE SERIES, AND IT IS FICTITIOUS ON PURPOSE: "Atrium Wine
      Days" is invented for this demo, under the invented organizer
@@ -6170,7 +6192,11 @@ function createFairEdition(seriesId, fields) {
   if (!s) { actionSay('That fair series no longer exists'); return null; }
   if (!fairSeriesManagedHere(s)) { actionSay('Only the organizer workspace that owns this series manages its editions'); return null; }
   if (FAIR_TYPES.indexOf(fields.fairType) === -1) { showToast('✗ Pick a fair type'); return null; }
-  if (!fields.startDate) { showToast('✗ An edition needs its first fair day'); return null; }
+  const span = fairDatesValid(fields.startDate, fields.endDate || null);
+  if (!span.ok) { showToast('✗ ' + span.why); return null; }
+  if (!fairTicketingUrlValid(fields.externalTicketingUrl)) {
+    showToast('✗ The ticketing link must be a full http(s) address'); return null;
+  }
   const ed = { id:'FE-' + (fairEditionSeq++), seriesId: s.id,
                fairType: fields.fairType,
                startDate: fields.startDate, endDate: fields.endDate || null,
@@ -6192,10 +6218,17 @@ function updateFairEditionBasics(id, fields) {
   const s = fairSeriesById(ed.seriesId);
   if (!fairSeriesManagedHere(s)) { actionSay('Only the organizer workspace that owns this series manages its editions'); return false; }
   if (ed.status !== 'draft') { actionSay('A published edition is not edited here — cancel it with a reason if it will not run'); return false; }
-  if (fields.fairType !== undefined) {
-    if (FAIR_TYPES.indexOf(fields.fairType) === -1) { showToast('✗ Unknown fair type'); return false; }
-    ed.fairType = fields.fairType;
+  /* Every check BEFORE the first assignment: a refused edit changes
+     nothing at all, never half of a form (the A19.3 discipline the
+     dates already follow). */
+  if (fields.fairType !== undefined && FAIR_TYPES.indexOf(fields.fairType) === -1) {
+    showToast('✗ Unknown fair type'); return false;
   }
+  if (fields.externalTicketingUrl !== undefined &&
+      !fairTicketingUrlValid(fields.externalTicketingUrl)) {
+    showToast('✗ The ticketing link must be a full http(s) address'); return false;
+  }
+  if (fields.fairType !== undefined) ed.fairType = fields.fairType;
   ['city', 'venue', 'description'].forEach(k => {
     if (fields[k] !== undefined) ed[k] = fields[k];
   });
@@ -6211,7 +6244,8 @@ function rescheduleFairEdition(id, startDate, endDate, reason) {
   const s = fairSeriesById(ed.seriesId);
   if (!fairSeriesManagedHere(s)) { actionSay('Only the organizer workspace that owns this series manages its editions'); return false; }
   if (ed.status !== 'draft') { actionSay('A published edition keeps its date — a date can only move before publication (A19.3)'); return false; }
-  if (!startDate) { showToast('✗ An edition needs its first fair day'); return false; }
+  const span = fairDatesValid(startDate, endDate || null);
+  if (!span.ok) { showToast('✗ ' + span.why); return false; }
   if (!reason || !reason.trim()) { showToast('✗ A date change needs a reason — it goes on the record'); return false; }
   const from = ed.startDate + (ed.endDate ? '–' + ed.endDate : '');
   const to   = startDate + (endDate ? '–' + endDate : '');
@@ -6349,7 +6383,9 @@ function renderPartnerFairs() {
         '<span class="otbl-id">' + ed.id + '</span>' +
         '<span class="otbl-dim">' + dates + '</span>' +
         '<span class="otbl-dim">' + FAIR_TYPE_LABEL[ed.fairType] + '</span>' +
-        '<span class="otbl-cust">' + (ed.city || '—') + '<em>' + (ed.venue || '') + '</em></span>' +
+        /* Organizer-typed free text is ESCAPED, never trusted — the
+           page's one escaper (notifEsc), reused. */
+        '<span class="otbl-cust">' + (notifEsc(ed.city) || '—') + '<em>' + notifEsc(ed.venue) + '</em></span>' +
         '<span class="otbl-dim">' + (ed.externalTicketingUrl ? FAIR_TICKETING_LABEL[ed.fairType] + ' set' : '—') + '</span>' +
         '<span><span class="ord-stage me-' + ed.status + '">' + FAIR_STATUS_LABEL[ed.status] + '</span>' + pastChip + '</span>' +
         '<span class="otbl-arrow">›</span>' +
@@ -6358,9 +6394,9 @@ function renderPartnerFairs() {
 
     return '<div class="profile-section" style="margin-top:1rem">' +
       '<div style="display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap">' +
-        '<strong>' + s.name + '</strong>' + wsBadge + brandBadge +
+        '<strong>' + notifEsc(s.name) + '</strong>' + wsBadge + brandBadge +
       '</div>' +
-      '<div class="edit-sub" style="margin-top:0.4rem">' + s.about + '</div>' +
+      '<div class="edit-sub" style="margin-top:0.4rem">' + notifEsc(s.about) + '</div>' +
       demoBtn +
       '<div style="margin:0.9rem 0 0.6rem">' +
         '<button class="btn-sm btn-outline" onclick="openFairEditionModal(\'' + s.id + '\')">+ New Edition</button>' +
@@ -6386,13 +6422,16 @@ function fairEditionDetailHtml(ed) {
       ? '<button class="btn-sm btn-outline" onclick="doCancelFairEdition(\'' + ed.id + '\')">Cancel This Edition…</button>' +
         '<span style="font-size:0.72rem;color:var(--dim);margin-left:0.8rem">Published — the date does not move any more (A19.3). Cancelling needs a reason; the record and its history remain.</span>'
       : '<span style="font-size:0.72rem;color:var(--dim)">Cancelled — the record and its history remain readable.</span>';
+  /* History rows carry organizer-typed reasons; description, venue
+     and the URL are typed too — every one goes through the page's one
+     escaper (notifEsc) on the way to the DOM. Stored stays plain. */
   const history = (ed.history || []).map(h =>
-    '<div class="edit-sub" style="margin-top:0.25rem">' + h.at + ' · ' + h.actor + ' — ' + fairHistoryText(h) + '</div>').join('');
+    '<div class="edit-sub" style="margin-top:0.25rem">' + h.at + ' · ' + notifEsc(h.actor) + ' — ' + notifEsc(fairHistoryText(h)) + '</div>').join('');
   return '<div style="padding:0.9rem 1rem;border:1px solid rgba(247,243,238,0.08);border-top:none;background:rgba(247,243,238,0.02)">' +
-    '<div class="edit-sub">' + (ed.description || 'No description yet.') + '</div>' +
+    '<div class="edit-sub">' + (notifEsc(ed.description) || 'No description yet.') + '</div>' +
     '<div class="edit-sub" style="margin-top:0.4rem">' +
       FAIR_TICKETING_LABEL[ed.fairType] + ': ' +
-      (ed.externalTicketingUrl ? '<span style="color:var(--paper)">' + ed.externalTicketingUrl + '</span> <span style="color:var(--dim)">(external — no checkout here)</span>' : '— none yet') +
+      (ed.externalTicketingUrl ? '<span style="color:var(--paper)">' + notifEsc(ed.externalTicketingUrl) + '</span> <span style="color:var(--dim)">(external — no checkout here)</span>' : '— none yet') +
     '</div>' +
     '<div style="display:flex;gap:0.6rem;align-items:center;margin-top:0.8rem;flex-wrap:wrap">' + actions + '</div>' +
     '<div class="form-block-title" style="margin-top:1rem">History</div>' + history +
@@ -6468,7 +6507,16 @@ function saveFairEdition() {
     description: document.getElementById('fef-desc').value.trim(),
     externalTicketingUrl: document.getElementById('fef-ticketing').value.trim() || null
   };
-  if (!fields.startDate) { showToast('✗ An edition needs its first fair day'); return; }
+  /* The WHOLE save is validated before the first mutation (A19.3): a
+     refused field further down must not leave a date change or its
+     history row already written. After these checks the two acts below
+     can only bounce on the shared gates (ownership, draft), where the
+     first act fails before anything moved. */
+  const span = fairDatesValid(fields.startDate, fields.endDate);
+  if (!span.ok) { showToast('✗ ' + span.why); return; }
+  if (!fairTicketingUrlValid(fields.externalTicketingUrl)) {
+    showToast('✗ The ticketing link must be a full http(s) address'); return;
+  }
   if (!fairEditModalId) {
     const ed = createFairEdition(fairModalSeriesId, fields);
     if (!ed) return;
@@ -6479,6 +6527,10 @@ function saveFairEdition() {
   } else {
     const ed = fairEditionById(fairEditModalId); if (!ed) return;
     const dateMoved = ed.startDate !== fields.startDate || (ed.endDate || null) !== fields.endDate;
+    if (dateMoved &&
+        !document.getElementById('fef-reason').value.trim()) {
+      showToast('✗ A date change needs a reason — it goes on the record'); return;
+    }
     if (dateMoved &&
         !rescheduleFairEdition(ed.id, fields.startDate, fields.endDate,
           document.getElementById('fef-reason').value)) return;
