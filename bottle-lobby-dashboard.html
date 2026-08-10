@@ -5943,11 +5943,20 @@ let platformPartners = [
 function platformPartner(id) {
   return platformPartners.find(function (p) { return p.id === id; }) || null;
 }
-/* PP-4 IN ONE FUNCTION — the showReleaseApproved() shape on the new
-   subject: asked of the register, never of a flag. */
+/* PP-4 IN TWO FUNCTIONS — the showReviewLatest() discipline on the
+   new subject: the register is append-only, so the partner's current
+   verification state is the LAST row about it (A18.4), never "any
+   approved row ever". An any-row reading would survive a later
+   rejection — exactly the stale answer the register's own comment
+   forbids. Asked of the register, never of a flag. */
+function partnerVerificationLatest(partner) {
+  const rows = reviewsFor('partner', partner.id)
+    .filter(r => r.approvalType === 'partner_verification');
+  return rows.length ? rows[rows.length - 1] : null;
+}
 function partnerVerificationApproved(partner) {
-  return reviewsFor('partner', partner.id).some(r =>
-    r.approvalType === 'partner_verification' && r.reviewStatus === 'approved');
+  const last = partnerVerificationLatest(partner);
+  return !!last && last.reviewStatus === 'approved';
 }
 
 /* ── The organizer cockpit — a hull, honestly empty (A18.7) ────────
@@ -5993,8 +6002,9 @@ function renderPartnerCockpit() {
   const p = platformPartners[0];
   if (!p) return;
   const verified = partnerVerificationApproved(p);
-  const vrow = reviewsFor('partner', p.id)
-    .filter(r => r.approvalType === 'partner_verification' && r.reviewStatus === 'approved').pop() || null;
+  /* Badge and date read the SAME last relevant decision — two reads
+     of the register's last word, never two different rows. */
+  const vrow = verified ? partnerVerificationLatest(p) : null;
   const badge = verified
     ? '<span class="tag tag-green">✓ Verified Platform Partner</span>'
     : '<span class="tag tag-dim">Verification pending</span>';

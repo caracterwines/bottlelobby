@@ -260,6 +260,40 @@ function badgeShown() {
   if (badgeShown()) ok('row restored → badge returns (pure derivation, both directions)');
   else bad('the badge did not come back with its row');
 }
+/* PP-4 is the register's LAST word (A18.4): the register is
+   append-only, so a LATER rejected row must pull the badge even
+   though the approved row is still in the array — an "any approved
+   row ever" reading survives this and is exactly the defect. The
+   mutation appends the later row, re-renders, and takes itself back
+   completely. */
+function assertLaterRejectionPullsBadge() {
+  w.eval("reviews.push({ id:'RVW-MUT-REJ', subjectType:'partner', subjectId:platformPartners[0].id, gateNumber:null, reviewStatus:'rejected', reviewedBy:'Bottle Lobby', reviewedAt:'2026-07-30', reviewNotes:null, approvalType:'partner_verification' })");
+  try {
+    RENDER();
+    if (!badgeShown() && !/Verified by Bottle Lobby/.test(d.getElementById('ppartner-profile').textContent))
+      ok('later rejected row → both badges fall, no surface still claims Verified');
+    else bad("a later rejection did not pull the badge — the derivation ignores the register's last word (PP-4)");
+  } finally {
+    w.eval("reviews = reviews.filter(r => r.id !== 'RVW-MUT-REJ')");
+    RENDER();
+  }
+}
+assertLaterRejectionPullsBadge();
+if (badgeShown()) ok('rejection mutation fully taken back — badge present again');
+else bad('the rejected-row mutation leaked into the fixtures');
+
+/* The red counter-proof for the new claim: put the any-row derivation
+   back in place of the real one and run the SAME check — it must go
+   red, or the check cannot tell the two derivations apart. */
+expectRed('an any-row derivation swapped in under the last-word check', () => {
+  w.eval("window.__ppRealDerive = partnerVerificationApproved; " +
+         "partnerVerificationApproved = function (p) { return reviewsFor('partner', p.id).some(r => r.approvalType === 'partner_verification' && r.reviewStatus === 'approved'); }");
+  try { assertLaterRejectionPullsBadge(); }
+  finally {
+    w.eval('partnerVerificationApproved = window.__ppRealDerive; delete window.__ppRealDerive');
+    RENDER();
+  }
+});
 
 /* ── §5 The fixture is fictitious and C7-derived ─────────────────── */
 console.log('\n§5 fixture discipline');

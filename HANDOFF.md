@@ -495,8 +495,8 @@ Funktionen aufrufen, `transferSize` vorher lesen (C7).
 > - **Follow ist ausschliesslich Geschaeftssemantik in A18.5:** gerichtete
 >   Beziehung, keine Handelspartnerschaft, kein Request Partnership. **A7 ist
 >   technisch unveraendert**; ob der bestehende Follow-Speicher sicher
->   generalisiert oder ein abgegrenzter Weg noetig ist, misst ein **eigener
->   Follow-Messdurchgang** (O-Reihe), vorher wird nichts gebaut.
+>   generalisiert oder ein abgegrenzter Weg noetig ist, misst der **O9
+>   vorgelagerte Follow-Messdurchgang**, vorher wird nichts gebaut.
 > - **Browser-Abnahme am finalen Stand, mit der bekannten Einschraenkung**
 >   (Screenshot-/Injection-Timeout am ~1-MB-Dokument, EIN Versuch, keine
 >   Serie — C7; abgenommen ueber gerenderten DOM, berechnete Darstellung und
@@ -517,10 +517,10 @@ Funktionen aufrufen, `transferSize` vorher lesen (C7).
 > **Roadmap Fair-Track (V4, O2–O15) — spaetere Ziel-Durchgaenge, kein
 > Auftragsbestand:** Fair Series & Editions · Exhibitor Recruiting mit
 > Bewerbungs-/Zulassungsworkflow · Staende & Hallen · Fair Participation
-> Pages · Termine & Agenda · **Organizer-Profil & Follow (O9/O10, mit
-> vorgelagertem Follow-Messdurchgang)** · Opportunities ·
-> **Fair-Benachrichtigungen/Organizer-Kommunikation als D10-Erweiterung
-> (O11)** · Hero-Medien mit zweigeteilter Abhaengigkeit ·
+> Pages · Termine & Agenda · **O9: oeffentliches Organizer-Profil & Follow,
+> einschliesslich vorgelagertem Follow-Messdurchgang** · **O10:
+> Opportunities** · **O11: Fair-Benachrichtigungen & Organizer-Kommunikation
+> als D10-Erweiterung** · Hero-Medien mit zweigeteilter Abhaengigkeit ·
 > Marketing-/Why-Join-Rollout der in A18.6 festgelegten EN-Formeln. Die
 > exakten Anker-Wortlaute stehen im V4-Dokument ausserhalb des Repos.
 >
