@@ -4500,6 +4500,12 @@ rescheduled (reason, from → to) · published · cancelled (reason) — and
 nothing ever rewrites one. The row IS the record of the reason; a second
 reason field beside it would be a copy (invariant 1).
 
+**The fair days are one valid span** (a precision of the semantics above,
+not a new rule): `end_date` NULL means a one-day edition; when set, it lies
+**on or after** `start_date`. Creation and rescheduling both check this
+**before anything is written** — an invalid span is refused whole, leaving
+record, dates and history untouched.
+
 **In pass O2 there is no public surface.** The findability rule exists as
 this rule, as **ONE derivation** read by the organizer surface and the
 harness, and as nothing else. The public directory and its cards arrive
@@ -4534,8 +4540,11 @@ field**, `external_ticketing_url` (nullable) — the off-platform ticket shop
 or accreditation portal. What the link *is* derives from the fair type and
 is not stored a second time (invariant 7): tickets for a consumer fair,
 accreditation for a trade fair, both for a hybrid. It is maintained in the
-organizer's edition basics. **No checkout, no internal ticketing, no public
-rendering in this pass** — O5 renders the link on the public surfaces.
+organizer's edition basics. When set, the value is a **valid absolute
+http(s) URL** — any other scheme or an unparsable value is refused without
+touching the record; NULL stays the "none yet" answer. **No checkout, no
+internal ticketing, no public rendering in this pass** — O5 renders the
+link on the public surfaces.
 
 ### A19.6 Tables
 
@@ -4543,7 +4552,7 @@ rendering in this pass** — O5 renders the link on the public surfaces.
                            name, about )
     fair_editions        ( id, series_id FK → fair_series,
                            fair_type enum('trade','consumer','hybrid'),
-                           start_date, end_date,    -- end_date NULL = one day
+                           start_date, end_date,    -- NULL = one day; else ≥ start_date
                            city, venue,             -- free text, as events.location
                            description,
                            status enum('draft','published','cancelled'),
@@ -4577,6 +4586,9 @@ checkout field (excluded by decision — the external link is the maximum).
 - **FS-5 — the lifecycle is the record.** No date change after
   publication; rescheduling and cancellation only with a reason; history
   append-only; a published edition is never deleted; "past" is derived.
+  The fair days are a valid span — `end_date` on or after `start_date`, or
+  NULL for one day — checked before any write, so a refused act leaves no
+  partial change.
 - **FS-6 — drafts are invisible outside the owning workspace**; published
   editions of all three types are publicly findable by default; findability
   grants no action.
