@@ -4,7 +4,7 @@
 > Dateiliste, Dateianzahl und Aenderungshistorie stehen in der Git-Historie — nicht hier.
 > Dauerhafte Regeln stehen in `BOTTLE-LOBBY-SPEC.md`, kurze Invarianten in `CLAUDE.md` — nicht hier.
 
-**Letzte Aktualisierung:** 9. August 2026
+**Letzte Aktualisierung:** 10. August 2026
 
 ---
 
@@ -21,7 +21,7 @@ Kein Build-Command, Publish-Directory = Repo-Root.
 
 ---
 
-## ▶ EINSTIEG — Stand 9. August 2026
+## ▶ EINSTIEG — Stand 10. August 2026
 
 > **Was Git nicht weiss, steht hier. Alles andere nicht.** Diese Datei fuehrt
 > keine Chronik: was gebaut wurde, wann und von wem, beantwortet `git log`
@@ -31,12 +31,12 @@ Kein Build-Command, Publish-Directory = Repo-Root.
 > Dauerhafte Regeln gehoeren in `BOTTLE-LOBBY-SPEC.md`, kurze Invarianten in
 > `CLAUDE.md`. Findet sich hier eine Regel, ist sie am falschen Ort.
 
-**Baum sauber, `main` gepusht, 26 Harnesses gruen** (nachgezaehlt 09.08. — `wine-guide-page.js` kam mit Durchgang 9 dazu, davor `member-events.js` mit 7, `shows-reach.js`/`shows-release.js` mit 5 und 6). **`BLStore.VERSION` steht auf 7** — die Begruendung samt korrigierter Vorhersage steht am `VERSION` in `assets/bottle-lobby-store.js` und im Block zu Durchgang 9 unten.
+**Baum sauber, `main` gepusht, 27 Harnesses gruen** (nachgezaehlt 10.08. — `campaigns.js` kam mit Durchgang 10 dazu, davor `wine-guide-page.js` mit 9, `member-events.js` mit 7, `shows-reach.js`/`shows-release.js` mit 5 und 6). **`BLStore.VERSION` steht auf 7** — Durchgang 10 hat gemessen KEINEN Bump gebraucht (nur Neuregistrierungen, Begruendung im Block zu Durchgang 10 unten).
 
 ### Womit eine Sitzung anfaengt
 
 ```
-node tests/run-all.js        →  26 Harnesses, muss gruen sein, bevor irgendetwas beginnt
+node tests/run-all.js        →  27 Harnesses, muss gruen sein, bevor irgendetwas beginnt
 node tests/serve.js          →  http://localhost:8765   (no-store — NIE python http.server)
 node tests/stamp-assets.js   →  nach jeder Aenderung an assets/, sonst wird check-static rot
 ```
@@ -94,7 +94,7 @@ Wahrheiten stabilisieren, dann nach aussen bauen.
 | 7 | ~~**Member Events, Basis + Cockpit (Distributor)**~~ | **Gebaut am 08.08.** — siehe den Block unter der Tabelle. Externe Messen (`event_kind:'external_fair'`) sind bewusst NICHT dabei |
 | 8 | ~~**Member Events, Ausrollen**~~ | **Gebaut am 08.08.** — siehe den Block unter der Tabelle. Die Bewerberseite ist bewusst NICHT dabei (Durchgang 9) |
 | 9 | ~~**Wine Guide → Events + Bewerberseite**~~ | **Gebaut am 09.08.** — siehe den Block unter der Tabelle. Dazu die ME-5-Korrektur (D42) und das ausgeschriebene Messe-Modell in der Spec |
-| 10 | **Kampagnen + Benachrichtigungen** | Ankuendigung/Erinnerung getrennt, Empfaenger-Snapshot, C9-Bedingungen |
+| 10 | ~~**Kampagnen + Benachrichtigungen**~~ | **Gebaut am 10.08.** — siehe den Block unter der Tabelle. Ankuendigung/Erinnerung getrennt, Empfaenger-Snapshot, C9-Bedingungen; die Publikumsregel ist neu entschieden (**D43**) |
 | 11 | **`bottle-lobby-own-label.html` neu** | Die Seite behauptet das alte Modell in ~20 Passagen (Zeilen 206–453) — **das alte Modell IST ihr Argument**, also Neuschrift, nicht Korrektur. Die zwei *konkreten* Falschaussagen sind mit dem A17-Fixture-Durchgang weg (siehe den Block unter der Tabelle); die **Argumentation** steht unveraendert. **Muss nach dem A17-Fixture-Durchgang**, sonst wird die Seite zweimal geschrieben |
 
 **Zwischen den Durchgaengen jeweils eine Browser-Abnahme** — klicken statt
@@ -358,6 +358,98 @@ Funktionen aufrufen, `transferSize` vorher lesen (C7).
 > ausserhalb des Host-Sortiments (Spekulationsverbot, ME-3101 bleibt der
 > dokumentierte Fall) · ein Ruecknahmeweg fuer Bewerbungen (nicht beauftragt,
 > nicht erfunden).
+
+> **Durchgang 10 ist gebaut (10.08.), fuenf lokal committete Schritte, ein
+> Push.** Kampagnen fuer beide Traegersorten, Suppressions, die abgeleitete
+> Empfaenger-Benachrichtigung — und die Spec ging voraus. Was Git nicht
+> selbst sagt:
+>
+> - **Die Publikumsregel ist NEU ENTSCHIEDEN, und die Spec muss ins
+>   Projektwissen.** Ein Announcement geht an die EIGENEN Fans des Hosts
+>   (eingehende A7-Kanten), optional plus die eigenen aktiven Partner —
+>   nie an ein Reach-Segment. Die abgeloeste Fassung („goes to a reach
+>   segment") ist **D43**; A16.14b nennt Kampagnen nicht mehr als
+>   Reach-Konsumenten, A16.8 ist nachgezogen, C9 klassifiziert die
+>   Suppression als Eingaberecord neben dem Read-Marker.
+> - **Es gibt KEINE gemeinsame Detailstelle fuer Show und Event** — das
+>   war die eine Messung, die den Auftragstext korrigiert hat. Die „eine
+>   parametrisierte Stelle" ist deshalb die FUNKTION: `campaignBox(role,
+>   subjectType, subject)`, gemountet in `renderShowDetail()` und
+>   `renderEventDetail()`, beide Male nur fuer den Host und absent statt
+>   deaktiviert fuer alle anderen.
+> - **Die C9-Sichtbarkeit je Empfaenger hat zwei Tueren, und das ist eine
+>   Entscheidung:** die Klasse-1-Ableitung (`showVisibleTo`/
+>   `eventVisibleTo`) ODER die EIGENE Zeile auf dem Traeger. Ein offen
+>   Eingeladener besteht die Verzeichnis-Sichtbarkeit nicht (EVENT_ON_IT
+>   kennt `sent`/`viewed` nicht), erreicht den Traeger aber ueber seine
+>   Einladung — C9 erbt die Flaeche, und fuer ihn IST die Einladung die
+>   Flaeche. Ohne die zweite Tuer haette ein Reminder genau die Haeuser
+>   verloren, um die es ihm geht.
+> - **`partnerships` hat kein `status`-Feld, und der Resolver verlaesst
+>   sich darauf:** jede Zeile IST eine aktive Partnerschaft (Aktivierung
+>   ist der manuelle Bottle-Lobby-Akt, Invariante 6); Anfragen leben in
+>   den vier Request-Buechern. „Aktive eigene Partner" ist deshalb
+>   `partnershipsOf()` ohne Filter — ein erfundenes Statusfeld waere D36
+>   eine Etage hoeher gewesen.
+> - **Der Fixture-Snapshot ist HERGELEITET, nicht behauptet:** CMP-4001
+>   (Hawesko, ME-3103, Fans + Partner) — 10 Kandidaten, Bistro Laurent
+>   faellt an seine Announcement-Preference, vier fallen an der
+>   Deutschland-Einengung ohne eigene Zeile, fuenf bleiben. Die Rechnung
+>   steht als Kommentar an der Fixture, und `tests/campaigns.js` prueft
+>   Snapshot gegen Live-Aufloesung auf Gleichheit.
+> - **Eine Zahl, die zufaellig stimmt, und der Harness weiss es:** die
+>   Reminder-Zahl auf ME-3103 (6) ist zufaellig gleich der Groesse von
+>   Haweskos Community (auch 6) — die MENGEN unterscheiden sich (Domaine
+>   Lefevre drin, Chateau Belrieu nicht). Der Harness und die Abnahme
+>   pruefen die Menge, nie die Zahl.
+> - **Versandstempel:** ein Live-Versand stempelt `SHOW_TODAY`
+>   (2026-07-31), wie jede andere Mutation der Seite; die Fixture traegt
+>   ihr Autorschaftsdatum (05.08.) nach C7-Konvention. Zwei Konventionen,
+>   beide vorgefunden, keine neu erfunden.
+> - **C8 gemessen, nicht gelesen:** alle 26 Bestandssammlungen hashen
+>   identisch, `eventCampaigns`, `campaignSeq` und
+>   `communicationSuppressions` sind reine Neuregistrierungen — ein
+>   Alt-Snapshot wird von `restore()` selbst verworfen, **kein
+>   VERSION-Bump** (dieselbe Lage wie Durchgang 7). Der C8-Roundtrip der
+>   neuen Sammlungen ist in der Abnahme nebenbei belegt: ein Live-Versand
+>   ueberlebte den Reload und verschwand erst mit `BLStore.reset()`.
+> - **Ein Bestands-Harness hat den Durchgang gefangen:** die
+>   Ziel-Whitelist in `tests/notifications.js` §9 kannte `event` nicht
+>   und wurde rot — genau ihre Aufgabe. Sie spiegelt jetzt
+>   `notifDestination()` inklusive des neuen Zweigs; den Klick auf beide
+>   Oeffnungswege fuehrt `tests/campaigns.js` echt aus.
+> - **Messbefund am Rande, benannt statt still:** die Tabelle „What each
+>   file guards" in `tests/README.md` fuehrt seit Durchgang 5 keine neuen
+>   Harnesses mehr (shows-reach, member-events, wine-guide-page,
+>   campaigns fehlen alle). Die Spec benennt Harness-Heimaten seit A16.15
+>   selbst; die Tabelle gehoert beim naechsten Test-Pflegepunkt
+>   nachgezogen oder auf die Spec-Verweise reduziert — hier nicht getan,
+>   weil es vier Durchgaenge Rueckstand ist und nicht dieser eine.
+> - **Browser-Abnahme am finalen Stand, mit derselben genannten
+>   Einschraenkung wie Durchgang 8/9** (keine Screenshot-Serie versucht):
+>   gerenderter DOM, berechnete Darstellung, echte Klicks,
+>   `transferSize` vorher gelesen (983 KB frisch). Voller Bogen:
+>   Announcement auf ME-3103 angelegt — Vorschau zeigt Zahl, nie Namen —
+>   bestaetigt, versendet, Protokollzeile sichtbar; Abbruch versendet
+>   nichts; Draft- und Completed-Traeger mit benanntem Grund abgelehnt;
+>   Cantina Rossi sieht die abgeleitete Benachrichtigung und landet per
+>   Klick auf dem bestehenden Discover→Detail-Pane als Leser (keine
+>   Host-Akte); Bistro Laurent (Suppression) sieht keine Kampagnenzeile;
+>   Teilnehmer-/Order-/Partnerschaftszaehler vor und nach dem Versand
+>   identisch; WS-2604 unveraendert funktionsfaehig samt neuer Box;
+>   Guide `#events` unveraendert (ein oeffentliches Event, die
+>   freigegebene Show, NICHT die Hausmesse). Danach `BLStore.reset()`,
+>   Fixtures nachgemessen unberuehrt.
+>
+> **Was Durchgang 10 bewusst NICHT gebaut hat:** eine
+> Suppressions-Einstellungsoberflaeche (nur Datensatz + Resolver; die
+> Oberflaeche ist ein benannter Restpunkt und gehoert in den Durchgang,
+> der Empfaenger-Einstellungen baut) · externe Messen (eigener
+> Durchgang, Modell steht in A16.8) · oeffentliche
+> Member-Event-Detailseiten (weiter benannt offen) · ein
+> Nachrichten-/Inbox-System (C9 bleibt eine Query; die einzige neue
+> Speicherung ist der Kampagnen-Snapshot, und der ist ein Beleg, kein
+> Postfach).
 
 ---
 
