@@ -327,7 +327,10 @@ console.log('\n── counter-check: the two ways the screen can lie');
 console.log('\n── what a row opens');
 {
   const s = build();
-  const KNOWN = ['show', 'profile', 'order', 'request'];
+  /* Mirrors notifDestination()'s branches. `event` arrived with the
+     campaign rows (A16.14e) and opens the existing Discover→Detail
+     route — tests/campaigns.js drives that click for real. */
+  const KNOWN = ['show', 'event', 'profile', 'order', 'request'];
 
   const strange = [];
   ROLES.forEach(r => s.eval('notificationsFor("' + r + '")').forEach(n => {
