@@ -22,9 +22,9 @@
    here, so that adding a phrase to publicShowCard() and forgetting it
    here cannot go unnoticed (C7: a contract test over vocabulary).
 
-   ME-4 (campaign recipient snapshots) is NOT covered: campaigns are
-   A16.14e and are not built. There is nothing to measure, and a check
-   over a feature that does not exist is a check that cannot fail.
+   ME-4 (campaign recipient snapshots) is covered in tests/campaigns.js
+   — its own harness home per A16.15, because the mechanism spans both
+   carrier kinds and this file is the member-event half only.
 
    SINCE THE COCKPIT WENT TO ALL FOUR ROLES, so has this file. A16.8's
    "one model for all four roles" was a claim nothing measured while
