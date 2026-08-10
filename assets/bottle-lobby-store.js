@@ -256,8 +256,26 @@ window.BLStore = (function () {
      collection, and this pass is exactly that case. A protection that
      rests on a neighbouring registration in the same commit is a
      protection that silently vanishes the day either half is
-     reverted, split or cherry-picked alone. */
-  var VERSION   = 8;
+     reverted, split or cherry-picked alone.
+
+     9 — the fair pass (10.08.2026), and it is Durchgang 11's
+     constellation repeated exactly. One fixture row added to the
+     EXISTING `reviews` collection: RVW-3005, the series brand review
+     (subjectType 'fair_series', A19.4b), with `reviewSeq` moving
+     3005 → 3006 beside it.
+
+     MEASURED against the pre-pass build (630c8e9): all 30 existing
+     collections hash identically; the only new prints are the four
+     NEW registrations fairSeries, fairSeriesSeq, fairEditions,
+     fairEditionSeq. So guard 2 cannot see the row (the D2D class, by
+     construction — RVW-3005 has the same row shape as RVW-3004), and
+     a restored v8 snapshot would drop the one row the series brand
+     badge and the publish gate derive from (FS-3b) while handing
+     `reviewSeq` back an id that already exists. The new-registration
+     discard would catch it TODAY — and the Durchgang-11 sentence
+     above says why that is not the protection: it vanishes the day
+     either half is reverted, split or cherry-picked alone. */
+  var VERSION   = 9;
   var DEBOUNCE  = 200;   /* ms after the last event before a write */
   var HEARTBEAT = 2000;  /* ms between "does storage still match?" checks */
   var POLL      = 500;   /* ms between retries while the tab is busy */
