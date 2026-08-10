@@ -612,8 +612,9 @@ Funktionen aufrufen, `transferSize` vorher lesen (C7).
 > (10.08., drei Commits auf `cbc80e5` — dieser Stand wurde NICHT
 > abgenommen und nie an Claude Chat uebergeben; Codex hat ihn vor der
 > Abnahme zurueckgewiesen)** — zwei eng begrenzte Befunde, beide behoben.
-> **Ausschliesslich der neue finale Stand `39be8af` geht zur einmaligen
-> unabhaengigen Abnahme an Claude Chat:**
+> `39be8af` ist der technisch bestaetigte Produktstand. **Ausschliesslich
+> der finale HEAD dieses Durchgangs nach allen Codex-Korrekturen geht zur
+> einmaligen unabhaengigen Abnahme an Claude Chat:**
 >
 > - **Datumsintegritaet:** `endDate` vor `startDate` wurde angenommen. Jetzt
 >   als **A19.3/FS-5-Praezisierung** (keine neue D-Entscheidung — dieselbe
