@@ -431,6 +431,120 @@ expectRed('the link rendered onto a trade dashboard', () => {
   finally { d.getElementById('fair-mut-link').remove(); }
 });
 
+/* ── §6b Hardening — the span, the URL scheme, the escaped render ──
+   Added after Codex's independent review of cbc80e5: the span rule is
+   an A19.3/FS-5 precision (end on/after start, or NULL for one day),
+   the link must be absolute http(s) (A19.5), and organizer-typed text
+   reaches the DOM only escaped. */
+console.log('\n§6b fair days are one valid span; the link is http(s); typed text is escaped');
+
+function assertInvalidSpanRefused() {
+  const before = EDITIONS().length;
+  const ed = w.eval("createFairEdition('FS-7001', { fairType:'trade', startDate:'2028-05-10', endDate:'2028-05-08' })");
+  if (ed === null && EDITIONS().length === before)
+    ok('creation with the last day before the first is refused — nothing written');
+  else { bad('an edition with an inverted span was created'); if (ed) dropEdition(ed.id); }
+  const draft = freshDraft();
+  const histBefore = w.eval("fairEditionById('" + draft.id + "').history.length");
+  const refused = w.eval("rescheduleFairEdition('" + draft.id + "', '2028-07-10', '2028-07-01', 'a stated reason')") === false;
+  const row = w.eval("fairEditionById('" + draft.id + "')");
+  if (refused && row.startDate === '2028-05-01' && row.endDate === null && row.history.length === histBefore)
+    ok('rescheduling to an inverted span is refused — date AND history untouched');
+  else bad('an inverted reschedule went through or left a partial change');
+  dropEdition(draft.id);
+}
+assertInvalidSpanRefused();
+expectRed('the span validation swapped for a yes-sayer', () => {
+  w.eval("window.__fairSpan = fairDatesValid; fairDatesValid = function (s) { return s ? { ok:true } : { ok:false, why:'x' }; }");
+  try { assertInvalidSpanRefused(); }
+  finally { w.eval('fairDatesValid = window.__fairSpan; delete window.__fairSpan'); }
+});
+
+function assertBadUrlRefused() {
+  const before = EDITIONS().length;
+  const ed = w.eval("createFairEdition('FS-7001', { fairType:'trade', startDate:'2028-05-01', externalTicketingUrl:'javascript:alert(1)' })");
+  if (ed === null && EDITIONS().length === before)
+    ok('creation with a javascript: link is refused — nothing written');
+  else { bad('a non-http(s) link was accepted at creation'); if (ed) dropEdition(ed.id); }
+  const linkBefore = w.eval("fairEditionById('FE-7102').externalTicketingUrl");
+  const cityBefore = w.eval("fairEditionById('FE-7102').city");
+  const refused = w.eval("updateFairEditionBasics('FE-7102', { city:'MUT', externalTicketingUrl:'not a url' })") === false;
+  if (refused &&
+      w.eval("fairEditionById('FE-7102').externalTicketingUrl") === linkBefore &&
+      w.eval("fairEditionById('FE-7102').city") === cityBefore)
+    ok('an unparsable link is refused on edit — and the refused form changed NO field');
+  else bad('a bad link edit went through or left a partial change');
+}
+assertBadUrlRefused();
+{
+  if (w.eval("updateFairEditionBasics('FE-7102', { externalTicketingUrl:'https://autumn.example/tickets' })") === true &&
+      w.eval("fairEditionById('FE-7102').externalTicketingUrl") === 'https://autumn.example/tickets')
+    ok('a valid https link still lands on the record');
+  else bad('the validation refuses a valid https link');
+  w.eval("fairEditionById('FE-7102').externalTicketingUrl = null");
+}
+expectRed('the URL validation swapped for a yes-sayer', () => {
+  w.eval('window.__fairUrl = fairTicketingUrlValid; fairTicketingUrlValid = function () { return true; }');
+  try { assertBadUrlRefused(); }
+  finally { w.eval('fairTicketingUrlValid = window.__fairUrl; delete window.__fairUrl'); }
+});
+
+/* The combined modal save is atomic: a date move plus a refused link
+   must leave neither the new date nor a history row behind. */
+{
+  w.eval("openFairEditionModal('FS-7001','FE-7102')");
+  const before = w.eval("fairEditionById('FE-7102')");
+  const histBefore = before.history.length;
+  d.getElementById('fef-start').value = '2027-10-20';
+  d.getElementById('fef-reason').value = 'trying to move';
+  d.getElementById('fef-ticketing').value = 'javascript:alert(1)';
+  w.eval('saveFairEdition()');
+  const after = w.eval("fairEditionById('FE-7102')");
+  if (after.startDate === before.startDate && after.history.length === histBefore &&
+      d.getElementById('fair-edition-modal').classList.contains('active'))
+    ok('date move + refused link: the whole save bounces — no date change, no history row');
+  else bad('a refused save left a partial change behind (date ' + after.startDate + ', history ' + after.history.length + ')');
+  w.eval('closeFairEditionModal()');
+}
+
+function assertTypedTextEscaped() {
+  w.eval("createFairSeries('<span id=\"fair-injection\">Test</span>', '<img id=\"fair-injection-img\" src=x>')");
+  const sid = SERIES()[SERIES().length - 1].id;
+  try {
+    RENDER();
+    const injected = d.getElementById('fair-injection') || d.getElementById('fair-injection-img');
+    const asText = d.getElementById('pfairs-root').textContent.indexOf('<span id="fair-injection">Test</span>') !== -1;
+    if (!injected && asText)
+      ok('markup in a series name/about renders as TEXT and creates no element');
+    else bad('organizer-typed markup reached the DOM as a live element');
+  } finally {
+    w.eval("fairSeries = fairSeries.filter(s => s.id !== '" + sid + "'); " +
+           "reviews = reviews.filter(r => r.subjectId !== '" + sid + "')");
+    RENDER();
+  }
+  const ed = freshDraft();
+  try {
+    w.eval("updateFairEditionBasics('" + ed.id + "', { description:'<b id=\"fair-injection2\">x</b>' })");
+    w.eval("rescheduleFairEdition('" + ed.id + "', '2028-05-02', null, '<i id=\"fair-injection3\">r</i>')");
+    w.eval("fairOpenEditionId = '" + ed.id + "'"); RENDER();
+    const injected = d.getElementById('fair-injection2') || d.getElementById('fair-injection3');
+    const reasonAsText = d.getElementById('pfairs-root').textContent.indexOf('<i id="fair-injection3">r</i>') !== -1;
+    if (!injected && reasonAsText)
+      ok('markup in description and history reason renders as text too');
+    else bad('typed markup in the edition file reached the DOM as a live element');
+  } finally {
+    w.eval('fairOpenEditionId = null');
+    dropEdition(ed.id);
+    RENDER();
+  }
+}
+assertTypedTextEscaped();
+expectRed('the escaper swapped for identity', () => {
+  w.eval('window.__fairEsc = notifEsc; notifEsc = function (v) { return String(v == null ? "" : v); }');
+  try { assertTypedTextEscaped(); }
+  finally { w.eval('notifEsc = window.__fairEsc; delete window.__fairEsc'); RENDER(); }
+});
+
 /* ── §7 Three fair types, distinguishable ─────────────────────────── */
 console.log('\n§7 trade · consumer · hybrid');
 
