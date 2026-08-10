@@ -545,6 +545,9 @@ console.log('\n── the one list stays the one list');
     rAwSelectedWine:       'ditto, restaurant side',
     tAwSelectedWine:       'ditto, retail side',
     editingPressId:        'the press entry an open editor is about',
+    fairOpenEditionId:     'the fair edition whose detail pane is unfolded in My Fairs — a reload starts folded. What HAS to survive is fairEditions and its history, and both are registered (A19)',
+    fairModalSeriesId:     'the series an open edition modal belongs to',
+    fairEditModalId:       'the edition an open edit modal is about (null = the modal is creating one)',
     editingPortfolioIndex: 'the portfolio row an open editor is about',
     demoSavedTimer:        'the timer behind the "Saved" flash'
   };

@@ -1489,6 +1489,11 @@ body {
     </div>
     <div class="nav-section">
       <div class="nav-section-label">Fairs</div>
+      <!-- The first fair entry is LIVE since O2 (A19): "My Fairs" grew
+           out of the locked "Fair Series & Editions" row and REPLACES
+           it — never a second entry beside it. The remaining seven
+           target-navigation rows stay locked with their reasons. -->
+      <div class="nav-item" id="pnav-fairs" onclick="showPartnerView('fairs')" style="cursor:pointer"><span class="nav-icon">◇</span> My Fairs</div>
       <div id="pnav-locked-fairs"></div>
     </div>
     <div class="nav-section">
@@ -3398,6 +3403,18 @@ With an annual production capacity of over 1.2 million bottles, Cantina Rossi is
             <div class="profile-section-title">Organization Profile</div>
           </div>
           <div id="ppartner-profile"></div>
+        </div>
+      </div>
+      <!-- MY FAIRS (A19, O2) — series list, edition drafts, the
+           reason-bound lifecycle. Filled by renderPartnerFairs() from
+           fairSeries/fairEditions and the reviews register; both
+           badges derive, nothing is typed here. -->
+      <div style="padding:2rem;display:none" id="partner-view-fairs">
+        <div class="profile-section">
+          <div class="profile-section-header">
+            <div class="profile-section-title">My Fairs</div>
+          </div>
+          <div id="pfairs-root"></div>
         </div>
       </div>
     </div>
@@ -6243,12 +6260,15 @@ function cancelFairEdition(id, reason) {
    lock names is the fair track's later passes; nothing here promises
    a date or builds a stand-in (A16.8). */
 const PARTNER_LOCKED_NAV = {
+  /* "Fair Series & Editions" left this list with O2: it is the live
+     nav entry "My Fairs" now (A19). The reasons below no longer say
+     "editions are not built yet" — they name what each later pass
+     still has to bring. */
   fairs: [
-    ['Fair Series & Editions', 'The canonical fair record (A16.8) arrives with the fair passes — a page here would promise a record that does not exist yet.'],
-    ['Exhibitor Recruitment',  'Applications and admissions hang off an edition, and editions are not built yet.'],
-    ['Stands & Halls',         'Stand and hall planning needs an edition to belong to.'],
-    ['Participation Pages',    'A participation row (A16.8) is the fair passes’ first record — nothing can render before it exists.'],
-    ['Schedule & Agenda',      'Dates and agenda belong to an edition; none exists yet.']
+    ['Exhibitor Recruitment',  'Applications and admissions on an edition are their own pass (O3) — a form here would promise a workflow that does not exist yet.'],
+    ['Stands & Halls',         'Stand and hall planning is its own pass (O3) — an edition carries no floor plan yet.'],
+    ['Participation Pages',    'A participation row (A16.8) is O4’s first record — nothing can render before it exists.'],
+    ['Schedule & Agenda',      'Programme and agenda on an edition are their own pass (O12).']
   ],
   community: [
     ['Organizer Profile & Follow', 'Its own later pass — following an organizer is a directed relation, never a trade partnership (A18.5), and its storage is measured before anything is built.'],
@@ -6258,16 +6278,215 @@ const PARTNER_LOCKED_NAV = {
 };
 
 function showPartnerView(view) {
-  const isProfile = view === 'profile';
-  document.getElementById('partner-view-dashboard').style.display = isProfile ? 'none' : '';
-  document.getElementById('partner-view-profile').style.display = isProfile ? '' : 'none';
-  document.getElementById('partner-topbar-title').textContent =
-    isProfile ? 'Organization Profile' : 'Platform Partner · Organizer';
-  ['pnav-dashboard', 'pnav-profile'].forEach(id => {
-    const e = document.getElementById(id); if (e) e.classList.remove('active');
+  const PARTNER_VIEWS = {
+    dashboard: ['partner-view-dashboard', 'Platform Partner · Organizer'],
+    profile:   ['partner-view-profile',   'Organization Profile'],
+    fairs:     ['partner-view-fairs',     'My Fairs']
+  };
+  if (!PARTNER_VIEWS[view]) view = 'dashboard';
+  Object.keys(PARTNER_VIEWS).forEach(v => {
+    const e = document.getElementById(PARTNER_VIEWS[v][0]);
+    if (e) e.style.display = v === view ? '' : 'none';
+    const n = document.getElementById('pnav-' + v);
+    if (n) n.classList.toggle('active', v === view);
   });
-  const ne = document.getElementById(isProfile ? 'pnav-profile' : 'pnav-dashboard');
-  if (ne) ne.classList.add('active');
+  document.getElementById('partner-topbar-title').textContent = PARTNER_VIEWS[view][1];
+  if (view === 'fairs') renderPartnerFairs();
+}
+
+/* ── MY FAIRS — the organizer's series & edition surface (A19) ─────
+   Everything derives: the workspace badge from the register's last
+   partner_verification word, the brand badge from the register's last
+   series_brand_review word — two subjects, two wordings, never merged
+   (FS-4). No delete appears anywhere on this surface, because no
+   delete act exists in the data layer either (A19.3). */
+let fairOpenEditionId = null;
+function renderPartnerFairs() {
+  const root = document.getElementById('pfairs-root');
+  if (!root) return;
+  const ws = platformPartners[0];
+  if (!ws) return;
+  const wsBadge = partnerVerificationApproved(ws)
+    ? '<span class="tag tag-green">✓ Verified Platform Partner</span>'
+    : '<span class="tag tag-dim">Verification pending</span>';
+
+  let html =
+    '<div class="edit-sub">A <b>fair series</b> is your durable fair brand; each <b>edition</b> is one concrete run — ' +
+    'year, fair days, place and fair type. An edition starts as a private draft; publishing needs the workspace ' +
+    'verification and the series brand approval, both current.</div>' +
+    '<div style="margin:0.8rem 0 1.2rem">' +
+      '<button class="btn-sm btn-gold" onclick="openFairSeriesModal()">+ New Fair Series</button>' +
+    '</div>';
+
+  const mine = fairSeriesOf(ws.id);
+  if (!mine.length)
+    html += '<div class="ord-empty">No fair series yet — create the brand first; its editions follow.</div>';
+
+  html += mine.map(s => {
+    const brandLast = seriesBrandLatest(s);
+    /* The brand badge NEVER borrows the partner wording (FS-4): its
+       subject is the fair brand, and its label says so. */
+    const brandBadge = seriesBrandApproved(s)
+      ? '<span class="tag tag-gold">✓ Fair brand approved</span>'
+      : '<span class="tag tag-dim">Brand review: ' +
+          (brandLast ? (brandLast.reviewStatus === 'pending' ? 'pending with Bottle Lobby'
+                        : REVIEW_STATUS_LABEL[brandLast.reviewStatus] || brandLast.reviewStatus)
+                     : 'not requested') + '</span>';
+    const demoBtn = brandLast && brandLast.reviewStatus === 'pending'
+      ? '<div style="margin-top:0.5rem"><button class="btn-sm btn-outline" onclick="simulateSeriesBrandApproval(\'' + s.id + '\')">Simulate brand approval (demo)</button>' +
+        '<div class="ws-demo-note">Demo shortcut for a <b>Bottle Lobby staff decision</b> — in the live platform the brand review is decided in the internal admin panel, never by the organizer.</div></div>'
+      : '';
+
+    const eds = editionsOfSeries(s.id);
+    const head = '<div class="otbl-head" style="grid-template-columns:88px 150px 120px 1.2fr 1fr 110px 26px">' +
+      '<span>Edition</span><span>Fair Days</span><span>Type</span><span>Where</span><span>Ticketing</span><span>Status</span><span></span></div>';
+    const rows = eds.map(ed => {
+      const dates = blDate(ed.startDate) + (ed.endDate ? ' – ' + blDate(ed.endDate) : '');
+      const pastChip = (ed.status === 'published' && fairEditionPast(ed))
+        ? ' <span class="ord-chip chip-manual">Past</span>' : '';
+      return '<div class="otbl-row" style="grid-template-columns:88px 150px 120px 1.2fr 1fr 110px 26px" ' +
+        'onclick="openFairEditionDetail(\'' + ed.id + '\')">' +
+        '<span class="otbl-id">' + ed.id + '</span>' +
+        '<span class="otbl-dim">' + dates + '</span>' +
+        '<span class="otbl-dim">' + FAIR_TYPE_LABEL[ed.fairType] + '</span>' +
+        '<span class="otbl-cust">' + (ed.city || '—') + '<em>' + (ed.venue || '') + '</em></span>' +
+        '<span class="otbl-dim">' + (ed.externalTicketingUrl ? FAIR_TICKETING_LABEL[ed.fairType] + ' set' : '—') + '</span>' +
+        '<span><span class="ord-stage me-' + ed.status + '">' + FAIR_STATUS_LABEL[ed.status] + '</span>' + pastChip + '</span>' +
+        '<span class="otbl-arrow">›</span>' +
+      '</div>' + (fairOpenEditionId === ed.id ? fairEditionDetailHtml(ed) : '');
+    }).join('');
+
+    return '<div class="profile-section" style="margin-top:1rem">' +
+      '<div style="display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap">' +
+        '<strong>' + s.name + '</strong>' + wsBadge + brandBadge +
+      '</div>' +
+      '<div class="edit-sub" style="margin-top:0.4rem">' + s.about + '</div>' +
+      demoBtn +
+      '<div style="margin:0.9rem 0 0.6rem">' +
+        '<button class="btn-sm btn-outline" onclick="openFairEditionModal(\'' + s.id + '\')">+ New Edition</button>' +
+        '<span style="font-size:0.72rem;color:var(--dim);margin-left:1rem">An edition starts as a private draft — nobody can find it until you publish it.</span>' +
+      '</div>' +
+      (eds.length ? '<div class="otbl">' + head + rows + '</div>'
+                  : '<div class="ord-empty">No editions yet.</div>') +
+    '</div>';
+  }).join('');
+
+  root.innerHTML = html;
+}
+
+/* The open edition's file: basics, the derived ticketing label, the
+   append-only history, and ONLY the acts its status allows — a bar is
+   an absent button, never a greyed one (the D8-pass discipline). */
+function fairEditionDetailHtml(ed) {
+  const s = fairSeriesById(ed.seriesId);
+  const actions = ed.status === 'draft'
+    ? '<button class="btn-sm btn-outline" onclick="openFairEditionModal(\'' + ed.seriesId + '\',\'' + ed.id + '\')">Edit Basics &amp; Dates</button>' +
+      '<button class="btn-sm btn-gold" onclick="doPublishFairEdition(\'' + ed.id + '\')">Publish →</button>'
+    : ed.status === 'published'
+      ? '<button class="btn-sm btn-outline" onclick="doCancelFairEdition(\'' + ed.id + '\')">Cancel This Edition…</button>' +
+        '<span style="font-size:0.72rem;color:var(--dim);margin-left:0.8rem">Published — the date does not move any more (A19.3). Cancelling needs a reason; the record and its history remain.</span>'
+      : '<span style="font-size:0.72rem;color:var(--dim)">Cancelled — the record and its history remain readable.</span>';
+  const history = (ed.history || []).map(h =>
+    '<div class="edit-sub" style="margin-top:0.25rem">' + h.at + ' · ' + h.actor + ' — ' + fairHistoryText(h) + '</div>').join('');
+  return '<div style="padding:0.9rem 1rem;border:1px solid rgba(247,243,238,0.08);border-top:none;background:rgba(247,243,238,0.02)">' +
+    '<div class="edit-sub">' + (ed.description || 'No description yet.') + '</div>' +
+    '<div class="edit-sub" style="margin-top:0.4rem">' +
+      FAIR_TICKETING_LABEL[ed.fairType] + ': ' +
+      (ed.externalTicketingUrl ? '<span style="color:var(--paper)">' + ed.externalTicketingUrl + '</span> <span style="color:var(--dim)">(external — no checkout here)</span>' : '— none yet') +
+    '</div>' +
+    '<div style="display:flex;gap:0.6rem;align-items:center;margin-top:0.8rem;flex-wrap:wrap">' + actions + '</div>' +
+    '<div class="form-block-title" style="margin-top:1rem">History</div>' + history +
+  '</div>';
+}
+function openFairEditionDetail(id) {
+  fairOpenEditionId = fairOpenEditionId === id ? null : id;
+  renderPartnerFairs();
+}
+function doPublishFairEdition(id) {
+  const ed = fairEditionById(id); if (!ed) return;
+  if (!publishFairEdition(id)) return;
+  renderPartnerFairs();
+  showToast('✓ Published — ' + ed.id + ' is publicly findable from now on');
+}
+/* The reason prompt follows the simulateStaffChangesRequested shape —
+   the stated C7 debt, reused rather than re-invented. */
+function doCancelFairEdition(id) {
+  const why = (window.prompt('Why will this edition not run? The reason stays on the record and in the history.') || '').trim();
+  if (!why) { showToast('✗ A cancellation needs a reason'); return; }
+  if (!cancelFairEdition(id, why)) return;
+  renderPartnerFairs();
+  showToast('Edition cancelled — the record and its history remain');
+}
+
+/* ── The two fair modals ──────────────────────────────────────── */
+function openFairSeriesModal() {
+  document.getElementById('fsf-name').value = '';
+  document.getElementById('fsf-about').value = '';
+  document.getElementById('fair-series-modal').classList.add('active');
+}
+function closeFairSeriesModal() { document.getElementById('fair-series-modal').classList.remove('active'); }
+function saveFairSeries() {
+  const name = document.getElementById('fsf-name').value.trim();
+  if (!name) { showToast('✗ The series needs its brand name'); return; }
+  const s = createFairSeries(name, document.getElementById('fsf-about').value.trim());
+  if (!s) return;
+  closeFairSeriesModal();
+  renderPartnerFairs();
+  showToast('✓ ' + name + ' created — brand review pending with Bottle Lobby');
+}
+
+let fairModalSeriesId = null;
+let fairEditModalId = null;
+function openFairEditionModal(seriesId, editionId) {
+  fairModalSeriesId = seriesId; fairEditModalId = editionId || null;
+  const ed = editionId ? fairEditionById(editionId) : null;
+  document.getElementById('fef-title').innerHTML = ed
+    ? 'Edit <span>' + ed.id + '</span>' : 'Create an <span>Edition</span>';
+  document.getElementById('fef-type').innerHTML = FAIR_TYPES.map(t =>
+    '<option value="' + t + '">' + FAIR_TYPE_LABEL[t] + '</option>').join('');
+  document.getElementById('fef-type').value = ed ? ed.fairType : 'trade';
+  document.getElementById('fef-start').value = ed ? ed.startDate : '';
+  document.getElementById('fef-end').value = ed ? (ed.endDate || '') : '';
+  document.getElementById('fef-city').value = ed ? ed.city : '';
+  document.getElementById('fef-venue').value = ed ? ed.venue : '';
+  document.getElementById('fef-desc').value = ed ? ed.description : '';
+  document.getElementById('fef-ticketing').value = ed ? (ed.externalTicketingUrl || '') : '';
+  /* The reason row exists only where a date can MOVE — on an edit.
+     On creation the date is set, not changed (A19.3). */
+  document.getElementById('fef-reason-row').style.display = ed ? '' : 'none';
+  document.getElementById('fef-reason').value = '';
+  document.getElementById('fair-edition-modal').classList.add('active');
+}
+function closeFairEditionModal() { document.getElementById('fair-edition-modal').classList.remove('active'); }
+function saveFairEdition() {
+  const fields = {
+    fairType: document.getElementById('fef-type').value,
+    startDate: document.getElementById('fef-start').value.trim(),
+    endDate: document.getElementById('fef-end').value.trim() || null,
+    city: document.getElementById('fef-city').value.trim(),
+    venue: document.getElementById('fef-venue').value.trim(),
+    description: document.getElementById('fef-desc').value.trim(),
+    externalTicketingUrl: document.getElementById('fef-ticketing').value.trim() || null
+  };
+  if (!fields.startDate) { showToast('✗ An edition needs its first fair day'); return; }
+  if (!fairEditModalId) {
+    const ed = createFairEdition(fairModalSeriesId, fields);
+    if (!ed) return;
+    fairOpenEditionId = ed.id;
+    closeFairEditionModal();
+    renderPartnerFairs();
+    showToast('✓ ' + ed.id + ' created as a private draft — nobody can find it until you publish it');
+  } else {
+    const ed = fairEditionById(fairEditModalId); if (!ed) return;
+    const dateMoved = ed.startDate !== fields.startDate || (ed.endDate || null) !== fields.endDate;
+    if (dateMoved &&
+        !rescheduleFairEdition(ed.id, fields.startDate, fields.endDate,
+          document.getElementById('fef-reason').value)) return;
+    if (!updateFairEditionBasics(ed.id, fields)) return;
+    closeFairEditionModal();
+    renderPartnerFairs();
+    showToast('✓ ' + ed.id + ' updated' + (dateMoved ? ' — the date change is on the record' : ''));
+  }
 }
 
 /* Everything the cockpit shows derives from the ONE partner row and
@@ -6299,12 +6518,22 @@ function renderPartnerCockpit() {
     '<div class="edit-sub" style="margin-top:0.4rem">' + caps + ' · ' + p.city + ', ' + p.country + '</div>' +
     '<div class="ws-demo-note">' + PARTNER_VERIFIED_DISCLAIMER + '</div>';
 
+  /* The overview counts DERIVE from the fair records (invariant 7) —
+     a typed figure here would be the D36 shape on the newest surface.
+     Draft counts render only inside this workspace (FS-6). */
   const empty = document.getElementById('ppartner-empty');
-  if (empty) empty.innerHTML =
-    '<div class="ord-empty">No fair series yet — the record it would live in does not exist yet.<br>' +
-    'The fair passes bring: fair series &amp; editions, exhibitor recruitment with applications ' +
-    'and admissions, stands &amp; halls, participation pages, and schedule &amp; agenda. ' +
-    'Organizer profile &amp; follow, opportunities and fair communications follow in their own passes.</div>';
+  if (empty) {
+    const mySeries = fairSeriesOf(p.id);
+    const myEds = mySeries.reduce((a, s) => a.concat(editionsOfSeries(s.id)), []);
+    const n = st => myEds.filter(e => e.status === st).length;
+    empty.innerHTML = mySeries.length
+      ? '<div class="edit-sub">' + mySeries.length + ' fair series · ' +
+          n('published') + ' published edition(s) · ' + n('draft') + ' draft(s)' +
+          (n('cancelled') ? ' · ' + n('cancelled') + ' cancelled' : '') + '</div>' +
+        '<div style="margin-top:0.6rem"><button class="btn-sm btn-outline" onclick="showPartnerView(\'fairs\')">Open My Fairs →</button></div>'
+      : '<div class="ord-empty">No fair series yet — create your fair brand under My Fairs.<br>' +
+        'Exhibitor recruitment, stands &amp; halls, participation pages and schedule &amp; agenda follow in their own passes.</div>';
+  }
 
   const prof = document.getElementById('ppartner-profile');
   if (prof) prof.innerHTML =
@@ -15956,6 +16185,7 @@ function saveMemberEvent() {
    renderAllOrders() is wrapped further up to do the same for Orders. */
 function redrawAll() {
   renderPressList();
+  renderPartnerFairs();
   renderWinePortfolioD();
   refreshOwnLabelSurfaces();
   renderWineryAvailability();
@@ -17612,6 +17842,95 @@ BLStore.start({
     <div class="modal-footer">
       <button class="btn-sm btn-outline" onclick="closeEventModal()">Cancel</button>
       <button class="btn-sm btn-gold" onclick="saveMemberEvent()">Create as a Draft →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ FAIR SERIES MODAL (A19) — the organizer creates the brand ══
+     Minimal on purpose: name and a short line. Saving writes the
+     PENDING brand-review row (A19.4b) — approval is a Bottle Lobby
+     staff decision, reachable in the demo only through the marked
+     shortcut on the series card, never from here. -->
+<div class="modal-overlay" id="fair-series-modal">
+  <div class="modal-panel" style="max-width:560px">
+    <div class="modal-header">
+      <div class="modal-title">New <span>Fair Series</span></div>
+      <button class="modal-close" onclick="closeFairSeriesModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="edit-section-sub" style="margin-top:0">The series is your durable fair <b>brand</b> — its concrete runs are editions. Bottle&nbsp;Lobby reviews the brand once before anything under it can be published; the review starts as <b>pending</b> when you save.</div>
+      <div class="form-row full">
+        <div class="form-field"><div class="field-label">Brand name</div>
+          <input class="field-input" id="fsf-name" type="text" placeholder="The name the trade knows the fair by">
+        </div>
+      </div>
+      <div class="form-row full">
+        <div class="form-field"><div class="field-label">About</div>
+          <input class="field-input" id="fsf-about" type="text" placeholder="One line on what this fair is">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-sm btn-outline" onclick="closeFairSeriesModal()">Cancel</button>
+      <button class="btn-sm btn-gold" onclick="saveFairSeries()">Create — Brand Review Pending →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ FAIR EDITION MODAL (A19) — create a draft, or edit one ══
+     One form, two entries: creating sets the date, editing may MOVE
+     it — and a moved date requires the reason field below, which is
+     hidden on creation (A19.3). The external link is O2's ticketing
+     maximum: off-platform, no checkout (A19.5). -->
+<div class="modal-overlay" id="fair-edition-modal">
+  <div class="modal-panel" style="max-width:620px">
+    <div class="modal-header">
+      <div class="modal-title" id="fef-title">Create an <span>Edition</span></div>
+      <button class="modal-close" onclick="closeFairEditionModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="edit-section-sub" style="margin-top:0">One concrete run of the series: fair days, place and fair type. It is created as a private <b>draft</b> — nobody outside this workspace can find it until you publish it, and publishing needs both approvals.</div>
+      <div class="form-row">
+        <div class="form-field"><div class="field-label">Fair type</div>
+          <select class="field-input" id="fef-type"></select>
+        </div>
+        <div class="form-field"><div class="field-label">City</div>
+          <input class="field-input" id="fef-city" type="text" placeholder="Where the fair runs">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-field"><div class="field-label">First fair day</div>
+          <input class="field-input" id="fef-start" type="date">
+        </div>
+        <div class="form-field"><div class="field-label">Last fair day (optional)</div>
+          <input class="field-input" id="fef-end" type="date">
+        </div>
+      </div>
+      <div class="form-row full" id="fef-reason-row" style="display:none">
+        <div class="form-field"><div class="field-label">Reason, if the dates move (required then)</div>
+          <input class="field-input" id="fef-reason" type="text" placeholder="Why the fair days change — this goes on the record">
+        </div>
+      </div>
+      <div class="form-row full">
+        <div class="form-field"><div class="field-label">Venue</div>
+          <input class="field-input" id="fef-venue" type="text" placeholder="Hall or address, free text">
+        </div>
+      </div>
+      <div class="form-row full">
+        <div class="form-field"><div class="field-label">Description</div>
+          <input class="field-input" id="fef-desc" type="text" placeholder="What this edition is, in a line or two">
+        </div>
+      </div>
+      <div class="form-row full">
+        <div class="form-field"><div class="field-label">External ticket / accreditation link (optional)</div>
+          <input class="field-input" id="fef-ticketing" type="url" placeholder="https:// — your off-platform ticket shop or accreditation portal">
+        </div>
+      </div>
+      <div class="edit-section-sub">Ticketing stays external — Bottle&nbsp;Lobby runs no checkout. What the link means follows the fair type: tickets for a consumer fair, accreditation for a trade fair, both for a hybrid.</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-sm btn-outline" onclick="closeFairEditionModal()">Cancel</button>
+      <button class="btn-sm btn-gold" onclick="saveFairEdition()">Save →</button>
     </div>
   </div>
 </div>
