@@ -31,12 +31,12 @@ Kein Build-Command, Publish-Directory = Repo-Root.
 > Dauerhafte Regeln gehoeren in `BOTTLE-LOBBY-SPEC.md`, kurze Invarianten in
 > `CLAUDE.md`. Findet sich hier eine Regel, ist sie am falschen Ort.
 
-**Baum sauber, `main` gepusht, 27 Harnesses gruen** (nachgezaehlt 10.08. — `campaigns.js` kam mit Durchgang 10 dazu, davor `wine-guide-page.js` mit 9, `member-events.js` mit 7, `shows-reach.js`/`shows-release.js` mit 5 und 6). **`BLStore.VERSION` steht auf 7** — Durchgang 10 hat gemessen KEINEN Bump gebraucht (nur Neuregistrierungen, Begruendung im Block zu Durchgang 10 unten).
+**Baum sauber, `main` gepusht, 28 Harnesses gruen** (nachgezaehlt 10.08. — `platform-partners.js` kam mit Durchgang 11 dazu, davor `campaigns.js` mit 10, `wine-guide-page.js` mit 9, `member-events.js` mit 7, `shows-reach.js`/`shows-release.js` mit 5 und 6). **`BLStore.VERSION` steht auf 8** — Durchgang 11 hat gemessen einen Bump gebraucht (eine Fixture-Zeile in der BESTEHENDEN Sammlung `reviews`; Begruendung im Block zu Durchgang 11 unten und am `VERSION` selbst).
 
 ### Womit eine Sitzung anfaengt
 
 ```
-node tests/run-all.js        →  27 Harnesses, muss gruen sein, bevor irgendetwas beginnt
+node tests/run-all.js        →  28 Harnesses, muss gruen sein, bevor irgendetwas beginnt
 node tests/serve.js          →  http://localhost:8765   (no-store — NIE python http.server)
 node tests/stamp-assets.js   →  nach jeder Aenderung an assets/, sonst wird check-static rot
 ```
@@ -50,7 +50,7 @@ Fehlmessungen an einem Tag kamen genau daher** (Spec C7, „Browser acceptance")
 `BOTTLE-LOBBY-SPEC.md` ist die Autoritaet und waechst. **Niemand liest sie ganz —
 also je Durchgang die geltenden Abschnitte benennen**, sonst wird nach
 Plausibilitaet statt nach Spec gebaut. `CLAUDE.md` hat die acht Invarianten,
-Anhang D die abgeloesten Entscheidungen (**D1–D42** — nie ohne Blick dorthin
+Anhang D die abgeloesten Entscheidungen (**D1–D44** — nie ohne Blick dorthin
 etwas wiedervorschlagen).
 
 Arbeitsregeln, die diesen Tag ueberdauern und in **C3/C7** stehen: jeden Commit
@@ -95,7 +95,7 @@ Wahrheiten stabilisieren, dann nach aussen bauen.
 | 8 | ~~**Member Events, Ausrollen**~~ | **Gebaut am 08.08.** — siehe den Block unter der Tabelle. Die Bewerberseite ist bewusst NICHT dabei (Durchgang 9) |
 | 9 | ~~**Wine Guide → Events + Bewerberseite**~~ | **Gebaut am 09.08.** — siehe den Block unter der Tabelle. Dazu die ME-5-Korrektur (D42) und das ausgeschriebene Messe-Modell in der Spec |
 | 10 | ~~**Kampagnen + Benachrichtigungen**~~ | **Gebaut am 10.08.** — siehe den Block unter der Tabelle. Ankuendigung/Erinnerung getrennt, Empfaenger-Snapshot, C9-Bedingungen; die Publikumsregel ist neu entschieden (**D43**) |
-| 11 | **`bottle-lobby-own-label.html` neu** | Die Seite behauptet das alte Modell in ~20 Passagen (Zeilen 206–453) — **das alte Modell IST ihr Argument**, also Neuschrift, nicht Korrektur. Die zwei *konkreten* Falschaussagen sind mit dem A17-Fixture-Durchgang weg (siehe den Block unter der Tabelle); die **Argumentation** steht unveraendert. **Muss nach dem A17-Fixture-Durchgang**, sonst wird die Seite zweimal geschrieben |
+| 11 | **`bottle-lobby-own-label.html` neu** | Die Seite behauptet das alte Modell in ~20 Passagen (Zeilen 206–453) — **das alte Modell IST ihr Argument**, also Neuschrift, nicht Korrektur. Die zwei *konkreten* Falschaussagen sind mit dem A17-Fixture-Durchgang weg (siehe den Block unter der Tabelle); die **Argumentation** steht unveraendert. **Muss nach dem A17-Fixture-Durchgang**, sonst wird die Seite zweimal geschrieben. ⚠ **Nummernkollision:** der am 10.08. gebaute „Durchgang 11" ist der **Platform-Partner-Durchgang** (V4, Block unter der Tabelle), nicht diese Zeile — die Neuschrift bleibt offen |
 
 **Zwischen den Durchgaengen jeweils eine Browser-Abnahme** — klicken statt
 Funktionen aufrufen, `transferSize` vorher lesen (C7).
@@ -219,11 +219,14 @@ Funktionen aufrufen, `transferSize` vorher lesen (C7).
 > · **Durchgang 10** — `event_campaigns` und damit **ME-4** sind nicht gebaut,
 >   und `tests/member-events.js` sagt das ausdruecklich, statt eine Pruefung
 >   ueber ein nicht existierendes Feature zu fuehren.
-> · **Externe Messen** sind nicht gebaut und bekommen einen eigenen Durchgang —
->   **das Modell steht seit Durchgang 9 ausgeschrieben in A16.8** (kanonische
->   Messe ohne Mitglieds-Host, Teilnahmezeile je Aussteller, Standtermine als
->   eigener beidseitiger Ablauf ohne Order), damit bis dahin nichts als
->   Ersatzkonstruktion modelliert wird.
+> · **Externe Messen** sind nicht gebaut — der alte Plan „eigener
+>   Kleindurchgang" ist seit Durchgang 11 **durch den Fair-Track ersetzt**
+>   (V4-Entscheid vom 10.08., Roadmap O2–O15 im Block zu Durchgang 11 unten).
+>   **Das Modell steht seit Durchgang 9 ausgeschrieben in A16.8** (kanonische
+>   Messe, deren Eigentuemer seit Durchgang 11 ein verifizierter
+>   Organizer-Workspace ist — A18, D44; Teilnahmezeile je Aussteller,
+>   Standtermine als eigener beidseitiger Ablauf ohne Order), damit bis dahin
+>   nichts als Ersatzkonstruktion modelliert wird.
 
 > **Durchgang 8 ist gebaut (08.08.), fuenf einzeln committete Schritte, ein
 > Push.** Was Git nicht selbst sagt:
@@ -450,6 +453,82 @@ Funktionen aufrufen, `transferSize` vorher lesen (C7).
 > Nachrichten-/Inbox-System (C9 bleibt eine Query; die einzige neue
 > Speicherung ist der Kampagnen-Snapshot, und der ist ein Beleg, kein
 > Postfach).
+
+> **Durchgang 11 ist gebaut (10.08.), fuenf lokal committete Schritte, ein
+> Push.** Die kleinste kohaerente Partner-/Organizer-Grundlage nach Serges
+> V4-Architekturentscheid (10.08.): Kategorie **Verified Platform Partners**
+> getrennt von den vier Handelsrollen, erste aktive Capability **Organizer**.
+> Die Spec ging voraus (**A18** neu, **D44** in Anhang D) **und muss ins
+> Projektwissen.** Was Git nicht selbst sagt:
+>
+> - **Das V4-Dokument liegt NICHT im Repo.** Die gesperrte Zielnavigation des
+>   Organizer-Cockpits (V4 §6) und die Anker O2–O15 sind deshalb aus den im
+>   Auftrag benannten Fair-Funktionen abgeleitet, nicht aus dem Dokument
+>   selbst. Stimmen Wortlaute nicht, ist die Korrektur billig: alles steht in
+>   EINEM Ort, `PARTNER_LOCKED_NAV` im Dashboard.
+> - **Die Verifikation ist eine `reviews`-Zeile, und das Register trug die
+>   Erweiterung gemessen:** `REVIEW_SUBJECT_TYPES` gewinnt `partner` nach dem
+>   `show`-Praezedenz aus Durchgang 6 (Invariante 6: EIN Ort fuer die
+>   Autoritaet der Plattform). Kein zweites Pruefregister, kein getipptes
+>   `verified`-Flag — die Kennzeichnung faellt mit der Zeile
+>   (`partnerVerificationApproved()`, RVW-3004).
+> - **Der Umschalter-Messbefund, der den Zuschnitt getragen hat:** NICHTS im
+>   Dashboard iteriert ueber die Umschalter-Liste — ORDER_ROLES, SHOW_ROLES,
+>   EVENT_ROLES, `stakeholders`, REACH_ROLE_VALUE und der Kampagnen-Resolver
+>   sind parallele, hartkodierte Vierer-Strukturen. Die fuenfte Sicht leckt
+>   also bauartbedingt nirgends hinein; `tests/platform-partners.js` sichert
+>   diesen IST-Zustand mit Gegenmutationen (Einmischen → rot) und verbietet
+>   ausdruecklich NICHT den spaeter gemessenen Organizer-Follow.
+> - **`VERSION` 7 → 8, gemessen:** alle 29 Bestandssammlungen hashen
+>   identisch, `platformPartners` (8d34c198) ist der einzige neue Print. Der
+>   Bump kommt von **RVW-3004 in der BESTEHENDEN Sammlung `reviews`** (die
+>   D2D-Klasse; `reviewSeq` 3004 → 3005 wandert mit). Das Gegenargument — die
+>   Neuregistrierung im selben Commit verwirft Alt-Snapshots ohnehin — ist am
+>   `VERSION` benannt und verworfen: ein Schutz, der an einer
+>   Nachbarregistrierung im selben Commit haengt, ist keiner.
+> - **Ein Fixture, fiktiv mit Absicht:** „Atrium Fairs GmbH" (PP-9001) —
+>   keine reale Messe- oder Medienmarke wird je Demo-Datum; reale Namen
+>   bleiben Spec-Prosa (A16.8). C7-Decke eingehalten: Verifikationsdatum
+>   15.07. liegt vor `SHOW_TODAY`, weil das Cockpit „heute" einen
+>   verifizierten Organizer zeigt. `media_partner` ist zulaessiger WERT und
+>   nirgends instanziert — Gegenmutation im Harness haelt das rot.
+> - **Follow ist ausschliesslich Geschaeftssemantik in A18.5:** gerichtete
+>   Beziehung, keine Handelspartnerschaft, kein Request Partnership. **A7 ist
+>   technisch unveraendert**; ob der bestehende Follow-Speicher sicher
+>   generalisiert oder ein abgegrenzter Weg noetig ist, misst ein **eigener
+>   Follow-Messdurchgang** (O-Reihe), vorher wird nichts gebaut.
+> - **Browser-Abnahme am finalen Stand, mit der bekannten Einschraenkung**
+>   (Screenshot-/Injection-Timeout am ~1-MB-Dokument, EIN Versuch, keine
+>   Serie — C7; abgenommen ueber gerenderten DOM, berechnete Darstellung und
+>   echte Element-Klicks, `transferSize` vorher gelesen, 999 KB frisch):
+>   fuenfter, abgesetzter Umschalter-Eintrag (Trenner, gestrichelt, aktiv
+>   gruen statt Handels-Gold) · Organizer-Sicht: Leerzustand benennt die
+>   kommenden Fair-Funktionen, alle 8 Zielnavigations-Eintraege sichtbar
+>   gesperrt mit Grund auf der Zeile, Organization Profile mit abgeleiteter
+>   Verified-Kennzeichnung + Disclaimer · Navigation vollstaendig
+>   durchgesehen: einzige erreichbare Aktionen sind die zwei
+>   Cockpit-Eintraege und der Logo-Link, keine Handelsflaeche ·
+>   Stichproben unveraendert: Distributor-Dashboard (Fans 3 = abgeleitet,
+>   10 Partnerzeilen, kein Partner-Leak), WS-2604 (planning, „Open for
+>   applications until 31 Jan 2027"), Guide `#events` (5 Listings, kein
+>   Partner-Leak) · C8-Roundtrip: Snapshot v8 traegt `platformPartners` und
+>   RVW-3004; danach `BLStore.reset()`, Fixtures nachgemessen unberuehrt.
+>
+> **Roadmap Fair-Track (V4, O2–O15) — spaetere Ziel-Durchgaenge, kein
+> Auftragsbestand:** Fair Series & Editions · Exhibitor Recruiting mit
+> Bewerbungs-/Zulassungsworkflow · Staende & Hallen · Fair Participation
+> Pages · Termine & Agenda · **Organizer-Profil & Follow (O9/O10, mit
+> vorgelagertem Follow-Messdurchgang)** · Opportunities ·
+> **Fair-Benachrichtigungen/Organizer-Kommunikation als D10-Erweiterung
+> (O11)** · Hero-Medien mit zweigeteilter Abhaengigkeit ·
+> Marketing-/Why-Join-Rollout der in A18.6 festgelegten EN-Formeln. Die
+> exakten Anker-Wortlaute stehen im V4-Dokument ausserhalb des Repos.
+>
+> **Was Durchgang 11 bewusst NICHT gebaut hat:** alles im Fair-Track oben ·
+> Registrierungsweg fuer Partner · oeffentliche Partner-Flaechen ·
+> Media-Partner-Oberflaechen jeder Art (Wert reserviert, sonst nichts) ·
+> Aenderungen an Wine-Show-, Member-Event-, Kampagnen- und A7-Mechanik ausser
+> der einen praezisen A16.8-Ersetzung (D44).
 
 ---
 
