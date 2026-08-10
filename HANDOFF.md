@@ -608,6 +608,37 @@ Funktionen aufrufen, `transferSize` vorher lesen (C7).
 >   traegt den ganzen Abnahme-Bogen ueber einen Reload; danach
 >   `BLStore.reset()`, Fixtures nachgemessen unberuehrt.
 >
+> **Codex-Korrektur nach der ersten Abnahme (10.08., drei Commits auf dem
+> vermeintlich finalen Stand `cbc80e5`)** — zwei eng begrenzte Befunde der
+> unabhaengigen Pruefung, beide behoben:
+>
+> - **Datumsintegritaet:** `endDate` vor `startDate` wurde angenommen. Jetzt
+>   als **A19.3/FS-5-Praezisierung** (keine neue D-Entscheidung — dieselbe
+>   Fair-Days-Semantik, praezisiert): `end_date` NULL = eintaegig, sonst am
+>   oder nach `start_date`; EINE gemeinsame Validierung (`fairDatesValid()`)
+>   wirkt bei Erstellung UND Verschiebung **vor der ersten Mutation** —
+>   eine Ablehnung laesst Datensatz, Datum und History unberuehrt.
+> - **Eingaben/URL:** organizer-getippte Fair-Texte (Series-Name, About,
+>   City, Venue, Description, History-Gruende, URL) laufen beim Rendern
+>   durch den EINEN Escaper der Seite (`notifEsc`, wiederverwendet);
+>   gespeichert bleibt Klartext. `externalTicketingUrl` bleibt nullable,
+>   ein gesetzter Wert muss absolute http(s)-URL sein
+>   (`fairTicketingUrlValid()`); andere Schemes werden ohne Teilaenderung
+>   abgelehnt. Der kombinierte Modal-Save validiert VOLLSTAENDIG vor der
+>   ersten Mutation — Datum + abgelehnter Link hinterlaesst keine
+>   Datumsaenderung und keine History-Zeile (in `tests/fairs.js` §6b samt
+>   Gegenmutationen fuer Span, URL und Escaping gesichert).
+> - **C8 erneut gemessen, nicht vorhergesagt:** alle 34 Sammlungen hashen
+>   identisch zu `cbc80e5` — keine Fixture-Zeile, kein Format-/Wertwechsel
+>   gespeicherter Zustaende, ein v9-Snapshot bleibt richtig → **kein
+>   weiterer Bump, VERSION bleibt 9**. `node tests/run-all.js` lief deshalb
+>   ein ZWEITES Mal vollstaendig (29/29 gruen) — der notwendige zweite
+>   Gesamtlauf, weil die Korrektur den Produktstand nach dem ersten Lauf
+>   geaendert hat. Gezielte DOM-Abnahme der korrigierten Pfade im echten
+>   Chrome (invertierter Zeitraum im Modal abgelehnt · Kombi-Save atomar ·
+>   https landet, javascript: nicht · Injektions-Name als Text, kein
+>   Element, kein onerror); danach `BLStore.reset()`, Fixtures pristine.
+>
 > **Was Durchgang 12 bewusst NICHT gebaut hat, mit Ziel-Durchgaengen:**
 > Recruiting/Bewerbungen/Zulassungen (**O3**) · Fair Participation +
 > Participation Pages samt der verschobenen Zaehler-Felder (**O4**) ·
