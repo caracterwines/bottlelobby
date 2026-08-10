@@ -1807,8 +1807,10 @@ a second, more generous surface.
 ### A16.8 Member events — "My Events"
 
 Any of the four roles creates and manages these freely — no approval.
-Invitations go to partnered stakeholders, to fans and to selected community
-contacts; the follow graph carries the announcement further (A7). An event owner
+Invitations go to concrete recipients — partnered stakeholders, fans, or other
+contacts the host names one by one (A16.14e's first kind). An announcement
+about the event goes to the host's own fans and optionally his own active
+partners, and no further (A16.14e); the follow graph is never a relay. An event owner
 may additionally ask a producer or distributor to **sponsor** the event or
 **join as an exhibitor**, which the invitee confirms or declines. A retailer's
 vintage presentation with the winemaker present, or a restaurant's winemaker
@@ -1859,7 +1861,9 @@ words for attendance. They live in `event_participants` (A16.9), which extends
 
 **Invitations, applications, RSVP — five separate facts.** The host may invite
 network partners, fans, stars, selected community contacts, customers,
-wineries, distributors, restaurants and retailers. Per event the host may also
+wineries, distributors, restaurants and retailers — each a concrete recipient
+named one by one (A16.14e's first kind), never an audience; the announcement
+audience is narrower and its rule lives in A16.14e. Per event the host may also
 **allow applications** — a restaurant's Rioja evening where wineries apply as
 participants. The five facts are: invitation · application · acceptance as
 participant · RSVP as guest · actual attendance. Status values, only as many as
@@ -1895,10 +1899,10 @@ community are distinct levels, and each means what A16.14b says it means.
 > subjects; neither one relaxes the other.
 
 **Publishing and notifications.** On publish the event becomes visible to the
-chosen reach. The host's own fans and selected community segments may receive an
-in-app notification, under C9's conditions and with preferences, blocks and
-unsubscribes respected (A7). No participation, invitation or partnership arises
-from a notification.
+chosen reach. The host's own fans — and, if he includes them, his own active
+partners — may receive an in-app notification, under C9's conditions and with
+the suppression record respected (A16.14e, A7). No participation, invitation or
+partnership arises from a notification.
 
 **Paid end-customer events.** Restaurants and retailers may announce paid
 consumer events. **Bottle Lobby stays B2B:** the first pass carries a paid/free
@@ -2063,7 +2067,17 @@ event_campaigns   ( id, subject_type enum('show','event'), subject_id,
                     kind enum('announcement','reminder'),
                     audience_query, sent_at, sent_by, preview_seen_at )
 event_campaign_recipients ( campaign_id FK, stakeholder_id FK )
-                                      -- the resolved audience, SNAPSHOT at send
+                                      -- the resolved audience, SNAPSHOT at send,
+                                      -- deduplicated, suppressions subtracted;
+                                      -- read internally, shown only as a count
+
+communication_suppressions ( recipient FK,
+                    kind enum('block','unsubscribe','preference'),
+                    sender FK,        -- NULL = global, any sender
+                    campaign_kind enum('announcement','reminder'),
+                                      -- NULL = both kinds
+                    at )              -- ONE resolver reads all three kinds
+                                      -- (A16.14e); no settings surface yet
 ```
 
 **Products are referenced, never copied** — `wine_show_products.product_id`
@@ -2958,9 +2972,12 @@ to the thing being rendered.
              'retail', 'partners', 'community' ]
 
 **This is the platform's reach taxonomy and it is defined once, here.** Wine
-Shows, member events (A16.8), own-label visibility (A17.13a), campaigns
-(A16.14e) and any later community feature **reference this list**. None of them
-redefines the levels, and none of them adds a private one.
+Shows, member events (A16.8), own-label visibility (A17.13a) and any later
+community feature **reference this list**. None of them redefines the levels,
+and none of them adds a private one. **Campaigns do not resolve against it**:
+reach decides who may *find* a carrier, a campaign audience is the host's own
+graph (A16.14e, D43) — every recipient must still pass the carrier's
+visibility, so reach keeps its gate without ever becoming an address book.
 
 - **Every entry permits; none forbids.** A house in two selected groups sees the
   show once, deduplicated. There is no precedence and no self-contradicting
@@ -3086,8 +3103,8 @@ and may not make the same promise (A16.8).
 | Kind | Goes to | Changes |
 |---|---|---|
 | **Direct Invitation** | a concrete recipient, for a concrete role or action | the invitation status — it is acceptable and declinable |
-| **Community Announcement** | a reach segment (A16.14b) | **nothing.** No invitation, application, participation, partnership or order arises from one |
-| **Reminder / Operational Update** | those already involved or invited | **nothing on its own** — a date change or venue note is information, not a renewed consent (that is A16.2's material-change rule) |
+| **Community Announcement** | the host's **own fans** — the incoming follow edges of his A7 graph — optionally plus his **own active partners** (A6); the audience rule below | **nothing.** No invitation, application, participation, partnership or order arises from one |
+| **Reminder / Operational Update** | those already on the carrier — the reminder rule below | **nothing on its own** — a date change or venue note is information, not a renewed consent (that is A16.2's material-change rule) |
 
 Collapsing the second into the first is how a marketing mail becomes an
 obligation somebody never entered.
@@ -3097,10 +3114,47 @@ obligation somebody never entered.
 - resolve the audience **before** sending, and store the recipients as a
   **snapshot** — a campaign is answerable for who it actually reached, not for
   who a query would return today
-- deduplicate; respect blocks, unsubscribes and preferences (A7, C9)
-- preview before send, then an explicit send confirmation
-- an auditable send log, and volume limits
-- **never disclose the recipient list**
+- deduplicate; subtract the suppression record (below); and every recipient
+  must pass C9's visibility condition for the carrier itself — a campaign never
+  shows anybody an event he could not have found
+- preview before send, then an explicit send confirmation — no confirmation, no
+  send, and an abandoned preview stores nothing
+- an auditable send log
+- **never disclose the recipient list** — every surface shows counts, never
+  names, the sender's own included
+
+**The announcement audience — own fans, and nothing wider.** Allowed: the
+incoming follow edges of the host's own A7 graph (his fans), optionally plus his
+own active partners (A6). Not allowed, structurally: accounts the host himself
+follows (his outgoing edges — following somebody is not their consent to be
+addressed) · global role or member groups · the reach taxonomy (A16.14b gates
+*finding*, never *addressing*; the carrier's discovery reach is untouched by
+this rule and never feeds the audience) · the community or partners of a
+participant, winery, exhibitor or venue. The first form of this rule —
+announcement to a reach segment — is **D43**.
+
+**The reminder audience never re-resolves a community.** Wine Shows: confirmed
+exhibitors and confirmed attendees, plus open invitations. Member events:
+accepted or confirmed participant roles, plus open invitations. Excluded:
+applicants, the declined, the withdrawn, no-shows, the host himself, and a
+venue without an explicit participation row.
+
+**Stages.** An announcement needs an upcoming, visible carrier — a show in
+`planning` or `published`, a member event in `published` or `postponed`; never
+`draft`, `pending_approval`, `changes_requested` or `completed`. A reminder
+needs a carrier that is not over, and it is **never a substitute for a
+material-change consent** (A16.2, WS-7).
+
+**Suppressions.** `communication_suppressions` (A16.9) holds three distinct
+kinds — `block` · `unsubscribe` · `preference` — each row naming the recipient,
+the kind, the sender scope (one concrete sender, or global) and the campaign
+kind it covers (announcement, reminder, or both), with its date. **One resolver
+reads all three**, for both campaign kinds. A settings surface for the
+recipient is a later, named pass; the record and the resolver are not.
+
+**Volume limit.** One central, configurable demo constant — never derived from
+the fixtures. A send that would exceed it is **rejected in full, with the limit
+named**: no silent capping, no partial send.
 
 **The host may address his own community, and nobody else's.** A participating
 winery does not thereby reach the host's fans, and a **venue never exports or
@@ -3150,7 +3204,10 @@ Member events:
 `tests/shows-release.js` for WS-6 and WS-7 — **with guards
 that actually look**, which is the A16.6 lesson (C7) — and a new
 `tests/member-events.js` for ME-1..ME-7. Each derives independently and compares
-against the rendered surfaces rather than the arrays behind them.
+against the rendered surfaces rather than the arrays behind them. **ME-4 and the
+A16.14e campaign rules live in their own `tests/campaigns.js`** — announcement
+audience, reminder resolution, stages, the suppression resolver and the volume
+limit, for both carrier kinds.
 
 ---
 
@@ -5712,6 +5769,12 @@ per-stakeholder marker (a timestamp, or a set of seen event ids), and in the
 prototype it belongs in the `BLStore.register` block like any other state (C8).
 Without it the badge cannot be honest.
 
+**And one input record beside it, not inside it: the suppression.**
+`communication_suppressions` (A16.14e, A16.9) is stored too — but it is the
+recipient's *declaration*, an input like a follow or a partnership request, not
+notification state. The read marker stays the only thing the notification
+mechanism itself stores.
+
 ---
 
 # APPENDIX D — SUPERSEDED DECISIONS
@@ -5766,6 +5829,7 @@ Without it the badge cannot be honest.
 | D40 | **A3's chain as the complete sourcing rule** — `WINERY → DISTRIBUTOR → RESTAURANT/RETAIL` and nothing else — together with **A14.1's narrow sentence** *"a Distributor buys from a Winery"*, and A3's own leftover reading of own label as *"a separate flag/relation layered on top of the winery→distributor wine link"* | **A3** *Where a distributor sources* — a distributor buys from a winery **or from another distributor**; A may sell ordinary wines he lawfully carries to B on an active A↔B partnership within his own distribution agreement; sub-distribution is not an own-label privilege; B gets his own listing on the same `productId` with his own `tradePrice` and article number; producer stays the winery and B's seller is A; the A→B order creates no relation; A17 grants are checked for **own-label products only**; the ordinary distribution agreement is **named, not modelled**; Restaurant and Retail still buy exclusively from a distributor. A14.1 widened to match; the own-label sentence now points at A17 (D36, D37) | The rule was never meant to forbid this and three places already assumed it did not: **A8** has named Distributor↔Distributor portfolio supplementation since it was written, **A17.9b** describes the downstream holder in full, and `ORDER_ROLES` names roles rather than pairings — only the chain diagram and one sentence in A14.1 said otherwise. Left as written, the platform would have permitted a distributor to resell an **own label** while forbidding him to resell an **ordinary wine**, which is exactly backwards: the own-label route is the constrained one, and ordinary trade is the case the whole model rests on. Serge named the contradiction from the business side — the Saparavi case (HANDOFF pass 4) and plain sub-distribution both need this route, and neither is an own label. What is deliberately NOT added: a second grant construct for ordinary distribution terms — A17.9a exists for own-label grants, and building its twin for ordinary contracts would be D36 a third time, so point 8 names the agreement and stops there. |
 | D41 | **The six bridged listings read as finished own labels** — PRD-1020 Sauvignon Blanc — Sancerre · PRD-1021 Chardonnay — Chablis Premier Cru · PRD-1022 Primitivo — Alcamo DOC · PRD-1023 Tempranillo — Rioja Crianza · PRD-1024 Riesling Spätlese — Mosel · PRD-1025 Merlot — Bordeaux Supérieur. Carried at **three spec locations**: the A17.0 re-measurement of 5 Aug 2026 (*"27 distinct products, 6 of which are finished own labels"*, and *"14 wines, 6 of them own label and 8 ordinary"*) · the A17.14 migration sentence (*"the existing `ownLabel:true` on PRD-1020, PRD-1021, PRD-1022 becomes derived … the pass that gives those wines real projects"*) · and, in the prototype, `legacyOwnLabel:'active'`/`'pending'` on six listings, `status:'Own-Label'` on ten Wine Guide rows, an *Own Label* ribbon on six article pages, a six-row typed *Own-Label Portfolio* widget, two typed counters reading **5** and a *Real Example* on `bottle-lobby-own-label.html` | **A17.0b last paragraph** — none of the six is an own label. Each is the producer's own appellation wine, under the producer's brand, on an article page written in the producer's name; five of those pages give the ribbon the reason *exclusive distribution through Hawesko*, which is **a producer-owned brand plus a distribution exclusivity and explicitly out of scope**. The six become: five ordinary wines keeping every A17.0 ability; **PRD-1020** additionally the `sourceWineId` of a relabel project (A17.0b's own example); **PRD-1022** and **PRD-1024** carrying `ownLabelAvailability:'on_request'`. Hawesko's real own labels are **two new `PRD-` records** with `brandOwner:'Hawesko GmbH'`, each out of a gate-2-approved project, one active and one created-but-undelivered. A17.0's counts and A17.14's migration sentence are corrected accordingly | **The definition beats the fixture observation, and the fixtures said so themselves.** A17.0b was written on 4 Aug and its closing paragraph excludes this exact arrangement by name; the 5 Aug re-measurement counted the flags it found instead of testing them against it, and A17.14 then wrote the count into a migration plan. **The article pages are the evidence, and they were always public**: `bottle-lobby-wine-sauvignon-blanc-sancerre.html` describes the wine as *"Henri Dubois Domaine farms its Sauvignon Blanc …"* and justifies the ribbon with *"Exclusive to Hawesko in northern Germany and Scandinavia"* — brand and exclusivity in one sentence, and only the second one is true. **PRD-1022 contradicted the flag on its own page**, which reads *Own-Label Available* — a capability where three other surfaces claimed a product, which is D36 surviving inside its own replacement. **The strongest counter-argument refuted itself**: the six are absent from `partnerWinesPool`, and A17.9 does forbid an own-label product from appearing in another distributor's picker — but **PRD-1026 sat in exactly the same gap with no own-label claim anywhere**, so the gap is seven mockup rows that lived only in the distributor's book, not six own labels; `assets/bottle-lobby-data.js` recorded the doubt in writing (*"the open question is not whether to loosen A17.9 but whether all six are own labels at all"*). **What the misreading would have cost, measured**: those six wines are named by 7 of 11 orders, 4 of 5 promo materials, 3 of 3 exclusive deals and both buyers' wine lists. As own labels every one of those movements would need a covering Market Grant under MG-1 — the model would have started refusing ordinary trade in order to protect a brand nobody owns, which is D40's error one level down. As ordinary wines, not one of those fixtures changes. |
 | D42 | **ME-5 as first written: "venue and participant surfaces show head counts, never identities, until `completed`"** — no name on any public member-event surface before the event was over, the confirmed winemaker's included | **A16.15 ME-5** — differentiated: guests, general participants, applicants and unanswered invitations stay unnamed and stay head counts; a confirmed **`winemaker` or `exhibitor`** may be named on the public surfaces of a **published** member event after their explicit acceptance and never before it; until acceptance the name appears only in the invitee's own view and the host's; the event itself stays gated by its stored reach (A16.14b); and a public naming is neither a release act nor a guarantee (ME-3) | **The blanket rule protected the one party A16.6's logic does not apply to.** Anonymisation exists for the invited-but-undecided, whose later decline would read as a withdrawal — and that protection stays in full: `sent`, `viewed`, `applied`, declined and withdrawn names appear on no public surface. But a winemaker dinner whose card may not say which winemaker is coming advertises nothing — naming the confirmed producer is the point of the event, and being named on a published event is part of what the producer says yes to when accepting. Confirmed business decision, 8 Aug 2026: **acceptance is the consent line; `completed` was one event too late.** The naming is a permission, not an obligation, and it is not the Bottle Lobby release vocabulary — a member event still promises nothing (ME-3). |
+| D43 | **The announcement audience as first written: a Community Announcement "goes to a reach segment (A16.14b)"** — A16.14b listed campaigns among the features that resolve against the reach taxonomy, and A16.8 said *"the follow graph carries the announcement further"*, so an announcement could have addressed `public`, `members`, a whole role group, or hopped beyond the host's own fans | **A16.14e / A16.14b / A16.8** — an announcement goes to the host's **own fans** (the incoming edges of his A7 graph), optionally plus his **own active partners** (A6), and to nobody else; outgoing edges, role and member groups, and the community or partners of a participant, winery, exhibitor or venue are structurally out; reach keeps deciding who may *find* the carrier and never feeds the audience; every recipient must still pass C9's visibility | Serge's decision, 10 Aug 2026. Reach answers *"who may find this?"* — a permission the reader exercises; an audience answers *"whom may I address?"* — an act the sender performs, and A7 had already said both that a follow is not marketing consent and that no foreign graph resolves into a recipient list for a third party. Reading the audience off the reach taxonomy collided with its own neighbours: `public` and `members` would have made a campaign a broadcast over people with no relation to the sender, and WS-3 — reach falls away from `published` — would have left a published show with **no defined audience at the exact stage where announcing matters most**. The incoming follow edge is the one relation where the recipient himself chose the sender; that is why it, and not the taxonomy, is the audience. |
 
 ---
 
