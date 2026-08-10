@@ -62,6 +62,15 @@ body {
 }
 .demo-btn.active { background: var(--gold); color: var(--ink); border-color: var(--gold); font-weight: 500; }
 .demo-btn:hover:not(.active) { border-color: rgba(247,243,238,0.2); color: var(--paper); }
+/* The fifth entry is a PLATFORM PARTNER, not a trade role (A18.3) —
+   set apart in the bar the way it is set apart in the model: its own
+   divider, a dashed outline, and green instead of the trade gold when
+   active. In the real build this is a separate workspace; the shared
+   bar is the named prototype deviation. */
+.demo-sep { width:1px; align-self:stretch; background:rgba(247,243,238,0.15); margin:0 0.35rem; }
+.demo-btn.demo-btn-partner { border-style:dashed; border-color:rgba(45,106,79,0.6); }
+.demo-btn.demo-btn-partner.active { background:var(--green); border-color:var(--green); border-style:solid; color:var(--paper); font-weight:500; }
+.demo-btn.demo-btn-partner:hover:not(.active) { border-color:var(--green); color:var(--paper); }
 
 /* ── Demo persistence controls (C8) ──────────────────────────────
    Deliberately in the demo bar and nowhere near "+ Host Wine Show":
@@ -657,6 +666,13 @@ body {
 .rf-locked { cursor:not-allowed; opacity:0.5; }
 .rf-locked input { cursor:not-allowed; }
 .rf-lock-tag { font-size:0.62rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--gold); border:1px solid rgba(184,151,90,0.3); padding:0.1rem 0.4rem; border-radius:2px; margin-left:0.5rem; }
+/* Sidebar rows for features that exist as a PLAN, not as a page
+   (A18.7): named, shown, locked, reason on the row — the REACH_LOCKED
+   discipline (C2) moved into a nav, so the organizer cockpit carries
+   no dead link. */
+.nav-locked { cursor:not-allowed; opacity:0.55; }
+.nav-locked:hover { background:none; }
+.nav-lock-why { font-size:0.62rem; color:var(--dim); line-height:1.5; margin:0.15rem 0 0.1rem 1.6rem; white-space:normal; }
 .add-btn { display:flex; align-items:center; gap:0.6rem; font-size:0.68rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--gold); background:rgba(184,151,90,0.07); border:1px dashed rgba(184,151,90,0.3); padding:0.8rem 1.4rem; cursor:pointer; border-radius:2px; font-family:'Inter',sans-serif; transition:background 0.2s; width:100%; justify-content:center; }
 .add-btn:hover { background:rgba(184,151,90,0.12); }
 .icon-btn { background:transparent; border:1px solid var(--line); color:var(--dim); padding:0.3rem 0.6rem; border-radius:2px; cursor:pointer; font-size:0.7rem; transition:all 0.15s; font-family:'Inter',sans-serif; text-decoration:none; display:inline-block; }
@@ -1170,6 +1186,12 @@ body {
     <button class="demo-btn" onclick="switchDashboard('distributor', this)">🚚 Distributor</button>
     <button class="demo-btn" onclick="switchDashboard('restaurant', this)">🍽 Restaurant</button>
     <button class="demo-btn" onclick="switchDashboard('retail', this)">🏪 Retail</button>
+    <!-- A18.3: a PLATFORM PARTNER workspace, not a fifth trade role.
+         The divider and the green styling keep the category visibly
+         apart; in the real build this is a separate workspace and the
+         shared bar is the named prototype deviation. -->
+    <span class="demo-sep"></span>
+    <button class="demo-btn demo-btn-partner" onclick="switchDashboard('partner', this)">🎪 Platform Partner · Organizer</button>
   </div>
   <!-- Demo persistence (C8) — the receipt, and the way back. -->
   <div class="demo-tools">
@@ -1436,6 +1458,42 @@ body {
     <div class="nav-section">
       <div class="nav-section-label">Account</div>
       <div class="nav-item"><span class="nav-icon">◌</span> Settings</div>
+    </div>
+  </aside>
+
+  <!-- ════════════════════════════════
+       PLATFORM PARTNER SIDEBAR (A18)
+       Not a fifth trade role: no Commerce, no Portfolio, no Network,
+       no Discover section — an organizer neither buys nor sells wine
+       (PP-1). The coming fair features are named, shown and LOCKED
+       with the reason on the row (C2, PARTNER_LOCKED_NAV) instead of
+       dead links. Name, avatar and badge are rendered from the
+       platformPartners row by renderPartnerCockpit(), never typed
+       here a second time.
+  ════════════════════════════════ -->
+  <aside class="sidebar" id="sidebar-partner" style="display:none">
+    <div class="sidebar-logo">
+      <a href="bottle-lobby.html" style="text-decoration:none"><div class="logo-text">Bottle<span>&nbsp;Lobby</span></div></a>
+    </div>
+    <div class="sidebar-user">
+      <div class="user-avatar" id="ppartner-avatar"></div>
+      <div class="user-info">
+        <div class="user-name" id="ppartner-name"></div>
+        <div class="user-role">Platform Partner · Organizer</div>
+      </div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">Overview</div>
+      <div class="nav-item active" id="pnav-dashboard" onclick="showPartnerView('dashboard')" style="cursor:pointer"><span class="nav-icon">⬡</span> Overview</div>
+      <div class="nav-item" id="pnav-profile" onclick="showPartnerView('profile')" style="cursor:pointer"><span class="nav-icon">◎</span> Organization Profile</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">Fairs</div>
+      <div id="pnav-locked-fairs"></div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">Community</div>
+      <div id="pnav-locked-community"></div>
     </div>
   </aside>
   <main class="main">
@@ -3304,6 +3362,42 @@ With an annual production capacity of over 1.2 million bottles, Cantina Rossi is
           </div>
 
 
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════════
+         PLATFORM PARTNER · ORGANIZER (A18) — a hull, honestly empty
+         No stats row, no Commerce, no orders, no A6 action anywhere in
+         this subtree (PP-1): an organizer neither buys nor sells wine.
+         Every pane is filled by renderPartnerCockpit() from the
+         platformPartners row and the reviews register — the Verified
+         badge is derived (PP-4), never typed into this markup.
+    ════════════════════════════════ -->
+    <div class="dashboard" id="dash-partner">
+      <div class="topbar">
+        <div class="topbar-title" id="partner-topbar-title">Platform Partner · Organizer</div>
+      </div>
+      <div style="padding:2rem" id="partner-view-dashboard">
+        <div class="profile-section">
+          <div class="profile-section-header">
+            <div class="profile-section-title">Organizer Overview</div>
+          </div>
+          <div id="ppartner-idcard"></div>
+        </div>
+        <div class="profile-section">
+          <div class="profile-section-header">
+            <div class="profile-section-title">Fairs &amp; Events</div>
+          </div>
+          <div id="ppartner-empty"></div>
+        </div>
+      </div>
+      <div style="padding:2rem;display:none" id="partner-view-profile">
+        <div class="profile-section">
+          <div class="profile-section-header">
+            <div class="profile-section-title">Organization Profile</div>
+          </div>
+          <div id="ppartner-profile"></div>
         </div>
       </div>
     </div>
@@ -5854,6 +5948,99 @@ function platformPartner(id) {
 function partnerVerificationApproved(partner) {
   return reviewsFor('partner', partner.id).some(r =>
     r.approvalType === 'partner_verification' && r.reviewStatus === 'approved');
+}
+
+/* ── The organizer cockpit — a hull, honestly empty (A18.7) ────────
+   The target navigation exists as NAMED, SHOWN, LOCKED rows with the
+   reason on the row (C2, the REACH_LOCKED shape) — never as dead
+   links, and never as trade sections: the partner sidebar has no
+   Commerce, no Portfolio, no Network, no Discover (PP-1). What each
+   lock names is the fair track's later passes; nothing here promises
+   a date or builds a stand-in (A16.8). */
+const PARTNER_LOCKED_NAV = {
+  fairs: [
+    ['Fair Series & Editions', 'The canonical fair record (A16.8) arrives with the fair passes — a page here would promise a record that does not exist yet.'],
+    ['Exhibitor Recruitment',  'Applications and admissions hang off an edition, and editions are not built yet.'],
+    ['Stands & Halls',         'Stand and hall planning needs an edition to belong to.'],
+    ['Participation Pages',    'A participation row (A16.8) is the fair passes’ first record — nothing can render before it exists.'],
+    ['Schedule & Agenda',      'Dates and agenda belong to an edition; none exists yet.']
+  ],
+  community: [
+    ['Organizer Profile & Follow', 'Its own later pass — following an organizer is a directed relation, never a trade partnership (A18.5), and its storage is measured before anything is built.'],
+    ['Opportunities',              'Organizer opportunities come after profile and follow exist.'],
+    ['Communications',             'Fair notifications extend the derived notification model (C9) in their own pass; no message table is built for them.']
+  ]
+};
+
+function showPartnerView(view) {
+  const isProfile = view === 'profile';
+  document.getElementById('partner-view-dashboard').style.display = isProfile ? 'none' : '';
+  document.getElementById('partner-view-profile').style.display = isProfile ? '' : 'none';
+  document.getElementById('partner-topbar-title').textContent =
+    isProfile ? 'Organization Profile' : 'Platform Partner · Organizer';
+  ['pnav-dashboard', 'pnav-profile'].forEach(id => {
+    const e = document.getElementById(id); if (e) e.classList.remove('active');
+  });
+  const ne = document.getElementById(isProfile ? 'pnav-profile' : 'pnav-dashboard');
+  if (ne) ne.classList.add('active');
+}
+
+/* Everything the cockpit shows derives from the ONE partner row and
+   the reviews register — no name, badge or capability is typed twice
+   (A1 applied to the newest record). The badge asks the register
+   (PP-4): remove RVW-3004 and this renders "Verification pending". */
+function renderPartnerCockpit() {
+  const p = platformPartners[0];
+  if (!p) return;
+  const verified = partnerVerificationApproved(p);
+  const vrow = reviewsFor('partner', p.id)
+    .filter(r => r.approvalType === 'partner_verification' && r.reviewStatus === 'approved').pop() || null;
+  const badge = verified
+    ? '<span class="tag tag-green">✓ Verified Platform Partner</span>'
+    : '<span class="tag tag-dim">Verification pending</span>';
+  const caps = p.capabilities.map(c => PARTNER_CAPABILITY_LABEL[c] || c).join(' · ');
+
+  const av = document.getElementById('ppartner-avatar');
+  if (av) av.textContent = p.name.split(/\s+/).map(word => word[0]).join('').slice(0, 2).toUpperCase();
+  const nm = document.getElementById('ppartner-name');
+  if (nm) nm.textContent = p.name;
+
+  const idcard = document.getElementById('ppartner-idcard');
+  if (idcard) idcard.innerHTML =
+    '<div style="display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap">' +
+      '<strong>' + p.name + '</strong>' + badge +
+    '</div>' +
+    '<div class="edit-sub" style="margin-top:0.4rem">' + caps + ' · ' + p.city + ', ' + p.country + '</div>' +
+    '<div class="ws-demo-note">' + PARTNER_VERIFIED_DISCLAIMER + '</div>';
+
+  const empty = document.getElementById('ppartner-empty');
+  if (empty) empty.innerHTML =
+    '<div class="ord-empty">No fair series yet — the record it would live in does not exist yet.<br>' +
+    'The fair passes bring: fair series &amp; editions, exhibitor recruitment with applications ' +
+    'and admissions, stands &amp; halls, participation pages, and schedule &amp; agenda. ' +
+    'Organizer profile &amp; follow, opportunities and fair communications follow in their own passes.</div>';
+
+  const prof = document.getElementById('ppartner-profile');
+  if (prof) prof.innerHTML =
+    '<div style="display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap">' +
+      '<strong>' + p.name + '</strong>' + badge +
+    '</div>' +
+    '<div class="edit-sub" style="margin-top:0.6rem">' +
+      'Capability: ' + caps + '<br>' +
+      'Location: ' + p.city + ', ' + p.country + '<br>' +
+      'About: ' + p.about +
+      (vrow ? '<br>Verified by ' + vrow.reviewedBy + ' on ' + vrow.reviewedAt : '') +
+    '</div>' +
+    '<div class="ws-demo-note">' + PARTNER_VERIFIED_DISCLAIMER + '</div>';
+
+  const lockRow = l =>
+    '<div class="nav-item nav-locked"><span class="nav-icon">◇</span> ' + l[0] +
+    '<span class="rf-lock-tag">Locked</span>' +
+    '<div class="nav-lock-why">' + l[1] + '</div></div>';
+  const lf = document.getElementById('pnav-locked-fairs');
+  if (lf) lf.innerHTML = PARTNER_LOCKED_NAV.fairs.map(lockRow).join('');
+  const lc = document.getElementById('pnav-locked-community');
+  if (lc) lc.innerHTML = PARTNER_LOCKED_NAV.community.map(lockRow).join('');
 }
 
 /* ══════════════════════════════════════════════════════════════════
@@ -9362,18 +9549,22 @@ renderExclusiveOffersRestaurant();
 renderExclusiveOffersRetail();
 renderExclusiveDealsRestaurant();
 renderExclusiveDealsRetail();
+renderPartnerCockpit();
 
 function switchDashboard(role, btn) {
   // Demo buttons
   document.querySelectorAll('.demo-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  // Sidebars
-  ['winery','distributor','restaurant','retail'].forEach(r => {
+  // Sidebars — the four trade roles plus the partner WORKSPACE (A18.3).
+  // This list is pure view switching: no trade registry reads it, and
+  // 'partner' must never migrate into ORDER_ROLES / SHOW_ROLES /
+  // EVENT_ROLES or the reach taxonomy (PP-3, tests/platform-partners.js).
+  ['winery','distributor','restaurant','retail','partner'].forEach(r => {
     document.getElementById('sidebar-' + r).style.display = r === role ? 'flex' : 'none';
     document.getElementById('dash-' + r).classList.toggle('active', r === role);
   });
   // Keep the URL in sync so every dashboard has its own shareable address:
-  // bottle-lobby-dashboard.html#winery / #distributor / #restaurant / #retail
+  // bottle-lobby-dashboard.html#winery / #distributor / #restaurant / #retail / #partner
   history.replaceState(null, '', '#' + role);
   // Reset the winery inline profile view back to the dashboard overview
   // whenever we land on/leave the winery role, so it never opens "stuck" on a sub-section.
@@ -9381,12 +9572,16 @@ function switchDashboard(role, btn) {
   if (role === 'distributor') showDistributorView('dashboard');
   if (role === 'restaurant') showRestaurantView('dashboard');
   if (role === 'retail') showRetailView('dashboard');
+  if (role === 'partner') showPartnerView('dashboard');
 }
 // Init sidebar flex
 document.getElementById('sidebar-winery').style.display = 'flex';
 
-// Deep link: arriving with #winery / #distributor / #restaurant / #retail selects that dashboard view
-const rolesByHash = { winery: 0, distributor: 1, restaurant: 2, retail: 3 };
+// Deep link: arriving with #winery / #distributor / #restaurant / #retail
+// / #partner selects that dashboard view. The value is the BUTTON index
+// in .demo-btn order (the divider is a span, not a button). This map
+// routes the demo bar and nothing else — it is not a role enumeration.
+const rolesByHash = { winery: 0, distributor: 1, restaurant: 2, retail: 3, partner: 4 };
 const hashRole = window.location.hash.replace('#', '');
 if (rolesByHash.hasOwnProperty(hashRole)) {
   const btn = document.querySelectorAll('.demo-btn')[rolesByHash[hashRole]];
@@ -15506,6 +15701,9 @@ function redrawAll() {
   renderExclusiveOffersRetail();
   renderExclusiveDealsRestaurant();
   renderExclusiveDealsRetail();
+  /* The partner badge derives from `reviews`, which persists — so the
+     cockpit redraws with everything else (PP-4). */
+  renderPartnerCockpit();
   renderAllOrders();
   refreshShows();
   /* Redraws whichever My Events view is open and the retail dashboard's
