@@ -608,9 +608,12 @@ Funktionen aufrufen, `transferSize` vorher lesen (C7).
 >   traegt den ganzen Abnahme-Bogen ueber einen Reload; danach
 >   `BLStore.reset()`, Fixtures nachgemessen unberuehrt.
 >
-> **Codex-Korrektur nach der ersten Abnahme (10.08., drei Commits auf dem
-> vermeintlich finalen Stand `cbc80e5`)** — zwei eng begrenzte Befunde der
-> unabhaengigen Pruefung, beide behoben:
+> **Codex-Korrektur nach der Codex-Pruefung des ersten Abschlussstands
+> (10.08., drei Commits auf `cbc80e5` — dieser Stand wurde NICHT
+> abgenommen und nie an Claude Chat uebergeben; Codex hat ihn vor der
+> Abnahme zurueckgewiesen)** — zwei eng begrenzte Befunde, beide behoben.
+> **Ausschliesslich der neue finale Stand `39be8af` geht zur einmaligen
+> unabhaengigen Abnahme an Claude Chat:**
 >
 > - **Datumsintegritaet:** `endDate` vor `startDate` wurde angenommen. Jetzt
 >   als **A19.3/FS-5-Praezisierung** (keine neue D-Entscheidung — dieselbe
