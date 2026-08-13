@@ -1090,32 +1090,43 @@ Funktionen aufrufen, `transferSize` vorher lesen (C7).
 >   here yet", Aufhebungsgrund nirgends sichtbar · Stichproben: vier
 >   Cockpits rendern, Fans 3, WS-2604 planning/offen, FP-9402-Page
 >   unveraendert.
-> - **ZWEI Umgebungsbefunde, benannt statt weggeschrieben:**
->   **(1)** Screenshots und die Accessibility-Werkzeuge der Erweiterung
->   liefen auf dieser Maschine in Injection-Timeouts (bekannte
->   C7-Fremdkoerperklasse) — abgenommen wurde deshalb ueber echte
->   DOM-Klicks (`element.click()` auf den tatsaechlichen Knoepfen und
->   Checkboxen) statt ueber Screenshot-Koordinaten, und die schmale
->   Ansicht liess sich NICHT herstellen: das Fenster nahm die
->   Groessenaenderung nicht an (`innerWidth` blieb 1250). Ersatzmessung:
->   der Events-Tab benutzt **dieselbe `.guide-layout`** wie die fuenf
->   erprobten Tabs, und die Regeln `@media (max-width:900px)`
->   (`grid-template-columns:1fr`, `filter-sidebar` → `position:static`)
->   sowie `@media (max-width:800px)` fuer `.ws-grid` sind die
->   bestehenden — die schmale Ansicht ist Klassengleichheit, keine neue
->   Regel. **Eine echte schmale Sichtprobe steht damit aus.**
->   **(2) Der Demo-Stand im Browser ist NICHT pristine zurueckgesetzt.**
->   Auf `localhost:8765` laeuft ein **zweiter Dashboard-Tab ausserhalb
->   der Automatisierung**, dessen Heartbeat den Snapshot alle zwei
->   Sekunden aus seinem eigenen Speicher zurueckschreibt: ein Sentinel
->   im Storage war nach 3,5 s ueberschrieben, und ein Entfernen des
->   Schluessels ueberlebt keine 2 s. Kein O5-Befund — der
->   storage-Event-Weg wuerde diesen Tab reloaden, `attempt()` schiebt
->   das aber auf, solange der Tab `busy()` ist (offenes Modal oder Feld
->   im Fokus). **Serge: in jenem Tab "↺ Reset demo" druecken oder ihn
->   schliessen** — danach sind die Fixtures wieder pristine. Der
->   pristine Zustand WURDE gesehen, zu Beginn der Abnahme (12
->   Eintraege, FE-7102 nicht gelistet).
+> - **Nachabnahme (14.08.): echte schmale Gegenprobe UND Reset bestanden,
+>   beide vormals offenen Umgebungsbefunde geschlossen.** Das Fenster
+>   nahm die programmatische Groessenaenderung wieder nicht an
+>   (`innerWidth` blieb bei 1628 stehen, dieselbe Klasse wie zuvor bei
+>   1250) — Ersatz war deshalb keine CSS-Lektuere, sondern ein
+>   **echtes Viewport** per gleichherkunftigem `<iframe>` fest auf
+>   800×1000 gesetzt und **gemessen** `innerWidth 796` (Scrollbar
+>   abgezogen). Darin, klickend, echte DOM-Interaktion: `.guide-layout`
+>   auf `grid-template-columns:1fr`, `.filter-sidebar`
+>   `position:static`, `body.scrollWidth` gleich `body.clientWidth` —
+>   kein horizontales Ueberlaufen, auch nicht mit offenem Filter oder
+>   offener Edition. Alle vier Kartensorten (`ws-cell`, `me-cell`,
+>   `fe-cell`, `fp-cell`) volle Breite 748px, `overflow-x:visible`,
+>   Text ungekuerzt lesbar. Familienfilter **genau drei** Optionen
+>   (Fair/Wine Show/Member Event), Klick auf "Fair" blendet den
+>   Fair-Typ-Filter ein (Trade/Consumer/Hybrid) und schrumpft die
+>   Stadtliste live auf die Messestaedte; ein zweiter Klick auf
+>   "Trade Fair" filtert live auf 3 Editionen, weiterhin ohne
+>   Ueberlauf. Eine Fair-Edition liess sich oeffnen
+>   (`aria-expanded` false→true) und wieder schliessen (true→false);
+>   ihr Ticket-/Akkreditierungslink war sichtbar, `target="_blank"`,
+>   `rel="noopener noreferrer"`. Screenshots liefen weiterhin in
+>   Injection-Timeouts (dieselbe bekannte C7-Fremdkoerperklasse,
+>   deshalb wieder DOM-Messung statt Bildabgleich).
+>   **Reset:** ein zweiter Dashboard-Tab lief diesmal NICHT — vor Beginn
+>   frisch per `tests/serve.js` gestartet, `tabs_context_mcp` zeigte
+>   genau einen Tab. Der Speicher war dennoch nicht pristine: `FE-7102`
+>   stand auf `status:"published"` mit einem `history`-Eintrag
+>   "published" vom 13.08. — der Rest der PERSISTENZ-DURCHREICHUNG aus
+>   der Erstabnahme, nie zurueckgesetzt. `resetDemoData()` haengt an
+>   einem blockierenden `confirm()`; ausgeloest wurde deshalb direkt
+>   `BLStore.reset()` (derselbe Codepfad hinter einem bestaetigten
+>   Dialog: `localStorage.removeItem` + Reload). Danach gemessen:
+>   `FE-7102` wieder `status:"draft"`, `history` nur noch "created",
+>   der Guide zeigt wieder **12 Eintraege**, `FE-7102` in keinem
+>   sichtbaren `.ws-grid` mehr enthalten. Kein Produktfehler in beiden
+>   Proben.
 >
 > **Was Durchgang O5 bewusst NICHT gebaut hat, mit Ziel-Durchgaengen:**
 > B2B-Termine, Slots, Follow-ups (**O7**) · oeffentliches
