@@ -1016,6 +1016,143 @@ console.log('\n── a snapshot from before an added row does not hide the row'
   }
 }
 
+/* ── 10. The read-only public hydration path (A21.8, FP-13) ────────
+   The canonical Participation Page reads the SAME snapshot the
+   dashboard writes — through BLStore.hydrate(), never start(). This
+   section lives HERE and not in tests/fair-participation.js for a
+   measured reason: this file is the ONE harness allowed to run a
+   live store (the kill-switch scan in section 1 fails every other
+   harness that opts in), and hydration without a live store proves
+   nothing. */
+console.log('\n── the public page reads the snapshot and can never write it');
+{
+  const PAGE = path.join(__dirname, '..', 'bottle-lobby-fair-participation.html');
+  function openPage(area, opts) {
+    opts = opts || {};
+    const errs = [];
+    let html = loadDashboard(PAGE, { persist: true }).html;
+    if (opts.patch) {
+      const before = html;
+      html = html.replace(opts.patch.from, opts.patch.to);
+      if (html === before) throw new Error('openPage: patch never applied — ' + opts.patch.from);
+    }
+    const dom = new JSDOM(html, {
+      runScripts: 'dangerously', pretendToBeVisual: true,
+      url: 'http://localhost/bottle-lobby-fair-participation.html' + (opts.query || ''),
+      beforeParse(w) {
+        if (area) {
+          const self = () => w;
+          Object.defineProperty(w, 'localStorage', { value: area.api(self), configurable: true });
+        }
+        w.scrollTo = () => {};
+      },
+      virtualConsole: new VirtualConsole().on('jsdomError', e => {
+        if (!/Not implemented: navigation/.test(e.message)) errs.push(e.message);
+      })
+    });
+    const w = dom.window;
+    w.__onStorage = () => {};
+    if (area) area._tabs.push({ w });
+    if (errs.length) { console.log('SCRIPT ERRORS:\n' + errs.join('\n')); process.exit(1); }
+    return { w, d: w.document };
+  }
+  const pageText = tab => {
+    const c = tab.d.body.cloneNode(true);
+    [...c.querySelectorAll('script')].forEach(n => n.remove());
+    return c.textContent;
+  };
+
+  /* (a) a saved dashboard change reaches the public page — ordinary
+     save, ordinary open, no test-only handover (FP-13). */
+  const area = makeStorageArea();
+  const dash = enter(openTab(area, { persist: true }));
+  act(dash.w, "setFairParticipationDescription('FP-9401','Domaine Lefèvre','Hydration probe — the saved sentence')");
+  await settle(dash.w);
+  const seeded = read(area);
+  if (seeded && JSON.stringify(seeded.data.fairParticipations).includes('Hydration probe'))
+    ok('the dashboard change sits in the ordinarily saved snapshot');
+  else bad('the dashboard change never reached the snapshot — the rest of this section is meaningless');
+
+  const page = openPage(area, { query: '?id=FP-9401' });
+  if (/Hydration probe — the saved sentence/.test(pageText(page)))
+    ok('the public page shows the CURRENT record after an ordinary open — hydrated from the same snapshot');
+  else bad('the public page still renders the fixture after a saved dashboard change (FP-13)');
+
+  /* (b) the read path never writes — save, reset and start are dead. */
+  const frozen = area._data[KEY];
+  if (page.w.eval('BLStore.isReadOnly()') === true) ok('hydrate() marked the page read-only');
+  else bad('the public page is not read-only after hydrate()');
+  const saved = page.w.eval('BLStore.save()');
+  page.w.eval('BLStore.reset()');
+  const started = page.w.eval('BLStore.start({})');
+  nudge(page.w); await settle(page.w);
+  if (saved === false && started === 'refused' && area._data[KEY] === frozen)
+    ok('save(), reset() and start() are all dead on the hydrated page — storage stays byte-identical');
+  else bad('the read path wrote, reset or wired autosave (FP-13)');
+  if (page.w.eval('typeof fairAdmissions') === 'undefined' &&
+      read(area).data.fairAdmissions)
+    ok('the private collections never reach the page, and the snapshot keeps them untouched (FR-11)');
+  else bad('private recruiting data crossed the hydration boundary');
+  const refused = page.w.eval("BLStore.register({ fairAdmissions: [function () { return []; }, function () {}] }); BLStore.hydrate()");
+  if (refused === 'refused' && area._data[KEY] === frozen)
+    ok('registering a private collection against hydrate() is refused WHOLE — the allowlist is the boundary');
+  else bad('hydrate() served a collection outside the fixed allowlist (FP-13)');
+
+  /* (c) the counter-proof the pass was built to avoid: the same page
+     wired through start() instead of the read-only entry. start()
+     restores strictly (names beyond the page's registration discard
+     the snapshot — a DELETE) and wires autosave, whose next save
+     writes the page's partial registration. Either way the
+     dashboard's full snapshot is gone. hydrate() exists because of
+     exactly this, and the proof is that the damage is real. */
+  {
+    const area2 = makeStorageArea();
+    const seed2 = enter(openTab(area2, { persist: true }));
+    act(seed2.w, "setFairParticipationDescription('FP-9401','Domaine Lefèvre','probe two')");
+    await settle(seed2.w);
+    const full = read(area2);
+    if (!full || !full.data.fairAdmissions) bad('could not seed the full snapshot for the counter-proof');
+    else {
+      const rogue = openPage(area2, {
+        query: '?id=FP-9401',
+        patch: { from: 'BLStore.hydrate();', to: 'BLStore.start({});' }
+      });
+      nudge(rogue.w); await settle(rogue.w);
+      const after = read(area2);
+      if (!after || !after.data || !after.data.fairAdmissions)
+        ok('caught: the start() route destroys the dashboard\'s snapshot — fairAdmissions and every other private collection fall out of storage. The read-only entry is what prevents this, and nothing else could have');
+      else bad('the start() route left the full snapshot intact — the read-only entry is not what protects it, so FP-13\'s reasoning is unproven');
+    }
+  }
+
+  /* (d) no valid snapshot → the fixtures render; an invalid one is
+     IGNORED under the store's one validity rule — and never deleted:
+     the dashboard is the only writer. */
+  {
+    const empty = openPage(makeStorageArea(), { query: '?id=FP-9401' });
+    if (/Burgundy table/.test(pageText(empty)))
+      ok('with no snapshot at all, the page renders the canonical fixtures');
+    else bad('the page needs a snapshot to render — the fixture fallback is broken');
+
+    const area3 = makeStorageArea();
+    const stale = JSON.parse(JSON.stringify(seeded));
+    stale.v = stale.v - 1;
+    area3._data[KEY] = JSON.stringify(stale);
+    const old = openPage(area3, { query: '?id=FP-9401' });
+    if (/Burgundy table/.test(pageText(old)) && !/Hydration probe/.test(pageText(old)) &&
+        area3._data[KEY] === JSON.stringify(stale))
+      ok('an outdated snapshot follows the store\'s own version rule — ignored, fixtures render, and the page DELETES nothing');
+    else bad('the page restored, reinterpreted or deleted an outdated snapshot');
+
+    const area4 = makeStorageArea();
+    area4._data[KEY] = 'not readable json {';
+    const corrupt = openPage(area4, { query: '?id=FP-9401' });
+    if (/Burgundy table/.test(pageText(corrupt)) && area4._data[KEY] === 'not readable json {')
+      ok('a corrupt snapshot is ignored and left in place — same answer, no write');
+    else bad('the page wrote or crashed over a corrupt snapshot');
+  }
+}
+
 console.log(fail ? '\n✗ ' + fail + ' failure(s)' : '\n✓ all checks passed');
 process.exit(fail ? 1 : 0);
 
