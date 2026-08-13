@@ -1114,19 +1114,22 @@ Funktionen aufrufen, `transferSize` vorher lesen (C7).
 >   `rel="noopener noreferrer"`. Screenshots liefen weiterhin in
 >   Injection-Timeouts (dieselbe bekannte C7-Fremdkoerperklasse,
 >   deshalb wieder DOM-Messung statt Bildabgleich).
->   **Reset:** ein zweiter Dashboard-Tab lief diesmal NICHT — vor Beginn
->   frisch per `tests/serve.js` gestartet, `tabs_context_mcp` zeigte
->   genau einen Tab. Der Speicher war dennoch nicht pristine: `FE-7102`
->   stand auf `status:"published"` mit einem `history`-Eintrag
->   "published" vom 13.08. — der Rest der PERSISTENZ-DURCHREICHUNG aus
->   der Erstabnahme, nie zurueckgesetzt. `resetDemoData()` haengt an
->   einem blockierenden `confirm()`; ausgeloest wurde deshalb direkt
->   `BLStore.reset()` (derselbe Codepfad hinter einem bestaetigten
->   Dialog: `localStorage.removeItem` + Reload). Danach gemessen:
->   `FE-7102` wieder `status:"draft"`, `history` nur noch "created",
->   der Guide zeigt wieder **12 Eintraege**, `FE-7102` in keinem
->   sichtbaren `.ws-grid` mehr enthalten. Kein Produktfehler in beiden
->   Proben.
+>   **Reset, ueber den sichtbaren Knopf:** ein zweiter Dashboard-Tab
+>   lief nicht — vor Beginn frisch per `tests/serve.js` gestartet,
+>   `tabs_context_mcp` zeigte genau einen Tab. Ein kontrollierter
+>   nicht-pristiner Zustand wurde eigens erzeugt: `doPublishFairEdition('FE-7102')`
+>   im Cockpit (derselbe Codepfad wie ein echter Klick auf "Publish"),
+>   danach `FE-7102` gemessen auf `status:"published"` mit `history`
+>   "created" + "published", **im `localStorage` bestaetigt**. `resetDemoData()`
+>   haengt an einem blockierenden `confirm()`; fuer diese eine Probe
+>   wurde ausschliesslich `window.confirm` auf `() => true` gestubbt,
+>   und dann der tatsaechlich sichtbare Knopf `#demo-reset` ("↺ Reset
+>   demo") per echtem `element.click()` betaetigt — `BLStore.reset()`
+>   wurde NICHT direkt aufgerufen. Nach dem dadurch ausgeloesten Reset
+>   und Reload gemessen: `FE-7102` wieder `status:"draft"`, `history`
+>   nur noch "created", der Guide zeigt wieder **12 Eintraege**,
+>   `FE-7102` in keinem sichtbaren `.ws-grid` mehr enthalten, keine
+>   Teständerung zurueckgeblieben. Kein Produktfehler in beiden Proben.
 >
 > **Was Durchgang O5 bewusst NICHT gebaut hat, mit Ziel-Durchgaengen:**
 > B2B-Termine, Slots, Follow-ups (**O7**) · oeffentliches
