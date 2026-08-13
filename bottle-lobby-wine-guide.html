@@ -394,29 +394,40 @@ h1 em { font-style: italic; color: var(--gold); }
   </div>
 </div>
 
-<!-- EVENTS PANEL — Wine Guide → Events (A16.14d): the full derived
-     directory over Wine Shows and member events. Everything here
-     renders live from assets/bottle-lobby-data.js through the same
-     renderers every other public surface uses — no show and no event
-     is typed onto this page (ME-1), and the two kinds keep their own
-     cards and their own promises (ME-3). -->
+<!-- EVENTS PANEL — Wine Guide → Events (A16.14d): the ONE derived
+     directory, since O5 over FOUR record sorts — Wine Shows, member
+     events, published fair editions and publicly released fair
+     participations. Everything here renders live from
+     assets/bottle-lobby-data.js through the same renderers every other
+     public surface uses; nothing is typed onto this page (ME-1, DIR-1),
+     and the four sorts keep their own cards and their own promises
+     (ME-3, DIR-3).
+
+     THE FILTER SIDEBAR IS THE OTHER FIVE TABS' OWN (DIR-5): the same
+     <aside class="filter-sidebar">, the same renderSidebarShell() /
+     clearFilters() / renderFilters() engine, the same live facet
+     counts. The two top dropdowns this tab used to carry are GONE
+     rather than kept beside it — a second filter mechanism on one
+     surface is two answers to what the reader asked for. -->
 <div class="guide-panel" id="gpanel-events">
-  <div class="guide-events-wrap">
-    <div class="network-note">✦ <strong>How this works:</strong> one directory, two kinds of record. <strong>Wine Shows</strong> are the Bottle&nbsp;Lobby format — reviewed and released by Bottle&nbsp;Lobby before anything is promised. <strong>Member Events</strong> are members' own occasions, published by their hosts; Bottle&nbsp;Lobby neither reviews nor releases them and gives no guarantee for them. Both render live from the same records the member dashboards read — nothing is copied onto this page.</div>
-    <div class="events-join-note">This is the public view: it lists only what hosts chose to make public. <strong>Members see more</strong> — the shows and events their partnerships, community and each host's chosen reach unlock. <a href="bottle-lobby-contact.html">Join Bottle&nbsp;Lobby</a> to see the rest.</div>
-    <div class="results-toolbar">
-      <div><div class="results-count" id="count-events"></div></div>
-      <div style="display:flex;gap:0.6rem;flex-wrap:wrap">
-        <select class="sort-select" id="filter-events-kind" onchange="renderEventsDirectory()"></select>
-        <select class="sort-select" id="filter-events-city" onchange="renderEventsDirectory()"></select>
+  <div class="guide-layout">
+    <aside class="filter-sidebar" id="sidebar-events"></aside>
+    <div>
+      <div class="network-note">✦ <strong>How this works:</strong> one directory, four kinds of record. <strong>Wine Shows</strong> are the Bottle&nbsp;Lobby format — reviewed and released by Bottle&nbsp;Lobby before anything is promised. <strong>Member Events</strong> are members' own occasions, published by their hosts; Bottle&nbsp;Lobby neither reviews nor releases them and gives no guarantee for them. <strong>Fairs</strong> are run by verified organizers — Bottle&nbsp;Lobby checks the organizer and the fair brand, not the edition — and an <strong>exhibitor presence</strong> is one house's own stand at such a fair. All four render live from the same records the member dashboards read — nothing is copied onto this page.</div>
+      <div class="events-join-note">This is the public view: it lists only what hosts chose to make public. <strong>Members see more</strong> — the shows and events their partnerships, community and each host's chosen reach unlock. <a href="bottle-lobby-contact.html">Join Bottle&nbsp;Lobby</a> to see the rest.</div>
+      <div class="results-toolbar">
+        <div>
+          <div class="results-count" id="count-events"></div>
+          <div class="active-chips" id="chips-events"></div>
+        </div>
       </div>
-    </div>
-    <div class="events-section-head">Coming up</div>
-    <div class="ws-grid" id="events-upcoming"></div>
-    <div class="events-empty" id="events-upcoming-empty" style="display:none">Nothing upcoming matches those filters.</div>
-    <div id="events-past-wrap">
-      <div class="events-section-head">Previously</div>
-      <div class="ws-grid" id="events-past"></div>
+      <div class="events-section-head">Coming up</div>
+      <div class="ws-grid" id="events-upcoming"></div>
+      <div class="events-empty" id="events-upcoming-empty" style="display:none">Nothing upcoming matches those filters.</div>
+      <div id="events-past-wrap">
+        <div class="events-section-head">Previously</div>
+        <div class="ws-grid" id="events-past"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -637,14 +648,94 @@ const filterConfig = {
       {field:'country', label:'Country'},
       {field:'distributor', label:'Distributor'}
     ]
+  },
+  /* THE FACETS THAT SURVIVED THE MEASUREMENT (A16.14d, DIR-5). Each
+     one is carried because the visible records actually answer it:
+
+       family    — the three event families, exactly three (DIR-2);
+       when      — Upcoming / Past, derived from the records' own dates
+                   and states, never stored;
+       city      — the only place field any of the four sorts carries;
+       fairType  — Trade / Consumer / Hybrid, and `only` keeps it out
+                   of sight until the reader is looking at fairs;
+       hostRole  — the member event's own field.
+
+     Measured and deliberately ABSENT, with the reason: country and
+     region (no sort carries either — only `city`) and wine origin,
+     region and variety (the canonical product row holds name, vintage,
+     type and url; a facet may not invent what the record does not
+     have). Wine colour IS on the product row and was measured too: it
+     separates nothing across the entries that publicly name wines, and
+     a facet that cannot narrow is decoration. They become filters when
+     the data behind them does. */
+  events: {
+    get data() { return eventsFacetRows(); },
+    search: ['text'],
+    fields: [
+      {field:'family',   label:'Event family'},
+      {field:'when',     label:'When'},
+      {field:'city',     label:'City'},
+      {field:'fairType', label:'Fair type', only: () => {
+        const f = state.events.filters.family;
+        return !!f && f.size === 1 && f.has('Fair');
+      }},
+      {field:'hostRole', label:'Member event host'}
+    ]
   }
 };
 
-const state = { wines:{filters:{},search:''}, wineries:{filters:{},search:''}, distributors:{filters:{},search:''}, restaurants:{filters:{},search:''}, retailers:{filters:{},search:''} };
+const state = { wines:{filters:{},search:''}, wineries:{filters:{},search:''}, distributors:{filters:{},search:''}, restaurants:{filters:{},search:''}, retailers:{filters:{},search:''}, events:{filters:{},search:''} };
+
+/* ══════════════════════════════════════════════════════════════════
+   EVENTS PLUGS INTO THE SAME ENGINE (A10, DIR-5)
+   ------------------------------------------------------------------
+   The other five tabs filter over their own arrays; this one filters
+   over the DERIVED directory. So its `data` is a getter rather than an
+   array: every read recomputes the entries the reading viewer may see,
+   which is what makes an option and a count impossible to store — the
+   moment a record changes, the next read of this property already
+   says so. A captured array would be the copy invariant 1 forbids,
+   one layer down.
+
+   One facet row per directory entry, and every field on it is READ
+   from the shared derivations — no fact about a show, an event, an
+   edition or a participation is written down here.
+═══════════════════════════════════════════════════════════════════ */
+function directorySources() {
+  return { shows: wineShows, events: memberEvents,
+           fairEditions: fairEditions, fairParticipations: fairParticipations };
+}
+function eventsFacetRow(en, when) {
+  return {
+    entry:    en,
+    when:     when,
+    family:   directoryEntryFamily(en),
+    city:     directoryEntryCity(en),
+    fairType: directoryEntryFairType(en),
+    hostRole: directoryEntryHostRole(en),
+    text:     directoryEntryText(en)
+  };
+}
+function eventsFacetRows() {
+  const src = directorySources();
+  return directoryEntries(src, false, SHOW_ANON).map(en => eventsFacetRow(en, 'Upcoming'))
+    .concat(directoryEntries(src, true, SHOW_ANON).map(en => eventsFacetRow(en, 'Past')));
+}
+
+/* Fields where an ABSENT value is absent, not a value of its own. A
+   Wine Show has no fair type and a fair has no member-event host role;
+   answering "Unspecified" would put a category on the surface that
+   stands for "this facet does not apply here" — an empty category
+   wearing a word (A16.14d). Contributing nothing means the option is
+   not offered and the entry drops out when the facet is used. */
+const ABSENT_IS_ABSENT = { fairType:1, hostRole:1 };
 
 function fieldValues(item, field) {
   let v = item[field];
-  if (v === null || v === undefined || v === '') v = (field === 'distributor') ? 'Direct (No Distributor)' : 'Unspecified';
+  if (v === null || v === undefined || v === '') {
+    if (ABSENT_IS_ABSENT[field]) return [];
+    v = (field === 'distributor') ? 'Direct (No Distributor)' : 'Unspecified';
+  }
   if (field === 'grape' && typeof v === 'string') {
     return v.split(',').map(s => s.trim()).filter(Boolean);
   }
@@ -799,6 +890,11 @@ function renderFilters(tab) {
   if (tab === 'wines') { renderStatusToggle(); renderVarietalToggle(); }
   let html = '';
   cfg.fields.forEach((f, idx) => {
+    /* A facet may declare WHEN it applies at all. The fair type is the
+       one that does: it is a question about fairs, and offering it
+       beside Wine Shows and member events would ask the reader to
+       narrow by a property most of the list cannot have (DIR-5). */
+    if (f.only && !f.only()) return;
     const counts = computeCounts(tab, f.field, f.field);
     const chosen = state[tab].filters[f.field] || new Set();
     const entries = Object.entries(counts).sort((a,b) => b[1]-a[1] || a[0].localeCompare(b[0]));
@@ -926,6 +1022,11 @@ function retailCardHtml(t) {
 }
 
 function renderResults(tab) {
+  /* Events renders two dated sections rather than one sorted grid, so
+     it answers for itself — through the SAME filter state, the same
+     passesFilters() and the same chips. One filter engine, two result
+     shapes; a second engine would be the thing DIR-5 forbids. */
+  if (tab === 'events') return renderEventsDirectory();
   const cfg = filterConfig[tab];
   let items = cfg.data.filter(item => passesFilters(item, state[tab].filters) && passesSearch(item, tab));
   items = sortItems(tab, items);
@@ -972,7 +1073,7 @@ function setupDelegatedEvents(tab) {
 }
 
 function initGuide() {
-  ['wines','wineries','distributors','restaurants','retailers'].forEach(tab => {
+  ['wines','wineries','distributors','restaurants','retailers','events'].forEach(tab => {
     renderSidebarShell(tab);
     setupDelegatedEvents(tab);
     renderFilters(tab);
@@ -987,32 +1088,29 @@ function initGuide() {
 initGuide();
 
 /* ══════════════════════════════════════════════════════════════════
-   EVENTS — THE DERIVED DIRECTORY (A16.14d, ME-1)
+   EVENTS — THE ONE DERIVED DIRECTORY (A16.14d, ME-1, DIR-1..DIR-7)
    ------------------------------------------------------------------
    The one tab on this page that does NOT read the page's own arrays:
-   `wineShows` and `memberEvents` come from assets/bottle-lobby-data.js,
-   the visibility answers from publicShows()/visibleEvents(), and the
-   cells from the shared renderers — the same records and the same
-   card code the dashboards and the Wine Shows page use. This page
-   adds a viewer and two filters, nothing else.
+   `wineShows`, `memberEvents`, `fairEditions` and `fairParticipations`
+   come from assets/bottle-lobby-data.js, the visibility answers from
+   publicShows() / visibleEvents() / fairEditionDiscoverable() /
+   fairParticipationPublic(), and the cells from the shared renderers —
+   the same records and the same card code the dashboards, the Wine
+   Shows page and the canonical Participation Page use. This page adds
+   a viewer and a filter state, nothing else.
 
    THE VIEWER IS THE ANONYMOUS ONE (SHOW_ANON). No relation filter, no
    member level: a stranger gets the strangers' answer, and the join
    note above the list says in words that members see more.
 
-   FILTERS ONLY WHERE REAL DATA COVERS THEM (A16.14d): kind and city,
-   both read off the records this viewer can actually see — the city
-   list can never offer a city with nothing behind it, and the kind
-   filter only exists while both kinds are present. */
-function eventsDirEntries(past) {
-  return directoryEntries(wineShows, memberEvents, past, SHOW_ANON);
-}
+   NOTHING HERE DECIDES VISIBILITY. Every entry has already passed its
+   own derivation before it reaches this function; a filter narrows
+   what a reader sees and can never widen it. */
 function renderEventsDirectory() {
-  const kind = document.getElementById('filter-events-kind').value;
-  const city = document.getElementById('filter-events-city').value;
-  const match = en => (!kind || en.kind === kind) && (!city || (en.rec.city || '') === city);
-  const up   = eventsDirEntries(false).filter(match);
-  const past = eventsDirEntries(true).filter(match);
+  const rows = eventsFacetRows().filter(r =>
+    passesFilters(r, state.events.filters) && passesSearch(r, 'events'));
+  const up   = rows.filter(r => r.when === 'Upcoming').map(r => r.entry);
+  const past = rows.filter(r => r.when === 'Past').map(r => r.entry);
   mountDirectory(document.getElementById('events-upcoming'), up, SHOW_ANON);
   mountDirectory(document.getElementById('events-past'), past, SHOW_ANON);
   document.getElementById('events-upcoming-empty').style.display = up.length ? 'none' : '';
@@ -1020,24 +1118,8 @@ function renderEventsDirectory() {
   const n = up.length + past.length;
   document.getElementById('count-events').innerHTML =
     `<strong>${n}</strong> ${n === 1 ? 'listing' : 'listings'} — upcoming and past, soonest first`;
+  renderChips('events');
 }
-function initEventsDirectory() {
-  const all = eventsDirEntries(false).concat(eventsDirEntries(true));
-  const kindSel = document.getElementById('filter-events-kind');
-  const kinds = [...new Set(all.map(en => en.kind))];
-  kindSel.innerHTML = '<option value="">Shows & member events</option>' +
-    (kinds.includes('show') ? '<option value="show">Wine Shows</option>' : '') +
-    (kinds.includes('event') ? '<option value="event">Member Events</option>' : '');
-  /* One kind on offer is no choice — the filter hides rather than
-     standing there with a single answer (no empty categories). */
-  kindSel.style.display = kinds.length > 1 ? '' : 'none';
-  const cities = [...new Set(all.map(en => en.rec.city).filter(Boolean))].sort();
-  document.getElementById('filter-events-city').innerHTML =
-    '<option value="">Every city</option>' +
-    cities.map(c => `<option value="${c}">${c}</option>`).join('');
-  renderEventsDirectory();
-}
-initEventsDirectory();
 
 // Deep link: #wineries, #distributors or #events opens that tab directly
 const guideHash = window.location.hash.replace('#','');

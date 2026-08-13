@@ -35,6 +35,20 @@ const SHOW_HERO_IMAGES = [
 /* A show without a photo still has to render. */
 const SHOW_HERO_FALLBACK = 'images/duesseldorf-tasting-wide.jpg';
 
+/* THE DEMO'S CLOCK, and it is a fixture like every record it dates.
+   MOVED HERE FROM THE DASHBOARD IN O5: a fair edition is "past" when
+   its own last fair day lies behind today (A19.3, derived and never
+   stored), and since O5 the public directory has to ask that question
+   to split Coming up from Previously. A second clock in a public
+   document would be a second answer to whether an edition is over, on
+   the surface where being over decides where a record appears.
+
+   A FIXED DATE RATHER THAN new Date(), deliberately: every fixture in
+   this file is dated against it — C7's ceiling chain, the show logs,
+   the review dates — and a demo whose "today" drifts would move the
+   fixtures' meaning every morning without anybody editing one. */
+const SHOW_TODAY = '2026-07-31';
+
 /* One record per show. `exhibitors[].products[].name` is a REFERENCE by
    name into the producer's own range (`partnerWinesPool` in the
    dashboard), never product content — A16.9, invariant 2.
@@ -1307,6 +1321,43 @@ function stakeholder(name) {
    finders, nothing gated. */
 const FAIR_TYPES = ['trade', 'consumer', 'hybrid'];
 const FAIR_TYPE_LABEL = { trade:'Trade Fair', consumer:'Consumer Fair', hybrid:'Hybrid Fair' };
+
+/* WHAT THE EXTERNAL LINK IS derives from the fair type and is stored
+   nowhere beside it (A19.5, invariant 7): a consumer fair sells
+   tickets, a trade fair accredits, a hybrid does both.
+
+   MOVED HERE FROM THE DASHBOARD IN O5, and the wording is the public
+   caption because there is only one caption. The link now has two
+   readers — the organizer cockpit, which says what is maintained, and
+   the public directory, which says what a reader gets when he follows
+   it (DIR-6) — and one fact may not be worded twice. The cockpit
+   composes its sentence around this value; it does not keep its own. */
+const FAIR_TICKETING_LABEL = {
+  trade:    'Trade Accreditation',
+  consumer: 'Consumer Tickets',
+  hybrid:   'Hybrid Tickets & Accreditation'
+};
+
+/* The external link is nullable; a SET value must be an absolute
+   http(s) URL (A19.5). Any other scheme — javascript:, data:, a bare
+   word — is refused without touching the record.
+
+   MOVED HERE IN O5 for the same reason as the caption: the write act
+   refuses an invalid value and the public renderer refuses to PRINT
+   one, and those are the same question. A record written before this
+   check existed, or reached by any route that skipped it, is caught at
+   the render end by the very same function — which is only true while
+   there is one of it. Returns true for the empty case: nothing to
+   refuse. A caller that wants "is there a link to show" asks for the
+   value AND this answer. */
+function fairTicketingUrlValid(url) {
+  if (url == null || url === '') return true;
+  if (typeof url !== 'string' || !/^https?:\/\//i.test(url)) return false;
+  try {
+    const u = new URL(url);
+    return u.protocol === 'http:' || u.protocol === 'https:';
+  } catch (e) { return false; }
+}
 
 let fairSeries = [
   /* THE ONE SERIES, AND IT IS FICTITIOUS ON PURPOSE: "Atrium Wine

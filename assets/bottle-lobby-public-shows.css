@@ -110,6 +110,97 @@
   border-top:1px dashed rgba(247,243,238,0.12);
   font-size:0.66rem; color:rgba(247,243,238,0.34); font-style:italic; line-height:1.65; }
 
+/* ══ THE FAIR CARDS (A19, A21, A16.14d, DIR-3) — fe-* and fp-* ════
+   The third and fourth card sorts, added with O5, and they sit in the
+   SAME visual system as the two above: the same .ws-grid, the same
+   cell rhythm, the same type scale, the same information order —
+   kind marker, then date and place, then the name, then the note,
+   then the sentence about who vouches for what.
+
+   THE SYSTEM IS SHARED WHERE IT CARRIES NO PROMISE, and the tokens
+   below are that boundary written down: sizes, spacings and the
+   neutral surface, defined once and used by both fair sorts. What is
+   deliberately NOT shared is the Wine Show's gold frame and serif
+   title. A fair is not a smaller Wine Show and a stand is not a
+   fair — each is its own statement, and a look is borrowed by
+   reusing a class long before anybody rewrites a sentence (ME-3's
+   lesson, two sorts on). The fair accent is its own: a cool line, so
+   the three voices — gold for the platform's own format, paper for a
+   member's occasion, this for a third party's fair — stay apart at a
+   glance.
+
+   The existing .ws-* and .me-* rules are untouched by O5: the two
+   cards they dress are proven, and restyling them to prove a shared
+   system would have changed two working surfaces to make a point
+   about a third. */
+:root {
+  --bl-card-hero-h:   132px;   /* the member-event hero's height — the system's */
+  --bl-card-pad:      1rem 1.1rem;
+  --bl-card-kicker:   0.58rem;
+  --bl-card-meta:     0.62rem;
+  --bl-card-title:    0.95rem;
+  --bl-card-body:     0.72rem;
+  --bl-card-fine:     0.66rem;
+  --bl-fair-accent:   rgba(126,163,182,0.55);
+  --bl-fair-accent-2: rgba(126,163,182,0.22);
+}
+
+/* THE IMAGE AREA'S DATA-FREE STATE (DIR-3). Hero media are their own
+   pass; a record sort the model gives no picture renders this band
+   instead of an empty frame or somebody else's photograph. It keeps
+   the shell's proportions, so a mixed grid stays a grid. */
+.bl-hero-band { display:flex; align-items:center; justify-content:center;
+  height:var(--bl-card-hero-h);
+  background:linear-gradient(140deg, rgba(126,163,182,0.10), rgba(247,243,238,0.02));
+  border-bottom:1px solid var(--bl-fair-accent-2); }
+.bl-hero-band span { font-size:0.6rem; letter-spacing:0.28em; text-transform:uppercase;
+  color:rgba(126,163,182,0.75); }
+
+.fe-cell, .fp-cell { display:block; }
+.fe-teaser, .fp-card { display:block; width:100%; text-align:left; cursor:pointer;
+  background:rgba(247,243,238,0.02); border:1px solid rgba(247,243,238,0.12);
+  border-left:2px solid var(--bl-fair-accent); padding:0; overflow:hidden;
+  font-family:'Inter',sans-serif; text-decoration:none; transition:border-color 0.2s; }
+.fe-teaser:hover, .fp-card:hover { border-color:var(--bl-fair-accent); }
+.fe-teaser-body, .fp-card-body { padding:var(--bl-card-pad); }
+.fe-teaser.past, .fp-card.past { opacity:0.55; }
+
+.fe-card-kind { display:flex; align-items:center; gap:0.45rem;
+  font-size:var(--bl-card-kicker); letter-spacing:0.16em; text-transform:uppercase;
+  color:rgba(126,163,182,0.8); margin-bottom:0.55rem; }
+.fe-kind-dot { width:6px; height:6px; border-radius:50%; background:var(--bl-fair-accent); flex:none; }
+.fe-card-date { font-size:var(--bl-card-meta); letter-spacing:0.1em; text-transform:uppercase;
+  color:rgba(247,243,238,0.38); margin-bottom:0.35rem; }
+.fe-card-title { font-size:var(--bl-card-title); font-weight:500; color:var(--paper); line-height:1.35; }
+.fe-card-note { font-size:var(--bl-card-body); color:var(--dim); margin-top:0.55rem; }
+.fp-card-at { font-size:var(--bl-card-body); color:var(--dim); margin-top:0.35rem; }
+.fp-card-reps { font-size:var(--bl-card-body); color:rgba(247,243,238,0.65); margin-top:0.45rem; }
+/* The sentence that keeps the four promises apart — the ME-3 shape,
+   for the sorts nobody released. */
+.fe-card-disclaim { font-size:var(--bl-card-fine); color:rgba(247,243,238,0.34);
+  font-style:italic; line-height:1.65; }
+.fe-teaser-foot { display:flex; align-items:flex-end; justify-content:space-between; gap:1rem;
+  margin-top:0.8rem; padding-top:0.7rem; border-top:1px dashed rgba(247,243,238,0.12); }
+.fe-teaser-more { font-size:0.6rem; letter-spacing:0.14em; text-transform:uppercase;
+  color:rgba(126,163,182,0.9); white-space:nowrap; }
+
+/* The fold-out, the .ws-listing mechanism's shape in the fair's own
+   dress — one interaction, wired once (wireExpandableCards). */
+.fe-listing { display:none; margin-top:-1px; border:1px solid rgba(247,243,238,0.12);
+  border-left:2px solid var(--bl-fair-accent); border-top:none;
+  padding:1.1rem 1.2rem; background:rgba(247,243,238,0.02); }
+.fe-listing.open { display:block; }
+.fe-listing-desc { font-size:0.78rem; color:rgba(247,243,238,0.7); line-height:1.75; margin-bottom:0.9rem; }
+.fe-listing-head { font-size:var(--bl-card-kicker); letter-spacing:0.16em; text-transform:uppercase;
+  color:rgba(247,243,238,0.45); margin:1rem 0 0.5rem; }
+/* The external ticket / accreditation link (DIR-6). It exists on the
+   card only where the record carries a valid absolute http(s) URL —
+   there is deliberately no empty state for it to occupy. */
+.fe-ticket { display:inline-block; margin-top:1rem; padding:0.5rem 1.1rem;
+  border:1px solid var(--bl-fair-accent); color:rgba(126,163,182,0.95);
+  font-size:0.62rem; letter-spacing:0.14em; text-transform:uppercase; text-decoration:none; }
+.fe-ticket:hover { background:rgba(126,163,182,0.10); }
+
 /* ══ THE CANONICAL PARTICIPATION PAGE (A21.7) — fpp-* ═════════════
    Styles for the one participation renderer in
    bottle-lobby-public-shows.js. They live beside the ws-*/me-*

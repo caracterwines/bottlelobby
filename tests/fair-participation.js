@@ -805,29 +805,43 @@ function assertGroupsPure(w2) {
   else bad('the not-available answer leaks information');
 }
 
-/* ── §10 The existing public surfaces stay untouched (the O5 line) ── */
-console.log('\n§10 no directory, no cards, no fair content on the existing surfaces');
+/* ── §10 Findability arrived in ONE place (the O5 line, crossed) ────
+   O4 asserted here that no public surface carried fair content at all.
+   O5 gives exactly one of them the directory (A16.14d), so the line
+   moves rather than disappears — and what it now protects is that it
+   moved ONCE: the Wine Shows page, which is a curated Wine Show
+   landing and not the directory, must still carry no fair content, and
+   the Guide's fair content must reach it through the shared
+   derivations rather than through a second reading of the records.
+   The Guide's own directory rules are measured in
+   tests/wine-guide-page.js (DIR-1..DIR-7). */
+console.log('\n§10 findability lives in the directory alone');
 
 {
   const SHOWS_PAGE = path.join(__dirname, '..', 'bottle-lobby-wine-shows.html');
-  const GUIDE_PAGE = path.join(__dirname, '..', 'bottle-lobby-wine-guide.html');
-  [SHOWS_PAGE, GUIDE_PAGE].forEach(f => {
-    const errs = [];
-    const dom = new JSDOM(loadDashboard(f).html, {
-      runScripts: 'dangerously', pretendToBeVisual: true,
-      url: 'https://localhost/' + path.basename(f),
-      virtualConsole: new VirtualConsole().on('jsdomError', e => errs.push(e.message))
-    });
-    if (errs.length) { bad(path.basename(f) + ' broke: ' + errs[0]); return; }
-    const text = strippedBody(dom.window).textContent;
-    if (!/Atrium Wine Days|FP-94|fair participation/i.test(text))
-      ok(path.basename(f) + ' renders no fair or participation content — findability stays O5');
-    else bad(path.basename(f) + ' grew fair content before O5');
+  const errs = [];
+  const dom = new JSDOM(loadDashboard(SHOWS_PAGE).html, {
+    runScripts: 'dangerously', pretendToBeVisual: true,
+    url: 'https://localhost/' + path.basename(SHOWS_PAGE),
+    virtualConsole: new VirtualConsole().on('jsdomError', e => errs.push(e.message))
   });
+  if (errs.length) bad(path.basename(SHOWS_PAGE) + ' broke: ' + errs[0]);
+  else {
+    const text = strippedBody(dom.window).textContent;
+    if (!/Atrium Wine Days|Uferlicht|FP-94|fair participation/i.test(text))
+      ok('the Wine Shows page renders no fair or participation content — it is a Wine Show landing, not the directory');
+    else bad('the Wine Shows page grew fair content — the directory is Wine Guide → Events alone');
+  }
+  /* The Guide reads the fair records — and reads them through the
+     shared derivations. A private recruiting record has no route onto
+     it, before or after O5 (FR-11). */
   const guideRaw = fs.readFileSync(path.join(__dirname, '..', 'bottle-lobby-wine-guide.html'), 'utf8');
-  if (!/fairParticipation|fairEdition|fairSeries/.test(guideRaw))
-    ok('the Wine Guide source references no fair record — the derived directory is untouched');
-  else bad('the Wine Guide reads fair records before O5');
+  if (/fairEditions/.test(guideRaw) && /fairParticipations/.test(guideRaw))
+    ok('the Wine Guide sources the two fair collections — the directory is its reader since O5');
+  else bad('the Wine Guide no longer reads the fair records the directory is built on');
+  if (!/fairAdmission/.test(guideRaw))
+    ok('and it names no admission record anywhere in its source (FR-11)');
+  else bad('the Wine Guide reaches a private recruiting record');
 }
 
 /* ── §11 Unchanged neighbours — the cockpits and the O3 core ──────── */

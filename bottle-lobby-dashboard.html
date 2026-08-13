@@ -5931,12 +5931,12 @@ function partnerVerificationApproved(partner) {
    below checks its acting workspace (A20.11), and the private
    recruiting records (`fairAdmissions` …) never leave this file
    (FR-11). */
-/* What the external link IS derives from the fair type and is never
-   stored beside it (A19.5, invariant 7): a consumer fair sells
-   tickets, a trade fair accredits, a hybrid does both. */
-const FAIR_TICKETING_LABEL = {
-  trade:'Accreditation link', consumer:'Ticket link', hybrid:'Tickets & accreditation link'
-};
+/* FAIR_TICKETING_LABEL and fairTicketingUrlValid() MOVED to
+   assets/bottle-lobby-data.js with O5, and for the reason every earlier
+   move had: the public directory renders the link and captions it, so
+   the caption and the validity question now have two readers — this
+   cockpit and the open web. A second copy on either side would be two
+   answers to "what is this link, and may it be shown at all". */
 const FAIR_STATUS_LABEL = { draft:'Draft', published:'Published', cancelled:'Cancelled' };
 
 /* ONE validation for BOTH acts that set fair days (A19.3): a NULL end
@@ -5949,18 +5949,6 @@ function fairDatesValid(startDate, endDate) {
     return { ok:false, why:'The last fair day cannot lie before the first — leave it empty for a one-day edition' };
   return { ok:true };
 }
-/* The external link is nullable; a SET value must be an absolute
-   http(s) URL (A19.5). Any other scheme — javascript:, data:, a bare
-   word — is refused without touching the record. */
-function fairTicketingUrlValid(url) {
-  if (url == null || url === '') return true;
-  if (typeof url !== 'string' || !/^https?:\/\//i.test(url)) return false;
-  try {
-    const u = new URL(url);
-    return u.protocol === 'http:' || u.protocol === 'https:';
-  } catch (e) { return false; }
-}
-
 /* FS-1's gate, asked by every management act: the demo's organizer
    view IS PP-9001, so "managed here" means owned by that workspace.
    A series owned by anyone else refuses the act instead of serving
@@ -5989,11 +5977,12 @@ function seriesBrandApproved(series) {
 /* The ONE findability derivation (fairEditionDiscoverable) lives in
    assets/bottle-lobby-public-shows.js since O4 (A21.8) — the file
    that answers "what may this visitor see", now for fairs too. */
-/* "Past" is derived, never stored (A19.3): the edition is over when
-   its last fair day is behind the demo's today. */
-function fairEditionPast(ed) {
-  return (ed.endDate || ed.startDate) < SHOW_TODAY;
-}
+/* fairEditionPast() MOVED to assets/bottle-lobby-public-shows.js with
+   O5, beside fairEditionDiscoverable(): the public directory splits
+   Coming up from Previously by exactly this derivation, and "past" may
+   not be answered twice. SHOW_TODAY moved to
+   assets/bottle-lobby-data.js in the same step — the demo's clock is a
+   fixture, and the public documents need it to ask the question. */
 
 /* Append-only, like logEventRow — every act one row, no rewrite. */
 function logFairEdition(ed, action, reason, fromDate, toDate) {
@@ -13192,7 +13181,13 @@ function actionShow(id) {
 }
 function actionSay(msg) { showToast('✗ ' + msg); }
 
-const SHOW_TODAY = '2026-07-31';
+/* SHOW_TODAY — the demo's clock — MOVED to
+   assets/bottle-lobby-data.js with O5. It is a fixture like every
+   record it dates, and since O5 a public document has to ask it too:
+   the directory derives a fair edition's "past" from its own days
+   against today (A19.3), and a second clock would be a second answer
+   to whether an edition is over. Every reader below keeps calling it
+   by name — the asset loads first. */
 /* `scope` answers condition 2 of C9 in the record instead of in a text
    heuristic: 'show' marks an event about the show ITSELF — a stage
    change — which every participant may read, because it changes their

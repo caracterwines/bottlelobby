@@ -31,6 +31,29 @@ function showHeroImage(show) {
   return show.heroImage || SHOW_HERO_FALLBACK;
 }
 
+/* ══ THE CARD SHELL'S IMAGE AREA — ONE LOGIC, TWO STATES (DIR-3) ══ */
+/* Every card sort in the directory leads with the same area, and the
+   area has exactly two answers: the record's picture, or — where the
+   MODEL gives the record no picture at all — a typographic band saying
+   what kind of thing this is.
+
+   THE SECOND STATE IS THE MEASURED ONE, and it is why this is one
+   function rather than three inline <img> tags. Hero media are their
+   own pass: a fair edition and a fair participation have no image
+   field and will not get one here. The two ways round that would both
+   be worse than the band — an empty grey frame reads as a picture that
+   failed to load, and borrowing SHOW_HERO_FALLBACK would put a
+   photograph of somebody else's tasting room on a stranger's fair and
+   call it theirs (A1, one step before the data even exists).
+
+   `alt` is passed through as the callers always passed it, unescaped,
+   so the two existing card sorts emit byte-identical markup; the band,
+   which is new, goes through the one escaper. */
+function cardHeroHtml(cls, image, alt, band) {
+  if (image) return '<img class="' + cls + '" src="' + image + '" alt="' + alt + '">';
+  return '<div class="' + cls + ' bl-hero-band"><span>' + notifEsc(band || '') + '</span></div>';
+}
+
 /* Which shows a visitor may see listed at all, and in what order.
    `planning` is listed because that is where recruiting happens and an
    anonymised listing names nobody (A16.6, D38): a show is here as soon
@@ -480,15 +503,19 @@ function publicShowTeaser(show, level, role) {
   const chip = role && PARTICIPATION_LABEL[role]
     ? '<span class="ws-teaser-role">' + PARTICIPATION_LABEL[role] + '</span>' : '';
 
-  return '<button type="button" class="ws-teaser' + (past ? ' past' : '') + '">' +
-    '<img class="ws-teaser-hero" src="' + showHeroImage(show) + '" alt="' + show.title + '">' +
+  /* `bl-expand` / `bl-expand-more` are the NEUTRAL hooks of the one
+     expand interaction (DIR-3) — they carry no promise and no styling
+     of their own, which is exactly why the fair card may wear them
+     while `ws-teaser` stays a Wine Show's alone (SHOW_CARD_CLASSES). */
+  return '<button type="button" class="ws-teaser bl-expand' + (past ? ' past' : '') + '">' +
+    cardHeroHtml('ws-teaser-hero', showHeroImage(show), show.title) +
     '<div class="ws-teaser-body">' +
       '<div class="ws-public-date">' + blDate(show.date) + ' · ' + show.city + chip + '</div>' +
       '<div class="ws-public-title">' + show.title + '</div>' +
       '<div class="ws-public-focus">' + show.focus + '</div>' +
       '<div class="ws-teaser-foot">' +
         '<span class="ws-teaser-note">' + note + '</span>' +
-        '<span class="ws-teaser-more">Full listing →</span>' +
+        '<span class="ws-teaser-more bl-expand-more">Full listing →</span>' +
       '</div>' +
     '</div>' +
   '</button>';
@@ -625,23 +652,41 @@ function showCellHtml(s, entity, viewer) {
     '<div class="ws-listing" id="' + id + '">' + publicShowCard(s, level) + '</div>' +
   '</div>';
 }
-/* One handler per card rather than one on the container: the cards
-   are buttons, and a delegated listener would have to re-derive
-   which one was hit. */
-function wireShowCells(host) {
-  Array.prototype.forEach.call(host.querySelectorAll('.ws-teaser'), function (btn) {
+/* THE ONE EXPAND INTERACTION, FOR EVERY CARD SORT THAT HAS ONE
+   (DIR-3). One handler per card rather than one on the container: the
+   cards are buttons, and a delegated listener would have to re-derive
+   which one was hit.
+
+   IT SELECTS ON A NEUTRAL CLASS, and that is the whole of the O5
+   generalisation. The alternative — a second toggle beside this one
+   for the fair card — is the copy DIR-3 forbids, and it is the kind
+   of copy that stays right for about a week. The alternative in the
+   other direction, renaming `.ws-teaser` into a neutral shell class,
+   was measured and rejected: SHOW_CARD_CLASSES names ws-teaser,
+   ws-public and ws-listing as the WINE SHOW GUARANTEE MARKERS, so
+   dissolving them would dissolve the contract ME-3 rests on and give
+   every other sort the show's own coat. The shell is shared exactly
+   where it carries no promise.
+
+   The closed label is read off the button rather than typed here, so
+   each sort keeps its own wording and the open state is the one thing
+   this function decides. */
+function wireExpandableCards(host) {
+  Array.prototype.forEach.call(host.querySelectorAll('.bl-expand'), function (btn) {
+    const label = btn.querySelector('.bl-expand-more');
+    const shut  = label ? label.textContent : '';
     btn.addEventListener('click', function () {
       const panel = btn.nextElementSibling;
       const open = panel.classList.toggle('open');
       btn.setAttribute('aria-expanded', open ? 'true' : 'false');
-      btn.querySelector('.ws-teaser-more').textContent = open ? 'Close ↑' : 'Full listing →';
+      if (label) label.textContent = open ? 'Close ↑' : shut;
     });
   });
 }
 function mountShowCards(host, list, entity, viewer) {
   if (!host) return 0;
   host.innerHTML = list.map(function (s) { return showCellHtml(s, entity, viewer); }).join('');
-  wireShowCells(host);
+  wireExpandableCards(host);
   return list.length;
 }
 
@@ -725,7 +770,7 @@ function memberEventCard(ev) {
     ? '<div class="me-card-paid">' + ev.priceNote + '</div>' : '';
 
   return '<div class="me-card">' +
-    '<img class="me-card-hero" src="' + (ev.heroImage || SHOW_HERO_FALLBACK) + '" alt="' + ev.title + '">' +
+    cardHeroHtml('me-card-hero', ev.heroImage || SHOW_HERO_FALLBACK, ev.title) +
     '<div class="me-card-body">' +
       /* THE MARKER. It leads, before the date and the title, because a
          reader scanning a mixed directory decides what kind of thing
@@ -757,34 +802,336 @@ function mountEventCards(host, list) {
   return list.length;
 }
 
-/* ══ THE DERIVED DIRECTORY (A16.14d, ME-1) ═══════════════════════ */
-/* Wine Guide → Events: ONE mixed, chronological list over the two
-   record kinds. It is a COMPOSITION, not a store — the entries are
-   the same records publicShows() and visibleEvents() answer with, in
-   one date order, and the cells delegate to the two existing
-   renderers. Nothing here holds a copy, invents a field or gives the
-   two kinds one card (ME-1, ME-3).
+/* ══ THE DERIVED DIRECTORY (A16.14d, DIR-1..DIR-3) ═══════════════ */
+/* Wine Guide → Events: ONE mixed, chronological list over FOUR record
+   sorts since O5 — Wine Shows, member events, published fair editions
+   and publicly released fair participations. It is a COMPOSITION, not
+   a store: every entry is the record its own derivation answers with,
+   in one date order, and every cell delegates to that sort's own
+   renderer. Nothing here holds a copy, invents a field, or gives two
+   sorts one card (ME-1, ME-3, DIR-1, DIR-3).
 
-   Upcoming sorts soonest first, past most recent first — the shape
-   both source lists already have, applied across the join so the
-   directory cannot disagree with itself between two card sorts. */
-function directoryEntries(shows, events, past, viewer) {
-  const out = publicShows(shows || [], past, viewer)
+   Upcoming sorts soonest first, past most recent first — the shape all
+   four source lists already have, applied across the join so the
+   directory cannot disagree with itself between two card sorts.
+
+   THE SOURCES ARRIVE AS ONE OBJECT rather than as four positional
+   arguments, because the next sort would make it five and the caller
+   would start passing nulls to reach the flag behind them. */
+function directoryEntries(sources, past, viewer) {
+  sources = sources || {};
+  const out = publicShows(sources.shows || [], past, viewer)
     .map(function (rec) { return { kind: 'show', rec: rec }; })
-    .concat(visibleEvents(events || [], past, viewer)
-    .map(function (rec) { return { kind: 'event', rec: rec }; }));
+    .concat(visibleEvents(sources.events || [], past, viewer)
+      .map(function (rec) { return { kind: 'event', rec: rec }; }))
+    .concat(publicFairEditions(sources.fairEditions || [], past)
+      .map(function (rec) { return { kind: 'fairEdition', rec: rec }; }))
+    .concat(publicFairParticipations(sources.fairParticipations || [], past)
+      .map(function (rec) { return { kind: 'fairParticipation', rec: rec }; }));
   return out.sort(function (a, b) {
-    return past ? blDateValue(b.rec.date) - blDateValue(a.rec.date)
-                : blDateValue(a.rec.date) - blDateValue(b.rec.date);
+    const av = blDateValue(directoryEntryDate(a)), bv = blDateValue(directoryEntryDate(b));
+    return past ? bv - av : av - bv;
   });
 }
+
+/* ONE CELL PER SORT, chosen here and composed there. A single renderer
+   over all four would be the mixed promise A16.14d spends a section
+   keeping apart: a released Wine Show, a self-published member event,
+   an organizer's fair and one exhibitor's stand are four different
+   statements about who vouches for what. */
+const DIRECTORY_CELL = {
+  show:              function (rec, viewer) { return showCellHtml(rec, null, viewer); },
+  event:             function (rec)         { return eventCellHtml(rec); },
+  fairEdition:       function (rec)         { return fairEditionCellHtml(rec); },
+  fairParticipation: function (rec)         { return fairParticipationCellHtml(rec); }
+};
 function mountDirectory(host, entries, viewer) {
   if (!host) return 0;
   host.innerHTML = entries.map(function (en) {
-    return en.kind === 'show' ? showCellHtml(en.rec, null, viewer) : eventCellHtml(en.rec);
+    const cell = DIRECTORY_CELL[en.kind];
+    return cell ? cell(en.rec, viewer) : '';
   }).join('');
-  wireShowCells(host);
+  wireExpandableCards(host);
   return entries.length;
+}
+
+/* ── FOUR RECORD SORTS, THREE EVENT FAMILIES (DIR-2) ──────────────
+   The family a reader filters by, mapped in ONE place. A fair edition
+   and a fair participation are both a Fair: a participation is a
+   concrete exhibitor presence AT a fair, not a fourth kind of event,
+   and the day it becomes a top-level option the reader is asked to
+   choose between a thing and a part of it. Its own record sort stays
+   legible on its card, which is where that distinction belongs. */
+const DIRECTORY_FAMILIES = ['Wine Show', 'Member Event', 'Fair'];
+const DIRECTORY_FAMILY_OF = {
+  show:'Wine Show', event:'Member Event',
+  fairEdition:'Fair', fairParticipation:'Fair'
+};
+function directoryEntryFamily(en) { return DIRECTORY_FAMILY_OF[en.kind] || null; }
+
+/* The edition an entry hangs on — itself for an edition, the
+   referenced one for a participation, null for the other two sorts.
+   Every fair fact below resolves through this and through nothing
+   stored on the entry (FP-3). */
+function directoryEntryEdition(en) {
+  if (en.kind === 'fairEdition')       return en.rec;
+  if (en.kind === 'fairParticipation') return fairEditionById(en.rec.editionId);
+  return null;
+}
+/* The date the whole list sorts and splits by. A show and an event
+   carry their own; a fair sorts on its first fair day, and a
+   participation sorts with the fair it is at rather than on its own
+   attendance days — a stand is not an event of its own. */
+function directoryEntryDate(en) {
+  const ed = directoryEntryEdition(en);
+  return ed ? ed.startDate : (en.rec.date || '');
+}
+function directoryEntryCity(en) {
+  const ed = directoryEntryEdition(en);
+  return (ed ? ed.city : en.rec.city) || '';
+}
+/* Only ever answered inside the Fair family — the two other sorts have
+   no fair type, and a facet built over this must not offer one to a
+   reader who is not looking at fairs (DIR-5). */
+function directoryEntryFairType(en) {
+  const ed = directoryEntryEdition(en);
+  return ed ? (FAIR_TYPE_LABEL[ed.fairType] || null) : null;
+}
+/* Display wording for the member event's host role. It is NOT a second
+   taxonomy: the platform's audience taxonomy is REACH_LEVELS and its
+   role map is REACH_ROLE_VALUE, and neither is touched or duplicated
+   here — this is four words for four values already on the record. */
+const DIRECTORY_HOST_ROLE_LABEL = {
+  winery:'Winery', distributor:'Distributor', restaurant:'Restaurant', retail:'Retail'
+};
+function directoryEntryHostRole(en) {
+  return en.kind === 'event' ? (DIRECTORY_HOST_ROLE_LABEL[en.rec.hostRole] || null) : null;
+}
+/* What a text search reads. Derived from the records at ask time, like
+   everything else here — never a stored search field. */
+function directoryEntryText(en) {
+  const ed = en.kind === 'fairParticipation' ? directoryEntryEdition(en) : null;
+  const s  = ed && fairSeriesById(ed.seriesId);
+  if (en.kind === 'fairEdition') {
+    const own = fairSeriesById(en.rec.seriesId);
+    return [own ? own.name : '', en.rec.city, en.rec.venue].join(' ');
+  }
+  if (en.kind === 'fairParticipation')
+    return [en.rec.org, s ? s.name : '', ed ? ed.city : ''].join(' ');
+  return [en.rec.title, en.rec.city, en.rec.host || en.rec.leadHost || ''].join(' ');
+}
+
+/* ══ THE TWO FAIR SORTS ON THE DIRECTORY (A19, A21, DIR-1) ═══════ */
+/* Published editions only, and only through the ONE findability
+   derivation (A19.3). A draft is on no directory, a cancelled edition
+   is no longer a published one, and neither gets a second chance from
+   a second reader here. Upcoming/past is fairEditionPast()'s answer,
+   also the one derivation. */
+function publicFairEditions(all, past) {
+  return (all || []).filter(function (ed) {
+    return fairEditionDiscoverable(ed) && fairEditionPast(ed) === !!past;
+  }).sort(function (a, b) {
+    return past ? blDateValue(b.startDate) - blDateValue(a.startDate)
+                : blDateValue(a.startDate) - blDateValue(b.startDate);
+  });
+}
+/* Participations only through the TRIPLE GATE (A21.7, FP-11), which
+   already contains the edition's findability — so a withdrawn or
+   rescinded stand, and any stand at an unpublished edition, is absent
+   without this function knowing why. No admission is read anywhere on
+   this path: applicants, open invitations, rejected and merely
+   admitted organisations have no route onto a public surface (FR-11).
+   `standId` and the represented houses are not asked here either;
+   visibility is one question and content is another. */
+function publicFairParticipations(all, past) {
+  return (all || []).filter(function (p) {
+    if (!fairParticipationPublic(p)) return false;
+    return fairEditionPast(fairEditionById(p.editionId)) === !!past;
+  }).sort(function (a, b) {
+    const ae = fairEditionById(a.editionId), be = fairEditionById(b.editionId);
+    const av = blDateValue(ae.startDate), bv = blDateValue(be.startDate);
+    return past ? bv - av : av - bv;
+  });
+}
+
+/* THE EXHIBITOR PRESENCES OF AN EDITION, DERIVED (invariant 7, DIR-7).
+   A count that is stored is a count that is wrong the moment somebody
+   withdraws, so there is none: the number on the card is the length of
+   this list, asked at render time, through the same gate the
+   participation cards pass. */
+function fairEditionExhibitors(ed) {
+  return fairParticipations.filter(function (p) {
+    return p.editionId === ed.id && fairParticipationPublic(p);
+  });
+}
+/* REPRESENTED WINERIES, and they are named that on the surface for the
+   reason FP-2 gives: a represented house is CONTENT on somebody else's
+   stand, not an exhibitor of its own. Only the houses actually
+   represented at the booth count — `representedAtBooth` is its own
+   explicit statement and is never inferred from the other one (FP-7).
+   Deduplicated across stands: a winery on two distributor tables is
+   one house at the fair. */
+function fairEditionRepresentedWineries(ed) {
+  const seen = {}, out = [];
+  fairEditionExhibitors(ed).forEach(function (p) {
+    (p.representing || []).forEach(function (r) {
+      if (r.representedAtBooth && !seen[r.winery]) { seen[r.winery] = 1; out.push(r.winery); }
+    });
+  });
+  return out;
+}
+
+/* ── THE EXTERNAL TICKET / ACCREDITATION LINK (A19.5, DIR-6) ──────
+   O5 is this field's first public reader, and the rendering rules are
+   the field's own rules read at the other end.
+
+   THE VALIDITY QUESTION IS THE WRITE ACT'S, ASKED BY THE SAME
+   FUNCTION: fairTicketingUrlValid() lives in the data asset and both
+   ends call it. A record that reached storage before the check
+   existed, or by any route that skipped it, is caught here — which is
+   only true while there is one of it.
+
+   NULL OR INVALID RENDERS NOTHING AT ALL: no button, and no reserved
+   empty area either. A frame with nothing in it is a promise the
+   record cannot keep, and on a card it reads as a link that failed
+   rather than as a fair that sells its tickets elsewhere. */
+function fairTicketingUrl(ed) {
+  const v = ed && ed.externalTicketingUrl;
+  return (v && fairTicketingUrlValid(v)) ? v : null;
+}
+function fairTicketingLinkHtml(ed) {
+  const url = fairTicketingUrl(ed);
+  if (!url) return '';
+  /* Opened in its own context, and safely: the target may be anybody's
+     ticket shop, so it gets no handle on this window and no referrer
+     (`noopener` is already the Bestand's pattern on every other
+     outbound link). The caption is the ONE derivation over the fair
+     type — Trade Accreditation · Consumer Tickets · Hybrid Tickets &
+     Accreditation — and it is stored nowhere (A19.5, invariant 7). */
+  return '<a class="fe-ticket" href="' + notifEsc(url) + '" target="_blank" rel="noopener noreferrer">' +
+    notifEsc(FAIR_TICKETING_LABEL[ed.fairType] || '') + ' ↗</a>';
+}
+
+/* ── THE FAIR EDITION CARD ────────────────────────────────────────
+   The third card sort, and it makes the third statement. A Wine Show
+   carries Bottle Lobby's review and release; a member event carries
+   none and says so (ME-3); a fair carries its VERIFIED ORGANIZER —
+   Bottle Lobby checked the workspace (A18.4) and the fair brand
+   (A19.4), and reviewed neither the edition nor what happens at it.
+   Three different sentences, three cards, one shell.
+
+   The wording lives here, once, like MEMBER_EVENT_DISCLAIMER: the
+   moment it is retyped anywhere it becomes the reassuring version. */
+const FAIR_EDITION_DISCLAIMER =
+  'A fair edition, published by the organizer who runs it. Bottle Lobby verifies the ' +
+  'organizer and the fair brand — it does not review or release the edition, and this is ' +
+  'neither a Wine Show nor a member event.';
+
+function fairEditionCellHtml(ed) {
+  const series = fairSeriesById(ed.seriesId);
+  const past   = fairEditionPast(ed);
+  const id     = 'fe-listing-' + ed.id;
+  const ex     = fairEditionExhibitors(ed);
+  const dates  = blDate(ed.startDate) + (ed.endDate ? ' – ' + blDate(ed.endDate) : '');
+  /* DERIVED, AND ONLY WHAT THE MODEL HOLDS (DIR-7). Exhibitor
+     presences are participation rows and nothing else. There is no
+     visitor, attendee, ticket or expected-reach figure anywhere on
+     this card, because no such registration exists in the model — a
+     number nobody records is a number nobody may print. */
+  const note = ex.length
+    ? ex.length + ' exhibitor presence(s) published'
+    : 'No exhibitor has published a stand here yet.';
+
+  return '<div class="fe-cell" data-edition-id="' + notifEsc(ed.id) + '">' +
+    '<button type="button" class="fe-teaser bl-expand' + (past ? ' past' : '') +
+      '" aria-expanded="false" aria-controls="' + id + '">' +
+      cardHeroHtml('fe-teaser-hero', null, '', FAIR_TYPE_LABEL[ed.fairType] || 'Fair') +
+      '<div class="fe-teaser-body">' +
+        '<div class="fe-card-kind"><span class="fe-kind-dot"></span>Fair · ' +
+          notifEsc(FAIR_TYPE_LABEL[ed.fairType] || '') + '</div>' +
+        '<div class="fe-card-date">' + dates + ' · ' + notifEsc(ed.city) + '</div>' +
+        '<div class="fe-card-title">' + notifEsc(series ? series.name : '') + '</div>' +
+        '<div class="fe-card-note">' + note + '</div>' +
+        '<div class="fe-teaser-foot">' +
+          '<span class="fe-card-disclaim">' + FAIR_EDITION_DISCLAIMER + '</span>' +
+          '<span class="fe-teaser-more bl-expand-more">Full listing →</span>' +
+        '</div>' +
+      '</div>' +
+    '</button>' +
+    '<div class="fe-listing" id="' + id + '">' + fairEditionListingHtml(ed) + '</div>' +
+  '</div>';
+}
+
+/* The listing behind the fair card — everything the edition record and
+   its participations publicly say, composed live and copied nowhere.
+   The exhibitors link at the ONE canonical Participation Page (A21.7);
+   the directory builds no detail view of its own. */
+function fairEditionListingHtml(ed) {
+  const ex   = fairEditionExhibitors(ed);
+  const reps = fairEditionRepresentedWineries(ed);
+  const kv = function (k, v) { return '<div class="ws-public-line"><b>' + k + '</b> · ' + v + '</div>'; };
+  const lines = ex.length
+    ? ex.map(function (p) {
+        const stand = p.standId ? fairStands.find(function (x) { return x.id === p.standId; }) : null;
+        return '<div class="ws-public-line">' +
+          '<a class="fpp-link" href="bottle-lobby-fair-participation.html?id=' +
+            encodeURIComponent(p.id) + '">' + notifEsc(p.org) + '</a>' +
+          (stand ? ' — Stand ' + notifEsc(stand.label) : '') +
+        '</div>';
+      }).join('')
+    : '<div class="ws-public-line">Exhibitor presences appear here as exhibitors publish their stands.</div>';
+
+  return (ed.description ? '<div class="fe-listing-desc">' + notifEsc(ed.description) + '</div>' : '') +
+    kv('Where', notifEsc(ed.venue || ed.city)) +
+    kv('Fair days', blDate(ed.startDate) + (ed.endDate ? ' – ' + blDate(ed.endDate) : ' (one day)')) +
+    kv('Type', notifEsc(FAIR_TYPE_LABEL[ed.fairType] || '')) +
+    (reps.length ? kv('Represented wineries', reps.map(notifEsc).join(' · ')) : '') +
+    '<div class="fe-listing-head">Exhibitor presences</div>' + lines +
+    fairTicketingLinkHtml(ed);
+}
+
+/* ── THE FAIR PARTICIPATION CARD ──────────────────────────────────
+   The fourth sort, and the only one whose whole content already has a
+   canonical page: this card is a way IN, not a second rendering of it.
+   So it is a link rather than an expander — there is nothing to unfold
+   that the page does not say better, and a fold-out here would be the
+   parallel detail view A21.7 rules out. */
+const FAIR_PARTICIPATION_DISCLAIMER =
+  'One exhibitor\'s own presence at a fair, published by the exhibiting house.';
+
+function fairParticipationCellHtml(p) {
+  const ed     = fairEditionById(p.editionId);
+  const series = ed && fairSeriesById(ed.seriesId);
+  const stand  = p.standId ? fairStands.find(function (x) { return x.id === p.standId; }) : null;
+  const hall   = stand ? fairHalls.find(function (h) { return h.id === stand.hallId; }) : null;
+  const past   = ed ? fairEditionPast(ed) : false;
+  const reps   = (p.representing || []).filter(function (r) { return r.representedAtBooth; });
+  const where  = stand
+    ? 'Stand ' + notifEsc(stand.label) + (hall ? ' · ' + notifEsc(hall.name) : '')
+    : 'Stand to be announced';
+
+  return '<div class="fp-cell" data-participation-id="' + notifEsc(p.id) + '">' +
+    '<a class="fp-card' + (past ? ' past' : '') + '" href="bottle-lobby-fair-participation.html?id=' +
+      encodeURIComponent(p.id) + '">' +
+      cardHeroHtml('fp-card-hero', null, '', 'Exhibitor presence') +
+      '<div class="fp-card-body">' +
+        '<div class="fe-card-kind"><span class="fe-kind-dot"></span>Fair · Exhibitor presence</div>' +
+        '<div class="fe-card-date">' +
+          (ed ? blDate(ed.startDate) + (ed.endDate ? ' – ' + blDate(ed.endDate) : '') + ' · ' + notifEsc(ed.city) : '') +
+        '</div>' +
+        '<div class="fe-card-title">' + notifEsc(p.org) + '</div>' +
+        '<div class="fp-card-at">at ' + notifEsc(series ? series.name : '') + ' · ' + where + '</div>' +
+        (reps.length
+          ? '<div class="fp-card-reps">Represented wineries · ' + reps.map(function (r) {
+              return notifEsc(r.winery); }).join(' · ') + '</div>'
+          : '') +
+        '<div class="fe-teaser-foot">' +
+          '<span class="fe-card-disclaim">' + FAIR_PARTICIPATION_DISCLAIMER + '</span>' +
+          '<span class="fe-teaser-more">Participation page →</span>' +
+        '</div>' +
+      '</div>' +
+    '</a>' +
+  '</div>';
 }
 
 /* ══ THE CANONICAL FAIR — public derivations (A19, A21) ══════════ */
@@ -816,6 +1163,19 @@ function notifEsc(v) {
    hangs off it. */
 function fairEditionDiscoverable(ed) {
   return !!ed && ed.status === 'published';
+}
+
+/* "Past" is DERIVED, never stored (A19.3): the edition is over when its
+   last fair day lies behind the demo's today. Moved here from the
+   dashboard with O5 — the directory splits Coming up from Previously by
+   exactly this question, and the organizer cockpit asks the same one.
+   A one-day edition carries `endDate` null and answers on its start.
+
+   Note what this does NOT do: it is not a visibility question. A past
+   published edition is still discoverable; it is simply listed under
+   Previously, exactly as a completed Wine Show is. */
+function fairEditionPast(ed) {
+  return (ed.endDate || ed.startDate) < SHOW_TODAY;
 }
 
 /* ── THE TRIPLE GATE, AS ONE DERIVATION (A21.7, FP-11) ────────────
