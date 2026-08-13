@@ -817,3 +817,35 @@ function notifEsc(v) {
 function fairEditionDiscoverable(ed) {
   return !!ed && ed.status === 'published';
 }
+
+/* ── THE TRIPLE GATE, AS ONE DERIVATION (A21.7, FP-11) ────────────
+   Publicly rendered means: admitted AND an explicitly created,
+   ACTIVE participation AND a published edition — all three at once.
+   Factor (a) needs no read here and MUST NOT get one: only an
+   admitted organisation can have created the row (the creation
+   entitlement, A21.1), `admitted` is final (A20.2), and the
+   admission records are private to the dashboard (FR-11) — a public
+   gate reading them would drag them onto every public page. Factor
+   (b) is the row's own status; factor (c) is the ONE findability
+   derivation above, referenced and never re-answered.
+
+   Everything public asks THIS function — the dashboard's "open your
+   page" link and the canonical Participation Page alike. A second
+   implementation would be a second answer to "may the public see
+   this stand", and the day the two disagree is the day somebody's
+   withdrawn participation is still on the open web. */
+function fairParticipationPublic(p) {
+  if (!p || p.status !== 'active') return false;
+  return fairEditionDiscoverable(fairEditionById(p.editionId));
+}
+
+/* Occupancy, DERIVED (A21.5, FP-8): the stand's occupant is the one
+   ACTIVE participation naming it — an ended participation frees its
+   stand by this filter alone, with no inventory edit anywhere. At
+   most one active row per stand is the invariant the assignment act
+   refuses on; this reader answers over whatever the data says. */
+function fairStandOccupant(standId) {
+  return fairParticipations.find(function (p) {
+    return p.standId === standId && p.status === 'active';
+  }) || null;
+}

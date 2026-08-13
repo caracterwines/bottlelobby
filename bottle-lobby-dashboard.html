@@ -6147,13 +6147,16 @@ const FAIR_ADMISSION_LABEL = {
 };
 
 let fairAdmissions = [
-  /* All four fixtures hang off the fictitious Atrium fixture (C7) and
+  /* All fixtures hang off the fictitious Atrium fixture (C7) and
      name existing trade organisations; the two ACTING demo entities —
-     Cantina Rossi and Hawesko GmbH — deliberately have no row, so the
-     live acts of a session start from a clean pair. Dates: the
-     edition published 25 Jul, everything here after that and before
-     SHOW_TODAY (31 Jul); the external agreement date is the one date
-     that MAY precede everything — the platform did not witness it. */
+     Cantina Rossi and Hawesko GmbH — deliberately have no row ON THE
+     OPEN-CALL EDITION FE-7101, so the live acts of a session start
+     from a clean pair there. (Since O4, Hawesko carries FA-9105 on
+     the SUMMER edition FE-7103 — the admitted ground under the
+     distributor participation fixture, FP-9402.) Dates: each edition
+     published before its rows, everything before SHOW_TODAY
+     (31 Jul); the external agreement date is the one date that MAY
+     precede everything — the platform did not witness it. */
   { id:'FA-9101', editionId:'FE-7101', orgType:'winery', org:'Weingut Schmitt',
     source:'application', status:'applied',
     externalSource:null, externalActor:null, externalAt:null,
@@ -6172,9 +6175,21 @@ let fairAdmissions = [
     externalSource:null, externalActor:null, externalAt:null,
     history:[ { at:'2026-07-26', actor:'Bodegas Ruiz', action:'applied', reason:null },
               { at:'2026-07-27', actor:'Atrium Fairs GmbH', action:'rejected',
-                reason:'Focus region Rheingau this run — the Rioja portfolio does not fit the hall concept.' } ] }
+                reason:'Focus region Rheingau this run — the Rioja portfolio does not fit the hall concept.' } ] },
+  /* Added with O4: the admitted ground under the distributor
+     participation fixture (FP-9402). The summer day recruits at the
+     spring edition — an agreement the platform did not witness, so
+     it enters through the audited external record (A20.1). Hawesko
+     is the ONLY distributor whose measured provenance (A21.4) spans
+     several wineries, which is why the representation fixture is
+     its. Recorded 28 Jul, after FE-7103's publication (27 Jul). */
+  { id:'FA-9105', editionId:'FE-7103', orgType:'distributor', org:'Hawesko GmbH',
+    source:'external', status:'admitted',
+    externalSource:'Signed exhibitor agreement for the summer day, Atrium office Wiesbaden',
+    externalActor:'Atrium Fairs GmbH / Hawesko GmbH', externalAt:'2026-07-20',
+    history:[ { at:'2026-07-28', actor:'Atrium Fairs GmbH', action:'recorded_external', reason:null } ] }
 ];
-let fairAdmissionSeq = 9105;
+let fairAdmissionSeq = 9106;
 
 /* `fairHalls` / `fairStands` (+ seqs, finders) live in
    assets/bottle-lobby-data.js since O4 — still edition inventory,
@@ -6404,6 +6419,243 @@ function addFairStand(hallId, label) {
   const st = { id:'FB-' + (fairStandSeq++), hallId: hallId, label: label.trim() };
   fairStands.push(st);
   return st;
+}
+
+/* ═══ FAIR PARTICIPATIONS — the acts (A21) ═════════════════════════
+   The records and finders live in assets/bottle-lobby-data.js; the
+   gate and the occupancy derivation in the shared renderer asset.
+   HERE live the acts, because here is where the acting workspace can
+   be checked (A20.11/FP-4): the exhibitor maintains content on its
+   OWN row, the organizer places stands on his OWN editions, and a
+   foreign write bounces with a message (B12). One function per act;
+   lifecycle and placement write row + history together (A21.6). */
+const FAIR_PARTICIPATION_STATUSES = ['active', 'withdrawn', 'rescinded'];
+const FAIR_PARTICIPATION_LABEL = {
+  active:'Active', withdrawn:'Withdrawn', rescinded:'Rescinded by the organizer'
+};
+function logFairParticipation(row, action, actor, reason) {
+  row.history = row.history || [];
+  row.history.push({ at: todayISO(), actor: actor, action: action, reason: reason || null });
+}
+function fairParticipationHistoryText(h) {
+  if (h.action === 'created')        return 'Participation created by the exhibitor';
+  if (h.action === 'stand_assigned') return 'Stand assigned by the organizer';
+  if (h.action === 'stand_cleared')  return 'Stand assignment cleared by the organizer';
+  if (h.action === 'withdrawn')      return 'Withdrawn by the exhibitor' + (h.reason ? ' — ' + h.reason : '');
+  if (h.action === 'rescinded')      return 'Rescinded by the organizer — ' + h.reason;
+  return h.action;
+}
+
+/* The edition's fair days, enumerated (A19.3: endDate null = one
+   day). Both the day picker and the validation read THIS list, so
+   they cannot disagree about what "within the fair days" means. */
+function fairEditionDays(ed) {
+  if (!ed || !ed.startDate) return [];
+  const out = [];
+  const end = ed.endDate || ed.startDate;
+  let cur = new Date(ed.startDate + 'T00:00:00Z');
+  const stop = new Date(end + 'T00:00:00Z');
+  while (cur <= stop && out.length < 31) {
+    out.push(cur.toISOString().slice(0, 10));
+    cur = new Date(cur.getTime() + 86400000);
+  }
+  return out;
+}
+
+/* THE MEASURED PROVENANCE (A21.4, FP-6): a distributor may represent
+   exactly the wineries an ACTIVE A6 partnership connects it to. The
+   books do not qualify — a D2D listing proves a purchase, not a
+   representation. Read-only over the one partnership table. */
+function fairRepresentableWineries(distributorName) {
+  const me = distributorName;
+  return partnershipsOf(me)
+    .map(p => partnerSide(p, me))
+    .filter(name => { const st = stakeholder(name); return st && st.type === 'winery'; });
+}
+
+/* The exhibitor-side gate, asked by every content act: the row, only
+   as the acting organisation's own, and only while it is active. */
+function fairParticipationActable(id, actingOrg) {
+  const p = fairParticipationById(id);
+  if (!p) { actionSay('That participation no longer exists'); return null; }
+  if (p.org !== actingOrg) { actionSay('An organisation maintains only its own fair participation (FP-4)'); return null; }
+  if (p.status !== 'active') { actionSay('This participation is ' + FAIR_PARTICIPATION_LABEL[p.status].toLowerCase() + ' — the resting state is the record'); return null; }
+  return p;
+}
+
+/* ── Creation (A21.1) — the entitlement is the admission, read
+   internally; the participation never arises from it by itself. ── */
+function createFairParticipation(editionId, orgType, org) {
+  const ed = fairEditionById(editionId);
+  if (!ed) { actionSay('That fair edition no longer exists'); return null; }
+  if (!fairOrgEligible(orgType)) { actionSay('Only a winery or a distributor exhibits at a fair (FR-2)'); return null; }
+  const adm = fairAdmissionFor(editionId, org);
+  if (!adm || adm.status !== 'admitted') {
+    actionSay('Only an admitted organisation creates its fair participation — the admission is the entitlement (A21.1)'); return null;
+  }
+  const ex = fairParticipationFor(editionId, org);
+  if (ex && ex.status === 'active') { actionSay(org + ' already has its participation on this edition — one canonical participation per pair (FP-1)'); return null; }
+  if (ex && ex.status === 'rescinded') { actionSay('The organizer rescinded this participation — the resting state is the record'); return null; }
+  if (ex) {   /* withdrawn leaves the door open (A21.6, D28's distinction) */
+    ex.status = 'active';
+    logFairParticipation(ex, 'created', org, null);
+    return ex;
+  }
+  const row = { id:'FP-' + (fairParticipationSeq++), editionId: editionId,
+                orgType: orgType, org: org,
+                standId:null, days:[], description:'',
+                products:    orgType === 'winery'      ? [] : null,
+                representing:orgType === 'distributor' ? [] : null,
+                status:'active', history:[] };
+  logFairParticipation(row, 'created', org, null);
+  fairParticipations.push(row);
+  return row;
+}
+
+/* ── Exhibitor content (A21.2/A21.3) ─────────────────────────────── */
+function setFairParticipationDescription(id, actingOrg, text) {
+  const p = fairParticipationActable(id, actingOrg);
+  if (!p) return false;
+  p.description = (text || '').trim();
+  return true;
+}
+/* Days must lie within the edition's fair days — checked whole
+   BEFORE the first assignment, so a refused list changes nothing. */
+function setFairParticipationDays(id, actingOrg, days) {
+  const p = fairParticipationActable(id, actingOrg);
+  if (!p) return false;
+  const valid = fairEditionDays(fairEditionById(p.editionId));
+  const list = Array.isArray(days) ? days : [];
+  const alien = list.find(dy => valid.indexOf(dy) === -1);
+  if (alien) { actionSay('Attendance days lie within the fair days — ' + alien + ' is outside this edition (FP-5)'); return false; }
+  const seen = {};
+  p.days = list.filter(dy => (seen[dy] ? false : (seen[dy] = true))).sort();
+  return true;
+}
+/* A winery presents its OWN wines — every reference must resolve to
+   the acting producer's catalogue row (A15.2a, ME-6, FP-6). */
+function setFairParticipationProducts(id, actingOrg, productIds) {
+  const p = fairParticipationActable(id, actingOrg);
+  if (!p) return false;
+  if (p.orgType !== 'winery') { actionSay('A distributor presents wines under its represented wineries — not as its own list (A21.3)'); return false; }
+  const owner = actingOrg;
+  const list = Array.isArray(productIds) ? productIds : [];
+  const alien = list.find(pid => { const wRow = wineByRef(pid); return !wRow || wRow.winery !== owner; });
+  if (alien !== undefined) { actionSay('Presented wines are productId references into your OWN catalogue — "' + alien + '" is not one of your wines (FP-6)'); return false; }
+  const seen = {};
+  p.products = list.filter(pid => (seen[pid] ? false : (seen[pid] = true)))
+                   .map(pid => ({ productId: pid }));
+  return true;
+}
+
+/* ── The representation model (A21.3/A21.4) ──────────────────────── */
+function fairRepresentationOf(p, wineryName) {
+  return (p.representing || []).find(r => r.winery === wineryName) || null;
+}
+function addFairRepresentedWinery(id, actingOrg, wineryName) {
+  const p = fairParticipationActable(id, actingOrg);
+  if (!p) return false;
+  if (p.orgType !== 'distributor') { actionSay('Only a distributor participation represents other houses (A21.3)'); return false; }
+  if (fairRepresentableWineries(actingOrg).indexOf(wineryName) === -1) {
+    actionSay('A represented winery comes from your active partnerships — ' + wineryName + ' is not one of them (A21.4)'); return false;
+  }
+  if (fairRepresentationOf(p, wineryName)) { actionSay(wineryName + ' is already represented on this stand'); return false; }
+  /* BOTH statements start unset-as-false and are set EXPLICITLY,
+     each on its own — never one from the other (FP-7). */
+  p.representing.push({ winery: wineryName,
+                        representedAtBooth:false, personallyAttending:false,
+                        products:[] });
+  return true;
+}
+function removeFairRepresentedWinery(id, actingOrg, wineryName) {
+  const p = fairParticipationActable(id, actingOrg);
+  if (!p) return false;
+  if (!fairRepresentationOf(p, wineryName)) { actionSay(wineryName + ' is not represented on this stand'); return false; }
+  p.representing = p.representing.filter(r => r.winery !== wineryName);
+  return true;
+}
+/* ONE flag per act, and only the named one moves: `representedAtBooth`
+   and `personallyAttending` are two facts, and no code path here or
+   anywhere may write one because of the other (FP-7). */
+function setFairRepresentationPresence(id, actingOrg, wineryName, field, value) {
+  const p = fairParticipationActable(id, actingOrg);
+  if (!p) return false;
+  if (field !== 'representedAtBooth' && field !== 'personallyAttending') {
+    actionSay('Presence is exactly two explicit statements — represented at booth, personally attending'); return false;
+  }
+  const rep = fairRepresentationOf(p, wineryName);
+  if (!rep) { actionSay(wineryName + ' is not represented on this stand'); return false; }
+  rep[field] = !!value;
+  return true;
+}
+/* Presented wines under a represented winery resolve to THAT
+   winery's catalogue rows — never typed, never another house's. */
+function setFairRepresentedProducts(id, actingOrg, wineryName, productIds) {
+  const p = fairParticipationActable(id, actingOrg);
+  if (!p) return false;
+  const rep = fairRepresentationOf(p, wineryName);
+  if (!rep) { actionSay(wineryName + ' is not represented on this stand'); return false; }
+  const owner = wineryName;
+  const list = Array.isArray(productIds) ? productIds : [];
+  const alien = list.find(pid => { const wRow = wineByRef(pid); return !wRow || wRow.winery !== owner; });
+  if (alien !== undefined) { actionSay('Presented wines are productId references into ' + wineryName + '’s catalogue — "' + alien + '" is not one of them (FP-6)'); return false; }
+  const seen = {};
+  rep.products = list.filter(pid => (seen[pid] ? false : (seen[pid] = true)))
+                     .map(pid => ({ productId: pid }));
+  return true;
+}
+
+/* ── Placement — the ORGANIZER's half (A21.2/A21.5) ──────────────── */
+function assignFairStand(participationId, standId) {
+  const p = fairParticipationById(participationId);
+  if (!p) { actionSay('That participation no longer exists'); return false; }
+  const ed = fairEditionById(p.editionId), s = ed && fairSeriesById(ed.seriesId);
+  if (!fairSeriesManagedHere(s)) { actionSay('Only the organizer workspace that owns this series places its exhibitors'); return false; }
+  if (p.status !== 'active') { actionSay('An ended participation holds no stand — nothing to place'); return false; }
+  if (standId == null || standId === '') {
+    if (p.standId == null) { actionSay('This participation holds no stand — nothing to clear'); return false; }
+    p.standId = null;
+    logFairParticipation(p, 'stand_cleared', platformPartners[0].name, null);
+    return true;
+  }
+  const st = fairStands.find(x => x.id === standId);
+  const hall = st && fairHalls.find(h => h.id === st.hallId);
+  if (!st || !hall || hall.editionId !== p.editionId) {
+    actionSay('A stand is assigned from THIS edition’s own inventory (A21.2)'); return false;
+  }
+  const occ = fairStandOccupant(standId);
+  if (occ && occ.id !== p.id) {
+    actionSay('Stand ' + st.label + ' already carries an active exhibitor (' + occ.org + ') — one stand, one occupancy (FP-8)'); return false;
+  }
+  p.standId = standId;
+  logFairParticipation(p, 'stand_assigned', platformPartners[0].name, null);
+  return true;
+}
+
+/* ── The two endings — two actors, two acts (A21.6) ──────────────── */
+/* The exhibitor withdraws its own participation — reason OPTIONAL
+   (A16.9/D28: leaving of one's own accord explains itself). */
+function withdrawFairParticipation(id, actingOrg, reason) {
+  const p = fairParticipationById(id);
+  if (!p) { actionSay('That participation no longer exists'); return false; }
+  if (p.org !== actingOrg) { actionSay('An organisation withdraws only its own participation'); return false; }
+  if (p.status !== 'active') { actionSay('This participation is not active — the resting state is the record'); return false; }
+  p.status = 'withdrawn';
+  logFairParticipation(p, 'withdrawn', actingOrg, (reason || '').trim() || null);
+  return true;
+}
+/* The organizer rescinds — reason MANDATORY (A19.3/`revoked`
+   precedent: retracting what somebody relies on states why). */
+function rescindFairParticipation(id, reason) {
+  const p = fairParticipationById(id);
+  if (!p) { actionSay('That participation no longer exists'); return false; }
+  const ed = fairEditionById(p.editionId), s = ed && fairSeriesById(ed.seriesId);
+  if (!fairSeriesManagedHere(s)) { actionSay('Only the organizer workspace that owns this series rescinds a participation on it'); return false; }
+  if (p.status !== 'active') { actionSay('This participation is not active — the resting state is the record'); return false; }
+  if (!reason || !reason.trim()) { showToast('✗ Rescinding a participation needs a reason — it goes on the record (FP-10)'); return false; }
+  p.status = 'rescinded';
+  logFairParticipation(p, 'rescinded', platformPartners[0].name, reason.trim());
+  return true;
 }
 
 /* ── The candidate read path (A20.7, FR-9) ─────────────────────────
@@ -18043,6 +18295,15 @@ BLStore.register({
   fairHallSeq:            [function () { return fairHallSeq; },            function (v) { fairHallSeq = v; }],
   fairStands:             [function () { return fairStands; },             function (v) { fairStands = v; }],
   fairStandSeq:           [function () { return fairStandSeq; },           function (v) { fairStandSeq = v; }],
+  /* The O4 participation records (A21) — NEW registrations, which
+     discard older snapshots by themselves. The VERSION decision of
+     this pass is measured at the VERSION constant, not predicted
+     here: the candidates are the O4 fixture rows added to the
+     EXISTING collections fairEditions, fairHalls, fairStands and
+     fairAdmissions (the D2D class). The counter travels for the
+     orderSeq reason. */
+  fairParticipations:     [function () { return fairParticipations; },     function (v) { fairParticipations = v; }],
+  fairParticipationSeq:   [function () { return fairParticipationSeq; },   function (v) { fairParticipationSeq = v; }],
 
   /* Partnerships — one row, four dashboards read it (A6). It replaced
      wineryPartners, which was registered here, plus three `const`

@@ -285,8 +285,34 @@ window.BLStore = (function () {
      `reviewSeq` back an id that already exists. The new-registration
      discard would catch it TODAY — and the Durchgang-11 sentence
      above says why that is not the protection: it vanishes the day
-     either half is reverted, split or cherry-picked alone. */
-  var VERSION   = 9;
+     either half is reverted, split or cherry-picked alone.
+
+     10 — the participation pass, O4 (13.08.2026). Fixture rows added
+     to FOUR existing collections: FE-7103 (the summer edition) to
+     `fairEditions`, FH-9202 to `fairHalls`, FB-9303/FB-9304 to
+     `fairStands`, FA-9105 to `fairAdmissions` — plus their seqs
+     moving beside them.
+
+     MEASURED against the pre-pass build (9a2873b): 39 of the 40
+     existing collections hash identically. The hall, stand and
+     admission rows are the D2D class by construction — same row
+     shapes as their neighbours, invisible to guard 2. `fairEditions`
+     DID move (5d7845b2 → 9c98d288), and for the Durchgang-12 reason
+     that is not the protection: FE-7103's combination of nullable
+     fields (endDate null beside a set ticketing URL) happens to make
+     its whole-row shape unique — had the summer day carried an end
+     date, guard 2 would have seen nothing at all. A protection that
+     rests on a coincidental field combination is not a protection.
+     The two NEW registrations (fairParticipations + seq) would also
+     discard every pre-pass snapshot today — and that is the
+     neighbouring-registration protection the Durchgang-11 note says
+     vanishes the day either half is reverted or split alone.
+
+     What a returning v9 visitor would otherwise keep: no summer
+     edition, no summer inventory, no FA-9105 — the admitted ground
+     under the distributor participation fixture — while the seqs
+     would reissue FE-7103/FH-9202/FB-9303 ids that already exist. */
+  var VERSION   = 10;
   var DEBOUNCE  = 200;   /* ms after the last event before a write */
   var HEARTBEAT = 2000;  /* ms between "does storage still match?" checks */
   var POLL      = 500;   /* ms between retries while the tab is busy */

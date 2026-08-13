@@ -1352,9 +1352,29 @@ let fairEditions = [
     externalTicketingUrl:null,
     history:[
       { at:'2026-07-28', actor:'Atrium Fairs GmbH', action:'created', reason:null }
+    ] },
+  /* The second published run, added with O4: a ONE-DAY edition
+     (endDate null, A19.3), so the participation model's day handling
+     is visible on real data — and the home of the distributor
+     participation fixture, which keeps the acting demo pair clean on
+     FE-7101 (see fairParticipations). "Run twice a year", says the
+     series — this is the other run. C7: created 26 Jul, published
+     27 Jul — after both preconditions' last words (15/20 Jul) and
+     before SHOW_TODAY (31 Jul). No open call: its exhibitors were
+     recruited at the spring edition, the external entrance's case. */
+  { id:'FE-7103', seriesId:'FS-7001', fairType:'trade',
+    startDate:'2027-06-12', endDate:null,
+    city:'Wiesbaden', venue:'Atrium Halle, Wiesbaden',
+    description:'Summer tasting day — one compact day, new releases poured for the trade.',
+    status:'published',
+    exhibitorCallOpen:false,
+    externalTicketingUrl:'https://atrium-wine-days.example/accreditation',
+    history:[
+      { at:'2026-07-26', actor:'Atrium Fairs GmbH', action:'created',   reason:null },
+      { at:'2026-07-27', actor:'Atrium Fairs GmbH', action:'published', reason:null }
     ] }
 ];
-let fairEditionSeq = 7103;
+let fairEditionSeq = 7104;
 
 function fairSeriesById(id) { return fairSeries.find(s => s.id === id) || null; }
 function fairEditionById(id) { return fairEditions.find(e => e.id === id) || null; }
@@ -1372,14 +1392,102 @@ function editionsOfSeries(seriesId) {
    is derived from it (invariant 7, fairStandOccupant in the shared
    renderer asset). */
 let fairHalls = [
-  { id:'FH-9201', editionId:'FE-7101', name:'Hall 1 — Tasting Floor' }
+  { id:'FH-9201', editionId:'FE-7101', name:'Hall 1 — Tasting Floor' },
+  /* The summer day's floor (O4): the inventory the distributor
+     participation fixture is placed on. */
+  { id:'FH-9202', editionId:'FE-7103', name:'Hall 1 — Summer Floor' }
 ];
-let fairHallSeq = 9202;
+let fairHallSeq = 9203;
 let fairStands = [
   { id:'FB-9301', hallId:'FH-9201', label:'A-01' },
-  { id:'FB-9302', hallId:'FH-9201', label:'A-02' }
+  { id:'FB-9302', hallId:'FH-9201', label:'A-02' },
+  { id:'FB-9303', hallId:'FH-9202', label:'S-01' },
+  { id:'FB-9304', hallId:'FH-9202', label:'S-02' }
 ];
-let fairStandSeq = 9303;
+let fairStandSeq = 9305;
 
 function fairHallsOfEdition(editionId) { return fairHalls.filter(h => h.editionId === editionId); }
 function fairStandsOfHall(hallId) { return fairStands.filter(st => st.hallId === hallId); }
+
+/* ══════════════════════════════════════════════════════════════════
+   FAIR PARTICIPATIONS (A21) — the exhibitor's presence at an edition
+   ------------------------------------------------------------------
+   One canonical row per (edition, exhibiting organisation), created
+   EXPLICITLY by the admitted organisation itself — never a side
+   effect of the admission (FP-1, FR-6). The row REFERENCES: the
+   edition by key, the organisation by key (names resolve through
+   stakeholder(), A21.9), wines by productId, the stand by key.
+   Nothing about the fair, the organizer or the house is copied here.
+
+   TWO ROW SORTS, ONE COLLECTION. A winery presents its OWN wines:
+   `products` is the list, `representing` is null. A distributor's
+   stand shows OTHER houses' wines: `representing` carries one entry
+   per represented winery — provenance is the active A6 partnership
+   (A21.4) — and `products` is null, because every presented wine
+   belongs under its winery. Within each entry `representedAtBooth`
+   and `personallyAttending` are TWO separate, explicitly set facts;
+   neither is ever derived from the other (FP-7).
+
+   `standId` is organizer-managed placement (A21.2); occupancy is
+   DERIVED from active rows (fairStandOccupant in the renderer
+   asset), never stored on the inventory. `status` + embedded
+   append-only `history` follow the fairAdmissions shape (A20.3):
+   active · withdrawn (the exhibitor's act) · rescinded (the
+   organizer's act) — two actors, two resting states, no deletion.
+
+   FIXTURE DATES (C7): every participation postdates its admission,
+   every stand assignment postdates the creation, and everything
+   sits before SHOW_TODAY (31 Jul). The acting demo pair — Cantina
+   Rossi and Hawesko GmbH — stays clean on FE-7101, so the live
+   session can walk apply → admit → create by hand there. */
+let fairParticipations = [
+  /* The winery fixture: Domaine Lefèvre, externally admitted to the
+     spring run (FA-9103, 26 Jul), created its participation the day
+     after; the organizer placed it on stand A-01 on the 28th. Its
+     wines are ITS OWN catalogue rows — Burgundy keys, nothing typed. */
+  { id:'FP-9401', editionId:'FE-7101', orgType:'winery', org:'Domaine Lefèvre',
+    standId:'FB-9301',
+    days:['2027-02-08', '2027-02-09'],
+    description:'Burgundy table — the new Mâcon-Villages poured beside the Chablis Premier Cru, the Aligoté open all day.',
+    products:[ { productId:'PRD-1013' }, { productId:'PRD-1021' }, { productId:'PRD-1012' } ],
+    representing:null,
+    status:'active',
+    history:[
+      { at:'2026-07-27', actor:'Domaine Lefèvre',  action:'created',        reason:null },
+      { at:'2026-07-28', actor:'Atrium Fairs GmbH', action:'stand_assigned', reason:null }
+    ] },
+  /* The distributor fixture: Hawesko on the one-day summer edition
+     (FA-9105) — the representation model at work. Two represented
+     wineries from the measured provenance (both active A6 partners),
+     and the SEPARATION is in the data: Weingut Schmitt is represented
+     at the booth WITHOUT personally attending — Hawesko pours the
+     Mosel wines, nobody from the estate travels — while Cantina Rossi
+     is represented AND at the stand in person. Neither flag was
+     derived from the other; that is the point (FP-7). */
+  { id:'FP-9402', editionId:'FE-7103', orgType:'distributor', org:'Hawesko GmbH',
+    standId:'FB-9303',
+    days:['2027-06-12'],
+    description:'The Hanseatic portfolio table — German riesling and Sicilian reds, poured through the one summer day.',
+    products:null,
+    representing:[
+      { winery:'Cantina Rossi',   representedAtBooth:true, personallyAttending:true,
+        products:[ { productId:'PRD-1002' }, { productId:'PRD-1022' } ] },
+      { winery:'Weingut Schmitt', representedAtBooth:true, personallyAttending:false,
+        products:[ { productId:'PRD-1024' }, { productId:'PRD-1018' } ] }
+    ],
+    status:'active',
+    history:[
+      { at:'2026-07-29', actor:'Hawesko GmbH',      action:'created',        reason:null },
+      { at:'2026-07-30', actor:'Atrium Fairs GmbH', action:'stand_assigned', reason:null }
+    ] }
+];
+let fairParticipationSeq = 9403;
+
+function fairParticipationById(id) { return fairParticipations.find(p => p.id === id) || null; }
+/* FP-1's structural half: THE row per (edition, organisation). */
+function fairParticipationFor(editionId, org) {
+  return fairParticipations.find(p => p.editionId === editionId && p.org === org) || null;
+}
+function fairParticipationsOfEdition(editionId) {
+  return fairParticipations.filter(p => p.editionId === editionId);
+}
