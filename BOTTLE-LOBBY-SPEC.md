@@ -1910,12 +1910,14 @@ flag, a price note, an external booking or contact link, and the host
 information — and nothing else. **No consumer ticketing, no consumer accounts,
 no checkout** without a separate decision (ME-7).
 
-**External fairs — the canonical core is now A19; the rest of this block is
-still a later model.** ProWein, Vinitaly and the rest exist in this repo today
-only as marketing prose and as *award* strings. The series/edition core and
-its organizer management are **built (A19, pass O2)**; everything else below —
-participations, booth appointments, their visibility — is still unbuilt and
-stays written down so that no stand-in gets modelled in the meantime:
+**External fairs — the canonical core is A19, the participation is A21; what
+remains here is the appointment model.** ProWein, Vinitaly and the rest exist
+in this repo today only as marketing prose and as *award* strings. The
+series/edition core and its organizer management are **built (A19, pass
+O2)**, recruiting and admission are **built (A20, pass O3)**, and the
+participation row with its canonical public page is **built (A21, pass
+O4)**; the booth appointments below are still unbuilt and stay written down
+so that no stand-in gets modelled in the meantime:
 
 - One **canonical record per fair** — since A19 that is a **Fair Series with
   its Fair Editions**, its own record pair, never an `events` row (the
@@ -1928,7 +1930,9 @@ stays written down so that no stand-in gets modelled in the meantime:
 - A separate **participation row per exhibiting member**: hall, booth, the fair
   days the member attends, a description, and the presented wines as
   `productId` references (ME-6). Nothing about the fair itself is repeated on
-  the participation row.
+  the participation row. **This row is the canonical model of A21** — the
+  sketch here is superseded by that chapter, which also decides who creates
+  it, the distributor's representation model and the public triple gate.
 - **Optional meeting slots and invitations** hang off the participation. A
   **booked booth appointment does not make the booking house a fair
   participant** — exhibiting and holding an appointment are two different
@@ -1939,16 +1943,20 @@ stays written down so that no stand-in gets modelled in the meantime:
   appointment as **provenance** only, exactly as A16.12 lets an order carry a
   show id.
 - **Visibility:** public are the participation, the booth, the days, the
-  presented wines and the fact that meetings can be requested. Concrete slots
-  and the booking act are for entitled members. What was discussed, who the
-  counterpart was and the full calendar belong to the two sides of each
-  appointment and to nobody else.
-- Explicitly out of scope HERE — narrowed by O2 (**D45**) and again by O3:
-  managing a fair series, its edition basics and its edition lifecycle is
-  **in** scope and lives in **A19**; exhibitor recruiting, admission and
-  the hall/stand inventory are **in** scope and live in **A20**; still out
-  are participations, appointments, agenda, ticket checkout and every
-  further fair feature — each in its own later pass. The
+  presented wines and the fact that meetings can be requested — **since O4
+  the first four render behind A21.7's triple gate on the canonical
+  Participation Page**; "meetings can be requested" arrives with O7.
+  Concrete slots and the booking act are for entitled members. What was
+  discussed, who the counterpart was and the full calendar belong to the two
+  sides of each appointment and to nobody else.
+- Explicitly out of scope HERE — narrowed by O2 (**D45**), by O3 and again
+  by O4: managing a fair series, its edition basics and its edition
+  lifecycle is **in** scope and lives in **A19**; exhibitor recruiting,
+  admission and the hall/stand inventory are **in** scope and live in
+  **A20**; the participation, its content, its placement and its public
+  page are **in** scope and live in **A21**; still out are appointments,
+  agenda, ticket checkout and every further fair feature — each in its own
+  later pass. The
   existing Vinitaly award strings stay what they are — recognition (A5), not
   participation — and nothing is migrated into fair records.
 - **A ProWein participation is never modelled as a member event of a winery** —
@@ -4511,8 +4519,10 @@ record, dates and history untouched.
 
 **In pass O2 there is no public surface.** The findability rule exists as
 this rule, as **ONE derivation** read by the organizer surface and the
-harness, and as nothing else. The public directory and its cards arrive
-with O5, which also renders the external ticketing links.
+harness, and as nothing else. **Since O4 the derivation lives in the shared
+public asset and has its first public reader: the canonical Participation
+Page reads it as gate factor (c) (A21.7/A21.8).** The public directory and
+its cards arrive with O5, which also renders the external ticketing links.
 
 ### A19.4 Two publication preconditions — both the register's last word
 
@@ -4571,8 +4581,8 @@ Deliberately **not** here yet, each with its reason: a `year` column
 as series name + year — storing one would copy the series name, invariant
 1) · halls, stands, floor space (built in O3 — **A20.9**, as their own
 edition-owned records, never fields here) · exhibitor and participant
-counts (derived from O4's participation rows once they exist) ·
-appointment slots (O7) · agenda (O12) · hero media (its own pass) · any
+counts (derived live from A21's participation rows since O4 — never
+stored) · appointment slots (O7) · agenda (O12) · hero media (its own pass) · any
 ticket price or checkout field (excluded by decision — the external link
 is the maximum). Since O3 the edition additionally carries
 `exhibitor_call_open` (A20.5).
@@ -4606,10 +4616,13 @@ is the maximum). Since O3 the edition additionally carries
   in the edition basics; no checkout, and no public rendering before O5.
 
 **Prototype blueprint:** `fairSeries` and `fairEditions` arrays (+ their id
-counters) in `bottle-lobby-dashboard.html`, beside `platformPartners` — O5
-moves them into `assets/bottle-lobby-data.js` when public pages first read
-them (a move, never a copy). `fairEditionDiscoverable()` is the ONE
-findability derivation; `seriesBrandApproved()` reads the register's last
+counters) live in `assets/bottle-lobby-data.js` since O4 — the move this
+blueprint had announced for O5 happened when the FIRST public reader
+arrived, which O4's Participation Page turned out to be (a sequence
+correction, executed as a move, never a copy — A21.8); O5 builds the
+directory on the already-moved source. `fairEditionDiscoverable()` is the
+ONE findability derivation, in `assets/bottle-lobby-public-shows.js` since
+the same move; `seriesBrandApproved()` reads the register's last
 word like `partnerVerificationApproved()` does. The organizer surface is
 **My Fairs** — the activated first entry of the former locked target
 navigation — with the series list, edition drafts, the reason-bound
@@ -4770,8 +4783,9 @@ real, authenticated entry: **one bounded fair-recruiting block on the
 existing Events → Wine Shows sub-page, for Winery and Distributor only** —
 open exhibitor calls of published editions, the organisation's own
 invitations (A20.8), and its own workflow rows with their state. No new
-nav item, no public fair directory, no Wine Guide card, no participation
-page (O5/O4 untouched). Restaurant and Retail get nothing — they are not
+nav item, no public fair directory, no Wine Guide card. **Since O4 the
+same block is also where an admitted organisation creates and maintains
+its participation (A21)** — still no new nav entry. Restaurant and Retail get nothing — they are not
 eligible, and an entry point that only ever refuses would be noise. **The
 block never borrows the Wine Show's dress:** a canonical fair is
 organizer-run and carries no Bottle Lobby release (A16.1's guarantee is
@@ -4844,14 +4858,16 @@ That is the measured minimum, and each absence is a decision: **a stand
 reaches its edition through its hall** — an `edition_id` on the stand row
 would be a copy (invariant 1). **No occupant or booking field on either
 row, ever:** the exhibitor↔stand connection is structurally the O4
-participation row — hall, booth and days live there (A16.8) — so occupancy
-is **derived from participation rows from O4 on** (invariant 7), and O3
-stores no exhibitor-stand assignment anywhere. No graphical floor plan. No
-copied fair, organizer or member data on hall or stand rows. Exhibitor and
-participant counts stay derived for O4 and are not stored as O3 helper
-values. Editing or removing inventory is not modelled in this pass:
-whether a stand may vanish is exactly the question O4's occupancy makes
-real, and answering it early would prejudge that pass.
+participation row — hall, booth and days live there (A16.8, now canonical
+in **A21**) — so occupancy is **derived from participation rows from O4
+on** (invariant 7), and O3 stores no exhibitor-stand assignment anywhere.
+No graphical floor plan. No copied fair, organizer or member data on hall
+or stand rows. Exhibitor and participant counts stay derived for O4 and
+are not stored as O3 helper values. Editing or removing inventory was
+deliberately not modelled in this pass, because whether a stand may
+vanish is exactly the question O4's occupancy makes real — **decided
+there: A21.5** (stable ids, editable names, no removal of an occupied
+stand or a non-empty hall, refused changes atomic).
 
 ### A20.10 What none of this creates
 
@@ -4859,7 +4875,7 @@ An invitation, an application, a visibility or an admission **creates no
 Fair Participation, no partnership, no order, no member event and no
 listing** (the WS-5 spirit). The admission is the entitlement for O4 — the
 participation row is created there, by the admitted organisation, never as
-a side effect here.
+a side effect here (built: **A21.1**).
 
 **No waitlist — neither stored nor decided.** The Bestand holds
 `waitlisted` exclusively as a *computed display state* at member events
@@ -4966,9 +4982,11 @@ admission row (the history row is the record, A20.3).
 **Prototype blueprint:** `fairAdmissions` (+ `fairAdmissionSeq`) with the
 append-only `history` embedded per row (the `fairEditions.history`
 pattern), `fairHalls` / `fairStands` (+ seqs), `exhibitorCallOpen` on the
-edition row — all in `bottle-lobby-dashboard.html` beside `fairEditions`;
-O5 moves what its public surfaces first read into
-`assets/bottle-lobby-data.js` (a move, never a copy). One act function per
+edition row. Since O4's data move (A21.8), `fairHalls` / `fairStands`
+live in `assets/bottle-lobby-data.js` beside the editions — still
+occupancy-free — while **`fairAdmissions` and every private recruiting
+record stay in `bottle-lobby-dashboard.html` for good**: no public asset
+reads an admission, and no public surface ever will (FR-11). One act function per
 act, each writing row + history together and gated by
 `fairSeriesManagedHere()` on the organizer side and the acting trade
 entity on the trade side. `FAIR_RECRUITING_READ_FIELDS` is the deep-frozen
@@ -4985,6 +5003,399 @@ as A18 and A19 each got their own home. FR-1..FR-12 with effective
 counter-mutations, plus unchanged samples of the four trade dashboards and
 the O2 lifecycle; `tests/fairs.js` §9's locked-navigation count follows
 the two activated rows.
+
+---
+
+## A21. Fair Participation, the Participation Page, Stand Occupancy & Exhibitor Content
+
+> Serge's decision of 13 Aug 2026 — fair-track anchor **O4**. The canonical
+> participation record A16.8 sketched and A20 entitled: created by the
+> admitted organisation itself, filled by the exhibitor, placed by the
+> organizer, and rendered publicly on ONE canonical, directly addressable
+> Participation Page behind a triple gate. Because O4 builds that page, O4
+> — not O5 — is the first public reader of the fair data, and the data
+> move A19.7/A20.13 announced for O5 happens here: a **sequence
+> correction, not a new business decision**. The public directory, its
+> cards, filters and ticket-link rendering stay O5; appointments stay O7;
+> the agenda stays O12 — A16.8's external-fair block keeps guarding them.
+
+### A21.1 The participation record — explicit creation, one per pair
+
+`admitted` (A20) is **exclusively the entitlement**. The admitted Winery
+or Distributor **creates its Fair Participation itself, explicitly** — a
+participation never arises automatically from an admission (FR-6 said it
+creates nothing; this is the other half: somebody has to act).
+
+- **Exactly ONE canonical participation per (fair edition, exhibiting
+  organisation)** — the FR-1 shape one record over. Only Winery and
+  Distributor trade workspaces can own one (FR-2 mirrored); Restaurant,
+  Retail and partner workspaces never become exhibitors through any act
+  here.
+- The participation **references** its edition by key. It copies no fair,
+  organizer, series or edition data (invariant 1) — and no stakeholder
+  identity either: it stores the **organisation key only**, never a name,
+  role or slug (A21.9).
+- The creation act checks the admission **by reading the internal
+  admission record** — `admitted` is final (A20.2), so the entitlement
+  cannot lapse and needs **no public admission register, no copied
+  admission status and no public helper field** to stand on.
+
+### A21.2 Responsibilities, separated in the data core
+
+The A20.11 discipline continues — write paths check the acting workspace
+in the data layer, and a foreign act is refused **with a message** (B12),
+never silently and never merely unrendered:
+
+- **The ORGANIZER manages the hall/stand placement** on the
+  participation — only for his own editions (FS-1), only onto inventory
+  rows that belong to that edition. He manages **no exhibitor content**:
+  no description, no days, no wines, no represented wineries.
+- **The EXHIBITOR manages description, attendance days and presented
+  content** — only on its own participation. It never touches inventory,
+  placement, or anybody else's record.
+- **Attendance days lie within the edition's fair days** — for a one-day
+  edition (`end_date` NULL, A19.3) the only valid day is the start date.
+  An out-of-span day is refused whole.
+- No surface writes in another workspace's name via a parameter — the
+  trade surface pins the acting entity to the cockpit's own, and the data
+  layer compares it against the record.
+
+### A21.3 Exhibitor content — the winery, and the representation model
+
+**A winery participation:** the winery itself is the exhibitor. Presented
+wines are **`productId` references into its OWN catalogue** (A15.2a,
+ME-6, invariant 2) — a reference that resolves to another house's wine,
+or a typed name, is refused. Nothing about the wine, the profile or the
+fair is copied onto the row.
+
+**A distributor participation — the representation model, whole:**
+
+- The distributor stays **exactly ONE exhibitor** with **exactly ONE
+  participation** (the A20.1 sentence carried forward). Which wineries
+  and wines its stand shows is **content of that one participation**,
+  never a second participation and never a second admission.
+- Within it the distributor may represent **several admitted-provenance
+  wineries** — one `representing` entry per winery, each carrying that
+  winery's presented wines as `productId` references into **that
+  winery's** catalogue.
+- For **every** represented winery, **`represented at booth`** and
+  **`personally attending`** are **two separate, explicitly set
+  statements. Neither is ever derived from the other** (the A20.2
+  principle: never one statement inferred from another): a winery can be
+  represented at the stand without anybody from the house being there —
+  the everyday case of a distributor pouring an estate's wines — and a
+  visit does not make a representation. Two inputs, two facts, two
+  checks.
+- A represented winery gains **no participation of its own, no
+  sub-account in the distributor workspace and no management right** on
+  the distributor's participation. The distributor remains sole owner and
+  manager; the later O7 appointment flow addresses the exhibiting
+  distributor exclusively — O4 builds no appointment mechanics.
+
+### A21.4 Where a represented winery may come from — measured
+
+The Bestand carries two candidate sources: **active partnerships**
+(distributor ↔ winery, staff-activated, A6) and the product-key-bearing
+books (`listings`, the distributor portfolio state). Measured and
+decided: **the active A6 partnership is the ONE source.** A distributor
+may list a winery as represented if and only if an active partnership row
+connects the two and the partner is a winery. The books do **not**
+qualify: a D2D-sourced listing (A3) proves the distributor bought a wine
+from another distributor, not that it represents the producing house —
+and an own-label listing would smuggle in a producer whose name the own
+label exists to keep out of the trade (A17). **No free winery or wine
+name entry, no new partnership logic, no new relation register** — the
+partnership row is read, never written, by anything here.
+
+### A21.5 Stand occupancy and inventory care — A20.9's open question, answered
+
+The exhibitor↔stand connection lives **exclusively on the
+participation** (`stand_id`, nullable) — this is the row A20.9 promised.
+`fair_halls` and `fair_stands` stay occupancy-free: **no occupant field,
+no booking field, no counters, ever.**
+
+- **Occupancy and exhibitor counts are derived live** from active
+  participations (invariant 7). A stand carries **at most one active
+  occupancy**; assigning an occupied stand is refused with a message at
+  the act — never hidden at render time.
+- **Inventory care** (deliberately left open in A20.9, decided here
+  against O4's now-real occupancy): ids are stable for good; hall and
+  stand **names/labels may be edited** (a rename never changes the id);
+  an **occupied stand is not removable**; a hall is removable only when
+  it carries **neither stands nor participation references**; every
+  refused change is atomic — no half state, and the stand-label
+  uniqueness rule of A20 holds through renames too.
+
+### A21.6 Lifecycle — the smallest coherent model, measured
+
+Measured against A19.3's history, A20.2's act table and D26/D29, the
+participation keeps the model shape: **one `status` field, one embedded
+append-only `history`, one act function per act writing both together.**
+States: `active · withdrawn · rescinded`.
+
+| Act (history row) | Actor | Resulting state | Reason |
+|---|---|---|---|
+| `created` | the admitted organisation | `active` | none — a positive act |
+| `stand_assigned` / `stand_cleared` | the organizer | (unchanged) | none — placement is his job |
+| `withdrawn` | the exhibitor | `withdrawn` | **optional** (A16.9/D28: leaving of one's own accord explains itself) |
+| `rescinded` | the organizer | `rescinded` | **mandatory** (A19.3/`revoked` precedent: retracting what somebody relies on states why) |
+
+Withdrawal and rescission are **two actors and two acts — never a
+collective "ended" state** (the A20.2 principle). Content edits
+(description, days, wines, representation) are ordinary maintenance of an
+active record and write no history row — the A19.3 basics discipline.
+
+- **No deletion** of a record that has been used outwardly (D29): both
+  ended states rest with their history readable.
+- `withdrawn` leaves the door open (D28's distinction): the organisation
+  may create again — the SAME row continues with a fresh `created` act.
+  `rescinded` has answered — no further act in this pass.
+- **An ended participation occupies no stand and renders no active
+  public presence** — both derived from the status (the gate falls with
+  it), never by editing inventory, edition or content.
+- **No participation act touches the admission record** — `admitted`
+  stays final (A20.2), and no parallel admission workflow exists.
+
+### A21.7 The canonical Participation Page and the triple gate
+
+O4 builds **the canonical, directly addressable public Participation
+Page** — the link target O5's directory and O11's communications will
+point at. Measured against the Bestand and decided: participations are
+**live-created records**, so a per-record static file (the slug-page
+pattern) cannot address them; the one dynamic precedent is the query
+parameter (B7's `?grape=`, the profiles' `?preview=embed`). The page is
+therefore **ONE file, `bottle-lobby-fair-participation.html`, addressing
+its record by `?id=`** — standing in for the real build's
+`/fair-participation/{id}` route. The internal editing view in the
+dashboard is NOT the public page.
+
+**The triple gate — one derived check, no parallel workflow, no fourth
+status field.** The page renders publicly only when ALL THREE hold at
+once:
+
+- **(a) accepted** — the existing final A20 state `admitted`, secured
+  structurally by the creation entitlement (A21.1): only an admitted
+  organisation can have created the row, and `admitted` is final.
+- **(b) confirmed** — an **explicitly created, ACTIVE** participation
+  (never auto-created from the admission).
+- **(c) published** — the edition carries the published state; the gate
+  reads the existing derivation `fairEditionDiscoverable()` (A19.3),
+  never a second one.
+
+`admitted` alone, a not-yet-created participation, an ended
+participation or an unpublished edition each yield **no public
+participation content** — one neutral not-available answer that reveals
+nothing about which factor failed. The gate exists as **exactly ONE
+executable implementation in the shared logic asset** (A21.8), loaded by
+the dashboard and the public page alike.
+
+The page **composes, never copies**: exhibitor identity from the
+canonical stakeholder record (A21.9), edition and series facts from their
+records, days, hall and stand labels resolved live from inventory,
+description from the participation, represented wineries with their **two
+separate presence statements rendered as two statements**, and presented
+wines **grouped by winery** for a distributor. Winery, distributor and
+product references render as **real links** to the existing canonical
+slug profiles and wine article pages — exactly where the target exists in
+the Bestand (`stakeholders.url`, the product row's `url`); where none
+exists, the name renders without a link — **no invented target** (the
+A12/data.js rule). Applicants, open invitations, rejected and
+merely-admitted organisations appear **nowhere** on it (FR-11 carried
+forward).
+
+**The O5 boundary:** O4 builds the target page, NOT findability. No
+public fair directory, no Wine Guide cards, no unified event cards, no
+filters, no ticket-link rendering. The existing public surfaces and the
+Wine Guide stay content-identical; only the new canonical page renders
+behind the fulfilled gate.
+
+### A21.8 One canonical source instead of object identity — the data move
+
+Two HTML documents are two JS runtimes; a cross-page `===` can never be
+true and is **not the invariant**. What holds instead: **one canonical
+fixture/record definition per collection, one canonical storage path,
+the same stable ids — and no separately maintained second copy
+anywhere.** Each page context hydrates its own bindings from that same
+canonical source or from the same valid stored snapshot; **within** one
+document, finders, gate and renderers work on the objects hydrated there
+(where `===` is expected and right).
+
+- **The move (the O5 announcement, executed in O4):** `fairSeries`,
+  `fairEditions`, `fairHalls`, `fairStands` (occupancy-free as ever),
+  the new `fairParticipations`, their id counters and the fair-type
+  vocabulary move into `assets/bottle-lobby-data.js` — a move, never a
+  copy; the old dashboard-local definitions are removed.
+  `fairEditionDiscoverable()` and the participation gate live **once**
+  in `assets/bottle-lobby-public-shows.js` — measured: that file already
+  IS the one-answer-per-visitor-question pattern ("the one renderer …
+  the public page will render the very same function"), and a second
+  visibility asset would split exactly that principle. Data stays in the
+  data file, derivations beside their sister derivations — one canonical
+  source means one data definition PLUS one implementation per
+  derivation, never both forced into one file.
+- **Saved dashboard changes MUST reach the public page.** The fixtures
+  in the asset are only the starting state; dashboard edits live in the
+  BLStore snapshot (C8). The store therefore gains **one narrow
+  read-only public hydration entry** — measured against the store:
+  `start()` unconditionally wires autosave (event listeners plus a
+  heartbeat calling `save()`), and `restore()`'s strict path **discards
+  — deletes — a snapshot** whose names exceed the registrations, so a
+  public page must call **neither**. The new entry validates the
+  snapshot by the SAME version and fingerprint rules (one parser, two
+  entries — never a second interpretation), applies only the page's
+  registered collections, and **never writes**: no `save()`, no
+  discard, no reset, no listener, no heartbeat. After it runs, the
+  store's write path is dead for that page.
+- **A FIXED allowlist** names the only collections the public entry may
+  hydrate: the five moved fair collections. Registering anything else
+  against the public entry is refused whole. **`fairAdmissions`,
+  applications, invitations, shortlists and recruiting audits are not in
+  it, are not in the asset, and never reach a public page** — the O3
+  assurance holds for admissions word for word (A20.13, FR-11); only
+  halls and stands travel, still occupancy-free.
+- **No valid snapshot → the fixtures render**; an invalid or outdated
+  snapshot is ignored under the same validity rules the dashboard
+  applies — the public page merely never deletes it (deleting is a
+  write, and the dashboard remains the only writer).
+- A page already open in parallel is refreshed only by ordinary
+  navigation or reload; a new cross-tab mechanism is explicitly not part
+  of O4.
+
+### A21.9 Public stakeholder identity without a name copy
+
+The participation page shows real winery, distributor and product links.
+Product identity and URLs already live in the shared asset; stakeholder
+master data lived only in the dashboard — measured: the `stakeholders`
+table **already is the minimal public identity record** (name, role,
+avatar, display region, city, canonical profile `url` — every field
+renders on public surfaces today), and `stakeholder()` is its one
+resolver. **Table and resolver move to the shared data asset as they
+are**; splitting out a second, narrower list would create exactly the
+second stakeholder collection this rule forbids. The participation
+stores **only the organisation key**; the page resolves names and
+profile targets from the canonical record at read time. No copied public
+name list, no invented slugs, no private workspace data beyond these
+identity fields.
+
+### A21.10 Tables
+
+    fair_participations ( id, edition_id FK → fair_editions,
+                          org_type enum('winery','distributor'),
+                          org_id,                    -- the exhibiting organisation
+                          stand_id FK → fair_stands, -- nullable; organizer-managed
+                          days,                      -- within the edition span
+                          description,
+                          status enum('active','withdrawn','rescinded'),
+                          -- winery rows: presented wines, own catalogue only
+                          products    ( product_id FK ),
+                          -- distributor rows: the representation model
+                          representing( winery_id,   -- active A6 partnership only
+                                        represented_at_booth  bool,  -- explicit
+                                        personally_attending  bool,  -- explicit, separate
+                                        products ( product_id FK ) ) )
+    fair_participation_history ( participation_id FK, at, actor,
+                          action enum('created','stand_assigned','stand_cleared',
+                                      'withdrawn','rescinded'),
+                          reason )  -- mandatory for rescinded; append-only
+
+Deliberately **not** here, each with its reason: copied fair, series,
+organizer or stakeholder data (invariant 1, A21.9) · an occupant field on
+halls or stands (A20.9/A21.5) · stored occupancy or exhibitor counts
+(invariant 7) · a public admission register or copied admission status
+(A21.1) · appointment slots (O7) · a reason column beside the history
+(A20.3) · a fourth publicness status field (the gate is derived, A21.7).
+
+### A21.11 Invariants
+
+- **FP-1 — explicit creation, one per pair.** A participation is created
+  only by the admitted organisation itself, never automatically; exactly
+  one canonical participation per (edition, organisation); only winery
+  and distributor workspaces own one.
+- **FP-2 — a represented winery is content, not an exhibitor.** It gains
+  no participation, no sub-account and no management right; the
+  distributor stays the one owner and the one future appointment
+  addressee.
+- **FP-3 — the participation references, never copies.** Edition by key,
+  organisation by key, wines by `productId`; no fair, organizer, series,
+  edition or identity data on the row.
+- **FP-4 — responsibilities stay separated.** Organizer: placement on
+  own editions onto own-edition inventory; exhibitor: description, days,
+  content on the own record; every foreign write refused with a message
+  in the data layer.
+- **FP-5 — days lie within the fair days**, one-day editions included; an
+  out-of-span day is refused whole.
+- **FP-6 — presented wines resolve to the presenting winery's own
+  catalogue; represented wineries come from the active A6 partnership**
+  and from nothing else — no free names, no book-derived representation,
+  no new relation register.
+- **FP-7 — `represented at booth` and `personally attending` are two
+  explicit statements; neither ever derives from the other**, in either
+  direction.
+- **FP-8 — occupancy is derived and exclusive.** No occupant/booking
+  field or stored counter anywhere; at most one active participation per
+  stand, the conflict refused at the act.
+- **FP-9 — inventory care is safe.** Stable ids; renames allowed; an
+  occupied stand is not removable; a hall only when it carries neither
+  stands nor references; refused changes are atomic.
+- **FP-10 — one status, one append-only history, one writer per act.**
+  Withdrawal (exhibitor) and rescission (organizer) stay two resting
+  acts with their measured reasons; nothing is deleted; an ended
+  participation frees its stand and its public presence by derivation;
+  no act touches the admission record.
+- **FP-11 — the triple gate is one shared derivation.** Public rendering
+  requires admitted (secured by the creation entitlement) AND an active
+  participation AND a published edition; below it, one neutral answer;
+  applicants, invitees, rejected and merely-admitted organisations
+  appear nowhere; no second gate implementation, no public admission
+  register.
+- **FP-12 — one canonical source.** Each fair collection and each
+  derivation is defined exactly once in the shared assets; no
+  dashboard-local shadow copy survives the move; dashboard and public
+  page load the same canonical files, and each document's readers use
+  the objects hydrated there.
+- **FP-13 — the public hydration path is read-only over a fixed
+  allowlist.** It never calls save, never discards, never resets, never
+  overwrites a snapshot with a partial registration; it loads no private
+  collection — `fairAdmissions` above all; without a valid snapshot the
+  fixtures render; snapshot validity follows the store's one
+  interpretation.
+- **FP-14 — public identity resolves, never copies.** Names, roles and
+  profile targets come from the one canonical stakeholder record at read
+  time; links point only at targets that exist; no second stakeholder
+  collection, no copied name list, no invented slugs.
+
+**Prototype blueprint:** `fairParticipations` (+ `fairParticipationSeq`)
+with the embedded append-only `history` (the `fairAdmissions` pattern),
+in `assets/bottle-lobby-data.js` beside the moved `fairSeries` /
+`fairEditions` / `fairHalls` / `fairStands` and the moved `stakeholders`
+table; BLStore registrations stay in the dashboard (the `wineShows`
+precedent). One act function per act in the dashboard, gated by
+`fairSeriesManagedHere()` on the organizer side and the acting trade
+entity on the trade side; `createFairParticipation()` reads
+`fairAdmissions` internally (A21.1). `fairEditionDiscoverable()`,
+`fairParticipationPublic()`, the occupancy derivation and the one page
+renderer live in `assets/bottle-lobby-public-shows.js`; the public page
+is `bottle-lobby-fair-participation.html?id=…`, hydrating through
+`BLStore.hydrate()` — the read-only entry with the fixed
+`PUBLIC_COLLECTIONS` allowlist in `assets/bottle-lobby-store.js`. The
+organizer surface is the **Stand Placement & Occupancy** view on the
+edition detail inside My Fairs (the "Participation Pages" row leaves the
+locked target navigation); the trade surface extends the A20.6 block on
+Events → Wine Shows with creation and care of the own participation and
+the link to the own public page — no new nav entry anywhere.
+
+**Harness home:** `tests/fair-participation.js` — its own file, as A18,
+A19 and A20 each got their own home, with FP-1..FP-14 under effective
+counter-mutations. **One measured exception:** the persistence half of
+FP-13 (a saved dashboard change reaching the public page; the read path
+never writing) lives as its own section in `tests/persistence.js` —
+measured: that file is the ONE harness allowed to opt into persistence
+(`load-dashboard`'s kill-switch discipline scans every other harness for
+the opt-in and fails it), so a hydration check anywhere else could not
+run against a live store. `tests/fairs.js` §9's locked-navigation count
+follows the activated row; `tests/fair-recruiting.js`'s asset scan
+narrows to `fairAdmissions` — the collections that moved are public now,
+the assurance about admissions stands word for word.
 
 ---
 
