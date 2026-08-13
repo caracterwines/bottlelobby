@@ -4,7 +4,7 @@
 > Dateiliste, Dateianzahl und Aenderungshistorie stehen in der Git-Historie — nicht hier.
 > Dauerhafte Regeln stehen in `BOTTLE-LOBBY-SPEC.md`, kurze Invarianten in `CLAUDE.md` — nicht hier.
 
-**Letzte Aktualisierung:** 10. August 2026
+**Letzte Aktualisierung:** 13. August 2026
 
 ---
 
@@ -21,7 +21,7 @@ Kein Build-Command, Publish-Directory = Repo-Root.
 
 ---
 
-## ▶ EINSTIEG — Stand 10. August 2026
+## ▶ EINSTIEG — Stand 13. August 2026
 
 > **Was Git nicht weiss, steht hier. Alles andere nicht.** Diese Datei fuehrt
 > keine Chronik: was gebaut wurde, wann und von wem, beantwortet `git log`
@@ -31,12 +31,12 @@ Kein Build-Command, Publish-Directory = Repo-Root.
 > Dauerhafte Regeln gehoeren in `BOTTLE-LOBBY-SPEC.md`, kurze Invarianten in
 > `CLAUDE.md`. Findet sich hier eine Regel, ist sie am falschen Ort.
 
-**Baum sauber, `main` gepusht, 29 Harnesses gruen** (nachgezaehlt 10.08. — `fairs.js` kam mit Durchgang 12 dazu, davor `platform-partners.js` mit 11, `campaigns.js` mit 10, `wine-guide-page.js` mit 9, `member-events.js` mit 7). **`BLStore.VERSION` steht auf 9** — Durchgang 12 hat gemessen einen Bump gebraucht (RVW-3005, eine Fixture-Zeile in der BESTEHENDEN Sammlung `reviews` — dieselbe Konstellation wie Durchgang 11; Begruendung im Block zu Durchgang 12 unten und am `VERSION` selbst).
+**Baum sauber, `main` gepusht, 30 Harnesses gruen** (nachgezaehlt 13.08. — `fair-recruiting.js` kam mit Durchgang O3 dazu, davor `fairs.js` mit 12, `platform-partners.js` mit 11, `campaigns.js` mit 10, `wine-guide-page.js` mit 9, `member-events.js` mit 7). **`BLStore.VERSION` steht auf 9** — Durchgang 12 hat gemessen einen Bump gebraucht (RVW-3005, eine Fixture-Zeile in der BESTEHENDEN Sammlung `reviews`); **O3 hat gemessen KEINEN gebraucht** (Begruendung im Block zu Durchgang O3 unten).
 
 ### Womit eine Sitzung anfaengt
 
 ```
-node tests/run-all.js        →  29 Harnesses, muss gruen sein, bevor irgendetwas beginnt
+node tests/run-all.js        →  30 Harnesses, muss gruen sein, bevor irgendetwas beginnt
 node tests/serve.js          →  http://localhost:8765   (no-store — NIE python http.server)
 node tests/stamp-assets.js   →  nach jeder Aenderung an assets/, sonst wird check-static rot
 ```
@@ -50,7 +50,7 @@ Fehlmessungen an einem Tag kamen genau daher** (Spec C7, „Browser acceptance")
 `BOTTLE-LOBBY-SPEC.md` ist die Autoritaet und waechst. **Niemand liest sie ganz —
 also je Durchgang die geltenden Abschnitte benennen**, sonst wird nach
 Plausibilitaet statt nach Spec gebaut. `CLAUDE.md` hat die acht Invarianten,
-Anhang D die abgeloesten Entscheidungen (**D1–D45** — nie ohne Blick dorthin
+Anhang D die abgeloesten Entscheidungen (**D1–D46** — nie ohne Blick dorthin
 etwas wiedervorschlagen).
 
 Arbeitsregeln, die diesen Tag ueberdauern und in **C3/C7** stehen: jeden Commit
@@ -516,8 +516,9 @@ Funktionen aufrufen, `transferSize` vorher lesen (C7).
 >
 > **Roadmap Fair-Track (V4, O2–O15) — spaetere Ziel-Durchgaenge, kein
 > Auftragsbestand:** ~~Fair Series & Editions~~ (**O2 — gebaut, Durchgang 12,
-> Block unten**) · Exhibitor Recruiting mit
-> Bewerbungs-/Zulassungsworkflow · Staende & Hallen · Fair Participation
+> Block unten**) · ~~Exhibitor Recruiting mit
+> Bewerbungs-/Zulassungsworkflow · Staende & Hallen~~ (**O3 — gebaut,
+> Block unten**) · Fair Participation
 > Pages · Termine & Agenda · **O9: oeffentliches Organizer-Profil & Follow,
 > einschliesslich vorgelagertem Follow-Messdurchgang** · **O10:
 > Opportunities** · **O11: Fair-Benachrichtigungen & Organizer-Kommunikation
@@ -644,15 +645,125 @@ Funktionen aufrufen, `transferSize` vorher lesen (C7).
 >   Element, kein onerror); danach `BLStore.reset()`, Fixtures pristine.
 >
 > **Was Durchgang 12 bewusst NICHT gebaut hat, mit Ziel-Durchgaengen:**
-> Recruiting/Bewerbungen/Zulassungen (**O3**) · Fair Participation +
+> ~~Recruiting/Bewerbungen/Zulassungen (**O3**)~~ (gebaut, Block unten) ·
+> Fair Participation +
 > Participation Pages samt der verschobenen Zaehler-Felder (**O4**) ·
 > oeffentliches Verzeichnis/Eventkarten — rendert auch die Ticket-Links und
 > zieht Sammlungen + Ableitung ins Asset um (**O5**) · B2B-Termine (**O7**)
-> · Agenda (**O12**) · Hero-Medien (eigener Durchgang) · Hallen/Staende
-> (**O3**) · Consumer-Ticketing-Checkout (ausgeschlossen, der externe Link
+> · Agenda (**O12**) · Hero-Medien (eigener Durchgang) · ~~Hallen/Staende
+> (**O3**)~~ (gebaut, Block unten) · Consumer-Ticketing-Checkout
+> (ausgeschlossen, der externe Link
 > ist das Maximum). Die Auffindbarkeits-Ableitung hat in O2 KEINEN
 > oeffentlichen Leser — das ist der Ist-Zustand, den `tests/fairs.js` §5
 > sichert, ohne O3/O7 zu verbieten.
+
+> **Durchgang O3 ist gebaut (13.08.), fuenf lokal committete Schritte, ein
+> Push.** Roadmap-Anker **O3**: Exhibitor Recruiting mit EINEM kanonischen
+> Bewerbungs-/Zulassungsworkflow, die Organizer-Kandidatensuche ueber einen
+> eigenen Read-Path mit fester Plattform-Allowlist, und das minimale
+> Hallen-/Standinventar der Edition. Die Spec ging voraus (**A20** neu,
+> FS-6-Praezisierung, **D46**) **und muss ins Projektwissen.** Was Git
+> nicht selbst sagt:
+>
+> - **Die Nav-Bestandsmessung hat den Zugang entschieden:** B8 fuehrt fuer
+>   alle vier Rollen unter Events nur Wine Shows · My Events, kein
+>   Fair-Eintrag existiert, und kein Handels-Renderer las eine
+>   Fair-Sammlung. Der A16.4-Praezedenzfall (Open Calls landen beim
+>   Producer „under Wine Shows") traegt den kleinsten echten Einstieg: EIN
+>   begrenzter Block auf der Events→Wine-Shows-Unterseite, NUR Winery und
+>   Distributor (Restaurant/Retail sind nicht zulassungsfaehig — ein
+>   Einstieg, der immer nur ablehnt, waere Rauschen). Kein Nav-Umbau, kein
+>   Verzeichnis, kein Stopp-Fall. Der Block traegt die
+>   Member-Events-Trennung weiter: eigene Ueberschrift, keine
+>   Show-Garantie, kein Show-Gold (ME-3-Argument auf Messen).
+> - **Die Pflichtgrund-Einzelentscheidungen, je Akt gemessen (A20.4):**
+>   `rejected` zwingend (A16.14c „with a reason", D29-Argument) ·
+>   `revoked` zwingend (A19.3-Praezedenz: der Organizer nimmt zurueck,
+>   worauf sich jemand verlassen durfte — und der Record muss sagen, warum
+>   die Einladungssicht fiel) · `declined` optional (A16.4: kein
+>   Pflichtgrund im Bestand) · `withdrawn` optional (A16.9/D28) · die
+>   positiven Akte tragen NIE einen erzwungenen Grund.
+> - **Kein Fristfeld, gemessen:** die Show-Deadline existiert fuer das
+>   A16.14c-Planning-Listing — eine oeffentliche Flaeche, die „apply
+>   until…" verspricht. O3 hat keine Listing-Flaeche (Verzeichnis ist O5),
+>   also kein belegter Bedarf, also kein Vorratsfeld. Der Call ist ein
+>   explizites Oeffnen/Schliessen je VEROEFFENTLICHTER Edition
+>   (`exhibitorCallOpen`, A16.9-Praezedenz `applications_open`).
+> - **Die Suppressions-Messung, eng:** alle drei Arten des Registers sind
+>   kampagnenbegrenzt (`campaignKind` NULL heisst „beide KAMPAGNEN-Arten"),
+>   ein unabhaengig geltender genereller Block existiert im Bestand nicht —
+>   Recruiting konsultiert das Register also GAR NICHT, und
+>   `tests/fair-recruiting.js` §7 haelt beides rot: ein Unsubscribe/Block
+>   stoppt keine gezielte Einladung, und weder Resolver noch Register
+>   wachsen um eine Recruitment-Art.
+> - **Das Last-Word-Modell ist der gespeicherte Status:** EIN `status` je
+>   Zeile plus eingebettete append-only `history` (das
+>   `fairEditions.history`-Muster), EIN Aktfunktions-Schreibweg fuer
+>   beides, Gruende leben NUR in der History-Zeile (A19.3 woertlich).
+>   Gegen die Ableitung aus Akten sprach die Messung: jedes zustandstragende
+>   Record im Modell hat diese Form, und eine zweite Konvention fuer
+>   dieselbe Frage waere die D32-Falle seitwaerts. Drei Eingangswege, EIN
+>   Endzustand `admitted`; die Akte bleiben in der History unterscheidbar
+>   (`admitted` / `accepted` / `recorded_external`), der externe Weg
+>   verlangt Quelle+Akteur+Datum als Ganzes oder schreibt nichts.
+> - **Locked-Nav 7 → 5:** „Exhibitor Recruitment" und „Stands & Halls"
+>   verlassen die gesperrte Zielnavigation und leben als Sektionen der
+>   Editionsakte in My Fairs — ein eigener Nav-Eintrag haette nur erneut
+>   gefragt, welche Edition gemeint ist. `tests/fairs.js` §9 zaehlt jetzt
+>   fuenf und verbietet gesperrte Zeilen neben live-Features.
+> - **Der eigene Harness hat einen echten Defekt gefangen (FR-11):** nach
+>   einer Ruecknahme renderte der Handelsblock die Draft-Fakten auf der
+>   Ruhezeile weiter. Fix: eine nicht auffindbare Edition behaelt auf einer
+>   Ruhezeile nur das EIGENE Record (Serienname, Zustand, History) — die
+>   Fakten fielen mit der offenen Einladung. Ausserdem fing
+>   `tests/wine-identity.js` den Allowlist-Extractor (`=== st.name` sieht
+>   fuer den Zeilen-Scan wie ein Namens-Join aus) — der Holder-String
+>   wandert in eine lokale Variable, wie es die bestehenden Leser halten.
+> - **C8 gemessen, nicht vorhergesagt:** 33 von 34 Bestandssammlungen
+>   hashen identisch; `fairEditions` aendert den Print (9d4d61a7 →
+>   5d7845b2) durch das NEUE FELD `exhibitorCallOpen` — eine
+>   STRUKTURaenderung, die Wache 2 selbst sieht und die an keinem
+>   Datenzufall haengt (beide Fixture-Zeilen und `createFairEdition`
+>   tragen das Feld). Sechs Neuregistrierungen (`fairAdmissions`,
+>   `fairHalls`, `fairStands` + Seqs) verwerfen Alt-Snapshots ohnehin.
+>   Keine neue Zeile in einer BESTEHENDEN Sammlung — die D2D-Klasse aus
+>   Durchgang 11/12 liegt nicht vor. **Kein Bump, `VERSION` bleibt 9.**
+> - **Browser-Abnahme am Ende ueber `tests/serve.js`, klickend**
+>   (`transferSize` 1.078.172 ≈ dekodiert, frisch): Organizer legt Halle
+>   und Stand an · Call geschlossen, Bestandszeilen byte-identisch, die
+>   Bewerbung ueber den stehengebliebenen Apply-Knopf (die
+>   Zwei-Tab-Realitaet) mit B12-Meldung refusiert · Winery und Distributor
+>   bewerben sich ueber Events→Wine Shows per Klick · Zulassung und
+>   Ablehnung mit Grund, Grund lesbar am Record · gezielte Einladungen auf
+>   die DRAFT-Edition ueber die Kandidatensuche, enge Einladungssicht
+>   beim Adressierten („Not yet published — … addresses you, and only
+>   you"), Restaurant/Retail leer, Nicht-Adressierte sehen nichts · nach
+>   Ruecknahme faellt die Sicht, das eigene Record bleibt · erneute
+>   Einladung nach `revoked`, Decline per Klick; Accept per Klick endet im
+>   IDENTISCHEN `admitted` wie der Bewerbungsweg (Akte getrennt:
+>   admitted/accepted) · externe Zulassung ohne Quelle/Akteur/Datum mit
+>   Meldung verweigert und ohne Teilschreibung, mit allen dreien erfasst
+>   und am Schirm lesbar · Guide `#events` traegt keinerlei Fair- oder
+>   Bewerberinhalt (`fairAdmissions` existiert auf den oeffentlichen
+>   Seiten nicht) · Cockpit-Stichproben unveraendert (Fans 3, Portfolio
+>   (15), WS-2604 planning/offen) · C8-Roundtrip ueber Reload, danach
+>   Reset per Knopf, Fixtures pristine nachgemessen. EIN Vorfall dieser
+>   Umgebung, benannt: der Reset-Klick ohne confirm-Stub blockierte den
+>   Tab am nativen Dialog (C7-Fremdkoerper) — Tab neu geladen, mit Stub
+>   wiederholt.
+>
+> **Was Durchgang O3 bewusst NICHT gebaut hat, mit Ziel-Durchgaengen:**
+> Fair Participation + Participation Pages, dargestellte Winzer/Weine
+> eines Distributor-Stands, Belegung und Zaehler (**O4**) · oeffentliches
+> Verzeichnis/Karten/Ticket-Link-Rendering, Umzug der Sammlungen ins
+> Asset (**O5**) · B2B-Termine (**O7**) · Organizer-Profil & Follow
+> (**O9**) · Opportunities (**O10**) · Fair-Benachrichtigungen &
+> Organizer-Kommunikation (**O11**) · Agenda (**O12**) · Hero-Medien
+> (eigener Durchgang). **Inventar-Edit und -Loeschung bleiben bewusst
+> offen bis O4** — ob ein Stand verschwinden darf, ist genau die Frage,
+> die erst die O4-Belegung real macht; sie frueher zu beantworten hiesse,
+> den Durchgang vorwegzunehmen. Eine Recruiting-Warteliste ist NICHT
+> beschlossen und wird nicht vorgemerkt.
 
 ---
 
