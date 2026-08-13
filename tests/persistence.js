@@ -802,16 +802,23 @@ console.log('\n── a snapshot from before the product key does not come back'
        rows must come back. Without this the section would go green
        even if the store had stopped comparing shapes at all. */
     area._data[KEY] = raw;
-    const blind = openTab(area, { persist: true, patch: {
+    /* Two mechanisms now stand in front of an old-shape snapshot: the
+       per-name fingerprint AND the schema record (the seed build's
+       fixtures hash to another schema). To prove the fingerprint is
+       real, BOTH are switched off — a snapshot then held back would
+       mean some third thing does the work. */
+    const blind = openTab(area, { persist: true, patch: [ {
       from: "else if (fp[e.name] !== fixtureFp[e.name]) changed.push(e.name + ' (shape changed)');",
-      to:   "else if (false) changed.push(e.name + ' (shape changed)');" } });
+      to:   "else if (false) changed.push(e.name + ' (shape changed)');" }, {
+      from: 'if (schemaWhy) return schemaWhy;',
+      to:   'if (false) return schemaWhy;' } ] });
     const returned = blind.w.eval('(' + BOOKS.map(b => b + ".filter(function (r) { return !r.id; }).length").join('+') + ')');
     if (returned === seeded)
-      ok('caught: with the shape comparison removed, all ' + returned +
-         ' id-less rows return — the fingerprint is what stops them, not the version');
+      ok('caught: with the shape comparison and the schema record removed, all ' + returned +
+         ' id-less rows return — those two are what stop them, not the version');
     else
-      bad('with the shape comparison removed only ' + returned + ' of ' + seeded +
-          ' id-less rows returned — something other than the fingerprint is doing this work, ' +
+      bad('with the comparisons removed only ' + returned + ' of ' + seeded +
+          ' id-less rows returned — something else is doing this work, ' +
           'so the check above does not prove what it says');
   }
 }
@@ -869,9 +876,12 @@ console.log('\n── a snapshot from before the show products named keys');
       ok('a snapshot holding ' + oldShape + ' show references in the old shape is discarded');
 
     area._data[KEY] = raw;
-    const blind = openTab(area, { persist: true, patch: {
+    /* Both guards off, as above: fingerprint and schema record. */
+    const blind = openTab(area, { persist: true, patch: [ {
       from: "else if (fp[e.name] !== fixtureFp[e.name]) changed.push(e.name + ' (shape changed)');",
-      to:   "else if (false) changed.push(e.name + ' (shape changed)');" } });
+      to:   "else if (false) changed.push(e.name + ' (shape changed)');" }, {
+      from: 'if (schemaWhy) return schemaWhy;',
+      to:   'if (false) return schemaWhy;' } ] });
     const returned = blind.w.eval(`(function () {
       var n = 0;
       wineShows.forEach(function (s) {
@@ -881,10 +891,10 @@ console.log('\n── a snapshot from before the show products named keys');
       return n;
     })()`);
     if (returned === oldShape)
-      ok('caught: with the shape comparison removed, all ' + returned + ' come back — ' +
-         'so it is the fingerprint doing this and not the version number');
+      ok('caught: with the shape comparison and the schema record removed, all ' + returned + ' come back — ' +
+         'so it is those guards doing this and not the version number');
     else
-      bad('with the comparison removed only ' + returned + ' of ' + oldShape + ' came back — ' +
+      bad('with the comparisons removed only ' + returned + ' of ' + oldShape + ' came back — ' +
           'something else is doing this work and the check above does not prove what it says');
   }
 }
@@ -1150,6 +1160,86 @@ console.log('\n── the public page reads the snapshot and can never write it'
     if (/Burgundy table/.test(pageText(corrupt)) && area4._data[KEY] === 'not readable json {')
       ok('a corrupt snapshot is ignored and left in place — same answer, no write');
     else bad('the page wrote or crashed over a corrupt snapshot');
+  }
+
+  /* (e) THE SHARED CONTRACT (Codex correction, A21.8): the page must
+     ignore every snapshot the dashboard would judge invalid — also
+     about collections the page never loads. The schema record (`sh` +
+     SCHEMA_HASH) is what carries that judgment across; first pin the
+     constant to the live registration, or nothing below means much. */
+  {
+    const pin = enter(openTab(makeStorageArea(), { persist: true }));
+    const live = pin.w.eval('BLStore.liveSchemaHash()');
+    const pinned = pin.w.eval('BLStore.SCHEMA_HASH');
+    if (live === pinned)
+      ok('SCHEMA_HASH is pinned to the live registration (' + live + ') — the one contract has one value');
+    else
+      bad('SCHEMA_HASH is stale: constant ' + pinned + ', live ' + live +
+          ' — update the constant in assets/bottle-lobby-store.js in the same commit (C8)');
+
+    /* legacyGhost in data AND fp — the exact Codex reproduction. Two
+       variants: sh left as written (integrity breaks), and sh
+       recomputed over the tampered map (currency breaks). */
+    const ghosted = JSON.parse(JSON.stringify(seeded));
+    ghosted.data.legacyGhost = [];
+    ghosted.fp.legacyGhost = 'deadbeef';
+    const variants = [
+      ['sh as written',   JSON.stringify(ghosted)],
+      ['sh recomputed',   (() => { const g = JSON.parse(JSON.stringify(ghosted));
+                                   g.sh = pin.w.eval('BLStore.schemaHashOf(' + JSON.stringify(g.fp) + ')');
+                                   return JSON.stringify(g); })()]
+    ];
+    for (const [label, blob] of variants) {
+      const areaG = makeStorageArea();
+      areaG._data[KEY] = blob;
+      const pageG = openPage(areaG, { query: '?id=FP-9401' });
+      if (/Burgundy table/.test(pageText(pageG)) && !/Hydration probe/.test(pageText(pageG)) &&
+          areaG._data[KEY] === blob)
+        ok('legacyGhost (' + label + '): the page ignores the snapshot, renders fixtures, storage stays byte-identical');
+      else bad('legacyGhost (' + label + '): the page hydrated a snapshot carrying an unknown collection (FP-13)');
+      /* And the dashboard judges the SAME bytes invalid — both
+         documents, one answer. */
+      const dashG = openTab(areaG, { persist: true });
+      if (dashG.w.eval("fairParticipationById('FP-9401').description").indexOf('Hydration probe') === -1 &&
+          areaG._data[KEY] !== blob)
+        ok('legacyGhost (' + label + '): the dashboard judges the same snapshot invalid too — discarded, fixtures live');
+      else bad('legacyGhost (' + label + '): dashboard and page disagree about the same bytes');
+    }
+
+    /* A PRIVATE collection's fingerprint drifts — fairAdmissions, which
+       the page never loads and must still judge by. sh recomputed, so
+       only the currency check can catch it. */
+    const priv = JSON.parse(JSON.stringify(seeded));
+    priv.fp.fairAdmissions = 'deadbeef';
+    priv.sh = pin.w.eval('BLStore.schemaHashOf(' + JSON.stringify(priv.fp) + ')');
+    const privBlob = JSON.stringify(priv);
+    const areaP = makeStorageArea();
+    areaP._data[KEY] = privBlob;
+    const pageP = openPage(areaP, { query: '?id=FP-9401' });
+    if (/Burgundy table/.test(pageText(pageP)) && !/Hydration probe/.test(pageText(pageP)) &&
+        areaP._data[KEY] === privBlob &&
+        pageP.w.eval('typeof fairAdmissions') === 'undefined' &&
+        pageP.w.eval("BLStore.names().sort().join(',')") === 'fairEditions,fairHalls,fairParticipations,fairSeries,fairStands')
+      ok('a drifted PRIVATE fingerprint (fairAdmissions) invalidates the snapshot for the page too — judged without ever loading or exposing a private value');
+    else bad('the page hydrated past a private-collection drift, or exposed one (FP-13)');
+
+    /* The counter-proofs: without the shared contract, both ghosts
+       hydrate — proving the checks above bite. The rogue pages carry
+       the ghost/private snapshots and a store whose hydrate skips the
+       contract. */
+    const areaR = makeStorageArea();
+    areaR._data[KEY] = variants[1][1];
+    const rogueG = openPage(areaR, { query: '?id=FP-9401', patch: {
+      from: 'var invalid = snapshotInvalidWhy(p);   /* the one shared contract */',
+      to:   'var invalid = null;' } });
+    const areaR2 = makeStorageArea();
+    areaR2._data[KEY] = privBlob;
+    const rogueP = openPage(areaR2, { query: '?id=FP-9401', patch: {
+      from: 'var invalid = snapshotInvalidWhy(p);   /* the one shared contract */',
+      to:   'var invalid = null;' } });
+    if (/Hydration probe/.test(pageText(rogueG)) && /Hydration probe/.test(pageText(rogueP)))
+      ok('caught: with the shared contract skipped, BOTH tampered snapshots hydrate on the page — the contract is what stops them, and nothing else could have');
+    else bad('the tampered snapshots were held back even without the contract — something else does this work, so the checks above do not prove what they say');
   }
 }
 

@@ -311,17 +311,52 @@ window.BLStore = (function () {
      What a returning v9 visitor would otherwise keep: no summer
      edition, no summer inventory, no FA-9105 — the admitted ground
      under the distributor participation fixture — while the seqs
-     would reissue FE-7103/FH-9202/FB-9303 ids that already exist. */
-  var VERSION   = 10;
+     would reissue FE-7103/FH-9202/FB-9303 ids that already exist.
+
+     11 — the shared-validity correction, O4/Codex (13.08.2026), and
+     it is the FORMAT class in the rule's own words: the snapshot
+     blob gains the `sh` schema record (see SCHEMA_HASH below) so the
+     read-only public page can make the SAME validity judgment the
+     dashboard makes — including about collections it never loads. No
+     fixture changed (all 40 fingerprints measured identical); the
+     STORED FORMAT did, and a v10 snapshot carries no schema record,
+     so the bump is the honest lever rather than leaning on the new
+     check to reject what the old format cannot say. */
+  var VERSION   = 11;
   var DEBOUNCE  = 200;   /* ms after the last event before a write */
   var HEARTBEAT = 2000;  /* ms between "does storage still match?" checks */
   var POLL      = 500;   /* ms between retries while the tab is busy */
   var HEAL_KEY  = 'bottle-lobby-demo-healed';
 
+  /* ── THE SCHEMA RECORD (A21.8, Codex correction 13.08.2026) ──────
+     The public page must ignore every snapshot the dashboard would
+     judge invalid — including one whose PRIVATE collections drifted,
+     which the page can never fingerprint itself (it must not even
+     load them). So a snapshot carries `sh`: the hash of its own
+     complete fp map, and THIS constant names the hash of the current
+     canonical schema. One shared contract then decides validity for
+     both documents (snapshotSchemaWhy below):
+
+       (3) data and fp name the same collections;
+       (4) sh matches the snapshot's own fp map — a tampered or
+           hand-extended map (the legacyGhost case) breaks here;
+       (5) sh matches THIS constant — a snapshot written under any
+           other schema, private collections included, breaks here
+           without the page ever reading a private value.
+
+     THE CONSTANT IS HAND-PINNED AND HARNESS-ENFORCED, deliberately:
+     the fingerprints themselves stay computed from the pristine
+     fixtures (guard 2 is untouched), and tests/persistence.js fails
+     the build the moment this value stops matching the dashboard's
+     live registration — with the new value in the failure message.
+     C8 gains the matching duty: when fixtures change SHAPE, the same
+     commit updates SCHEMA_HASH (the harness names the value; VERSION
+     keeps its own, separate rule). */
+  var SCHEMA_HASH = '6d204f48';
+
   var entries      = [];   /* { name, get, set } in registration order */
   var fixtureFp    = {};   /* name → hash of the pristine fixture shape */
   var hooks        = {};   /* redraw / afterRestore / onSaved / notify / onExternal */
-  var strict       = true;
   var readOnly     = false;/* set by hydrate(); kills every write path */
   var saveTimer    = null;
   var beatTimer    = null;
@@ -389,6 +424,18 @@ window.BLStore = (function () {
     return JSON.stringify(data);
   }
 
+  /* The schema record: one stable string over a whole fp map, hashed.
+     save() stamps every snapshot with the LIVE value (the truth of
+     this document's fixtures — automatic, like the fingerprints);
+     the contract compares against SCHEMA_HASH (the pinned canonical
+     value). In a healthy build the two are identical, and the
+     persistence harness keeps them so. */
+  function serialiseSchema(fp) {
+    return Object.keys(fp).sort().map(function (k) { return k + ':' + fp[k]; }).join('|');
+  }
+  function schemaHashOf(fp) { return hash(serialiseSchema(fp)); }
+  function liveSchemaHash() { return schemaHashOf(fixtureFp); }
+
   /* ── Registration ────────────────────────────────────────────────
      Called BEFORE start(), so `get()` still returns the untouched
      fixture — which is exactly the shape the current code expects. */
@@ -415,16 +462,45 @@ window.BLStore = (function () {
   /* ── Snapshot validity, decided ONCE ─────────────────────────────
      restore() and hydrate() must never disagree about what a valid
      snapshot is — a second interpretation of the same bytes would be
-     the drift this file exists to prevent. This helper answers the
-     shared half: structure, version, and every REGISTERED name
-     present with the fixture's shape. What the two entries DO with an
-     invalid snapshot stays theirs: the dashboard discards it (it owns
-     the storage), the read-only page merely ignores it. */
+     the drift this file exists to prevent. snapshotInvalidWhy() IS
+     the one contract, whole: structure, version, the schema record
+     (names, integrity, currency — see SCHEMA_HASH above), and every
+     name THIS document registered present with the fixture's shape.
+     The schema half is what lets the read-only page judge collections
+     it never loads; the old strict check in restore() ("no longer
+     persisted") is subsumed by it and no longer lives anywhere else.
+     What the two entries DO with an invalid snapshot stays theirs:
+     the dashboard discards it (it owns the storage), the read-only
+     page merely ignores it. */
+  function snapshotSchemaWhy(p) {
+    var fp = p.fp;
+    if (!fp || typeof fp !== 'object' || typeof p.sh !== 'string')
+      return 'the snapshot carries no schema record';
+    /* (3) data and fp must name the SAME collections — a stored
+       collection nobody fingerprinted, or the reverse, is a snapshot
+       nobody wrote whole. */
+    var dataKeys = Object.keys(p.data).sort().join(','),
+        fpKeys   = Object.keys(fp).sort().join(',');
+    if (dataKeys !== fpKeys)
+      return 'data and schema record disagree about the stored collections';
+    /* (4) integrity: the schema record must describe exactly this fp
+       map — an entry added or edited by hand breaks here. */
+    if (schemaHashOf(fp) !== p.sh)
+      return 'the schema record does not match the stored collections';
+    /* (5) currency: written under the CURRENT canonical schema — an
+       older or foreign schema (a private collection reshaped, a name
+       added or dropped) breaks here, without reading any value. */
+    if (p.sh !== SCHEMA_HASH)
+      return 'it was written under another schema (' + p.sh + ', current ' + SCHEMA_HASH + ')';
+    return null;
+  }
   function snapshotInvalidWhy(p) {
     if (!p || typeof p !== 'object' || !p.data || typeof p.data !== 'object')
       return 'the snapshot has no data block';
     if (p.v !== VERSION)
       return 'it was written by store version ' + p.v + ', this is ' + VERSION;
+    var schemaWhy = snapshotSchemaWhy(p);
+    if (schemaWhy) return schemaWhy;
     var fp = p.fp || {}, changed = [];
     entries.forEach(function (e) {
       if (!p.data.hasOwnProperty(e.name)) changed.push(e.name + ' (missing)');
@@ -445,18 +521,9 @@ window.BLStore = (function () {
     try { p = JSON.parse(raw); } catch (e) {
       return discard('the snapshot is not readable JSON');
     }
-    /* All or nothing: name every mismatch, then throw the lot away. */
-    var changed = [];
+    /* All or nothing: the ONE contract decides, then the lot goes. */
     var why = snapshotInvalidWhy(p);
-    if (why) changed.push(why);
-    if (strict && p && typeof p === 'object' && p.data && typeof p.data === 'object') {
-      var known = {};
-      entries.forEach(function (e) { known[e.name] = 1; });
-      Object.keys(p.data).forEach(function (n) {
-        if (!known[n]) changed.push(n + ' (no longer persisted)');
-      });
-    }
-    if (changed.length) return discard(changed.join(', '));
+    if (why) return discard(why);
 
     entries.forEach(function (e) { e.set(p.data[e.name]); });
     if (hooks.afterRestore) hooks.afterRestore();
@@ -505,8 +572,8 @@ window.BLStore = (function () {
     if (!raw) return 'empty';
     var p;
     try { p = JSON.parse(raw); } catch (e) { return ignore('the snapshot is not readable JSON'); }
-    var why = snapshotInvalidWhy(p);
-    if (why) return ignore(why);
+    var invalid = snapshotInvalidWhy(p);   /* the one shared contract */
+    if (invalid) return ignore(invalid);
     entries.forEach(function (e) { e.set(p.data[e.name]); });
     return 'hydrated';
   }
@@ -535,7 +602,12 @@ window.BLStore = (function () {
 
     var payload;
     try {
-      payload = '{"v":' + VERSION + ',"fp":' + JSON.stringify(fixtureFp) +
+      /* `sh` is stamped from the LIVE registration — automatic, like
+         the fingerprints beside it. A build whose SCHEMA_HASH went
+         stale therefore writes snapshots its own contract refuses:
+         loud on the next load, and red in the harness long before. */
+      payload = '{"v":' + VERSION + ',"sh":"' + liveSchemaHash() + '"' +
+                ',"fp":' + JSON.stringify(fixtureFp) +
                 ',"data":' + serialise() + '}';
     } catch (e) {
       if (window.console && console.warn)
@@ -641,7 +713,7 @@ window.BLStore = (function () {
   }
 
   /* ── start ───────────────────────────────────────────────────────
-     opts: redraw, afterRestore, onSaved, notify, onExternal, strict.
+     opts: redraw, afterRestore, onSaved, notify, onExternal.
      Returns the restore outcome, which the harnesses assert on. */
   function start(opts) {
     if (readOnly) {               /* hydrate() ran — this page must not wire autosave */
@@ -649,9 +721,14 @@ window.BLStore = (function () {
         console.error('[BLStore] start() refused after hydrate() — this page is read-only');
       return 'refused';
     }
+    /* The pinned contract value must be the live one — screamed here,
+       and failed for good in tests/persistence.js, which prints the
+       value to paste. */
+    if (liveSchemaHash() !== SCHEMA_HASH && window.console && console.error)
+      console.error('[BLStore] SCHEMA_HASH is stale — the fixtures changed shape; set it to ' +
+                    liveSchemaHash() + ' in the same commit (C8)');
     opts = opts || {};
     hooks = opts;
-    if (opts.strict === false) strict = false;
     started = true;
 
     if (!storage()) return 'inactive';
@@ -709,6 +786,9 @@ window.BLStore = (function () {
     hydrate:  hydrate,
     /* Read-only surface for the harnesses and for the console. */
     PUBLIC_COLLECTIONS: PUBLIC_COLLECTIONS.slice(),
+    SCHEMA_HASH:  SCHEMA_HASH,
+    schemaHashOf: schemaHashOf,
+    liveSchemaHash: liveSchemaHash,
     isReadOnly:   function () { return readOnly; },
     isActive:     function () { return started && !!storage(); },
     names:        function () { return entries.map(function (e) { return e.name; }); },

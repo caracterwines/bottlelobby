@@ -6658,6 +6658,16 @@ or nothing**, and says so in the toast. A partial restore would leave a
 half-migrated demo, which is worse than starting clean. A snapshot that breaks
 rendering is thrown away and the page reloads once.
 
+**Since O4 the snapshot also carries its schema record** (`sh`, the hash of its
+own complete fingerprint map), pinned in code as `SCHEMA_HASH` — a technical
+precision of A21.8's one-contract sentence: it is what lets the READ-ONLY public
+page make the same validity judgment about collections it never loads.
+`tests/persistence.js` fails the build the moment the pinned value stops
+matching the live registration, with the new value in the message — so the duty
+that comes with it (fixtures change shape → same commit updates `SCHEMA_HASH`)
+cannot be missed silently, and the fingerprints themselves stay computed, never
+hand-kept.
+
 > **Correction, 3 August 2026 — this passage used to claim the two guards rely on
 > nobody remembering anything. That is false for one case, and the case
 > occurred.** The fingerprint sees STRUCTURE, never VALUES, and that is right:
