@@ -923,7 +923,7 @@ Funktionen aufrufen, `transferSize` vorher lesen (C7).
 > Subaccounts oder Termininhaber (ausgeschlossen, A21.3).
 
 > **Codex-Korrektur nach der Codex-Pruefung des ersten O4-Abschluss-
-> stands (13.08., acht Commits auf `2bfa80f` — dieser Stand wurde
+> stands (13.08., neun Commits auf `2bfa80f` — dieser Stand wurde
 > NICHT abgenommen und nie an Claude Chat uebergeben; Codex hat ihn
 > vor der Abnahme zurueckgewiesen)** — zwei reproduzierte Befunde,
 > beide behoben; **der finale HEAD nach dieser Korrektur geht zur
