@@ -31,12 +31,12 @@ Kein Build-Command, Publish-Directory = Repo-Root.
 > Dauerhafte Regeln gehoeren in `BOTTLE-LOBBY-SPEC.md`, kurze Invarianten in
 > `CLAUDE.md`. Findet sich hier eine Regel, ist sie am falschen Ort.
 
-**Baum sauber, `main` gepusht, 30 Harnesses gruen** (nachgezaehlt 13.08. — `fair-recruiting.js` kam mit Durchgang O3 dazu, davor `fairs.js` mit 12, `platform-partners.js` mit 11, `campaigns.js` mit 10, `wine-guide-page.js` mit 9, `member-events.js` mit 7). **`BLStore.VERSION` steht auf 9** — Durchgang 12 hat gemessen einen Bump gebraucht (RVW-3005, eine Fixture-Zeile in der BESTEHENDEN Sammlung `reviews`); **O3 hat gemessen KEINEN gebraucht** (Begruendung im Block zu Durchgang O3 unten).
+**Baum sauber, `main` gepusht, 31 Harnesses gruen** (nachgezaehlt 13.08. — `fair-participation.js` kam mit Durchgang O4 dazu, davor `fair-recruiting.js` mit O3, `fairs.js` mit 12, `platform-partners.js` mit 11, `campaigns.js` mit 10, `wine-guide-page.js` mit 9, `member-events.js` mit 7). **`BLStore.VERSION` steht auf 10** — O4 hat gemessen einen Bump gebraucht (Fixture-Zeilen in den BESTEHENDEN Sammlungen `fairHalls`/`fairStands`/`fairAdmissions`, D2D-Klasse; Begruendung am `VERSION` und im Block zu Durchgang O4 unten); Durchgang 12 brauchte einen (RVW-3005), **O3 gemessen keinen**.
 
 ### Womit eine Sitzung anfaengt
 
 ```
-node tests/run-all.js        →  30 Harnesses, muss gruen sein, bevor irgendetwas beginnt
+node tests/run-all.js        →  31 Harnesses, muss gruen sein, bevor irgendetwas beginnt
 node tests/serve.js          →  http://localhost:8765   (no-store — NIE python http.server)
 node tests/stamp-assets.js   →  nach jeder Aenderung an assets/, sonst wird check-static rot
 ```
@@ -753,17 +753,174 @@ Funktionen aufrufen, `transferSize` vorher lesen (C7).
 >   wiederholt.
 >
 > **Was Durchgang O3 bewusst NICHT gebaut hat, mit Ziel-Durchgaengen:**
-> Fair Participation + Participation Pages, dargestellte Winzer/Weine
-> eines Distributor-Stands, Belegung und Zaehler (**O4**) · oeffentliches
-> Verzeichnis/Karten/Ticket-Link-Rendering, Umzug der Sammlungen ins
-> Asset (**O5**) · B2B-Termine (**O7**) · Organizer-Profil & Follow
+> ~~Fair Participation + Participation Pages, dargestellte Winzer/Weine
+> eines Distributor-Stands, Belegung und Zaehler (**O4**)~~ (gebaut,
+> Block unten — samt vorgezogenem Datenumzug) · oeffentliches
+> Verzeichnis/Karten/Ticket-Link-Rendering (**O5** — der Umzug der
+> Sammlungen ins Asset ist mit O4 bereits geschehen) · B2B-Termine
+> (**O7**) · Organizer-Profil & Follow
 > (**O9**) · Opportunities (**O10**) · Fair-Benachrichtigungen &
 > Organizer-Kommunikation (**O11**) · Agenda (**O12**) · Hero-Medien
-> (eigener Durchgang). **Inventar-Edit und -Loeschung bleiben bewusst
-> offen bis O4** — ob ein Stand verschwinden darf, ist genau die Frage,
-> die erst die O4-Belegung real macht; sie frueher zu beantworten hiesse,
-> den Durchgang vorwegzunehmen. Eine Recruiting-Warteliste ist NICHT
-> beschlossen und wird nicht vorgemerkt.
+> (eigener Durchgang). ~~**Inventar-Edit und -Loeschung bleiben bewusst
+> offen bis O4**~~ (entschieden in O4: **A21.5**). Eine
+> Recruiting-Warteliste ist NICHT beschlossen und wird nicht vorgemerkt.
+
+> **Durchgang O4 ist gebaut (13.08.), acht lokal committete Schritte, ein
+> Push.** Roadmap-Anker **O4**: die kanonische Fair Participation (Anlage
+> nur durch die zugelassene Organisation selbst), die oeffentliche
+> Participation Page hinter dem Dreifach-Gate, Standbelegung und
+> Inventar-Pflege, das Vertretungsmodell des Distributors — und der
+> VORGEZOGENE Datenumzug samt Nur-Lese-Hydrationsweg. Die Spec ging
+> voraus (**A21** neu, A16.8 auf das Terminmodell verengt,
+> A19.3/A19.6/A19.7/A20.6/A20.9/A20.13 nachgezogen, KEINE neue
+> D-Entscheidung) **und muss ins Projektwissen.** Was Git nicht selbst
+> sagt:
+>
+> - **Der Datenumzug ist eine SEQUENZKORREKTUR, keine neue
+>   Geschaeftsentscheidung:** A19.7/A20.13 sagten den Umzug fuer den
+>   ERSTEN OEFFENTLICHEN LESER voraus und nannten O5 — der erste Leser
+>   wurde die kanonische Participation Page, also O4. Verschoben nach
+>   `assets/bottle-lobby-data.js`: `fairSeries`/`fairEditions`/
+>   `fairHalls`/`fairStands` (+ Seqs, Finder, Typ-Vokabular), die
+>   `stakeholders`-Tabelle samt `stakeholder()` (A21.9 — sie IST schon
+>   der minimale oeffentliche Identitaetsdatensatz, eine engere zweite
+>   Liste waere die verbotene Kopie) und neu `fairParticipations`
+>   (+ Seq). Nach `assets/bottle-lobby-public-shows.js`:
+>   `fairEditionDiscoverable()`, das Gate `fairParticipationPublic()`,
+>   die Belegungsableitung `fairStandOccupant()`, der eine Renderer
+>   `fairParticipationPageHtml()` und der EINE Escaper `notifEsc()`
+>   (der Renderer druckt getippten Text auf oeffentliche Seiten; ein
+>   zweiter Escaper daneben waere die D26-Drift eine Ebene tiefer).
+>   **`fairAdmissions` und alle privaten Recruiting-Daten bleiben im
+>   Dashboard** — der FR-11-Scan in `tests/fair-recruiting.js` ist auf
+>   `fairAdmission` verengt (die Zusicherung galt den Admissions;
+>   Hallen/Staende sind jetzt belegungsfreies oeffentliches Inventar).
+> - **Der Nur-Lese-Hydrationsweg, gemessen statt vorentschieden:**
+>   `restore()` DISCARDED (loescht!) einen Snapshot, dessen Namen ueber
+>   die Registrierung hinausgehen, und `start()` verdrahtet unbedingt
+>   Autosave — beide waren fuer eine oeffentliche Seite unbrauchbar.
+>   Neu: `BLStore.hydrate()` — feste Allowlist
+>   (`PUBLIC_COLLECTIONS` = die fuenf Fair-Sammlungen, sonst „refused"
+>   als Ganzes), EINE geteilte Snapshot-Gueltigkeitspruefung
+>   (`snapshotInvalidWhy()`, von restore UND hydrate gelesen — nie
+>   zwei Interpretationen), und NIE ein Schreibpfad: nach `hydrate()`
+>   sind `save()`, `reset()` und `start()` tot (readOnly-Riegel). Ein
+>   ungueltiger/veralteter Snapshot wird IGNORIERT, nie geloescht —
+>   loeschen ist ein Schreiben, und das Dashboard bleibt der einzige
+>   Schreiber; ohne Snapshot rendern die Fixtures.
+>   `tests/persistence.js` §10 fuehrt den Gegenbeweis mit `start()`
+>   statt `hydrate()` (gepatchte Seite): der Dashboard-Snapshot faellt
+>   — genau der Fall, den der Nur-Lese-Einstieg verhindert.
+> - **Die Herkunftsmessung der vertretenen Wineries (A21.4):** die
+>   AKTIVE A6-Partnerschaft (Distributor↔Winery) ist die EINE Quelle.
+>   Die produktschluessel-tragenden Buecher tragen sie NICHT: eine
+>   D2D-Listing-Zeile beweist einen Einkauf, keine Vertretung — und
+>   eine Own-Label-Zeile wuerde den Erzeuger hineinschmuggeln, den das
+>   Own Label gerade verbirgt. Praesentierte Weine je Winery sind
+>   productId-Referenzen in DEREN Katalog (`partnerWinesPool`).
+>   `represented at booth` und `personally attending` sind zwei
+>   ausdrueckliche, getrennt gesetzte Angaben — beide Richtungen per
+>   Gegenmutation gesichert, und die Fixture traegt den Fall
+>   „vertreten OHNE anwesend" (Weingut Schmitt auf FP-9402).
+> - **Form der kanonischen Page, gemessen:** Participations sind
+>   live erzeugte Records — das Slug-Muster (eine Datei je Datensatz)
+>   kann sie nicht adressieren; der eine dynamische Praezedenzfall ist
+>   der Query-Parameter (B7 `?grape=`, Profile `?preview=embed`). Also
+>   `bottle-lobby-fair-participation.html?id=FP-…` als Stellvertreter
+>   der echten Route `/fair-participation/{id}`. JEDER geschlossene
+>   Fall (unbekannte Id, keine/beendete Participation, unveroeffentlichte
+>   Edition) antwortet mit EINEM neutralen Satz — welcher Faktor fehlt,
+>   verraet die Seite nicht.
+> - **Lifecycle, am Bestand gemessen (A21.6):** ein `status` + embedded
+>   append-only `history`, eine Aktfunktion je Akt (A20.3-Form).
+>   `withdrawn` (Aussteller, Grund OPTIONAL — A16.9/D28) und
+>   `rescinded` (Organizer, Grund PFLICHT — A19.3/`revoked`-Praezedenz)
+>   sind zwei Akte, nie ein Sammelzustand; `withdrawn` laesst die Tuer
+>   offen (dieselbe Zeile laeuft mit frischem `created` weiter, D28),
+>   `rescinded` hat geantwortet. Kein Akt beruehrt den
+>   Admission-Record; Content-Edits schreiben keine History (die
+>   A19.3-Basics-Disziplin), Anlage/Platzierung/Beendigung schon.
+> - **Inventar-Pflege entschieden (A21.5, die in A20.9 offene Frage):**
+>   Ids stabil; Namen/Labels editierbar; belegter Stand nicht
+>   loeschbar; ein von einer RUHENDEN Participation referenzierter
+>   Stand ebenfalls nicht (D29 — das Record behaelt seine History);
+>   Halle nur leer loeschbar; jede Ablehnung atomar. Belegung und
+>   Zaehler leben NUR als Ableitung (`fairStandOccupant`, die
+>   Belegungssicht rechnet live).
+> - **Fixtures:** FE-7103 (Sommer-Edition, EINTAEGIG — endDate null an
+>   echten Daten), FH-9202/FB-9303/FB-9304, FA-9105 (Hawesko extern
+>   zugelassen auf FE-7103 — der einzige Distributor, dessen gemessene
+>   Herkunft MEHRERE Wineries traegt), FP-9401 (Lefèvre, Winery-Fall)
+>   und FP-9402 (Hawesko, Vertretungsfall). Das saubere Paar der
+>   Live-Akte bleibt erhalten: Cantina Rossi und Hawesko haben auf der
+>   OPEN-CALL-Edition FE-7101 weiterhin keine Fixture-Zeile.
+> - **C8 gemessen, nicht vorhergesagt:** 39 von 40 Bestandssammlungen
+>   hashen identisch; `fairEditions` bewegt den Print (5d7845b2 →
+>   9c98d288) NUR durch FE-7103s zufaellige Feldkombination (endDate
+>   null neben gesetzter URL) — die Durchgang-12-Lehre woertlich; die
+>   Zeilen in `fairHalls`/`fairStands`/`fairAdmissions` sind die
+>   D2D-Klasse und bauartbedingt unsichtbar. **Bump 9 → 10**, im
+>   Fixture-Commit, Begruendung am `VERSION`. Der reine Datei-Umzug
+>   selbst hat KEINEN Print bewegt (Form unveraendert).
+> - **Harness-Heimat:** `tests/fair-participation.js` (FP-1..FP-14,
+>   98 Checks, 28 Gegenmutationen — eigener Chapter, eigene Heimat wie
+>   A18/A19/A20). Die PERSISTENZ-Haelfte von FP-13 liegt GEMESSEN in
+>   `tests/persistence.js` §10: dessen Kill-Switch-Scan laesst keinen
+>   anderen Harness mit lebendem Store laufen. `tests/fairs.js` §9
+>   zaehlt jetzt VIER gesperrte Zielnav-Zeilen („Participation Pages"
+>   ist live, auf der Editionsakte); Inventar-Loeschknoepfe heissen
+>   bewusst „Remove", damit §3s „kein Delete auf My Fairs"
+>   (Serien/Editionen) unangetastet weiter gilt.
+> - **Browser-Abnahme am finalen Stand ueber `tests/serve.js`, klickend
+>   per DevTools-Elementklicks** (die O3-Bauart; Injection-Screenshot
+>   lief am ~1-MB-Dokument in den bekannten Timeout, EIN Versuch —
+>   `transferSize` vorher 1.104.226 ≈ dekodiert, frisch; Dialog-Stubs
+>   fuer prompt/confirm wie in O3): Winery bewirbt sich → Organizer
+>   laesst zu → Winery legt Participation an, pflegt Beschreibung, EINEN
+>   Anwesenheitstag und zwei eigene Weine per productId-Checkboxen
+>   (kein Freitextfeld existiert) · Hawesko: Anlage, Vertretung Henri
+>   Dubois (`represented at booth` gesetzt — `personally attending`
+>   bleibt sichtbar ungesetzt) und Bodegas Ruiz (umgekehrte Richtung
+>   zuerst — auch sie zieht nichts nach), Weine je Winery ·
+>   Restaurant/Retail: kein Block; nicht-zugelassene Faelle: kein
+>   Anlageweg (UI und Datenpfad) · Organizer: Doppelbelegung A-01 mit
+>   B12-Meldung refusiert, A-02 zugewiesen, Belegungssicht „3 active ·
+>   2 of 2 occupied" abgeleitet; kein Weg zu Ausstellerinhalten ·
+>   Inventar: Rename bei stabiler Id, belegter Stand und nicht-leere
+>   Halle mit Meldung refusiert, kein halber Zustand · DREIFACH-GATE
+>   als vier Faelle: (a) Schmitt admitted ohne Participation → neutral,
+>   nirgends genannt; (b) FP-9405 aktiv auf der DRAFT-Edition (Einladung
+>   ueber Kandidatensuche, Accept, Anlage) → neutral; (c) FP-9403/9404
+>   voll gerendert mit ECHTEN Links (Winery-Profil per Klick geladen,
+>   Wein-Artikel verlinkt), Distributor nach Winery gruppiert mit den
+>   zwei getrennten Aussagen; (d) keine Bewerber-/Einladungsnamen ·
+>   PERSISTENZ-DURCHREICHUNG: Dashboard-Aenderung → gewoehnlicher
+>   Heartbeat-Save (v10-Snapshot gelesen) → Page in ZWEITEM Tab
+>   gewoehnlich geoeffnet zeigt den AKTUELLEN Record (Beschreibung,
+>   Tag, Stand, umbenannte Halle); danach save/reset/start auf der
+>   Page tot, Storage byte-identisch · Ruecknahme (Hawesko, FP-9402)
+>   UND Aufhebung (Organizer, FP-9401 mit Grund) an ZWEI getrennten
+>   Participations: Staende frei (abgeleitet, standId bleibt am
+>   Record), Pages neutral, beide Admissions unveraendert `admitted` ·
+>   Wine-Shows-Seite und Guide `#events` ohne jeden Fair-Inhalt ·
+>   Stichproben: Fans 3, Portfolio 15, WS-2604 planning/offen · Reset
+>   per Knopf, Fixtures pristine nachgemessen.
+>
+> **Was Durchgang O4 bewusst NICHT gebaut hat, mit Ziel-Durchgaengen:**
+> oeffentliches Fair-Verzeichnis, Wine-Guide-/Eventkarten, Filter,
+> allgemeine Auffindbarkeit und Ticket-Link-Rendering (**O5** — baut
+> jetzt auf der BEREITS VERSCHOBENEN Quelle und dem bestehenden
+> Hydrationsweg auf; die kanonische Zielseite existiert) · B2B-Termine,
+> Slots, Follow-ups — der O7-Terminweg adressiert ausschliesslich den
+> AUSSTELLENDEN Distributor, nie eine vertretene Winery (**O7**) ·
+> Organizer-Profil & Follow (**O9**) · Opportunities (**O10**) ·
+> Fair-Benachrichtigungen & Organizer-Kommunikation — die Page ist das
+> Linkziel (**O11**) · Agenda (**O12**) · Hero-Medien (eigener
+> Durchgang) · Cross-Tab-Live-Nachfuehrung der oeffentlichen Page
+> (bewusst NICHT gebaut — Reload ist der Weg; der bestehende
+> storage-Event-Mechanismus haengt an start() und damit am
+> Schreibpfad) · vertretene Wineries als eigene Aussteller,
+> Subaccounts oder Termininhaber (ausgeschlossen, A21.3).
 
 ---
 
