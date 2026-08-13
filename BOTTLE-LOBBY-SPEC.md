@@ -1943,11 +1943,12 @@ stays written down so that no stand-in gets modelled in the meantime:
   and the booking act are for entitled members. What was discussed, who the
   counterpart was and the full calendar belong to the two sides of each
   appointment and to nobody else.
-- Explicitly out of scope HERE — narrowed by O2 (**D45**): managing a fair
-  series, its edition basics and its edition lifecycle is now **in** scope
-  and lives in **A19**; still out are exhibitor recruiting, admission,
-  participations, halls and stands, appointments, agenda, ticket checkout
-  and every further fair feature — each in its own later pass. The
+- Explicitly out of scope HERE — narrowed by O2 (**D45**) and again by O3:
+  managing a fair series, its edition basics and its edition lifecycle is
+  **in** scope and lives in **A19**; exhibitor recruiting, admission and
+  the hall/stand inventory are **in** scope and live in **A20**; still out
+  are participations, appointments, agenda, ticket checkout and every
+  further fair feature — each in its own later pass. The
   existing Vinitaly award strings stay what they are — recognition (A5), not
   participation — and nothing is migrated into fair records.
 - **A ProWein participation is never modelled as a member event of a winery** —
@@ -4269,10 +4270,11 @@ Two consequences inside this section:
 > extensible partner category**, never by a fifth trade role. This chapter is
 > the smallest coherent foundation: the category, its capability model, the
 > workspace separation, the verification semantics and the follow semantics.
-> The fair model's series/edition foundation is now **A19**; exhibitor
-> recruitment, stands and halls, participation pages and schedules follow in
-> their own passes, and A16.8's external-fair block keeps guarding what A19
-> does not yet cover.
+> The fair model's series/edition foundation is now **A19**, exhibitor
+> recruiting, admission and the hall/stand inventory are **A20**;
+> participation pages and schedules follow in their own passes, and
+> A16.8's external-fair block keeps guarding what A19/A20 do not yet
+> cover.
 
 ### A18.1 A separate category, not a fifth trade role
 
@@ -4444,10 +4446,11 @@ surface offers *Request Partnership*.
 > A18/D44 gave an owner: the durable fair brand as a **Fair Series**, the
 > concrete run as a **Fair Edition**, ownership by the verified organizer
 > workspace, the three fair types, the lifecycle with its two publication
-> preconditions, and the external ticketing link. Everything beyond this —
-> recruiting, admission, participations, halls and stands, appointments,
-> agenda, the public directory — stays in its own later passes, and A16.8's
-> external-fair block keeps guarding those parts against stand-ins.
+> preconditions, and the external ticketing link. Recruiting, admission
+> and the hall/stand inventory are **A20** (pass O3); everything beyond —
+> participations, appointments, agenda, the public directory — stays in
+> its own later passes, and A16.8's external-fair block keeps guarding
+> those parts against stand-ins.
 
 ### A19.1 Series and Edition — two records, one owner
 
@@ -4566,10 +4569,13 @@ link on the public surfaces.
 Deliberately **not** here yet, each with its reason: a `year` column
 (derived from `start_date`, invariant 7) · a stored display title (derived
 as series name + year — storing one would copy the series name, invariant
-1) · halls, stands, floor space (O3) · exhibitor and participant counts
-(derived from O4's participation rows once they exist) · appointment slots
-(O7) · agenda (O12) · hero media (its own pass) · any ticket price or
-checkout field (excluded by decision — the external link is the maximum).
+1) · halls, stands, floor space (built in O3 — **A20.9**, as their own
+edition-owned records, never fields here) · exhibitor and participant
+counts (derived from O4's participation rows once they exist) ·
+appointment slots (O7) · agenda (O12) · hero media (its own pass) · any
+ticket price or checkout field (excluded by decision — the external link
+is the maximum). Since O3 the edition additionally carries
+`exhibitor_call_open` (A20.5).
 
 ### A19.7 Invariants
 
@@ -4589,9 +4595,13 @@ checkout field (excluded by decision — the external link is the maximum).
   The fair days are a valid span — `end_date` on or after `start_date`, or
   NULL for one day — checked before any write, so a refused act leaves no
   partial change.
-- **FS-6 — drafts are invisible outside the owning workspace**; published
-  editions of all three types are publicly findable by default; findability
-  grants no action.
+- **FS-6 — drafts are invisible outside the owning workspace, with ONE
+  narrow exception (A20.8, D46):** the concretely addressed recipient of an
+  **open** recruiting invitation sees the decision-minimum edition facts
+  through the authenticated invitation view — never the draft surface,
+  never a directory, and the view falls with decline or revocation.
+  Published editions of all three types are publicly findable by default;
+  findability grants no action.
 - **FS-7 — the ticketing link is external.** One nullable URL, maintained
   in the edition basics; no checkout, and no public rendering before O5.
 
@@ -4614,6 +4624,367 @@ bars (date change after publication, reschedule or cancellation without a
 reason, deletion), draft absence outside the workspace, published
 findability per fair type, the ticketing link stored but not publicly
 rendered, and unchanged samples of the four trade dashboards.
+
+---
+
+## A20. Fair Exhibitor Recruiting, Admission, and Halls & Stands
+
+> Serge's decision of 13 Aug 2026 — fair-track anchor **O3**. One canonical
+> application/admission workflow per Fair Edition, the organizer's targeted
+> recruiting, the narrowly scoped candidate read path, and the minimal
+> hall/stand inventory. Everything is owned and managed by the verified
+> organizer workspace (A18, D44); none of the four trade roles creates, owns
+> or hosts any of it (A19, FS-2). Participations and participation pages
+> (O4), the public directory and its cards (O5), appointments (O7) and the
+> agenda (O12) stay in their own passes — A16.8's external-fair block keeps
+> guarding them.
+
+### A20.1 The admission record — one workflow, three entrances
+
+**Who may exhibit at a canonical fair: a Winery or a Distributor trade
+workspace, and nobody else.** A restaurant or retailer visits a fair to buy —
+its presence is visitor business, which this model does not manage; a
+platform partner neither buys nor sells wine (A18.1) and therefore has
+nothing to exhibit. Neither can apply and neither can be invited.
+
+**A distributor is admitted as ONE exhibiting organisation.** No application
+in the name of individual represented wineries, no sub-accounts, no
+represented-winery lists, no presented products — which wineries and wines a
+distributor's stand shows is the content of its O4 participation, not of its
+admission. **Deliberately unlike A16.4, no partnership precondition:** a Wine
+Show exhibitor sells on the *host distributor's* behalf, which is what an A6
+partnership authorises; a fair organizer is not a trade party at all (A18.1
+— no A6 workflow), so there is no partnership an admission could rest on.
+Recruiting the open market is what a fair is *for*.
+
+One record carries the whole workflow: **one `fair_admissions` row per
+(edition, organisation)** — never a second parallel procedure for the same
+pair. Three entrances write that same record, distinguished by `source`:
+
+- **`application`** — the organisation submits itself, against an open
+  exhibitor call (A20.5). Only the organizer's **explicit admission** turns
+  it into the final result.
+- **`invitation`** — the organizer extends a concrete admission offer. Only
+  the recipient's **explicit acceptance** turns it into the final result.
+- **`external`** — the organizer records an admission that was already
+  agreed by both sides outside Bottle Lobby, with a **mandatory source,
+  actor and date** of the external agreement. Same record, same final
+  result, fully audited — the entrance for reality, never a quiet
+  permission bypass: the row says in writing that the platform did not
+  witness the agreement, and who did.
+
+All three end in **the same single final state, `admitted`** — and that
+state is precisely one thing: **the entitlement to create this
+organisation's O4 Fair Participation.** It creates nothing else (A20.2).
+
+### A20.2 Acts and states — distinct acts, one word per state
+
+The A16.14c vocabulary is a *pattern* here, not an import: resting states
+with their reason instead of deletion (D29), never two words for one state
+(D26) — **and never one word for two acts.** The acts, each with its actor:
+
+| Act (history row) | Actor | Resulting state |
+|---|---|---|
+| `applied` | the organisation | `applied` (open) |
+| `invited` | the organizer | `invited` (open) |
+| `admitted` — organizer admits an application | the organizer | **`admitted`** |
+| `accepted` — recipient accepts an invitation | the organisation | **`admitted`** |
+| `recorded_external` — externally agreed admission recorded | the organizer, naming external source, actor and date | **`admitted`** |
+| `rejected` — organizer rejects an application | the organizer | `rejected` |
+| `declined` — recipient declines an invitation | the organisation | `declined` |
+| `withdrawn` — organisation withdraws its own application | the organisation | `withdrawn` |
+| `revoked` — organizer withdraws an open invitation | the organizer | `revoked` |
+
+**`admitted` is one state reached by three distinct acts**, and the history
+row keeps the acts apart — the A16.14c sentence ("`accepted` is the act,
+never a second status") applied in both directions. The four negative acts
+are four separate resting states because they are four different facts with
+three different actors: an organizer refusing an applicant, a recipient
+refusing an offer, an applicant leaving of its own accord, an organizer
+retracting its own offer. None of them collapses into a collective
+"closed", and none is a deletion.
+
+**Which resting states rest for good, within one edition:** `rejected` and
+`declined` have *answered* — no further act on the row in this pass (D28's
+distinction: only leaving of one's own accord may be re-approached without
+ceremony). `withdrawn` and `revoked` leave the door open: a fresh `applied`
+(call permitting) or `invited` act continues the SAME row — one workflow
+row per pair, its history unbroken. `admitted` is final; taking an
+admission back is not modelled in this pass (nothing invented).
+
+### A20.3 One stored truth — status plus append-only history
+
+Measured against the existing model and decided: **the canonical current
+state is the row's single `status` field, and the append-only `history` is
+the audit of the acts — never a second status copy.** Every state-bearing
+record in this model has that shape — `fair_editions` (A19.3),
+`wine_show_exhibitors` (A16.9), `event_participants` — and every reader is
+a plain renderer; deriving the current state from the act log alone would
+put a fold-the-log obligation into every consumer, a second convention for
+one question (the D32 shape sideways). The two cannot drift because **one
+function writes both in the same act**, a refused act writes neither, and
+the harness holds row and history consistent. Reasons live **only** in the
+history row — the A19.3 sentence verbatim: the row IS the record of the
+reason; a reason field beside it would be a copy (invariant 1). Nothing is
+ever deleted or rewritten.
+
+### A20.4 Reasons — measured per act, no blanket rule
+
+The positive final acts — `admitted`, `accepted`, `recorded_external` —
+**carry no mandatory reason.** Nobody owes a justification for a yes. Per
+negative act, each measured against its closest existing pattern:
+
+| Act | Reason | Measured against |
+|---|---|---|
+| `rejected` | **mandatory** | A16.14c — a show application is declined *"with a reason"*; D29's argument holds one to one: an applicant told only "no" stops asking, and the trade loses exactly the signal recruiting exists to create |
+| `declined` | optional | A16.4 — declining an exhibitor invitation carries no mandatory reason anywhere in the Bestand; an invited house owes no justification for saying no thanks |
+| `withdrawn` | optional | `withdrawn` in A16.9 / D28 carries none — leaving of one's own accord explains itself |
+| `revoked` | **mandatory** | A19.3 — an organizer retracting something another party may already be relying on states why (reschedule/cancel precedent); the record must say why the invitation view (A20.8) fell |
+
+### A20.5 The exhibitor call — explicit per edition, no deadline field
+
+**No organisation may apply to every edition by default.** The organizer
+explicitly opens applications for one concrete **published** edition:
+`exhibitor_call_open` (bool, the `wine_shows.applications_open` precedent,
+A16.9). An application against a closed call, an unpublished or a cancelled
+edition is refused with a message (B12). **Closing the call stops new
+applications and touches nothing** — no existing row is changed, no state
+is rewritten, nothing is deleted. **A targeted invitation is independent of
+the call** — possible without one, before one, after one has closed.
+
+**No application deadline field — measured, not assumed.** The wine-show
+deadline exists for A16.14c's *planning listing*, a public surface that
+promises "apply until…". O3 has no public listing surface at all — the
+directory and its cards are O5 — so nothing in the current spec, HANDOFF or
+repo needs a stored date here. A field on stock would be invariant 7's
+stale answer waiting to happen. If a later pass builds a surface that makes
+a deadline a promise to somebody, that pass brings the field.
+
+### A20.6 Where an organisation meets the workflow — measured entry, no nav rebuild
+
+**Measured (B8): all four trade roles carry Events → Wine Shows · My
+Events; no trade-side fair nav entry exists**, and no trade renderer reads
+a fair record. The precedent is A16.4: open calls already reach producers
+*"under Wine Shows in their dashboard"*. O3 follows it with the smallest
+real, authenticated entry: **one bounded fair-recruiting block on the
+existing Events → Wine Shows sub-page, for Winery and Distributor only** —
+open exhibitor calls of published editions, the organisation's own
+invitations (A20.8), and its own workflow rows with their state. No new
+nav item, no public fair directory, no Wine Guide card, no participation
+page (O5/O4 untouched). Restaurant and Retail get nothing — they are not
+eligible, and an entry point that only ever refuses would be noise. **The
+block never borrows the Wine Show's dress:** a canonical fair is
+organizer-run and carries no Bottle Lobby release (A16.1's guarantee is
+not asserted — the ME-3 argument, applied to fairs).
+
+### A20.7 The candidate read path — a platform-fixed allowlist, owned by nobody
+
+The organizer may search for candidate exhibitors — **over an own, narrow
+read path, and nothing else.** No trade cockpit, no reuse of a private
+trade resolver with surplus fields: where an existing reader carries more
+than this path may show, a narrower one is built, never an existing one
+widened.
+
+- **The allowlist is a platform security boundary, not an organizer
+  record.** It is named here and fixed in platform code as a constant — a
+  server-side field list in the real build. It is NOT per-edition
+  configuration, NOT a stored record any workspace owns, creates or edits.
+- **No workspace can extend or alter it** — not by form, not by input, not
+  by payload, not by a stored field, and **not the entitled organizer of
+  the edition either.** A write attempt against the allowlist definition is
+  refused (B12). The organizer's ownership covers his editions, their
+  recruiting and their hall/stand inventory — **the boundary of the read
+  path itself is platform property**, exactly as the reach taxonomy
+  (A16.14b) is defined once and owned by no host.
+- **The allowlist is explicit, never "everything minus a blocklist".** A
+  private profile property or trade fact added elsewhere NEVER appears in
+  this search by side effect — it appears when, and only when, a deliberate
+  platform decision adds it to the list.
+- **What it serves:** winery and distributor organisation facts and product
+  facts from sources already public or expressly released for this search —
+  name, role, region, city, and the organisation's publicly catalogued
+  wines. **Match reasons come from those facts directly** ("lists Grillo
+  Sicilia DOC"), and from nothing else.
+- **No score, no opportunity, no new matchmaking** — A8 stays untouched;
+  simple search and filtering replaces no matchmaking system. No private
+  portfolio, follow, partnership, request, sales or matchmaking data. No
+  new trade role, no partnership.
+
+### A20.8 The draft-edition invitation view — FS-6 replaced on purpose (D46)
+
+Recruiting happens while an edition is being planned — a targeted
+invitation before publication is the normal case, and an invitation whose
+recipient cannot see date, place and type is not decidable. FS-6 as first
+written was absolute; **this narrowly scoped view deliberately replaces
+that rule (D46, FS-6 reworded in A19.7):**
+
+- The draft edition itself stays private and unfindable. Directory,
+  search, public surfaces: nothing.
+- **Only the concretely addressed recipient** of an **open** invitation
+  gets an authenticated view of the decision-minimum edition facts —
+  series name, dates, city and venue, fair type, description. Never the
+  organizer's draft surface, never a publication, never a directory entry.
+- Decline, revocation — or an expiry, once a later pass introduces one —
+  removes the entitlement ground; the view falls with it. What remains is
+  the organisation's own admission row: its own record of its own
+  procedure.
+- **Applicants, invitees and rejected candidates are named on no public
+  surface.** O3 has no public surface at all; O5 inherits this rule.
+
+### A20.9 Halls & stands — edition inventory, no occupancy
+
+Halls and stands belong to the **concrete Fair Edition** — not to the
+series, not to any trade organisation — and are managed only by the owning
+organizer workspace:
+
+    fair_halls  ( id, edition_id FK → fair_editions, name )
+    fair_stands ( id, hall_id FK → fair_halls, label )
+
+That is the measured minimum, and each absence is a decision: **a stand
+reaches its edition through its hall** — an `edition_id` on the stand row
+would be a copy (invariant 1). **No occupant or booking field on either
+row, ever:** the exhibitor↔stand connection is structurally the O4
+participation row — hall, booth and days live there (A16.8) — so occupancy
+is **derived from participation rows from O4 on** (invariant 7), and O3
+stores no exhibitor-stand assignment anywhere. No graphical floor plan. No
+copied fair, organizer or member data on hall or stand rows. Exhibitor and
+participant counts stay derived for O4 and are not stored as O3 helper
+values. Editing or removing inventory is not modelled in this pass:
+whether a stand may vanish is exactly the question O4's occupancy makes
+real, and answering it early would prejudge that pass.
+
+### A20.10 What none of this creates
+
+An invitation, an application, a visibility or an admission **creates no
+Fair Participation, no partnership, no order, no member event and no
+listing** (the WS-5 spirit). The admission is the entitlement for O4 — the
+participation row is created there, by the admitted organisation, never as
+a side effect here.
+
+**No waitlist — neither stored nor decided.** The Bestand holds
+`waitlisted` exclusively as a *computed display state* at member events
+(A16.5, A16.8, A16.9, D28), derived from request order against a capacity.
+O3 owns no occupancy and no capacity from which a waitlist could derive,
+and an organizer decision named "waitlist" would be a stored ranking
+promise with no arithmetic behind it. There is no such state and no such
+act.
+
+**Recruitment invitations neither consult nor extend
+`communication_suppressions`.** Measured: the register's three kinds are
+all campaign-scoped — `campaign_kind` is `announcement`, `reminder`, or
+NULL meaning *both campaign kinds* (A16.9, A16.14e) — so no independently
+valid general block exists in the Bestand, and there is nothing to
+respect. A recruitment invitation is a targeted business act (the
+A16.14e *Direct Invitation* class), not a campaign: no new suppression
+kind, no campaign-resolver extension, no broadcast, no send snapshot
+apparatus — O11 and D10 are neither anticipated nor bypassed. An
+announcement unsubscribe or preference never blocks a targeted
+recruitment invitation. **Dedupe:** never a second OPEN invitation to the
+same organisation for the same edition — the one-row-per-pair rule makes
+that structural.
+
+### A20.11 Permissions in the data core
+
+Write paths check the acting workspace — in the data layer, not only in
+what is rendered (B12: a foreign act is refused **with a message**, never
+silently and never merely unrendered):
+
+- the organizer manages only his **own** editions' recruiting and
+  hall/stand inventory (the `fairSeriesManagedHere` discipline, FS-1);
+- an organisation applies only as **itself**;
+- only the **addressed recipient** answers its invitation;
+- **nobody writes the allowlist** (A20.7) — reading fields outside the
+  fixed definition or writing to it is refused for every workspace,
+  including the entitled organizer.
+
+### A20.12 Tables
+
+    fair_admissions ( id, edition_id FK → fair_editions,
+                      org_type enum('winery','distributor'),
+                      org_id,                  -- the trade organisation
+                      source enum('application','invitation','external'),
+                      status enum('applied','invited','admitted','rejected',
+                                  'declined','withdrawn','revoked'),
+                      -- external entrance only, all three mandatory there:
+                      external_source, external_actor, external_at )
+    fair_admission_history ( admission_id FK, at, actor,
+                      action enum('applied','invited','admitted','accepted',
+                                  'recorded_external','rejected','declined',
+                                  'withdrawn','revoked'),
+                      reason )   -- mandatory for rejected/revoked; append-only
+
+Deliberately **not** here, each with its reason: an application deadline
+(A20.5) · a waitlist state (A20.10) · represented wineries or presented
+products on an admission (O4) · an occupant field on halls or stands
+(A20.9) · stored exhibitor counts (invariant 7) · a reason column on the
+admission row (the history row is the record, A20.3).
+
+### A20.13 Invariants
+
+- **FR-1 — one workflow row per (edition, organisation).** Never a second
+  parallel procedure for the same pair; a second open invitation or
+  application is refused.
+- **FR-2 — exhibiting organisations are Winery and Distributor trade
+  workspaces only**, and a distributor is admitted as ONE organisation.
+  Restaurant, Retail and partner workspaces can neither apply nor be
+  invited.
+- **FR-3 — three entrances, one record, one final state.** Application,
+  invitation and external recording end in the same single `admitted`;
+  the acts stay distinct in the history; the external entrance carries
+  source, actor and date or is refused whole — it is never a permission
+  bypass.
+- **FR-4 — one stored status, one append-only history.** No deletion, no
+  second status source, no contradiction between row and history; a
+  refused act writes nothing.
+- **FR-5 — reasons per the measured table (A20.4).** Mandatory on
+  `rejected` and `revoked`; never demanded on `admitted`, `accepted`,
+  `recorded_external`; optional on `declined` and `withdrawn`.
+- **FR-6 — admission entitles, creates nothing.** No participation,
+  partnership, order, member-event or listing row arises from any
+  recruiting act.
+- **FR-7 — applications need the open call of a published edition.**
+  Closing the call refuses new applications and alters no existing
+  record; invitations are call-independent.
+- **FR-8 — no waitlist**, stored or decided.
+- **FR-9 — the candidate read path serves the platform-fixed allowlist
+  and nothing else.** The allowlist is platform property — no workspace
+  owns, stores, extends or edits it, the entitled organizer included; a
+  new private trade fact never enters the search without being expressly
+  added to the list; match reasons come from allowlist facts; no score,
+  no opportunity, no matchmaking, no private trade data.
+- **FR-10 — halls and stands are edition inventory.** Minimal fields, no
+  occupant or booking field, no copied data, no stored counts; occupancy
+  derives from O4 participation rows.
+- **FR-11 — the draft invitation view is the narrow FS-6 exception
+  (D46).** Only the addressed recipient, only while the invitation is
+  open, decision-minimum facts only; the view falls with decline or
+  revocation; applicants, invitees and rejected candidates are publicly
+  named nowhere.
+- **FR-12 — recruiting neither consults nor extends the suppression
+  register**, and the campaign resolver is untouched.
+
+**Prototype blueprint:** `fairAdmissions` (+ `fairAdmissionSeq`) with the
+append-only `history` embedded per row (the `fairEditions.history`
+pattern), `fairHalls` / `fairStands` (+ seqs), `exhibitorCallOpen` on the
+edition row — all in `bottle-lobby-dashboard.html` beside `fairEditions`;
+O5 moves what its public surfaces first read into
+`assets/bottle-lobby-data.js` (a move, never a copy). One act function per
+act, each writing row + history together and gated by
+`fairSeriesManagedHere()` on the organizer side and the acting trade
+entity on the trade side. `FAIR_RECRUITING_READ_FIELDS` is the deep-frozen
+allowlist constant; `organizerCandidateSearch()` builds every result
+exclusively from it. The organizer surface is the **Exhibitor Recruiting**
+and **Halls & Stands** sections of the edition detail inside **My Fairs**
+(their two former locked target-navigation rows leave the locked list);
+the trade surface is the fair-recruiting block on the Events → Wine Shows
+sub-page of winery and distributor (A20.6).
+
+**Harness home:** `tests/fair-recruiting.js` — its own file beside
+`tests/fairs.js`, because A20 is its own chapter with its own invariants,
+as A18 and A19 each got their own home. FR-1..FR-12 with effective
+counter-mutations, plus unchanged samples of the four trade dashboards and
+the O2 lifecycle; `tests/fairs.js` §9's locked-navigation count follows
+the two activated rows.
 
 ---
 
@@ -6199,6 +6570,7 @@ mechanism itself stores.
 | D43 | **The announcement audience as first written: a Community Announcement "goes to a reach segment (A16.14b)"** — A16.14b listed campaigns among the features that resolve against the reach taxonomy, and A16.8 said *"the follow graph carries the announcement further"*, so an announcement could have addressed `public`, `members`, a whole role group, or hopped beyond the host's own fans | **A16.14e / A16.14b / A16.8** — an announcement goes to the host's **own fans** (the incoming edges of his A7 graph), optionally plus his **own active partners** (A6), and to nobody else; outgoing edges, role and member groups, and the community or partners of a participant, winery, exhibitor or venue are structurally out; reach keeps deciding who may *find* the carrier and never feeds the audience; every recipient must still pass C9's visibility | Serge's decision, 10 Aug 2026. Reach answers *"who may find this?"* — a permission the reader exercises; an audience answers *"whom may I address?"* — an act the sender performs, and A7 had already said both that a follow is not marketing consent and that no foreign graph resolves into a recipient list for a third party. Reading the audience off the reach taxonomy collided with its own neighbours: `public` and `members` would have made a campaign a broadcast over people with no relation to the sender, and WS-3 — reach falls away from `published` — would have left a published show with **no defined audience at the exact stage where announcing matters most**. The incoming follow edge is the one relation where the recipient himself chose the sender; that is why it, and not the taxonomy, is the audience. |
 | D44 | **A16.8's external-fair host rule as first written: "no member is its host"** — the canonical fair (`events.event_kind = 'external_fair'`) simply had no host, and nothing in the model could own or manage it | **A16.8 / A18** — precise instead of blank: **none of the four trade roles is the host** of a canonical fair; its **owner and manager is a verified organizer workspace (A18)**, a platform partner outside the trade enumeration. The ProWein rule — a fair participation is never modelled as a member event — stands word for word | Serge's V4 architecture decision, 10 Aug 2026. The first wording was written (Durchgang 9) when nobody *could* be the host: its job was to block the stand-in — a fair modelled as some member's event — and it did that by leaving the fair ownerless. With A18 the owner exists as a category, and the blank wording would have blocked the wrong party: an organizer is a platform member in the ordinary sense of the word, so *"no member"* read literally would exclude exactly the workspace the fair model is being built for. The precision keeps the protective half (no trade role ever hosts a canonical fair) and adds the ownership half instead of leaving it to inference. Nothing else in the block moved — participation rows, booth appointments and the out-of-scope list are untouched. |
 | D45 | **The external-fair sketch's storage and scope as first written** — the canonical fair parked as an `events` row via `events.event_kind = 'external_fair'` (A16.8's first bullet and A16.9's `events` DDL), and A16.8's blanket sentence *"Explicitly out of scope: running a fair, ticketing, organiser management"* | **A19 / A16.8 / A16.9** — the canonical fair is its own record pair, **`fair_series` + `fair_editions`**, owned and managed by the verified organizer workspace (A18, D44); `events` carries member events only and `event_kind` is gone. The out-of-scope sentence is **narrowed, not deleted**: managing a series, its edition basics and its edition lifecycle is in scope (A19, pass O2); exhibitor recruiting, admission, participations, halls and stands, appointments, agenda and ticket checkout stay out until their own passes. Participation rows, the appointment separation, the provenance rule and the ProWein ban stand word for word | Serge's O2 decision, 10 Aug 2026 — one coherent replacement with two halves. The `event_kind` sketch predates A18: with no owner category in the model, an `events` row was the only place a fair could live, and its job was to block the stand-in. With an owning organizer workspace the fair is not anybody's event — a durable brand (series) with concrete runs (editions) is a two-level shape one `events` row cannot carry, and leaving the enum standing would have invited exactly the substitute construction the block exists to forbid. The blanket out-of-scope sentence, written to stop premature fair features, had started to forbid the pass that builds the real thing; the narrowing keeps its protective half — everything beyond series/edition management stays out — while admitting the canonical core it was guarding the door for. |
+| D46 | **FS-6 as first written, absolute: "drafts are invisible outside the owning workspace"** — no exception of any kind; before publication, no workspace but the owner could see any fact of an edition | **A19.7 FS-6 / A20.8** — one narrow, deliberate exception: the concretely addressed recipient of an **open** recruiting invitation sees the decision-minimum edition facts (series name, dates, city and venue, fair type, description) through an authenticated invitation view. The draft itself stays private and unfindable for everyone else; the view is never the organizer's draft surface, never a publication, never a directory entry; and it falls the moment the invitation stops being open — decline, revocation, or a later-pass expiry | Serge's O3 decision, 13 Aug 2026. FS-6 was written in O2, when no act existed that could address anybody before publication — its job was to keep an unfinished edition out of every foreign view, and absolute was the cheapest correct form. O3 introduces the targeted invitation (A20.2), and recruiting happens precisely while an edition is being planned: an invitation whose recipient cannot see date, place and type is not decidable, and the two ways around that would both be worse — publishing early makes a public act out of a recruiting need and drags the publication preconditions (FS-3) into it, and inviting blind pushes the edition facts into the invitation text as a copy (invariant 1). The exception is deliberately narrower than publication on every axis: one addressed recipient instead of the public, decision-minimum facts instead of the record, entitlement-bound instead of durable. The protective half of the old rule — non-addressed members and the public see nothing — stands word for word. |
 ---
 
 # APPENDIX E — HOW THIS DOCUMENTATION IS ORGANISED
