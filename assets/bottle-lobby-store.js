@@ -321,8 +321,22 @@ window.BLStore = (function () {
      fixture changed (all 40 fingerprints measured identical); the
      STORED FORMAT did, and a v10 snapshot carries no schema record,
      so the bump is the honest lever rather than leaning on the new
-     check to reject what the old format cannot say. */
-  var VERSION   = 11;
+     check to reject what the old format cannot say.
+
+     12 — O5, and it is the D2D class in its plainest form: the pass
+     adds ROWS to collections that were already registered and whose
+     shape does not move — a second fair series (FS-7002), three
+     published editions under it (FE-7104/7105/7106), the second
+     brand-review row (RVW-3006), and the three counters stepped past
+     them. Guard 2 fingerprints SHAPE, so it sees exactly none of that
+     by construction, and a returning v11 visitor would otherwise keep
+     a snapshot in which the consumer and hybrid editions, their two
+     new cities and the edition with no ticketing link simply do not
+     exist — while `fairEditionSeq` reissues ids that now do. Measured,
+     not predicted: the fingerprints were compared before and after and
+     all 40 are identical, which is precisely why the bump is the only
+     lever left. */
+  var VERSION   = 12;
   var DEBOUNCE  = 200;   /* ms after the last event before a write */
   var HEARTBEAT = 2000;  /* ms between "does storage still match?" checks */
   var POLL      = 500;   /* ms between retries while the tab is busy */

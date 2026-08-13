@@ -179,15 +179,22 @@ expectRed('an any-row series derivation under the last-word check', () => {
 
 /* The two badges: distinguishable on the RENDERED surface, each
    falling with its own row and never with the other's (FS-4). */
+/* EVERY brand row goes, not RVW-3005 alone. O5 gave the workspace a
+   SECOND series with its own approved brand row (FS-7002/RVW-3006),
+   and a check that pulled one row while another series still carried
+   its own would have measured "somewhere on this surface a brand is
+   approved" instead of the rule. The rule is per subject, so the
+   measurement is over the subject class. */
 function assertBadgesIndependent() {
-  w.eval("reviews = reviews.filter(r => r.id !== 'RVW-3005')");
+  const brandRows = w.eval("JSON.stringify(reviews.filter(r => r.approvalType === 'series_brand_review'))");
+  w.eval("reviews = reviews.filter(r => r.approvalType !== 'series_brand_review')");
   try {
     const html = ROOT();
     if (!/Fair brand approved/.test(html) && /Verified Platform Partner/.test(html) && /Brand review/.test(html))
-      ok('brand row removed → only the brand badge falls; the workspace badge stands');
+      ok('every brand row removed → only the brand badges fall; the workspace badge stands');
     else bad('the two badges do not derive from their own subjects (FS-4)');
   } finally {
-    w.eval("reviews.push({ id:'RVW-3005', subjectType:'fair_series', subjectId:'FS-7001', gateNumber:null, reviewStatus:'approved', reviewedBy:'Bottle Lobby', reviewedAt:'2026-07-20', reviewNotes:null, approvalType:'series_brand_review' })");
+    w.eval("reviews = reviews.concat(" + brandRows + ")");
   }
   w.eval("reviews = reviews.filter(r => r.id !== 'RVW-3004')");
   try {

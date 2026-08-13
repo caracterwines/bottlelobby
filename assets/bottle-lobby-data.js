@@ -1316,9 +1316,35 @@ let fairSeries = [
      review (RVW-3005, 20 Jul), which predates the published edition
      below. */
   { id:'FS-7001', organizerId:'PP-9001', name:'Atrium Wine Days',
-    about:'Regional wine trade fair — portfolio tastings and trade contacts under one roof, run twice a year.' }
+    about:'Regional wine trade fair — portfolio tastings and trade contacts under one roof, run twice a year.' },
+  /* THE SECOND SERIES, ADDED WITH O5, AND IT EXISTS FOR A MEASURED
+     REASON RATHER THAN FOR VOLUME. The public directory offers a fair
+     TYPE filter, and a filter may not have empty categories: with only
+     Atrium Wine Days there were two published TRADE editions and
+     nothing else — consumer and hybrid were labels no reader could
+     ever reach, and the NULL ticketing case hung on the invisible
+     draft. The three published editions below make Trade, Consumer and
+     Hybrid, two more cities and the "no link at all" case publicly
+     reachable and clickable.
+
+     WHY A SECOND SERIES INSTEAD OF MORE ATRIUM EDITIONS: FS-7001 says
+     in its own about text that it runs TWICE A YEAR, and it has
+     exactly two published runs in 2027. Hanging three more onto it
+     would have made the series' own sentence false — and a consumer
+     festival under a brand that describes itself as a trade fair is
+     the same untruth one level down. This series is invented like the
+     first one (no real festival is called this), owned by the same
+     verified organizer workspace, and carries NO cadence claim: its
+     runs are what its editions say they are.
+
+     C7: the brand review (RVW-3006, 22 Jul) postdates the workspace
+     verification it rests on (15 Jul) and predates the publications it
+     gates (24 Jul), which in turn predate SHOW_TODAY (31 Jul) — the
+     earliest dependent event is the ceiling, in that order. */
+  { id:'FS-7002', organizerId:'PP-9001', name:'Uferlicht Wine Festival',
+    about:'Wine festival on the Rhine — open tasting days for wine lovers, with a trade morning where the format calls for one.' }
 ];
-let fairSeriesSeq = 7002;
+let fairSeriesSeq = 7003;
 
 let fairEditions = [
   /* The published upcoming run: created 18 Jul (a draft needs no
@@ -1372,9 +1398,68 @@ let fairEditions = [
     history:[
       { at:'2026-07-26', actor:'Atrium Fairs GmbH', action:'created',   reason:null },
       { at:'2026-07-27', actor:'Atrium Fairs GmbH', action:'published', reason:null }
+    ] },
+
+  /* ── THE UFERLICHT RUNS (O5) ──────────────────────────────────────
+     Three published editions, and each one exists for one branch the
+     public directory could otherwise not reach: the CONSUMER label,
+     the HYBRID label, and the edition with NO ticketing link at all.
+     Two further cities come with them, so the city facet has something
+     to separate. No halls, no stands, no participations and no
+     admissions are added — none of those is needed for type, place,
+     time or link coverage, and fixtures grow only where a built branch
+     would otherwise be unreachable.
+
+     ALL THREE ARE UPCOMING, measured rather than chosen: a PAST
+     published edition cannot be dated coherently here. FS-3 requires
+     both preconditions at the moment of publication, and the later of
+     them is the brand review — so nothing may be published before
+     22 Jul 2026, which leaves nine days to SHOW_TODAY for a fair that
+     would have to be announced, run and over. The directory's
+     "Previously" section is carried by the completed Wine Show and
+     needs no invented past fair. */
+  /* Consumer, two days, WITH a ticket shop — the "Consumer Tickets"
+     caption's only public home. */
+  { id:'FE-7104', seriesId:'FS-7002', fairType:'consumer',
+    startDate:'2027-05-15', endDate:'2027-05-16',
+    city:'Mainz', venue:'Rheinufer Halle, Mainz',
+    description:'Two open days on the river — producers pour for visitors, guided flights each afternoon.',
+    status:'published',
+    exhibitorCallOpen:true,
+    externalTicketingUrl:'https://uferlicht-festival.example/tickets',
+    history:[
+      { at:'2026-07-23', actor:'Atrium Fairs GmbH', action:'created',   reason:null },
+      { at:'2026-07-24', actor:'Atrium Fairs GmbH', action:'published', reason:null }
+    ] },
+  /* Hybrid, one day, WITH a link that is both at once — the only
+     public home of "Hybrid Tickets & Accreditation". */
+  { id:'FE-7105', seriesId:'FS-7002', fairType:'hybrid',
+    startDate:'2027-10-02', endDate:null,
+    city:'Koblenz', venue:'Kurfürstliches Depot, Koblenz',
+    description:'Trade morning, public afternoon — one day, two audiences, the same tables.',
+    status:'published',
+    exhibitorCallOpen:false,
+    externalTicketingUrl:'https://uferlicht-festival.example/autumn',
+    history:[
+      { at:'2026-07-23', actor:'Atrium Fairs GmbH', action:'created',   reason:null },
+      { at:'2026-07-24', actor:'Atrium Fairs GmbH', action:'published', reason:null }
+    ] },
+  /* Consumer, one day, and DELIBERATELY WITHOUT a link: the nullable
+     field's public answer is "no button and no reserved space", and a
+     rule about nothing needs a record that really has nothing. */
+  { id:'FE-7106', seriesId:'FS-7002', fairType:'consumer',
+    startDate:'2027-08-21', endDate:null,
+    city:'Mainz', venue:'Zollhafen Kai, Mainz',
+    description:'Summer evening on the quay — one open tasting night, entry at the door.',
+    status:'published',
+    exhibitorCallOpen:false,
+    externalTicketingUrl:null,
+    history:[
+      { at:'2026-07-23', actor:'Atrium Fairs GmbH', action:'created',   reason:null },
+      { at:'2026-07-24', actor:'Atrium Fairs GmbH', action:'published', reason:null }
     ] }
 ];
-let fairEditionSeq = 7104;
+let fairEditionSeq = 7107;
 
 function fairSeriesById(id) { return fairSeries.find(s => s.id === id) || null; }
 function fairEditionById(id) { return fairEditions.find(e => e.id === id) || null; }

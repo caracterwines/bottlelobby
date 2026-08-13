@@ -5748,13 +5748,25 @@ let reviews = [
   { id:'RVW-3005', subjectType:'fair_series', subjectId:'FS-7001', gateNumber:null,
     reviewStatus:'approved', reviewedBy:'Bottle Lobby', reviewedAt:'2026-07-20',
     reviewNotes:'Fair brand "Atrium Wine Days" checked: name and prior editions evidenced, brand held by the organisation, no conflicting claim.',
+    approvalType:'series_brand_review' },
+
+  /* The SECOND series' own brand review (O5, FS-3). Its own row about
+     its own subject: one workspace may hold two fair brands, and each
+     brand is reviewed on its own merits — a series does not inherit
+     the approval of its neighbour any more than it inherits the
+     workspace badge (FS-4). C7: 22 Jul, after the workspace
+     verification it rests on (15 Jul) and before the three Uferlicht
+     publications it gates (24 Jul, their histories). */
+  { id:'RVW-3006', subjectType:'fair_series', subjectId:'FS-7002', gateNumber:null,
+    reviewStatus:'approved', reviewedBy:'Bottle Lobby', reviewedAt:'2026-07-22',
+    reviewNotes:'Fair brand "Uferlicht Wine Festival" checked: name and venue agreements evidenced, brand held by the organisation, no conflicting claim.',
     approvalType:'series_brand_review' }
 ];
 /* Ids for releases decided in the demo. Separate from the own-label
    3000-block above only by where the counter starts; it travels with
    the reviews for the same reason orderSeq travels with the orders —
    without it a reload would hand out an id that already exists. */
-let reviewSeq = 3006;
+let reviewSeq = 3007;
 
 function reviewById(id) {
   if (typeof id !== 'string') return null;
