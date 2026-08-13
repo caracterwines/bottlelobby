@@ -13648,7 +13648,7 @@ function renderFairRecruitingBlock(role) {
         act = '<span class="ord-chip chip-manual">Applied — waiting for the organizer</span> ' +
           '<button class="btn-sm btn-outline" onclick="doWithdrawFairApplication(\'' + role + '\',\'' + a.id + '\')">Withdraw</button>';
       } else if (a.status === 'admitted') {
-        act = '<span class="ord-chip chip-deal">Admitted — your participation follows in its own pass (O4)</span>';
+        act = fairParticipationTradeHtml(role, ed, a);
       } else {
         act = '<span class="ord-chip chip-manual">' + FAIR_ADMISSION_LABEL[a.status] + '</span>';
       }
@@ -13678,6 +13678,7 @@ function renderFairRecruitingBlock(role) {
         '<span class="ord-chip chip-manual">' + FAIR_ADMISSION_LABEL[a.status] + '</span>' +
         '<div class="otbl-cust" style="margin-top:0.4rem">' + facts + '</div>' +
         (last ? '<div class="edit-sub" style="margin-top:0.3rem">' + last.at + ' — ' + notifEsc(fairAdmissionHistoryText(last)) + '</div>' : '') +
+        (a.status === 'admitted' ? '<div style="margin-top:0.7rem">' + fairParticipationTradeHtml(role, ed, a) + '</div>' : '') +
       '</div>';
     }).join('');
   }
@@ -13710,6 +13711,198 @@ function doAnswerFairInvitation(role, admissionId, accept) {
   renderFairRecruitingBlock(role);
   showToast(accept ? '✓ Accepted — you are admitted to this fair edition'
                    : 'Invitation declined — the record remains readable');
+}
+
+/* ══ THE EXHIBITOR'S OWN PARTICIPATION (A21) — inside the A20.6
+   block, no new nav entry. The admitted organisation CREATES it
+   explicitly (A21.1) and maintains description, days and content
+   (A21.2/A21.3); hall and stand render read-only, because placement
+   is the organizer's half. The public link asks the ONE gate. ═════ */
+function fairParticipationTradeHtml(role, ed, adm) {
+  const me = SHOW_ROLES[role].entity;
+  const p = fairParticipationFor(ed.id, me);
+  if (!p) {
+    return '<span class="ord-chip chip-deal">Admitted</span> ' +
+      '<button class="btn-sm btn-gold" onclick="doCreateFairParticipation(\'' + role + '\',\'' + ed.id + '\')">Create Fair Participation →</button>' +
+      '<span style="font-size:0.72rem;color:var(--dim);margin-left:0.6rem">The admission entitles you — the participation is your own explicit act (A21.1).</span>';
+  }
+  if (p.status !== 'active') {
+    const last = (p.history || [])[p.history.length - 1];
+    const again = p.status === 'withdrawn'
+      ? ' <button class="btn-sm btn-outline" onclick="doCreateFairParticipation(\'' + role + '\',\'' + ed.id + '\')">Create again →</button>'
+      : '';
+    return '<span class="ord-chip chip-manual">' + FAIR_PARTICIPATION_LABEL[p.status] + '</span>' + again +
+      (last ? '<div class="edit-sub" style="margin-top:0.3rem">' + last.at + ' — ' + notifEsc(fairParticipationHistoryText(last)) + '</div>' : '');
+  }
+
+  /* Stand & hall — read-only here: the organizer places (A21.2). */
+  const st = p.standId ? fairStands.find(x => x.id === p.standId) : null;
+  const hall = st ? fairHalls.find(h => h.id === st.hallId) : null;
+  const place = st
+    ? 'Stand <b>' + notifEsc(st.label) + '</b>' + (hall ? ' · ' + notifEsc(hall.name) : '') + ' <span style="color:var(--dim)">(assigned by the organizer)</span>'
+    : '<span style="color:var(--dim)">No stand assigned yet — the organizer places you.</span>';
+
+  /* Attendance days — checkboxes over the edition's real fair days. */
+  const dayBoxes = fairEditionDays(ed).map(dy =>
+    '<label style="font-size:0.78rem;margin-right:0.8rem"><input type="checkbox" name="fpd-' + p.id + '" value="' + dy + '"' +
+    (p.days.indexOf(dy) !== -1 ? ' checked' : '') + '> ' + blDate(dy) + '</label>').join('');
+
+  /* Content — the two row sorts (A21.3). */
+  let content;
+  if (p.orgType === 'winery') {
+    const holder = me;
+    const mine = partnerWinesPool.filter(wRow => wRow.winery === holder);
+    const chosen = (p.products || []).map(x => x.productId);
+    content = '<div class="form-block-title" style="margin-top:0.8rem">Presented Wines — your own catalogue, by key</div>' +
+      mine.map(wRow =>
+        '<label style="display:block;font-size:0.78rem;margin-top:0.2rem"><input type="checkbox" name="fpw-' + p.id + '" value="' + wRow.id + '"' +
+        (chosen.indexOf(wRow.id) !== -1 ? ' checked' : '') + '> ' + wineLabel(wRow) + ' · ' + wRow.type + '</label>').join('') +
+      '<button class="btn-sm btn-outline" style="margin-top:0.4rem" onclick="doSaveFairWines(\'' + role + '\',\'' + p.id + '\')">Save Wines</button>';
+  } else {
+    const addable = fairRepresentableWineries(me)
+      .filter(nm => !fairRepresentationOf(p, nm));
+    const repBlocks = (p.representing || []).map((rep, idx) => {
+      const owner = rep.winery;
+      const range = partnerWinesPool.filter(wRow => wRow.winery === owner);
+      const chosen = (rep.products || []).map(x => x.productId);
+      return '<div style="padding:0.5rem 0;border-top:1px solid rgba(247,243,238,0.06)">' +
+        '<div style="display:flex;gap:0.6rem;align-items:center;flex-wrap:wrap">' +
+          '<strong>' + notifEsc(rep.winery) + '</strong>' +
+          '<button class="btn-sm btn-outline" onclick="doRemoveFairRepWinery(\'' + role + '\',\'' + p.id + '\',' + idx + ')">Remove</button>' +
+        '</div>' +
+        /* TWO statements, TWO controls — ticking one never moves the
+           other (FP-7). */
+        '<label style="font-size:0.78rem;margin-right:1rem"><input type="checkbox" onchange="doToggleFairPresence(\'' + role + '\',\'' + p.id + '\',' + idx + ',\'representedAtBooth\',this)"' +
+          (rep.representedAtBooth ? ' checked' : '') + '> Represented at booth</label>' +
+        '<label style="font-size:0.78rem"><input type="checkbox" onchange="doToggleFairPresence(\'' + role + '\',\'' + p.id + '\',' + idx + ',\'personallyAttending\',this)"' +
+          (rep.personallyAttending ? ' checked' : '') + '> Personally attending</label>' +
+        '<div style="margin-top:0.3rem">' +
+        range.map(wRow =>
+          '<label style="display:block;font-size:0.78rem;margin-top:0.15rem"><input type="checkbox" name="fpw-' + p.id + '-' + idx + '" value="' + wRow.id + '"' +
+          (chosen.indexOf(wRow.id) !== -1 ? ' checked' : '') + '> ' + wineLabel(wRow) + ' · ' + wRow.type + '</label>').join('') +
+        '</div>' +
+        '<button class="btn-sm btn-outline" style="margin-top:0.3rem" onclick="doSaveFairRepWines(\'' + role + '\',\'' + p.id + '\',' + idx + ')">Save Wines</button>' +
+      '</div>';
+    }).join('');
+    content = '<div class="form-block-title" style="margin-top:0.8rem">Represented Wineries — from your active partnerships (A21.4)</div>' +
+      (repBlocks || '<div class="edit-sub">No represented winery yet.</div>') +
+      (addable.length
+        ? '<div style="display:flex;gap:0.6rem;margin-top:0.5rem;flex-wrap:wrap">' +
+          '<select class="field-input" style="max-width:240px;margin:0" id="fprw-' + p.id + '">' +
+            addable.map(nm => '<option value="' + notifEsc(nm) + '">' + notifEsc(nm) + '</option>').join('') + '</select>' +
+          '<button class="btn-sm btn-outline" onclick="doAddFairRepWinery(\'' + role + '\',\'' + p.id + '\')">+ Represent</button>' +
+          '</div>'
+        : '<div class="edit-sub" style="margin-top:0.4rem">Every partnered winery is already on the stand.</div>');
+  }
+
+  /* The public link asks the ONE gate — never a second answer. */
+  const pubLink = fairParticipationPublic(p)
+    ? '<a class="icon-btn" href="bottle-lobby-fair-participation.html?id=' + p.id + '" target="_blank" rel="noopener">Open your public participation page →</a>'
+    : '<span style="font-size:0.72rem;color:var(--dim)">Not publicly rendered — the page appears once the edition is published and this participation is active (A21.7).</span>';
+
+  return '<span class="ord-chip chip-deal">Participation active</span>' +
+    '<div class="edit-sub" style="margin-top:0.4rem">' + place + '</div>' +
+    '<div class="form-block-title" style="margin-top:0.8rem">Description</div>' +
+    '<div style="display:flex;gap:0.6rem;flex-wrap:wrap">' +
+      '<input class="field-input" style="max-width:420px;margin:0" id="fpdesc-' + p.id + '" value="' + notifEsc(p.description) + '" placeholder="What your stand shows">' +
+      '<button class="btn-sm btn-outline" onclick="doSaveFairDescription(\'' + role + '\',\'' + p.id + '\')">Save</button>' +
+    '</div>' +
+    '<div class="form-block-title" style="margin-top:0.8rem">Attendance Days — within the fair days (FP-5)</div>' +
+    '<div>' + dayBoxes +
+      '<button class="btn-sm btn-outline" onclick="doSaveFairDays(\'' + role + '\',\'' + p.id + '\')">Save Days</button>' +
+    '</div>' +
+    content +
+    '<div style="margin-top:0.7rem;display:flex;gap:0.8rem;align-items:center;flex-wrap:wrap">' +
+      pubLink +
+      '<button class="btn-sm btn-outline" onclick="doWithdrawFairParticipation(\'' + role + '\',\'' + p.id + '\')">Withdraw…</button>' +
+    '</div>';
+}
+
+/* The trade-side participation handlers — the acting organisation is
+   THIS role's entity, never a parameter a foreign surface could bend
+   (A20.11/FP-4). */
+function doCreateFairParticipation(role, editionId) {
+  const me = SHOW_ROLES[role].entity;
+  const p = createFairParticipation(editionId, role, me);
+  if (!p) return;
+  renderFairRecruitingBlock(role);
+  showToast('✓ Fair participation created — fill days, description and wines');
+}
+function doSaveFairDescription(role, participationId) {
+  const me = SHOW_ROLES[role].entity;
+  const el = document.getElementById('fpdesc-' + participationId);
+  if (!el) return;
+  if (!setFairParticipationDescription(participationId, me, el.value)) return;
+  renderFairRecruitingBlock(role);
+  showToast('✓ Description saved');
+}
+function doSaveFairDays(role, participationId) {
+  const me = SHOW_ROLES[role].entity;
+  const days = Array.prototype.map.call(
+    document.querySelectorAll('input[name="fpd-' + participationId + '"]:checked'),
+    el => el.value);
+  if (!setFairParticipationDays(participationId, me, days)) return;
+  renderFairRecruitingBlock(role);
+  showToast('✓ Attendance days saved');
+}
+function doSaveFairWines(role, participationId) {
+  const me = SHOW_ROLES[role].entity;
+  const ids = Array.prototype.map.call(
+    document.querySelectorAll('input[name="fpw-' + participationId + '"]:checked'),
+    el => el.value);
+  if (!setFairParticipationProducts(participationId, me, ids)) return;
+  renderFairRecruitingBlock(role);
+  showToast('✓ Presented wines saved — references into your catalogue');
+}
+function doAddFairRepWinery(role, participationId) {
+  const me = SHOW_ROLES[role].entity;
+  const sel = document.getElementById('fprw-' + participationId);
+  if (!sel || !sel.value) return;
+  if (!addFairRepresentedWinery(participationId, me, sel.value)) return;
+  renderFairRecruitingBlock(role);
+  showToast('✓ ' + sel.value + ' is on your stand — set its two presence statements yourself');
+}
+function doRemoveFairRepWinery(role, participationId, idx) {
+  const me = SHOW_ROLES[role].entity;
+  const p = fairParticipationById(participationId);
+  const rep = p && (p.representing || [])[idx];
+  if (!rep) return;
+  if (!removeFairRepresentedWinery(participationId, me, rep.winery)) return;
+  renderFairRecruitingBlock(role);
+  showToast(rep.winery + ' removed from the stand');
+}
+function doToggleFairPresence(role, participationId, idx, field, el) {
+  const me = SHOW_ROLES[role].entity;
+  const p = fairParticipationById(participationId);
+  const rep = p && (p.representing || [])[idx];
+  if (!rep) return;
+  if (!setFairRepresentationPresence(participationId, me, rep.winery, field, el.checked)) {
+    renderFairRecruitingBlock(role);   /* refused — the box snaps back to the record */
+    return;
+  }
+  showToast(field === 'representedAtBooth'
+    ? (el.checked ? '✓ Represented at booth' : 'No longer represented at booth')
+    : (el.checked ? '✓ Personally attending' : 'Not personally attending'));
+}
+function doSaveFairRepWines(role, participationId, idx) {
+  const me = SHOW_ROLES[role].entity;
+  const p = fairParticipationById(participationId);
+  const rep = p && (p.representing || [])[idx];
+  if (!rep) return;
+  const ids = Array.prototype.map.call(
+    document.querySelectorAll('input[name="fpw-' + participationId + '-' + idx + '"]:checked'),
+    el => el.value);
+  if (!setFairRepresentedProducts(participationId, me, rep.winery, ids)) return;
+  renderFairRecruitingBlock(role);
+  showToast('✓ Wines saved for ' + rep.winery);
+}
+function doWithdrawFairParticipation(role, participationId) {
+  const me = SHOW_ROLES[role].entity;
+  const why = window.prompt('Withdraw your participation? A reason is optional — leave empty to withdraw without one.');
+  if (why === null) return;
+  if (!withdrawFairParticipation(participationId, me, why)) return;
+  renderFairRecruitingBlock(role);
+  showToast('Participation withdrawn — the record remains readable');
 }
 
 /* The venue is part of the protected detail until a show is published
