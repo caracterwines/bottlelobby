@@ -629,18 +629,19 @@ console.log('\n§9 trade dashboards untouched — samples');
   else bad('the campaign audience moved: live ' + audSize + ' vs snapshot ' + snap);
 }
 
-/* The locked target navigation after O3: exactly the remaining FIVE
-   rows stay locked with reasons — "Exhibitor Recruitment" and
-   "Stands & Halls" left the list with A20 (they live on the edition
-   inside My Fairs), the way "Fair Series & Editions" left it with
-   O2. Never a locked row beside its live feature. */
+/* The locked target navigation after O4: exactly the remaining FOUR
+   rows stay locked with reasons — "Participation Pages" left the
+   list with A21 (placement lives on the edition inside My Fairs, the
+   public page is canonical), the way "Exhibitor Recruitment" and
+   "Stands & Halls" left it with A20 and "Fair Series & Editions"
+   with O2. Never a locked row beside its live feature. */
 {
   const lockedNav = w.eval('PARTNER_LOCKED_NAV');
   const total = lockedNav.fairs.length + lockedNav.community.length;
-  const gone = ['Fair Series & Editions', 'Exhibitor Recruitment', 'Stands & Halls'];
-  if (total === 5 && !lockedNav.fairs.some(l => gone.some(g => l[0].indexOf(g) !== -1)))
-    ok('five target-navigation entries stay locked; the three live features carry no locked row');
-  else bad('the locked navigation is not the agreed five (' + total + ')');
+  const gone = ['Fair Series & Editions', 'Exhibitor Recruitment', 'Stands & Halls', 'Participation Pages'];
+  if (total === 4 && !lockedNav.fairs.some(l => gone.some(g => l[0].indexOf(g) !== -1)))
+    ok('four target-navigation entries stay locked; the four live features carry no locked row');
+  else bad('the locked navigation is not the agreed four (' + total + ')');
   /* Rendered rows, not raw HTML — a source comment naming the old
      entry is history, not a nav row. */
   const fairsEntries = Array.from(d.querySelectorAll('#sidebar-partner .nav-item'))

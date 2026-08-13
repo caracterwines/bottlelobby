@@ -6632,6 +6632,56 @@ function assignFairStand(participationId, standId) {
   return true;
 }
 
+/* ── Inventory care (A21.5) — A20.9's open question, answered:
+   stable ids, editable names, no removal of anything occupied or
+   referenced, every refusal atomic. ──────────────────────────────── */
+function renameFairHall(hallId, name) {
+  const h = fairHalls.find(x => x.id === hallId);
+  if (!h) { actionSay('That hall no longer exists'); return false; }
+  const ed = fairEditionById(h.editionId), s = ed && fairSeriesById(ed.seriesId);
+  if (!fairSeriesManagedHere(s)) { actionSay('Only the organizer workspace that owns this series manages its halls'); return false; }
+  if (!name || !name.trim()) { showToast('✗ A hall needs a name'); return false; }
+  h.name = name.trim();   /* the id never moves (FP-9) */
+  return true;
+}
+function renameFairStand(standId, label) {
+  const st = fairStands.find(x => x.id === standId);
+  if (!st) { actionSay('That stand no longer exists'); return false; }
+  const h = fairHalls.find(x => x.id === st.hallId);
+  const ed = h && fairEditionById(h.editionId), s = ed && fairSeriesById(ed.seriesId);
+  if (!fairSeriesManagedHere(s)) { actionSay('Only the organizer workspace that owns this series manages its stands'); return false; }
+  if (!label || !label.trim()) { showToast('✗ A stand needs a label'); return false; }
+  if (fairStandsOfHall(st.hallId).some(x => x.id !== st.id && x.label === label.trim())) {
+    showToast('✗ Stand ' + label.trim() + ' already exists in this hall — two stands with one label are un-referenceable inventory'); return false;
+  }
+  st.label = label.trim();   /* the id never moves (FP-9) */
+  return true;
+}
+function removeFairStand(standId) {
+  const st = fairStands.find(x => x.id === standId);
+  if (!st) { actionSay('That stand no longer exists'); return false; }
+  const h = fairHalls.find(x => x.id === st.hallId);
+  const ed = h && fairEditionById(h.editionId), s = ed && fairSeriesById(ed.seriesId);
+  if (!fairSeriesManagedHere(s)) { actionSay('Only the organizer workspace that owns this series manages its stands'); return false; }
+  const occ = fairStandOccupant(standId);
+  if (occ) { actionSay('Stand ' + st.label + ' is occupied by ' + occ.org + ' — an occupied stand is not removable (FP-9)'); return false; }
+  if (fairParticipations.some(p => p.standId === standId)) {
+    actionSay('A resting participation record still references stand ' + st.label + ' — the record keeps its history (D29)'); return false;
+  }
+  fairStands = fairStands.filter(x => x.id !== standId);
+  return true;
+}
+function removeFairHall(hallId) {
+  const h = fairHalls.find(x => x.id === hallId);
+  if (!h) { actionSay('That hall no longer exists'); return false; }
+  const ed = fairEditionById(h.editionId), s = ed && fairSeriesById(ed.seriesId);
+  if (!fairSeriesManagedHere(s)) { actionSay('Only the organizer workspace that owns this series manages its halls'); return false; }
+  const stands = fairStandsOfHall(hallId);
+  if (stands.length) { actionSay('Hall "' + h.name + '" still carries ' + stands.length + ' stand(s) — a hall is removed empty (FP-9)'); return false; }
+  fairHalls = fairHalls.filter(x => x.id !== hallId);
+  return true;
+}
+
 /* ── The two endings — two actors, two acts (A21.6) ──────────────── */
 /* The exhibitor withdraws its own participation — reason OPTIONAL
    (A16.9/D28: leaving of one's own accord explains itself). */
@@ -6728,9 +6778,11 @@ const PARTNER_LOCKED_NAV = {
      still has to bring. */
   /* "Exhibitor Recruitment" and "Stands & Halls" left this list with
      O3 (A20): both live on the edition itself, inside My Fairs — a
-     separate nav entry would only re-ask which edition is meant. */
+     separate nav entry would only re-ask which edition is meant.
+     "Participation Pages" left it with O4 (A21): placement and
+     occupancy live on the edition detail, and the public page is the
+     canonical bottle-lobby-fair-participation.html. */
   fairs: [
-    ['Participation Pages',    'A participation row (A16.8) is O4’s first record — nothing can render before it exists.'],
     ['Schedule & Agenda',      'Programme and agenda on an edition are their own pass (O12).']
   ],
   community: [
@@ -6864,9 +6916,54 @@ function fairEditionDetailHtml(ed) {
     '</div>' +
     '<div style="display:flex;gap:0.6rem;align-items:center;margin-top:0.8rem;flex-wrap:wrap">' + actions + '</div>' +
     fairRecruitingSectionHtml(ed) +
+    fairParticipationSectionHtml(ed) +
     fairInventorySectionHtml(ed) +
     '<div class="form-block-title" style="margin-top:1rem">History</div>' + history +
   '</div>';
+}
+
+/* ── STAND PLACEMENT & OCCUPANCY on the edition (A21) — the former
+   locked "Participation Pages" row, live where the work is. The
+   organizer PLACES; the content is the exhibitor's and has no door
+   here (A21.2). Every figure is derived (FP-8). ─────────────────── */
+function fairParticipationSectionHtml(ed) {
+  if (ed.status === 'cancelled') return '';
+  const parts = fairParticipationsOfEdition(ed.id);
+  const active = parts.filter(p => p.status === 'active');
+  const standsAll = fairHallsOfEdition(ed.id)
+    .reduce((a, h) => a.concat(fairStandsOfHall(h.id)), []);
+  const occupied = standsAll.filter(st => fairStandOccupant(st.id)).length;
+
+  const rows = parts.map(p => {
+    const st = stakeholder(p.org);
+    const opts = '<option value="">— no stand —</option>' + standsAll.map(x => {
+      const occ = fairStandOccupant(x.id);
+      return '<option value="' + x.id + '"' + (p.standId === x.id ? ' selected' : '') + '>' +
+        notifEsc(x.label) + (occ && occ.id !== p.id ? ' — occupied' : '') + '</option>';
+    }).join('');
+    const placement = p.status === 'active'
+      ? '<select class="field-input" style="max-width:180px;margin:0" id="fpa-stand-' + p.id + '">' + opts + '</select>' +
+        '<button class="btn-sm btn-outline" onclick="doAssignFairStand(\'' + p.id + '\')">Assign Stand</button>' +
+        '<button class="btn-sm btn-outline" onclick="doRescindFairParticipation(\'' + p.id + '\')">Rescind…</button>'
+      : '';
+    const last = (p.history || [])[p.history.length - 1];
+    return '<div style="padding:0.45rem 0;border-top:1px solid rgba(247,243,238,0.06)">' +
+      '<div style="display:flex;gap:0.6rem;align-items:center;flex-wrap:wrap">' +
+        '<strong>' + notifEsc(p.org) + '</strong>' +
+        '<span style="font-size:0.7rem;color:var(--dim)">' + (st.type || p.orgType) + '</span>' +
+        '<span class="ord-chip ' + (p.status === 'active' ? 'chip-deal' : 'chip-manual') + '">' + FAIR_PARTICIPATION_LABEL[p.status] + '</span>' +
+        placement +
+      '</div>' +
+      (last ? '<div class="edit-sub" style="margin-top:0.2rem">' + last.at + ' — ' + notifEsc(fairParticipationHistoryText(last)) + '</div>' : '') +
+    '</div>';
+  }).join('');
+
+  return '<div class="form-block-title" style="margin-top:1rem">Participations — Stand Placement &amp; Occupancy</div>' +
+    '<div class="edit-sub">Created by the admitted organisations themselves (A21.1). You place the stand; ' +
+    'description, days and wines are the exhibitor’s own content and are not edited here (A21.2).</div>' +
+    '<div class="edit-sub" style="margin-top:0.4rem">Derived: <b>' + active.length + '</b> active exhibitor(s) · ' +
+    '<b>' + occupied + '</b> of <b>' + standsAll.length + '</b> stand(s) occupied — computed live, never stored (FP-8)</div>' +
+    (rows || '<div class="edit-sub" style="margin-top:0.4rem">No participations yet — an admitted organisation creates its own.</div>');
 }
 
 /* ── EXHIBITOR RECRUITING on the edition (A20) — the former locked
@@ -6950,19 +7047,32 @@ function fairInventorySectionHtml(ed) {
   const halls = fairHallsOfEdition(ed.id);
   const rows = halls.map(h => {
     const stands = fairStandsOfHall(h.id);
+    const standRows = stands.map(st => {
+      const occ = fairStandOccupant(st.id);
+      return '<div style="display:flex;gap:0.6rem;align-items:center;flex-wrap:wrap;margin-top:0.25rem">' +
+        '<span class="otbl-id">' + st.id + '</span>' +
+        '<strong>' + notifEsc(st.label) + '</strong>' +
+        /* The occupant is DERIVED from the active participation —
+           the inventory row itself holds nobody (A20.9/FP-8). */
+        '<span style="font-size:0.72rem;color:var(--dim)">' + (occ ? 'occupied — ' + notifEsc(occ.org) : 'free') + '</span>' +
+        '<button class="btn-sm btn-outline" onclick="doRenameFairStand(\'' + st.id + '\')">Rename</button>' +
+        '<button class="btn-sm btn-outline" onclick="doRemoveFairStand(\'' + st.id + '\')">Remove</button>' +
+      '</div>';
+    }).join('');
     return '<div style="padding:0.45rem 0;border-top:1px solid rgba(247,243,238,0.06)">' +
       '<div style="display:flex;gap:0.6rem;align-items:center;flex-wrap:wrap">' +
         '<strong>' + notifEsc(h.name) + '</strong>' +
         '<span style="font-size:0.7rem;color:var(--dim)">' + stands.length + ' stand' + (stands.length === 1 ? '' : 's') + '</span>' +
         '<button class="btn-sm btn-outline" onclick="doAddFairStand(\'' + h.id + '\')">+ Stand</button>' +
+        '<button class="btn-sm btn-outline" onclick="doRenameFairHall(\'' + h.id + '\')">Rename</button>' +
+        '<button class="btn-sm btn-outline" onclick="doRemoveFairHall(\'' + h.id + '\')">Remove</button>' +
       '</div>' +
-      (stands.length
-        ? '<div class="edit-sub" style="margin-top:0.2rem">' + stands.map(st => notifEsc(st.label)).join(' · ') + '</div>'
-        : '') +
+      standRows +
     '</div>';
   }).join('');
   return '<div class="form-block-title" style="margin-top:1rem">Halls &amp; Stands</div>' +
-    '<div class="edit-sub">Edition inventory. Who exhibits on which stand is the O4 participation — nothing here holds an occupant.</div>' +
+    '<div class="edit-sub">Edition inventory. Who exhibits on which stand is the participation (A21) — nothing here holds an occupant. ' +
+    'Ids are stable; renaming never changes one; an occupied stand and a non-empty hall are not removable (FP-9).</div>' +
     (rows || '<div class="edit-sub" style="margin-top:0.4rem">No halls yet.</div>') +
     '<div style="margin-top:0.5rem"><button class="btn-sm btn-outline" onclick="doAddFairHall(\'' + ed.id + '\')">+ Add Hall</button></div>';
 }
@@ -7047,6 +7157,50 @@ function doAddFairStand(hallId) {
   if (!addFairStand(hallId, label)) return;
   renderPartnerFairs();
   showToast('✓ Stand added');
+}
+/* ── Placement & inventory-care handlers (A21.2/A21.5) — the reason
+   prompt follows doCancelFairEdition, the named C7 debt, reused. ── */
+function doAssignFairStand(participationId) {
+  const sel = document.getElementById('fpa-stand-' + participationId);
+  if (!sel) return;
+  const p = fairParticipationById(participationId);
+  if (!assignFairStand(participationId, sel.value || null)) return;
+  renderPartnerFairs();
+  showToast(sel.value ? '✓ Stand assigned — ' + p.org + ' has its place'
+                      : 'Stand assignment cleared');
+}
+function doRescindFairParticipation(participationId) {
+  const why = (window.prompt('Why is this participation rescinded? The reason goes on the record.') || '').trim();
+  if (!why) { showToast('✗ Rescinding a participation needs a reason'); return; }
+  if (!rescindFairParticipation(participationId, why)) return;
+  renderPartnerFairs();
+  showToast('Participation rescinded — the record and its reason remain');
+}
+function doRenameFairHall(hallId) {
+  const h = fairHalls.find(x => x.id === hallId); if (!h) return;
+  const name = (window.prompt('New name of the hall', h.name) || '').trim();
+  if (!name) { showToast('✗ A hall needs a name'); return; }
+  if (!renameFairHall(hallId, name)) return;
+  renderPartnerFairs();
+  showToast('✓ Hall renamed — the id (' + hallId + ') is unchanged');
+}
+function doRenameFairStand(standId) {
+  const st = fairStands.find(x => x.id === standId); if (!st) return;
+  const label = (window.prompt('New label of the stand', st.label) || '').trim();
+  if (!label) { showToast('✗ A stand needs a label'); return; }
+  if (!renameFairStand(standId, label)) return;
+  renderPartnerFairs();
+  showToast('✓ Stand renamed — the id (' + standId + ') is unchanged');
+}
+function doRemoveFairStand(standId) {
+  if (!removeFairStand(standId)) return;
+  renderPartnerFairs();
+  showToast('Stand removed from the inventory');
+}
+function doRemoveFairHall(hallId) {
+  if (!removeFairHall(hallId)) return;
+  renderPartnerFairs();
+  showToast('Hall removed from the inventory');
 }
 function openFairEditionDetail(id) {
   fairOpenEditionId = fairOpenEditionId === id ? null : id;
@@ -7195,7 +7349,7 @@ function renderPartnerCockpit() {
           (n('cancelled') ? ' · ' + n('cancelled') + ' cancelled' : '') + '</div>' +
         '<div style="margin-top:0.6rem"><button class="btn-sm btn-outline" onclick="showPartnerView(\'fairs\')">Open My Fairs →</button></div>'
       : '<div class="ord-empty">No fair series yet — create your fair brand under My Fairs.<br>' +
-        'Exhibitor recruitment, stands &amp; halls, participation pages and schedule &amp; agenda follow in their own passes.</div>';
+        'Exhibitor recruitment, stands &amp; halls and participations live on each edition; schedule &amp; agenda follows in its own pass.</div>';
   }
 
   const prof = document.getElementById('ppartner-profile');
