@@ -418,6 +418,44 @@ expectRed('the conflict check taken out of the assignment act', () => {
   finally { w.eval('assignFairStand = window.__assign; delete window.__assign'); }
 });
 
+/* The reactivation gap Codex reproduced: withdraw frees the stand by
+   derivation, the organizer re-assigns it, and the withdrawn row —
+   which still remembers the stand — tries to come back. The return
+   must refuse WHOLE, before any change (FP-8). */
+function assertReactivationConflictRefused() {
+  snapAdm(); snapParts();
+  try {
+    w.eval("withdrawFairParticipation('FP-9401','Domaine Lefèvre',null)");
+    w.eval("applyToFair('FE-7101','winery','Cantina Rossi')");
+    w.eval("admitFairApplication(fairAdmissionFor('FE-7101','Cantina Rossi').id)");
+    const p2 = w.eval("createFairParticipation('FE-7101','winery','Cantina Rossi')");
+    w.eval("assignFairStand('" + p2.id + "','FB-9301')");   /* the freed stand, re-assigned */
+    const histBefore = w.eval("((fairParticipationById('FP-9401')||{}).history||[]).length");
+    const admBefore = w.eval('JSON.stringify(fairAdmissions)');
+    const back = w.eval("createFairParticipation('FE-7101','winery','Domaine Lefèvre')");
+    const row = w.eval("fairParticipationById('FP-9401')");
+    if (back === null && row && row.status === 'withdrawn' && row.history.length === histBefore &&
+        row.standId === 'FB-9301' &&
+        w.eval("fairParticipations.filter(p => p.org === 'Domaine Lefèvre' && p.editionId === 'FE-7101').length") === 1 &&
+        w.eval('JSON.stringify(fairAdmissions)') === admBefore &&
+        w.eval("(fairStandOccupant('FB-9301')||{}).id") === p2.id)
+      ok('withdraw → re-assignment → return attempt: refused whole — no double occupancy, the row rests withdrawn, history, stand reference and admission untouched (FP-8)');
+    else bad('the reactivation seized an occupied stand or left a half state');
+    /* And with the stand free again, the SAME row still returns. */
+    w.eval("assignFairStand('" + p2.id + "', null)");
+    const again = w.eval("createFairParticipation('FE-7101','winery','Domaine Lefèvre')");
+    if (again && again.id === 'FP-9401' && again.status === 'active')
+      ok('once the stand is free the same row reactivates with a fresh created act — the door stays open (D28)');
+    else bad('a free stand did not let the withdrawn row return');
+  } finally { restoreParts(); restoreAdm(); }
+}
+assertReactivationConflictRefused();
+expectRed('the occupancy check taken out of the reactivation', () => {
+  w.eval("window.__occ2 = fairStandOccupant; fairStandOccupant = function () { return null; }");
+  try { assertReactivationConflictRefused(); }
+  finally { w.eval('fairStandOccupant = window.__occ2; delete window.__occ2'); }
+});
+
 function assertInventoryCare() {
   snapInv();
   try {

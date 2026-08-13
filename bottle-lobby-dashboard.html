@@ -6497,6 +6497,22 @@ function createFairParticipation(editionId, orgType, org) {
   if (ex && ex.status === 'active') { actionSay(org + ' already has its participation on this edition — one canonical participation per pair (FP-1)'); return null; }
   if (ex && ex.status === 'rescinded') { actionSay('The organizer rescinded this participation — the resting state is the record'); return null; }
   if (ex) {   /* withdrawn leaves the door open (A21.6, D28's distinction) */
+    /* … but never back ONTO somebody. The resting row still remembers
+       the stand it held, and the organizer may have assigned it to
+       another exhibitor since the withdrawal — checked whole BEFORE
+       any change (FP-8): a refused return leaves the row withdrawn,
+       its history, its stand reference and the admission untouched,
+       and clears or moves nothing by itself (the placement stays the
+       organizer's, A21.2). */
+    if (ex.standId) {
+      const occ = fairStandOccupant(ex.standId);
+      if (occ && occ.id !== ex.id) {
+        const st = fairStands.find(x => x.id === ex.standId);
+        actionSay('Stand ' + (st ? st.label : ex.standId) + ' has been assigned to ' + occ.org +
+          ' since the withdrawal — one stand, one occupancy (FP-8). This participation can return once the organizer has resolved the placement.');
+        return null;
+      }
+    }
     ex.status = 'active';
     logFairParticipation(ex, 'created', org, null);
     return ex;

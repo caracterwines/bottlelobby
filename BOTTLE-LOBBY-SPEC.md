@@ -5149,7 +5149,12 @@ active record and write no history row — the A19.3 basics discipline.
   ended states rest with their history readable.
 - `withdrawn` leaves the door open (D28's distinction): the organisation
   may create again — the SAME row continues with a fresh `created` act.
-  `rescinded` has answered — no further act in this pass.
+  **But never back ONTO somebody:** the resting row still references the
+  stand it held, and if the organizer has assigned that stand to another
+  active participation in the meantime, the return is refused whole —
+  before any change, clearing and moving nothing (FP-8 at the
+  reactivation act; a technical precision, not a new rule). `rescinded`
+  has answered — no further act in this pass.
 - **An ended participation occupies no stand and renders no active
   public presence** — both derived from the status (the gate falls with
   it), never by editing inventory, edition or content.
