@@ -31,7 +31,7 @@ Kein Build-Command, Publish-Directory = Repo-Root.
 > Dauerhafte Regeln gehoeren in `BOTTLE-LOBBY-SPEC.md`, kurze Invarianten in
 > `CLAUDE.md`. Findet sich hier eine Regel, ist sie am falschen Ort.
 
-**Baum sauber, `main` gepusht, 31 Harnesses gruen** (nachgezaehlt 13.08. — `fair-participation.js` kam mit Durchgang O4 dazu, davor `fair-recruiting.js` mit O3, `fairs.js` mit 12, `platform-partners.js` mit 11, `campaigns.js` mit 10, `wine-guide-page.js` mit 9, `member-events.js` mit 7). **`BLStore.VERSION` steht auf 11** — O4 hat gemessen einen Bump auf 10 gebraucht (Fixture-Zeilen in den BESTEHENDEN Sammlungen `fairHalls`/`fairStands`/`fairAdmissions`, D2D-Klasse), die Codex-Korrektur einen weiteren auf 11 (FORMAT-Klasse: das Schema-Feld `sh` im Snapshot-Blob; Begruendung jeweils am `VERSION` und in den Bloecken unten); Durchgang 12 brauchte einen (RVW-3005), **O3 gemessen keinen**. **Mit `sh` kam eine neue C8-Pflicht: aendern Fixtures ihre FORM, wird `SCHEMA_HASH` in `assets/bottle-lobby-store.js` im selben Commit nachgezogen — `tests/persistence.js` wird sonst rot und nennt den neuen Wert.**
+**Baum sauber, `main` gepusht, 31 Harnesses gruen** (nachgezaehlt 13.08. nach O5 — O5 brachte KEIN neues File, sondern erweiterte `wine-guide-page.js`, `persistence.js` und `fairs.js`; `fair-participation.js` kam mit Durchgang O4 dazu, davor `fair-recruiting.js` mit O3, `fairs.js` mit 12, `platform-partners.js` mit 11, `campaigns.js` mit 10, `wine-guide-page.js` mit 9, `member-events.js` mit 7). **`BLStore.VERSION` steht auf 12** — O5 hat gemessen einen Bump auf 12 gebraucht (neue Fixture-Zeilen in den bestehenden Sammlungen `fairSeries`/`fairEditions`/`reviews`, D2D-Klasse; `SCHEMA_HASH` blieb `6d204f48`, alle 40 Fingerprints identisch); O4 hat gemessen einen Bump auf 10 gebraucht (Fixture-Zeilen in den BESTEHENDEN Sammlungen `fairHalls`/`fairStands`/`fairAdmissions`, D2D-Klasse), die Codex-Korrektur einen weiteren auf 11 (FORMAT-Klasse: das Schema-Feld `sh` im Snapshot-Blob; Begruendung jeweils am `VERSION` und in den Bloecken unten); Durchgang 12 brauchte einen (RVW-3005), **O3 gemessen keinen**. **Mit `sh` kam eine neue C8-Pflicht: aendern Fixtures ihre FORM, wird `SCHEMA_HASH` in `assets/bottle-lobby-store.js` im selben Commit nachgezogen — `tests/persistence.js` wird sonst rot und nennt den neuen Wert.**
 
 ### Womit eine Sitzung anfaengt
 
@@ -978,6 +978,159 @@ Funktionen aufrufen, `transferSize` vorher lesen (C7).
 >   (beide Dokumente, ein Urteil, live beobachtet). Danach Reset,
 >   Fixtures pristine.
 
+> **Durchgang O5 ist gebaut (13.08.), sieben lokal committete Schritte,
+> ein Push.** Roadmap-Anker **O5**: Wine Guide → Events ist jetzt DAS
+> eine oeffentliche Verzeichnis ueber VIER Datensatzarten, mit dem
+> gemeinsamen Kartensystem, der Filter-Sidebar der uebrigen Tabs, der
+> Nur-Lese-Hydration des Guides und dem oeffentlichen Rendern des
+> externen Ticket-/Akkreditierungslinks. Die Spec ging voraus und
+> **muss ins Projektwissen**. Was Git nicht selbst sagt:
+>
+> - **KEIN neues A-Kapitel, gemessen statt vermutet.** O5 legt kein
+>   neues Record, keinen neuen Status und keine neue Relation an — es
+>   rendert, was A16.14d, A10, A19.5/FS-7 und A21.7 laengst versprochen
+>   hatten. Ein zweites Kapitel ueber dieselbe Flaeche waeren zwei Orte
+>   fuer eine Regel. Die Praezisierungen stehen daher dort, wo die
+>   Regeln schon stehen; **neu sind nur die Invarianten DIR-1..DIR-7 in
+>   A16.15.**
+> - **KEINE neue D-Entscheidung, und die alte Formulierung war schon
+>   abgeloest.** A16.14d sprach von *"external fairs"* — das ist das
+>   Vokabular der `events.event_kind:'external_fair'`-Skizze, die
+>   **D45** bereits ersetzt hat; die Ersetzung hatte diesen Satz nur nie
+>   erreicht. Naechste freie D-Nummer am Dokument gemessen (D46 ist die
+>   letzte) und bewusst NICHT genommen.
+> - **Die Huellen-Entscheidung ist gemessen und faellt gegen die
+>   Verallgemeinerung:** `SHOW_CARD_CLASSES` fuehrt `ws-teaser` /
+>   `ws-public` / `ws-listing` ausdruecklich als
+>   WINE-SHOW-GARANTIEMARKER. Eine neutrale Huelle haette sie umbenennen
+>   muessen — und damit genau den Vertrag aufgeloest, auf dem ME-3
+>   steht. Geteilt wird deshalb, was KEIN Versprechen traegt: EIN
+>   Expander (`wireExpandableCards`, Selektor `.bl-expand`, das
+>   geschlossene Label wird je Sorte vom Knopf gelesen), EINE
+>   Bildflaechenlogik mit gemessenem datenfreien Zustand (`cardHeroHtml`
+>   — Hero-Medien bleiben ein eigener Durchgang, also Typo-Band statt
+>   leerem Rahmen oder fremdem Foto), das Raster und die Typo-Tokens.
+>   Die `.ws-*`/`.me-*`-Regeln sind unangetastet.
+> - **Vier Satzarten, drei Familien** (`DIRECTORY_FAMILY_OF`, an einer
+>   Stelle): eine Participation gehoert zu **Fair**, ist NIE eine vierte
+>   Familie und NIE eine oberste Filteroption — sie verlinkt
+>   ausschliesslich auf die kanonische Participation Page.
+> - **Der Guide hydratisiert jetzt nur lesend** — derselbe
+>   `BLStore.hydrate()`, dieselbe feste Allowlist, derselbe eine
+>   Gueltigkeitsvertrag wie auf der Participation Page. Ohne diesen
+>   Schritt haette der Tab fuer immer Fixtures gezeigt.
+> - **Zwei kleine Umzuege, aus demselben Grund wie in O4** (ein Fakt,
+>   zwei Leser — nicht der O4-Umzug wiederholt): `FAIR_TICKETING_LABEL`
+>   und `fairTicketingUrlValid()` nach `assets/bottle-lobby-data.js`,
+>   `SHOW_TODAY` ebenfalls dorthin und `fairEditionPast()` neben
+>   `fairEditionDiscoverable()`. **Die Ticket-Beschriftungen sind damit
+>   die oeffentlichen** (Trade Accreditation · Consumer Tickets · Hybrid
+>   Tickets & Accreditation); das Organizer-Cockpit baut seinen Satz um
+>   denselben Wert und fuehrt keinen zweiten.
+> - **Fixture-Abdeckung, gemessen:** oeffentlich sichtbar waren nur ZWEI
+>   Trade-Editionen, gleiche Stadt, gleicher Link — ein Fair-Typ-Filter
+>   haette zwei leere Kategorien gehabt, und der einzige NULL-Link hing
+>   an der unsichtbaren Draft. Aufloesung: eine **zweite, klar fiktive
+>   Serie** (FS-7002 *Uferlicht Wine Festival*, eigener Brand-Review
+>   RVW-3006) mit drei veroeffentlichten Editionen — Consumer MIT Link,
+>   Hybrid MIT Link, Consumer OHNE Link — in zwei weiteren Staedten.
+>   **Warum keine weiteren Atrium-Runs:** FS-7001 sagt in seinem eigenen
+>   `about` *"run twice a year"* und hat genau zwei veroeffentlichte
+>   2027-Laeufe; drei weitere haetten den eigenen Satz falsch gemacht.
+>   **FE-7102 bleibt die Hybrid-DRAFT.** **Alle drei neuen Editionen
+>   sind upcoming, und das ist gemessen:** FS-3 verlangt beide
+>   Voraussetzungen im Moment der Publikation, die spaetere ist der
+>   Brand-Review (22. Jul) — bis SHOW_TODAY (31. Jul) bleiben neun Tage
+>   fuer eine Messe, die angekuendigt, gelaufen und vorbei sein
+>   muesste. "Previously" traegt die abgeschlossene Wine Show.
+> - **Gemessen und bewusst NICHT gebaute Filter, mit Grund:** Land und
+>   Region (keine Satzart traegt beides — nur `city`) · Weinherkunft,
+>   -region und -rebsorte (die kanonische Produktzeile fuehrt Name,
+>   Jahrgang, Typ und URL; eine Facette darf nicht erfinden, was der
+>   Record nicht hat) · Weinfarbe (steht auf der Produktzeile, trennt
+>   ueber die Eintraege, die Weine oeffentlich nennen, aber nichts).
+>   Getragen: Eventfamilie (3) · Upcoming/Past (abgeleitet) · Stadt ·
+>   Fair-Typ (nur im Fair-Kontext) · Member-Event-Hostrolle.
+> - **C8 am tatsaechlichen Diff:** alle 40 Fingerprints identisch (jede
+>   neue Zeile behaelt die Form ihrer Sammlung), **`SCHEMA_HASH` bleibt
+>   `6d204f48`** — und genau deshalb ist **`VERSION` 11 → 12** der
+>   einzige verbleibende Hebel (D2D-Klasse: Zeilen in bereits
+>   registrierten Sammlungen sieht Guard 2 bauartbedingt nicht).
+> - **Harness-Heimat gemessen:** `tests/wine-guide-page.js` erweitert
+>   (A16.14d ist eine Regel), die Persistenzhaelfte von DIR-4 in
+>   `tests/persistence.js` — aus demselben Grund wie FP-13: das ist das
+>   EINE Harness, das einen lebenden Store fahren darf. **31 Harnesses
+>   bleiben 31**, kein neues File.
+> - **Zwei Befunde, die das Harness selbst erzeugt hat** (beide im
+>   selben Commit behoben): die Fair-Auflistung benutzte
+>   `.ws-public-line` — eine Wine-Show-Garantieklasse — und traegt jetzt
+>   `.fe-fact`; und der Hydrationskommentar im Guide nannte eine private
+>   Recruiting-Sammlung beim Namen, was der FR-11-Quellscan zu Recht als
+>   Zugriff liest.
+> - **Browser-Abnahme, klickend, `transferSize` frisch gemessen:** vier
+>   Kartensorten in einer chronologischen Liste (12 Eintraege, Coming up
+>   und Previously belegt) · Garantiemarker NUR auf Wine Shows (auf der
+>   Fair-Karte gemessen: keine) · Familienfilter mit **genau drei**
+>   Optionen, Participation unter Fair auffindbar · Sidebar links,
+>   sticky, alte Dropdowns weg, Clear all setzt zurueck · Filterproben
+>   Familie / Fair-Typ (Trade 4, Consumer 2, Hybrid 1) / Stadt /
+>   Upcoming-Past — Optionen UND Zaehler bewegen sich live (unter "Fair"
+>   schrumpft die Stadtliste auf die Messestaedte, unter "Mainz" bleibt
+>   nur Fair(2)) · Fair-Edition vollstaendig im gemeinsamen Expander
+>   lesbar, Label und `aria-expanded` kippen zurueck · Klick auf die
+>   Presence landet auf `?id=FP-9401` mit unveraendertem Inhalt · die
+>   drei Ticket-Beschriftungen exakt je Typ, FE-7106 ohne Knopf UND ohne
+>   leere Flaeche, alle Links `_blank` + `noopener noreferrer` ·
+>   **PERSISTENZ-DURCHREICHUNG:** FE-7102 im Cockpit veroeffentlicht →
+>   gewoehnlicher Save (v12 im Snapshot, History append-only) → Guide
+>   gewoehnlich geoeffnet zeigt 13 Eintraege inkl. FE-7102, Snapshot
+>   byte-identisch, Store read-only, `fairAdmissions` auf der Seite
+>   `undefined` · Aufhebung von FP-9401 durch den Organizer → Presence
+>   weg, Edition-Karte faellt auf "No exhibitor has published a stand
+>   here yet", Aufhebungsgrund nirgends sichtbar · Stichproben: vier
+>   Cockpits rendern, Fans 3, WS-2604 planning/offen, FP-9402-Page
+>   unveraendert.
+> - **ZWEI Umgebungsbefunde, benannt statt weggeschrieben:**
+>   **(1)** Screenshots und die Accessibility-Werkzeuge der Erweiterung
+>   liefen auf dieser Maschine in Injection-Timeouts (bekannte
+>   C7-Fremdkoerperklasse) — abgenommen wurde deshalb ueber echte
+>   DOM-Klicks (`element.click()` auf den tatsaechlichen Knoepfen und
+>   Checkboxen) statt ueber Screenshot-Koordinaten, und die schmale
+>   Ansicht liess sich NICHT herstellen: das Fenster nahm die
+>   Groessenaenderung nicht an (`innerWidth` blieb 1250). Ersatzmessung:
+>   der Events-Tab benutzt **dieselbe `.guide-layout`** wie die fuenf
+>   erprobten Tabs, und die Regeln `@media (max-width:900px)`
+>   (`grid-template-columns:1fr`, `filter-sidebar` → `position:static`)
+>   sowie `@media (max-width:800px)` fuer `.ws-grid` sind die
+>   bestehenden — die schmale Ansicht ist Klassengleichheit, keine neue
+>   Regel. **Eine echte schmale Sichtprobe steht damit aus.**
+>   **(2) Der Demo-Stand im Browser ist NICHT pristine zurueckgesetzt.**
+>   Auf `localhost:8765` laeuft ein **zweiter Dashboard-Tab ausserhalb
+>   der Automatisierung**, dessen Heartbeat den Snapshot alle zwei
+>   Sekunden aus seinem eigenen Speicher zurueckschreibt: ein Sentinel
+>   im Storage war nach 3,5 s ueberschrieben, und ein Entfernen des
+>   Schluessels ueberlebt keine 2 s. Kein O5-Befund — der
+>   storage-Event-Weg wuerde diesen Tab reloaden, `attempt()` schiebt
+>   das aber auf, solange der Tab `busy()` ist (offenes Modal oder Feld
+>   im Fokus). **Serge: in jenem Tab "↺ Reset demo" druecken oder ihn
+>   schliessen** — danach sind die Fixtures wieder pristine. Der
+>   pristine Zustand WURDE gesehen, zu Beginn der Abnahme (12
+>   Eintraege, FE-7102 nicht gelistet).
+>
+> **Was Durchgang O5 bewusst NICHT gebaut hat, mit Ziel-Durchgaengen:**
+> B2B-Termine, Slots, Follow-ups (**O7**) · oeffentliches
+> Organizer-Profil & Follow (**O9**) · Opportunities (**O10**) ·
+> Fair-Benachrichtigungen & Organizer-Kommunikation (**O11**) · Agenda
+> und Unterveranstaltungen (**O12**) · **Hero-Medien und Uploads
+> (eigener Durchgang** — die Bildflaechenlogik traegt bis dahin den
+> gemessenen datenfreien Zustand) · **Cross-Tab-Live-Nachfuehrung
+> (bewusst NICHT gebaut** — Reload ist der Weg; ein Live-Kanal auf einer
+> nur lesenden oeffentlichen Flaeche waere ein Schreibpfad auf der Suche
+> nach einem Grund) · internes Ticketing, Checkout, Preise · erfundene
+> Besucher-, Teilnehmer-, Ticket- oder Reichweitenzaehler ·
+> oeffentliche Organizer-Profilseiten · eine Umstrukturierung der
+> Dashboard-Events-Navigation.
+
 ---
 
 ### Arbeitsorganisation — Serges Vorgabe vom 08.08.
@@ -1366,13 +1519,16 @@ existieren. Aus demselben Grund fehlt die **Bestandspruefung** im Auftragsdetail
 ist gebahnt und getestet (`tests/load-dashboard.js`), das naechste Array ist also
 billig — aber **jeweils ein eigener Durchgang**, damit Fehler zuzuordnen bleiben.
 
-**Persistenz auf den oeffentlichen Seiten — moeglicher zweiter Durchgang.**
-Die 16 oeffentlichen Seiten laden `assets/bottle-lobby-data.js` bereits und
-koennten den gespeicherten `wineShows`-Stand **nur lesend** uebernehmen; eine im
-Dashboard angelegte Show stuende sofort oeffentlich. `BLStore.start({ strict:
-false })` kann das schon. **Wichtig: diese Seiten duerfen nie schreiben** — sie
-kennen nur `wineShows` und wuerden die uebrigen Sammlungen sonst beim Speichern
-loeschen. Ein `readOnly`-Schalter im Store waere der saubere Weg davor.
+**Persistenz auf den uebrigen oeffentlichen Seiten — halb eingeloest.**
+Der saubere Weg, den diese Notiz sich gewuenscht hat, EXISTIERT seit O4:
+`BLStore.hydrate()` — nur lesend, feste Public-Allowlist, ein
+Gueltigkeitsvertrag — und seit O5 nutzen ihn ZWEI Dokumente, die kanonische
+Participation Page und `bottle-lobby-wine-guide.html`. Offen ist damit nur noch
+der urspruengliche Fall: die Wine-Shows-Seite und die 15 Profilseiten lesen
+`wineShows` weiterhin ausschliesslich als Fixture, sodass eine im Dashboard
+angelegte Show dort nicht erscheint. Wer das nachzieht, nimmt den bestehenden
+Weg und erweitert die Allowlist um `wineShows`/`memberEvents` — **nie
+`start()`**, und **kein zweiter Vertrag**.
 
 **Offen bei A16, in empfohlener Reihenfolge:** Catering ab Schritt 3 (A16.11,
 vollstaendig spezifiziert, keine offene Entscheidung, und das einzige
