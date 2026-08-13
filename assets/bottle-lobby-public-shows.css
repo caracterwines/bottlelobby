@@ -109,3 +109,46 @@
 .me-card-disclaim { margin-top:0.8rem; padding-top:0.7rem;
   border-top:1px dashed rgba(247,243,238,0.12);
   font-size:0.66rem; color:rgba(247,243,238,0.34); font-style:italic; line-height:1.65; }
+
+/* ══ THE CANONICAL PARTICIPATION PAGE (A21.7) — fpp-* ═════════════
+   Styles for the one participation renderer in
+   bottle-lobby-public-shows.js. They live beside the ws-*/me-*
+   classes for the same reason those do: the markup and its dress
+   belong to the shared renderer, not to a page. */
+.fpp { max-width: 720px; }
+.fpp-kicker { font-size:0.62rem; letter-spacing:0.25em; text-transform:uppercase;
+  color:var(--gold, #b8975a); margin-bottom:0.9rem; }
+.fpp-exhibitor { font-family:'Cormorant Garamond', serif; font-size:clamp(2rem, 4vw, 3rem);
+  font-weight:300; line-height:1.1; margin-bottom:0.4rem; }
+.fpp-exhibitor a { color:inherit; }
+.fpp-role { font-size:0.7rem; letter-spacing:0.1em; text-transform:uppercase;
+  color:rgba(247,243,238,0.45); margin-bottom:1.6rem; }
+.fpp-edition { border:1px solid rgba(247,243,238,0.09); background:rgba(247,243,238,0.03);
+  padding:1.1rem 1.3rem; margin-bottom:1.4rem; }
+.fpp-edition-name { font-family:'Cormorant Garamond', serif; font-size:1.3rem; font-weight:400; }
+.fpp-edition-facts { font-size:0.78rem; color:rgba(247,243,238,0.55); margin-top:0.3rem; line-height:1.7; }
+.fpp-facts { display:flex; gap:2.2rem; flex-wrap:wrap; margin-bottom:1.3rem; }
+.fpp-fact { font-size:0.8rem; color:rgba(247,243,238,0.75); }
+.fpp-fact b { display:block; font-size:0.6rem; letter-spacing:0.14em; text-transform:uppercase;
+  color:rgba(247,243,238,0.4); font-weight:500; margin-bottom:0.25rem; }
+.fpp-desc { font-size:0.86rem; color:rgba(247,243,238,0.7); line-height:1.85; margin-bottom:1.6rem; }
+.fpp-block-title { font-size:0.62rem; letter-spacing:0.2em; text-transform:uppercase;
+  color:rgba(247,243,238,0.45); margin:1.6rem 0 0.7rem; }
+.fpp-wines { list-style:none; margin:0; padding:0; }
+.fpp-wine { display:flex; align-items:baseline; gap:0.7rem; padding:0.4rem 0;
+  border-bottom:1px solid rgba(247,243,238,0.06); font-size:0.84rem; }
+.fpp-wine-type { font-size:0.66rem; letter-spacing:0.08em; text-transform:uppercase;
+  color:rgba(247,243,238,0.35); }
+.fpp-rep { border:1px solid rgba(247,243,238,0.08); padding:1rem 1.2rem; margin-bottom:0.9rem; }
+.fpp-rep-head { display:flex; align-items:center; gap:0.7rem; flex-wrap:wrap;
+  font-size:0.95rem; font-weight:500; margin-bottom:0.4rem; }
+/* The TWO presence statements — two chips, each with its own explicit
+   answer (FP-7). The muted "no" is a statement, not an absence. */
+.fpp-flag { font-size:0.6rem; letter-spacing:0.1em; text-transform:uppercase;
+  padding:0.2rem 0.55rem; border:1px solid rgba(247,243,238,0.15);
+  color:rgba(247,243,238,0.4); border-radius:2px; }
+.fpp-flag.on { border-color:rgba(184,151,90,0.5); color:var(--gold, #b8975a); }
+.fpp-link { color:var(--gold, #b8975a); text-decoration:none;
+  border-bottom:1px solid rgba(184,151,90,0.3); }
+.fpp-link:hover { border-color:var(--gold, #b8975a); }
+.fpp-none { font-size:0.86rem; color:rgba(247,243,238,0.5); line-height:1.9; }

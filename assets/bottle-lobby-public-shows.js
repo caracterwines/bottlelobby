@@ -849,3 +849,95 @@ function fairStandOccupant(standId) {
     return p.standId === standId && p.status === 'active';
   }) || null;
 }
+
+/* ══ THE CANONICAL PARTICIPATION PAGE — the one renderer (A21.7) ══ */
+/* A stakeholder or wine renders as a REAL link exactly where the
+   Bestand carries a target (`stakeholders.url`, the product row's
+   `url`) — and as plain text where it does not. No invented target:
+   a link that has to be guessed is worse than none (the A12 lesson,
+   the data.js `url` rule). Names resolve from the canonical records
+   at render time; nothing here reads a copy (FP-14). */
+function fairStakeholderLink(name) {
+  const st = stakeholder(name);
+  return st && st.url
+    ? '<a class="fpp-link" href="' + notifEsc(st.url) + '">' + notifEsc(st.name) + '</a>'
+    : notifEsc(name);
+}
+function fairWineLine(ref) {
+  const wRow = wineByRef(ref);
+  if (!wRow) return '';   /* an unresolvable reference renders nothing (ME-6) */
+  const label = notifEsc(wRow.name + ' ' + wRow.vintage);
+  return '<li class="fpp-wine">' +
+    (wRow.url ? '<a class="fpp-link" href="' + notifEsc(wRow.url) + '">' + label + '</a>' : label) +
+    '<span class="fpp-wine-type">' + notifEsc(wRow.type) + '</span></li>';
+}
+/* The TWO presence statements, rendered as the two statements they
+   are — each with its own explicit answer, never folded into one
+   line and never one inferred from the other (FP-7). */
+function fairPresenceChips(rep) {
+  return '<span class="fpp-flag' + (rep.representedAtBooth ? ' on' : '') + '">Represented at booth · ' +
+           (rep.representedAtBooth ? 'yes' : 'no') + '</span>' +
+         '<span class="fpp-flag' + (rep.personallyAttending ? ' on' : '') + '">Personally attending · ' +
+           (rep.personallyAttending ? 'yes' : 'no') + '</span>';
+}
+
+/* COMPOSES, NEVER COPIES (A21.7): exhibitor identity from the
+   stakeholder record, edition and series facts from their records,
+   hall and stand labels resolved live from the inventory, wines
+   through the one product resolver. The caller has already asked
+   fairParticipationPublic() — this function renders content, it does
+   not re-decide visibility, and nothing here reads an admission. */
+function fairParticipationPageHtml(p) {
+  const ed = fairEditionById(p.editionId);
+  const s  = ed && fairSeriesById(ed.seriesId);
+  const st = stakeholder(p.org);
+  const dates = ed
+    ? blDate(ed.startDate) + (ed.endDate ? ' – ' + blDate(ed.endDate) : '')
+    : '';
+  const stand = p.standId ? fairStands.find(function (x) { return x.id === p.standId; }) : null;
+  const hall  = stand ? fairHalls.find(function (h) { return h.id === stand.hallId; }) : null;
+  const place = stand
+    ? 'Stand ' + notifEsc(stand.label) + (hall ? ' · ' + notifEsc(hall.name) : '')
+    : 'Stand to be announced';
+  const days = (p.days && p.days.length)
+    ? p.days.map(blDate).join(' · ')
+    : 'Attendance days to be announced';
+
+  let content = '';
+  if (p.orgType === 'winery') {
+    const wines = (p.products || []).map(function (x) { return fairWineLine(x.productId); }).join('');
+    content = wines
+      ? '<div class="fpp-block-title">Presented Wines</div><ul class="fpp-wines">' + wines + '</ul>'
+      : '';
+  } else {
+    /* GROUPED BY WINERY (A21.7): each represented house is one group
+       with its own two presence statements and its own wines — no
+       mixed pool, no foreign bottle in a group. */
+    content = (p.representing || []).map(function (rep) {
+      const wines = (rep.products || []).map(function (x) { return fairWineLine(x.productId); }).join('');
+      return '<div class="fpp-rep">' +
+        '<div class="fpp-rep-head">' + fairStakeholderLink(rep.winery) + fairPresenceChips(rep) + '</div>' +
+        (wines ? '<ul class="fpp-wines">' + wines + '</ul>' : '') +
+      '</div>';
+    }).join('');
+    if (content) content = '<div class="fpp-block-title">Represented Wineries &amp; Their Wines</div>' + content;
+  }
+
+  return '<div class="fpp">' +
+    '<div class="fpp-kicker">Fair participation</div>' +
+    '<h2 class="fpp-exhibitor">' + fairStakeholderLink(p.org) + '</h2>' +
+    '<div class="fpp-role">' + notifEsc(st.type === 'distributor' ? 'Distributor' : 'Winery') +
+      (st.region ? ' · ' + notifEsc(st.region) : '') + '</div>' +
+    (ed ? '<div class="fpp-edition">' +
+      '<div class="fpp-edition-name">' + notifEsc(s ? s.name : '') + '</div>' +
+      '<div class="fpp-edition-facts">' + dates + ' · ' + notifEsc(FAIR_TYPE_LABEL[ed.fairType] || '') +
+        '<br>' + notifEsc(ed.city) + (ed.venue ? ' — ' + notifEsc(ed.venue) : '') + '</div>' +
+    '</div>' : '') +
+    '<div class="fpp-facts">' +
+      '<div class="fpp-fact"><b>Where</b>' + place + '</div>' +
+      '<div class="fpp-fact"><b>Fair days attended</b>' + days + '</div>' +
+    '</div>' +
+    (p.description ? '<p class="fpp-desc">' + notifEsc(p.description) + '</p>' : '') +
+    content +
+  '</div>';
+}
