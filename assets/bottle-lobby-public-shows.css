@@ -193,6 +193,11 @@
 .fe-listing-desc { font-size:0.78rem; color:rgba(247,243,238,0.7); line-height:1.75; margin-bottom:0.9rem; }
 .fe-listing-head { font-size:var(--bl-card-kicker); letter-spacing:0.16em; text-transform:uppercase;
   color:rgba(247,243,238,0.45); margin:1rem 0 0.5rem; }
+/* The show card's line has the same job and the same metrics — and a
+   different name on purpose: .ws-public-line is one of the Wine Show's
+   guarantee classes (SHOW_CARD_CLASSES), and a fair may not wear it. */
+.fe-fact { font-size:0.76rem; color:var(--dim); margin-top:0.5rem; }
+.fe-fact b { color:var(--paper); font-weight:500; }
 /* The external ticket / accreditation link (DIR-6). It exists on the
    card only where the record carries a valid absolute http(s) URL —
    there is deliberately no empty state for it to occupy. */

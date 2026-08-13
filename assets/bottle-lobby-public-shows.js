@@ -1006,8 +1006,8 @@ function fairTicketingLinkHtml(ed) {
      ticket shop, so it gets no handle on this window and no referrer
      (`noopener` is already the Bestand's pattern on every other
      outbound link). The caption is the ONE derivation over the fair
-     type — Trade Accreditation · Consumer Tickets · Hybrid Tickets &
-     Accreditation — and it is stored nowhere (A19.5, invariant 7). */
+     type — FAIR_TICKETING_LABEL, in the data asset — and it is stored
+     nowhere and worded nowhere else (A19.5, invariant 7, DIR-6). */
   return '<a class="fe-ticket" href="' + notifEsc(url) + '" target="_blank" rel="noopener noreferrer">' +
     notifEsc(FAIR_TICKETING_LABEL[ed.fairType] || '') + ' ↗</a>';
 }
@@ -1069,17 +1069,22 @@ function fairEditionCellHtml(ed) {
 function fairEditionListingHtml(ed) {
   const ex   = fairEditionExhibitors(ed);
   const reps = fairEditionRepresentedWineries(ed);
-  const kv = function (k, v) { return '<div class="ws-public-line"><b>' + k + '</b> · ' + v + '</div>'; };
+  /* `fe-fact`, NOT the show card's `ws-public-line`. The ws-* classes
+     are SHOW_CARD_CLASSES — the Wine Show's guarantee markers — and a
+     fair borrowing one of them would be exactly the look ME-3 says is
+     borrowed by reusing a class long before anybody rewrites a
+     sentence. Same shell metrics, its own name. */
+  const kv = function (k, v) { return '<div class="fe-fact"><b>' + k + '</b> · ' + v + '</div>'; };
   const lines = ex.length
     ? ex.map(function (p) {
         const stand = p.standId ? fairStands.find(function (x) { return x.id === p.standId; }) : null;
-        return '<div class="ws-public-line">' +
+        return '<div class="fe-fact">' +
           '<a class="fpp-link" href="bottle-lobby-fair-participation.html?id=' +
             encodeURIComponent(p.id) + '">' + notifEsc(p.org) + '</a>' +
           (stand ? ' — Stand ' + notifEsc(stand.label) : '') +
         '</div>';
       }).join('')
-    : '<div class="ws-public-line">Exhibitor presences appear here as exhibitors publish their stands.</div>';
+    : '<div class="fe-fact">Exhibitor presences appear here as exhibitors publish their stands.</div>';
 
   return (ed.description ? '<div class="fe-listing-desc">' + notifEsc(ed.description) + '</div>' : '') +
     kv('Where', notifEsc(ed.venue || ed.city)) +

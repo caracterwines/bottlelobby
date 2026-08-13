@@ -595,11 +595,81 @@ function assertFixtureDiscipline() {
   if (w.eval("fairEditionById('FE-7101').startDate") > TODAY)
     ok('the published edition is upcoming — the cockpit shows a live fair today');
   else bad('the published fixture edition is already over');
-  if (w.eval('fairSeriesSeq') > 7001 && w.eval('fairEditionSeq') > 7102)
+  const maxSeries = Math.max(...SERIES().map(s => Number(s.id.slice(3))));
+  const maxEdition = Math.max(...EDITIONS().map(e => Number(e.id.slice(3))));
+  if (w.eval('fairSeriesSeq') > maxSeries && w.eval('fairEditionSeq') > maxEdition)
     ok('both id counters are ahead of every fixture id — no reload collision');
   else bad('a fair id counter would reissue an existing id');
 }
 assertFixtureDiscipline();
+
+/* ── §8b EVERY published fixture edition, not just the first ────────
+   O5 added three published editions under a second series, and each of
+   them is a publication act that FS-3 governs: both preconditions had
+   to hold at the moment it happened. The fixtures are dated, not
+   executed, so the harness is where that chain is actually checked —
+   for all of them, by derivation, rather than for FE-7101 by hand. */
+console.log('\n§8b every published edition is publishable, dated and append-only');
+
+function assertPublishedFixtures() {
+  const TODAY = w.eval('SHOW_TODAY');
+  const wsRow = w.eval("reviewsFor('partner','PP-9001').filter(r => r.approvalType === 'partner_verification')");
+  const wsAt = wsRow[wsRow.length - 1].reviewedAt;
+  EDITIONS().filter(e => e.status === 'published').forEach(ed => {
+    const hist = ed.history || [];
+    const pub = hist.find(h => h.action === 'published');
+    const brand = w.eval("seriesBrandLatest(fairSeriesById('" + ed.seriesId + "'))");
+    if (!pub) { bad(ed.id + ' is published with no publication row in its history'); return; }
+    /* FS-3, both levels, at the moment of the act. */
+    if (!(brand && brand.reviewStatus === 'approved' && brand.reviewedAt <= pub.at && wsAt <= pub.at))
+      bad(ed.id + ' was published before its preconditions: workspace ' + wsAt +
+          ', brand ' + (brand ? brand.reviewedAt + '/' + brand.reviewStatus : 'none') + ', published ' + pub.at);
+    /* The history is append-only and in order, and nothing postdates
+       the demo's today (C7's ceiling). */
+    const ats = hist.map(h => h.at);
+    if (ats.join('|') !== ats.slice().sort().join('|') || ats[ats.length - 1] > TODAY)
+      bad(ed.id + ' has a history out of order or after today: ' + ats.join(' → '));
+    if (hist[0].action !== 'created')
+      bad(ed.id + ' does not open its history with its creation');
+  });
+  ok('all ' + EDITIONS().filter(e => e.status === 'published').length +
+     ' published editions: both preconditions before the act, history append-only, nothing after today');
+
+  /* A series' own words and its editions may not contradict each
+     other. "Run twice a year" is a claim about the record set, and a
+     fixture that grows past it makes its own description false. */
+  SERIES().forEach(s => {
+    if (!/twice a year/i.test(s.about || '')) return;
+    const perYear = {};
+    EDITIONS().filter(e => e.seriesId === s.id && e.status === 'published')
+      .forEach(e => { const y = e.startDate.slice(0, 4); perYear[y] = (perYear[y] || 0) + 1; });
+    const over = Object.keys(perYear).filter(y => perYear[y] > 2);
+    if (over.length)
+      bad(s.name + ' says it runs twice a year and has ' + over.map(y => perYear[y] + ' in ' + y).join(', '));
+  });
+  ok('no series description contradicts the number of its published editions');
+}
+assertPublishedFixtures();
+expectRed('a published edition dated before its brand review', () => {
+  const ed = EDITIONS().find(e => e.status === 'published' && e.seriesId === 'FS-7002');
+  const pub = ed.history.find(h => h.action === 'published');
+  const was = pub.at;
+  pub.at = '2026-07-21';
+  try { assertPublishedFixtures(); } finally { pub.at = was; }
+});
+expectRed('a third published run under a series that says twice a year', () => {
+  const donor = EDITIONS().find(e => e.status === 'published' && e.seriesId === 'FS-7002');
+  const was = donor.seriesId, wasDate = donor.startDate;
+  donor.seriesId = 'FS-7001';
+  donor.startDate = '2027-04-04';
+  try { assertPublishedFixtures(); } finally { donor.seriesId = was; donor.startDate = wasDate; }
+});
+{
+  const draft = EDITIONS().find(e => e.id === 'FE-7102');
+  if (draft && draft.status === 'draft' && draft.fairType === 'hybrid')
+    ok('FE-7102 is still the hybrid DRAFT — the FS-6 fixture was not repurposed for the directory');
+  else bad('FE-7102 is no longer the hybrid draft');
+}
 expectRed('the brand review dated after the publication it gates', () => {
   w.eval("reviewById('RVW-3005').reviewedAt = '2026-07-28'");
   try { assertFixtureDiscipline(); }
