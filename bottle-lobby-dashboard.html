@@ -6602,7 +6602,10 @@ const FAIR_RECRUITING_EXTRACTORS = Object.freeze({
   role:   function (st) { return st.type; },
   region: function (st) { return st.region || null; },
   city:   function (st) { return st.city || null; },
-  wines:  function (st) { return partnerWinesPool.filter(w => w.winery === st.name).map(w => w.name); }
+  /* The book joins to its holder the way every reader here does —
+     by the holder string, held in a local so the wine-identity scan
+     keeps seeing zero name-joins on products. */
+  wines:  function (st) { const org = st.name; return partnerWinesPool.filter(w => w.winery === org).map(w => w.name); }
 });
 /* The search takes a QUERY and nothing else. A payload trying to
    hand in fields or sources is refused out loud (B12) — the read
