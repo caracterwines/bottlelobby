@@ -1160,3 +1160,226 @@ let eventCampaigns = [
     sentAt:'2026-08-05', sentBy:'Hawesko GmbH',
     log:[ { at:'2026-08-05', actor:'Hawesko GmbH', text:'Announcement sent to 5 recipients' } ] }
 ];
+
+/* ══════════════════════════════════════════════════════════════════
+   STAKEHOLDERS — the master record of every house on the platform
+   ------------------------------------------------------------------
+   MOVED HERE IN O4 (A21.9), unchanged: the canonical Participation
+   Page resolves exhibitor names, roles and profile targets from this
+   table, and a public page cannot reach a dashboard binding. The
+   table already IS the minimal public identity record — every field
+   renders on public surfaces — so it moves whole; a second, narrower
+   public list would be the copy A21.9 forbids.
+
+   A1 applied to the one thing that had no owner: a house's own
+   profile data. Type, avatar, region and public page sat in twelve
+   arrays at once — the partner lists of all four roles, the eight
+   request lists and the follow graph — and they had already drifted.
+   Hawesko GmbH rendered as HW wherever an array carried `avatar` and
+   as HG wherever wnInitials() computed it: the same house, two
+   badges, on screen at the same time. `wineryPartners` carried no
+   `url` at all, which is why the winery was the one role that could
+   not click through to its own partner (A11).
+
+   This table is the single place. Every list in the dashboard keeps
+   only the RELATION — who, when, which stage — and asks
+   stakeholder(name) for everything about the house itself.
+
+   `avatar` is a field, not a computation. Initials look derivable
+   until "Cave à Vins Lyon" comes out as CÀ. The two letters a house
+   is known by are a choice somebody made, and a choice is data.
+
+   `region` is the display line ("Hamburg, Germany"). `city` is the
+   market city the regional Wine Show rule matches on (C9) and is
+   recorded ONLY where it is actually known: for a winery the region
+   is a wine region, not a seat, and inventing a town to fill the
+   column would be exactly the violation this table exists to end.
+
+   Real build: `stakeholders` (id, name, type, city, region, slug),
+   and every list holds a foreign key instead of a name. The
+   prototype joins on the name because everything else does — A14.4
+   records what string matching has already cost here — so this table
+   adds a new join point, and stakeholder() below refuses to invent a
+   row for a name it does not know.
+══════════════════════════════════════════════════════════════════ */
+const stakeholders = [
+  /* Producers. No `city` except Cantina Rossi, whose seat is on the
+     invoice letterhead in the dashboard (Alcamo). The others are known
+     by their appellation, and a town guessed from it would be fiction. */
+  { name:'Cantina Rossi',             type:'winery',      avatar:'CR', region:'Sicily, Italy',        city:'Alcamo',
+    url:'bottle-lobby-winery-cantina-rossi.html' },
+  { name:'Domaine Lefèvre',           type:'winery',      avatar:'DL', region:'Burgundy, France',
+    url:'bottle-lobby-winery-domaine-lefevre.html' },
+  { name:'Henri Dubois Domaine',      type:'winery',      avatar:'HD', region:'Loire Valley, France',
+    url:'bottle-lobby-winery-henri-dubois-domaine.html' },
+  { name:'Bodegas Ruiz',              type:'winery',      avatar:'BR', region:'Rioja Alta, Spain',
+    url:'bottle-lobby-winery-bodegas-ruiz.html' },
+  { name:'Weingut Schmitt',           type:'winery',      avatar:'WS', region:'Mosel, Germany',
+    url:'bottle-lobby-winery-weingut-schmitt.html' },
+  { name:'Château Belrieu',           type:'winery',      avatar:'CB', region:'Bordeaux, France',
+    url:'bottle-lobby-winery-chateau-belrieu.html' },
+
+  /* Distributors. Hawesko's `city` is Hamburg, the market it trades
+     in and the one the shows are matched against; its registered seat
+     on the invoice is Tornesch. Two different facts, and the regional
+     rule wants the first. */
+  { name:'Hawesko GmbH',              type:'distributor', avatar:'HW', region:'Hamburg, Germany',     city:'Hamburg',
+    url:'bottle-lobby-distributor-hawesko-gmbh.html' },
+  { name:'Enoteca Milano Import Srl', type:'distributor', avatar:'EM', region:'Milan, Italy',         city:'Milan',
+    url:'bottle-lobby-distributor-enoteca-milano-import-srl.html' },
+  { name:'Iberian Wine Partners S.L.',type:'distributor', avatar:'IW', region:'Barcelona, Spain',     city:'Barcelona',
+    url:'bottle-lobby-distributor-iberian-wine-partners-sl.html' },
+  { name:'Vinorama Nordic AB',        type:'distributor', avatar:'VN', region:'Stockholm, Sweden',    city:'Stockholm',
+    url:'bottle-lobby-distributor-vinorama-nordic-ab.html' },
+  { name:'Aktiv Getränke',            type:'distributor', avatar:'AG', region:'Köln, Germany',        city:'Köln',
+    url:'bottle-lobby-distributor-aktiv-getraenke.html' },
+
+  /* Restaurants */
+  { name:'Bistro Laurent',            type:'restaurant',  avatar:'BL', region:'Frankfurt, Germany',   city:'Frankfurt',
+    url:'bottle-lobby-restaurant-bistro-laurent.html' },
+  { name:'Osteria Marconi',           type:'restaurant',  avatar:'OM', region:'Milan, Italy',         city:'Milan',
+    url:'bottle-lobby-restaurant-osteria-marconi.html' },
+  { name:'Casa Elena',                type:'restaurant',  avatar:'CE', region:'Barcelona, Spain',     city:'Barcelona',
+    url:'bottle-lobby-restaurant-casa-elena.html' },
+
+  /* Retail */
+  { name:'Weinhaus Müller',           type:'retail',      avatar:'WM', region:'Munich, Germany',      city:'Munich',
+    url:'bottle-lobby-retail-weinhaus-mueller.html' },
+  { name:'Vinstuen København',        type:'retail',      avatar:'VK', region:'Copenhagen, Denmark',  city:'Copenhagen',
+    url:'bottle-lobby-retail-vinstuen-kobenhavn.html' },
+  { name:'Vinoteca Roma',             type:'retail',      avatar:'VR', region:'Rome, Italy',          city:'Rome',
+    url:'bottle-lobby-retail-vinoteca-roma.html' },
+  { name:'Cave à Vins Lyon',          type:'retail',      avatar:'CL', region:'Lyon, France',         city:'Lyon',
+    url:'bottle-lobby-retail-cave-a-vins-lyon.html' }
+];
+
+/* Houses that appear in a record WITHOUT being in this table are not
+   an oversight. Two Wine Show attendees — Restaurant Hafenkante and
+   Vinoteca Alster — exist only as names on a guest list; they have no
+   partnership, no follow edge and no public page, and giving them
+   invented profile data so that a lookup succeeds would be the same
+   violation from the other direction. Nothing renders their avatar,
+   so nothing asks. */
+const STAKEHOLDER_INDEX = {};
+stakeholders.forEach(function (s) { STAKEHOLDER_INDEX[s.name] = s; });
+
+/* Deliberately NOT demo state and never registered with BLStore: it
+   remembers which name has already been complained about in this
+   page load, nothing a reload should inherit. */
+const stakeholderMisses = {};
+/* B12, applied to a lookup: an unknown name must not come back as an
+   empty card that looks like a house with nothing to say. What we
+   actually know is the name, so the name is what the caller gets;
+   avatar and link stay absent rather than guessed, and the miss is
+   reported once — to the console here, and as a failure in
+   tests/stakeholders.js, which asserts that every name reaching this
+   function is in the table. */
+function stakeholder(name) {
+  const s = STAKEHOLDER_INDEX[name];
+  if (s) return s;
+  if (name && !stakeholderMisses[name]) {
+    stakeholderMisses[name] = true;
+    console.warn('[stakeholders] no master record for "' + name + '" — rendering the name without avatar or profile link');
+  }
+  return { name:name, type:null, avatar:'', region:'', city:undefined, url:null, unknown:true };
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   THE CANONICAL FAIR — series, editions, halls, stands (A19, A20)
+   ------------------------------------------------------------------
+   MOVED HERE IN O4 (A21.8) — the sequence correction: A19.7 announced
+   this move for the first public reader, which the canonical
+   Participation Page turned out to be (O4, not O5). One canonical
+   definition per collection; the dashboard registers the bindings
+   with BLStore exactly as it does for `wineShows`, and the public
+   page hydrates the same collections read-only (BLStore.hydrate).
+
+   WHAT DID NOT MOVE, on purpose: `fairAdmissions` and every private
+   recruiting record stay in bottle-lobby-dashboard.html for good —
+   no public asset reads an admission (FR-11, A20.13). Halls and
+   stands travel occupancy-free: NO occupant field, NO booking field,
+   NO stored counts, ever (A20.9/A21.5) — who stands where is the
+   participation row, and occupancy is derived from it (invariant 7).
+
+   Management stays where the actor is: every act function (create,
+   publish, recruit, assign…) lives in the dashboard and checks its
+   acting workspace there (A20.11). This file holds records and
+   finders, nothing gated. */
+const FAIR_TYPES = ['trade', 'consumer', 'hybrid'];
+const FAIR_TYPE_LABEL = { trade:'Trade Fair', consumer:'Consumer Fair', hybrid:'Hybrid Fair' };
+
+let fairSeries = [
+  /* THE ONE SERIES, AND IT IS FICTITIOUS ON PURPOSE: "Atrium Wine
+     Days" is invented for this demo, under the invented organizer
+     Atrium Fairs GmbH — real fair brands (ProWein, Vinitaly) stay
+     spec prose and award strings (A16.8). C7: the brand predates its
+     review (RVW-3005, 20 Jul), which predates the published edition
+     below. */
+  { id:'FS-7001', organizerId:'PP-9001', name:'Atrium Wine Days',
+    about:'Regional wine trade fair — portfolio tastings and trade contacts under one roof, run twice a year.' }
+];
+let fairSeriesSeq = 7002;
+
+let fairEditions = [
+  /* The published upcoming run: created 18 Jul (a draft needs no
+     approval to exist), published 25 Jul — AFTER both preconditions'
+     last words (workspace 15 Jul, brand 20 Jul) and before SHOW_TODAY
+     (31 Jul), because the cockpit shows a published edition "today".
+     The dates sit in the coming spring, like every upcoming fixture. */
+  { id:'FE-7101', seriesId:'FS-7001', fairType:'trade',
+    startDate:'2027-02-08', endDate:'2027-02-09',
+    city:'Wiesbaden', venue:'Atrium Halle, Wiesbaden',
+    description:'Two trade days: open tasting floor, importer round tables, focus region Rheingau.',
+    status:'published',
+    /* The exhibitor call is OPEN on the published run (A20.5): the
+       trade block has something real to reach, and closing it is a
+       live act of the acceptance, not a fixture edit. */
+    exhibitorCallOpen:true,
+    externalTicketingUrl:'https://atrium-wine-days.example/accreditation',
+    history:[
+      { at:'2026-07-18', actor:'Atrium Fairs GmbH', action:'created',   reason:null },
+      { at:'2026-07-25', actor:'Atrium Fairs GmbH', action:'published', reason:null }
+    ] },
+  /* The draft: private, visible only inside the owning workspace
+     (FS-6) — the harness proves its title absent from every other
+     view. A hybrid, so the third fair type is data, not prose. */
+  { id:'FE-7102', seriesId:'FS-7001', fairType:'hybrid',
+    startDate:'2027-09-04', endDate:null,
+    city:'Wiesbaden', venue:'Atrium Halle, Wiesbaden',
+    description:'Autumn edition — trade morning, public afternoon. Concept in planning.',
+    status:'draft',
+    exhibitorCallOpen:false,
+    externalTicketingUrl:null,
+    history:[
+      { at:'2026-07-28', actor:'Atrium Fairs GmbH', action:'created', reason:null }
+    ] }
+];
+let fairEditionSeq = 7103;
+
+function fairSeriesById(id) { return fairSeries.find(s => s.id === id) || null; }
+function fairEditionById(id) { return fairEditions.find(e => e.id === id) || null; }
+function fairSeriesOf(workspaceId) {
+  return fairSeries.filter(s => s.organizerId === workspaceId);
+}
+function editionsOfSeries(seriesId) {
+  return fairEditions.filter(e => e.seriesId === seriesId);
+}
+
+/* Halls and stands are EDITION inventory (A20.9): a stand reaches its
+   edition through its hall — no editionId copy on the stand row
+   (invariant 1) — and NO occupant or booking field on either row,
+   ever: who stands where is the A21 participation row, and occupancy
+   is derived from it (invariant 7, fairStandOccupant in the shared
+   renderer asset). */
+let fairHalls = [
+  { id:'FH-9201', editionId:'FE-7101', name:'Hall 1 — Tasting Floor' }
+];
+let fairHallSeq = 9202;
+let fairStands = [
+  { id:'FB-9301', hallId:'FH-9201', label:'A-01' },
+  { id:'FB-9302', hallId:'FH-9201', label:'A-02' }
+];
+let fairStandSeq = 9303;
+
+function fairHallsOfEdition(editionId) { return fairHalls.filter(h => h.editionId === editionId); }
+function fairStandsOfHall(hallId) { return fairStands.filter(st => st.hallId === hallId); }

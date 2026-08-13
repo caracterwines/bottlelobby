@@ -13,6 +13,17 @@
    the next load. Invariant 1 is untouched: one record, referenced
    everywhere, never copied.
 
+   ONE deliberate exception since O4 (A21.8): hydrate(), the READ-ONLY
+   public entry. The canonical Participation Page has to show the same
+   current records the dashboard saved, and "the next load" of a public
+   page IS a read of this snapshot. hydrate() applies the snapshot to
+   the page's registered bindings under the SAME validity rules
+   restore() uses — one parser, two entries, never a second
+   interpretation — and differs in exactly two ways: it accepts only
+   the fixed PUBLIC_COLLECTIONS allowlist, and it NEVER writes: no
+   save, no discard, no reset, no listener, no heartbeat. The
+   dashboard remains the only writer.
+
    IT DISAPPEARS WITHOUT REPLACEMENT. In the Supabase build persistence
    IS the database. This file is then deleted, not ported.
 
@@ -285,6 +296,7 @@ window.BLStore = (function () {
   var fixtureFp    = {};   /* name → hash of the pristine fixture shape */
   var hooks        = {};   /* redraw / afterRestore / onSaved / notify / onExternal */
   var strict       = true;
+  var readOnly     = false;/* set by hydrate(); kills every write path */
   var saveTimer    = null;
   var beatTimer    = null;
   var pollTimer    = null;
@@ -374,6 +386,27 @@ window.BLStore = (function () {
     return 'discarded';
   }
 
+  /* ── Snapshot validity, decided ONCE ─────────────────────────────
+     restore() and hydrate() must never disagree about what a valid
+     snapshot is — a second interpretation of the same bytes would be
+     the drift this file exists to prevent. This helper answers the
+     shared half: structure, version, and every REGISTERED name
+     present with the fixture's shape. What the two entries DO with an
+     invalid snapshot stays theirs: the dashboard discards it (it owns
+     the storage), the read-only page merely ignores it. */
+  function snapshotInvalidWhy(p) {
+    if (!p || typeof p !== 'object' || !p.data || typeof p.data !== 'object')
+      return 'the snapshot has no data block';
+    if (p.v !== VERSION)
+      return 'it was written by store version ' + p.v + ', this is ' + VERSION;
+    var fp = p.fp || {}, changed = [];
+    entries.forEach(function (e) {
+      if (!p.data.hasOwnProperty(e.name)) changed.push(e.name + ' (missing)');
+      else if (fp[e.name] !== fixtureFp[e.name]) changed.push(e.name + ' (shape changed)');
+    });
+    return changed.length ? changed.join(', ') : null;
+  }
+
   /* Returns 'restored' | 'empty' | 'discarded' | 'inactive'. */
   function restore() {
     var ls = storage();
@@ -386,18 +419,11 @@ window.BLStore = (function () {
     try { p = JSON.parse(raw); } catch (e) {
       return discard('the snapshot is not readable JSON');
     }
-    if (!p || typeof p !== 'object' || !p.data || typeof p.data !== 'object')
-      return discard('the snapshot has no data block');
-    if (p.v !== VERSION)
-      return discard('it was written by store version ' + p.v + ', this is ' + VERSION);
-
     /* All or nothing: name every mismatch, then throw the lot away. */
-    var fp = p.fp || {}, changed = [];
-    entries.forEach(function (e) {
-      if (!p.data.hasOwnProperty(e.name)) changed.push(e.name + ' (missing)');
-      else if (fp[e.name] !== fixtureFp[e.name]) changed.push(e.name + ' (shape changed)');
-    });
-    if (strict) {
+    var changed = [];
+    var why = snapshotInvalidWhy(p);
+    if (why) changed.push(why);
+    if (strict && p && typeof p === 'object' && p.data && typeof p.data === 'object') {
       var known = {};
       entries.forEach(function (e) { known[e.name] = 1; });
       Object.keys(p.data).forEach(function (n) {
@@ -414,6 +440,56 @@ window.BLStore = (function () {
     return 'restored';
   }
 
+  /* ── The READ-ONLY public entry (O4, A21.8) ──────────────────────
+     For pages that RENDER the demo state without owning it — the
+     canonical Participation Page first. It differs from start() in
+     everything start() wires: no event listeners, no heartbeat, no
+     beforeunload save, no storage handler — after hydrate() this
+     page's store cannot write, and save()/reset() are dead on it.
+
+     THE ALLOWLIST IS FIXED HERE, in platform code, like the
+     recruiting read path's field list (A20.7): only these public
+     collections may ever be hydrated on a public page. A page that
+     registers anything else — fairAdmissions above all — is refused
+     WHOLE, before any read. Private recruiting records never reach a
+     public page (FR-11, A21.8).
+
+     An invalid or outdated snapshot follows the store's ONE validity
+     interpretation (snapshotInvalidWhy) and is IGNORED, never
+     deleted: deleting is a write, and the dashboard is the only
+     writer. With no usable snapshot the page simply renders the
+     fixtures it loaded.
+
+     Returns 'hydrated' | 'empty' | 'ignored' | 'refused' | 'inactive'. */
+  var PUBLIC_COLLECTIONS = ['fairSeries', 'fairEditions', 'fairHalls',
+                            'fairStands', 'fairParticipations'];
+  function hydrate() {
+    readOnly = true;   /* first thing: whatever happens, this page never writes */
+    var alien = entries.map(function (e) { return e.name; })
+      .filter(function (n) { return PUBLIC_COLLECTIONS.indexOf(n) === -1; });
+    if (alien.length) {
+      if (window.console && console.warn)
+        console.warn('[BLStore] hydrate refused — not public collections: ' + alien.join(', '));
+      return 'refused';
+    }
+    var ls = storage();
+    if (!ls) return 'inactive';
+    var raw;
+    try { raw = ls.getItem(KEY); } catch (e) { return 'inactive'; }
+    if (!raw) return 'empty';
+    var p;
+    try { p = JSON.parse(raw); } catch (e) { return ignore('the snapshot is not readable JSON'); }
+    var why = snapshotInvalidWhy(p);
+    if (why) return ignore(why);
+    entries.forEach(function (e) { e.set(p.data[e.name]); });
+    return 'hydrated';
+  }
+  function ignore(why) {
+    if (window.console && console.info)
+      console.info('[BLStore] stored demo data ignored on this read-only page — ' + why);
+    return 'ignored';
+  }
+
   /* ── Writing ─────────────────────────────────────────────────────
      The comparison is against what is IN STORAGE, so the answer stays
      true no matter what happened to storage behind our back — cleared
@@ -426,6 +502,7 @@ window.BLStore = (function () {
      where a throw would escape through the timer callback, kill the
      pending save and leave nothing behind but a console line. */
   function save() {
+    if (readOnly) return false;   /* a hydrated page never writes (A21.8) */
     if (applying) return false;
     var ls = storage();
     if (!ls) return false;
@@ -514,6 +591,7 @@ window.BLStore = (function () {
      open sub-view, the active tab, half-filled modals — which is what
      "start clean" has to mean before a meeting. */
   function reset() {
+    if (readOnly) return;         /* a hydrated page never writes (A21.8) */
     var ls = storage();
     if (ls) { try { ls.removeItem(KEY); } catch (e) {} }
     /* Stop beforeunload AND the heartbeat from writing the state
@@ -540,6 +618,11 @@ window.BLStore = (function () {
      opts: redraw, afterRestore, onSaved, notify, onExternal, strict.
      Returns the restore outcome, which the harnesses assert on. */
   function start(opts) {
+    if (readOnly) {               /* hydrate() ran — this page must not wire autosave */
+      if (window.console && console.error)
+        console.error('[BLStore] start() refused after hydrate() — this page is read-only');
+      return 'refused';
+    }
     opts = opts || {};
     hooks = opts;
     if (opts.strict === false) strict = false;
@@ -597,7 +680,10 @@ window.BLStore = (function () {
     save:     save,
     restore:  restore,
     reset:    reset,
+    hydrate:  hydrate,
     /* Read-only surface for the harnesses and for the console. */
+    PUBLIC_COLLECTIONS: PUBLIC_COLLECTIONS.slice(),
+    isReadOnly:   function () { return readOnly; },
     isActive:     function () { return started && !!storage(); },
     names:        function () { return entries.map(function (e) { return e.name; }); },
     fingerprints: function () { var c = {}; Object.keys(fixtureFp).forEach(function (k) { c[k] = fixtureFp[k]; }); return c; },

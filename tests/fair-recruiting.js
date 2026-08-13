@@ -616,16 +616,23 @@ expectRed('the recipient filter widened to every organisation', () => {
 });
 
 {
-  /* Nobody is publicly named: no public surface reads the recruiting
+  /* Nobody is publicly named: no public surface reads the ADMISSION
      records at all — asserted structurally, with the reason. The
      assets are the public pages' whole data source; a name that
-     never leaves the dashboard cannot appear on any of them. */
+     never leaves the dashboard cannot appear on any of them. Since
+     O4's data move (A21.8) halls and stands DO live in the shared
+     asset — occupancy-free inventory a public page may resolve — so
+     the assurance is exactly the admissions, as A20.13 words it. */
   const assetDir = path.join(__dirname, '..', 'assets');
   const assetSrc = fs.readdirSync(assetDir).filter(f => f.endsWith('.js'))
-    .map(f => fs.readFileSync(path.join(assetDir, f), 'utf8')).join('');
-  if (!/fairAdmissions|fairHalls|fairStands/.test(assetSrc))
-    ok('no public asset reads admissions, halls or stands — applicants, invitees and rejected candidates are publicly named nowhere (O3 has no public fair surface)');
-  else bad('a public asset reads the recruiting records (FR-11)');
+    .map(f => fs.readFileSync(path.join(assetDir, f), 'utf8')).join('')
+    /* identifiers, not prose — the store and data files NAME the rule
+       in comments; the scan looks for code that would READ the
+       records (the §8 read-path discipline). */
+    .replace(/\/\*[\s\S]*?\*\//g, '');
+  if (!/fairAdmission/.test(assetSrc))
+    ok('no public asset reads the admission records — applicants, invitees and rejected candidates are publicly named nowhere (FR-11)');
+  else bad('a public asset reads the admission records (FR-11)');
 }
 
 /* ── §11 Unchanged neighbours — trade cockpits and the O2 core ───── */

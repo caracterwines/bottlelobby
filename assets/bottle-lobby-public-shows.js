@@ -786,3 +786,34 @@ function mountDirectory(host, entries, viewer) {
   wireShowCells(host);
   return entries.length;
 }
+
+/* ══ THE CANONICAL FAIR — public derivations (A19, A21) ══════════ */
+/* Moved/defined here in O4 (A21.8): this file is the one answer to
+   "what may this visitor see", and the fair's visibility questions
+   belong beside the shows' — a second visibility asset would split
+   exactly that principle. Requires bottle-lobby-data.js first, as
+   everything here does. */
+
+/* ONE escaper for typed text on the way to the DOM. It moved here
+   from the dashboard with the participation renderer, because the
+   renderer prints exhibitor- and organizer-typed text (descriptions,
+   names) on public pages too — and a second escaper beside the one
+   the dashboard already trusted would be the drift D26 describes,
+   one layer down. The dashboard keeps calling it by this name. */
+function notifEsc(v) {
+  return String(v == null ? '' : v)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+/* ── THE ONE FINDABILITY DERIVATION (A19.3, FS-6) ─────────────────
+   Published → publicly findable by default, all three fair types; a
+   draft is findable by nobody outside the owning workspace, and a
+   cancelled edition is no longer a published one. Read by the
+   organizer surface, the harnesses and — since O4 — the canonical
+   Participation Page as gate factor (c) (A21.7). O5's directory
+   becomes its next reader, never a second answer. Findability is NOT
+   entitlement: no application, appointment or other business action
+   hangs off it. */
+function fairEditionDiscoverable(ed) {
+  return !!ed && ed.status === 'published';
+}
