@@ -31,7 +31,7 @@ Kein Build-Command, Publish-Directory = Repo-Root.
 > Dauerhafte Regeln gehoeren in `BOTTLE-LOBBY-SPEC.md`, kurze Invarianten in
 > `CLAUDE.md`. Findet sich hier eine Regel, ist sie am falschen Ort.
 
-**Baum sauber, `main` gepusht, 31 Harnesses gruen** (nachgezaehlt 13.08. — `fair-participation.js` kam mit Durchgang O4 dazu, davor `fair-recruiting.js` mit O3, `fairs.js` mit 12, `platform-partners.js` mit 11, `campaigns.js` mit 10, `wine-guide-page.js` mit 9, `member-events.js` mit 7). **`BLStore.VERSION` steht auf 10** — O4 hat gemessen einen Bump gebraucht (Fixture-Zeilen in den BESTEHENDEN Sammlungen `fairHalls`/`fairStands`/`fairAdmissions`, D2D-Klasse; Begruendung am `VERSION` und im Block zu Durchgang O4 unten); Durchgang 12 brauchte einen (RVW-3005), **O3 gemessen keinen**.
+**Baum sauber, `main` gepusht, 31 Harnesses gruen** (nachgezaehlt 13.08. — `fair-participation.js` kam mit Durchgang O4 dazu, davor `fair-recruiting.js` mit O3, `fairs.js` mit 12, `platform-partners.js` mit 11, `campaigns.js` mit 10, `wine-guide-page.js` mit 9, `member-events.js` mit 7). **`BLStore.VERSION` steht auf 11** — O4 hat gemessen einen Bump auf 10 gebraucht (Fixture-Zeilen in den BESTEHENDEN Sammlungen `fairHalls`/`fairStands`/`fairAdmissions`, D2D-Klasse), die Codex-Korrektur einen weiteren auf 11 (FORMAT-Klasse: das Schema-Feld `sh` im Snapshot-Blob; Begruendung jeweils am `VERSION` und in den Bloecken unten); Durchgang 12 brauchte einen (RVW-3005), **O3 gemessen keinen**. **Mit `sh` kam eine neue C8-Pflicht: aendern Fixtures ihre FORM, wird `SCHEMA_HASH` in `assets/bottle-lobby-store.js` im selben Commit nachgezogen — `tests/persistence.js` wird sonst rot und nennt den neuen Wert.**
 
 ### Womit eine Sitzung anfaengt
 
@@ -921,6 +921,62 @@ Funktionen aufrufen, `transferSize` vorher lesen (C7).
 > storage-Event-Mechanismus haengt an start() und damit am
 > Schreibpfad) · vertretene Wineries als eigene Aussteller,
 > Subaccounts oder Termininhaber (ausgeschlossen, A21.3).
+
+> **Codex-Korrektur nach der Codex-Pruefung des ersten O4-Abschluss-
+> stands (13.08., acht Commits auf `2bfa80f` — dieser Stand wurde
+> NICHT abgenommen und nie an Claude Chat uebergeben; Codex hat ihn
+> vor der Abnahme zurueckgewiesen)** — zwei reproduzierte Befunde,
+> beide behoben; **der finale HEAD nach dieser Korrektur geht zur
+> einmaligen unabhaengigen Abnahme an Claude Chat:**
+>
+> - **Wiederaktivierung konnte doppelt belegen:** Ruecknahme gibt den
+>   Stand abgeleitet frei, `standId` bleibt am ruhenden Record; nach
+>   einer Neuvergabe aktivierte `createFairParticipation()` die Zeile
+>   ungeprueft zurueck — zwei aktive Belegungen auf einem Stand. Jetzt
+>   prueft die Rueckkehr ATOMAR vor jeder Aenderung: ist der weiterhin
+>   referenzierte Stand inzwischen anderweitig aktiv belegt, wird sie
+>   mit Meldung vollstaendig refusiert — Zeile bleibt `withdrawn`,
+>   History/Stand-Referenz/Admission unberuehrt, nichts wird
+>   automatisch geloescht oder umplatziert (die Platzierung bleibt
+>   Organizer-Sache). Freier Stand: dieselbe Zeile kehrt mit frischem
+>   `created` zurueck (D28). Harness-Fall mit Gegenmutation fuer genau
+>   Ruecknahme → Neuvergabe → Rueckkehrversuch; A21.6 traegt die
+>   technische Praezisierung.
+> - **hydrate() und Dashboard urteilten verschieden:** die strikte
+>   „no longer persisted“-Pruefung lebte nur in `restore()` — ein um
+>   `legacyGhost` ergaenzter Snapshot hydratisierte auf der Page und
+>   wurde vom Dashboard verworfen. Jetzt traegt der Blob das
+>   SCHEMA-RECORD `sh` (Hash seiner vollstaendigen fp-Map), im Code
+>   gepinnt als `SCHEMA_HASH`, und `snapshotInvalidWhy()` ist der EINE
+>   Vertrag fuer beide Einstiege: Struktur · VERSION · data/fp-
+>   Namensgleichheit · sh-Integritaet · sh-Aktualitaet · die im
+>   Dokument registrierten Namen. Damit beurteilt die Page auch
+>   Sammlungen, die sie nie laedt (fairAdmissions-Drift), ohne je
+>   einen privaten Wert zu lesen; `restore()`s separater Strict-Block
+>   ist darin aufgegangen (nichts abgeschwaecht — jedes alte Urteil
+>   ist enthalten). Ergebnis auf der Page bleibt Fixture-Fallback ohne
+>   Loeschung; das Dashboard bleibt der einzige Schreiber.
+>   **FORMAT-Aenderung → `VERSION` 10 → 11**, alle 40 Fixture-Prints
+>   gemessen identisch; C8 in der Spec um die `sh`/`SCHEMA_HASH`-
+>   Pflicht praezisiert. `tests/persistence.js` §10: Pinning-Check
+>   (nennt bei Drift den neuen Wert), legacyGhost in beiden Varianten
+>   (sh belassen/nachgerechnet) je Page UND Dashboard, private
+>   fp-Drift (fairAdmissions) ohne Wert-Exposition, Gegenproben mit
+>   uebersprungenem Vertrag (beide Geister hydratisieren dann — der
+>   Vertrag ist es, der sie stoppt); die zwei bestehenden
+>   Blind-Gegenproben schalten jetzt Fingerprint UND Schema-Record ab,
+>   um weiterhin den Fingerprint zu isolieren.
+> - **Gezielte Browser-Abnahme beider Pfade** (klickend, DevTools-
+>   Elementklicks, `transferSize` frisch): Ruecknahme → Neuvergabe →
+>   Rueckkehrversuch mit B12-Meldung refusiert (eine aktive Belegung,
+>   kein zweiter Record, Admission unveraendert), nach Freigabe kehrt
+>   dieselbe Zeile zurueck · gueltige Durchreichung (gespeicherte
+>   Aenderung auf der gewoehnlich geoeffneten Page) · manipulierter
+>   Snapshot (legacyGhost, sh nachgerechnet): Page rendert Fixtures,
+>   Storage byte-identisch, nichts gebunden — und der parallel offene
+>   Dashboard-Tab verwarf dieselben Bytes ueber den storage-Event-Weg
+>   (beide Dokumente, ein Urteil, live beobachtet). Danach Reset,
+>   Fixtures pristine.
 
 ---
 
