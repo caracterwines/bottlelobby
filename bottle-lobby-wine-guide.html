@@ -432,8 +432,56 @@ h1 em { font-style: italic; color: var(--gold); }
   </div>
 </div>
 
+<!-- ══ SHARED ASSETS ═══════════════════════════════════════════════
+     The store comes FIRST, as it does on the canonical Participation
+     Page: the read-only hydration has to run before anything renders,
+     and it has to run over the collections the data asset declares.
+     Classic scripts, not modules — this page is opened over file://
+     as well as over http. -->
+<script src="assets/bottle-lobby-store.js?v=996f64b4"></script>
 <script src="assets/bottle-lobby-data.js?v=ed4a6950"></script>
 <script src="assets/bottle-lobby-public-shows.js?v=48ba2f04"></script>
+<script>
+/* ══════════════════════════════════════════════════════════════════
+   READ-ONLY HYDRATION (A10, A21.8, DIR-4, FP-13)
+   ------------------------------------------------------------------
+   So that a change saved in a dashboard reaches this directory, the
+   Guide reads the SAME snapshot the dashboard writes — through
+   BLStore.hydrate(), the read-only entry with the fixed public
+   allowlist, and NEVER through start().
+
+   This is the O4 contract reused, not a second one. start() would wire
+   autosave, and the next save would overwrite the dashboard's whole
+   snapshot with this page's partial registration — every private
+   collection gone, `fairAdmissions` first. After hydrate() the write
+   path on this document is dead by construction: save(), reset() and
+   start() all refuse.
+
+   The allowlist is platform code and this page registers exactly
+   inside it — a page that registers anything else is refused WHOLE,
+   before any read (FR-11). Snapshot validity is the store's ONE
+   interpretation (snapshotInvalidWhy), including about collections
+   this page never loads; an invalid or outdated snapshot is IGNORED
+   and never deleted, because deleting is a write and the dashboard is
+   the only writer. With no usable snapshot the shared fixtures render,
+   which is what every harness here sees.
+
+   THE OTHER FIVE TABS ARE NOT PART OF THIS. They read this page's own
+   inline arrays — the known D34 copy, and not this pass's business.
+   Cross-tab live updating is deliberately absent (DIR-4): a reload is
+   the way, and a live channel onto a read-only public surface would be
+   a write path looking for a reason. */
+(function () {
+  BLStore.register({
+    fairSeries:         [function () { return fairSeries; },         function (v) { fairSeries = v; }],
+    fairEditions:       [function () { return fairEditions; },       function (v) { fairEditions = v; }],
+    fairHalls:          [function () { return fairHalls; },          function (v) { fairHalls = v; }],
+    fairStands:         [function () { return fairStands; },         function (v) { fairStands = v; }],
+    fairParticipations: [function () { return fairParticipations; }, function (v) { fairParticipations = v; }]
+  });
+  BLStore.hydrate();
+})();
+</script>
 <script>
 /* ══════════════════════════════════════════════════
    DATA — this is the "single source of truth" every

@@ -1243,6 +1243,154 @@ console.log('\n── the public page reads the snapshot and can never write it'
   }
 }
 
+/* ── 11. The Wine Guide on the same read-only path (DIR-4, O5) ──────
+   The public directory is the SECOND document to read the dashboard's
+   snapshot, and it reads it through the same entry, the same
+   allowlist and the same validity contract — that sameness is what is
+   measured here, not a second mechanism. This section lives in this
+   file for the reason section 10 does: this is the one harness allowed
+   to run a live store, and a hydration check without one proves
+   nothing.
+
+   The visible act is a PUBLICATION: FE-7102 is the hybrid draft, on no
+   directory by FS-6. Publishing it in the dashboard is an ordinary,
+   permitted organizer act — and the directory has to show it after an
+   ordinary reload, with nothing handed over between the two documents
+   but storage. */
+console.log('\n── the public directory reads the same snapshot, and can never write it');
+{
+  const GUIDE = path.join(__dirname, '..', 'bottle-lobby-wine-guide.html');
+  function openGuide(area, opts) {
+    opts = opts || {};
+    const errs = [];
+    let html = loadDashboard(GUIDE, { persist: true }).html;
+    if (opts.patch) {
+      const before = html;
+      html = html.replace(opts.patch.from, opts.patch.to);
+      if (html === before) throw new Error('openGuide: patch never applied — ' + opts.patch.from);
+    }
+    const dom = new JSDOM(html, {
+      runScripts: 'dangerously', pretendToBeVisual: true,
+      url: 'http://localhost/bottle-lobby-wine-guide.html',
+      beforeParse(w) {
+        if (area) {
+          const self = () => w;
+          Object.defineProperty(w, 'localStorage', { value: area.api(self), configurable: true });
+        }
+        w.scrollTo = () => {};
+      },
+      virtualConsole: new VirtualConsole().on('jsdomError', e => {
+        if (!/Not implemented: navigation/.test(e.message)) errs.push(e.message);
+      })
+    });
+    const w = dom.window;
+    w.__onStorage = () => {};
+    if (area) area._tabs.push({ w });
+    if (errs.length) { console.log('SCRIPT ERRORS:\n' + errs.join('\n')); process.exit(1); }
+    return { w, d: w.document };
+  }
+  const directoryText = tab => {
+    const c = tab.d.getElementById('gpanel-events').cloneNode(true);
+    [...c.querySelectorAll('script')].forEach(n => n.remove());
+    return c.textContent;
+  };
+
+  /* (a) an ordinary save in the dashboard, an ordinary open of the
+     Guide — and the draft that was on no directory is on it. */
+  const area = makeStorageArea();
+  const dash = enter(openTab(area, { persist: true }));
+  const drafted = dash.w.eval("fairEditionById('FE-7102').status");
+  act(dash.w, "publishFairEdition('FE-7102')");
+  await settle(dash.w);
+  const seeded = read(area);
+  if (drafted === 'draft' && seeded &&
+      seeded.data.fairEditions.find(e => e.id === 'FE-7102').status === 'published')
+    ok('the publication sits in the ordinarily saved snapshot (draft → published)');
+  else bad('the publication never reached the snapshot — the rest of this section is meaningless');
+
+  const guide = openGuide(area);
+  if (/Autumn edition/.test(directoryText(guide)) || guide.w.eval(
+        "eventsFacetRows().some(r => r.entry.kind === 'fairEdition' && r.entry.rec.id === 'FE-7102')"))
+    ok('the Guide lists the newly published edition after an ordinary open — hydrated from the same snapshot');
+  else bad('the Guide still renders the fixtures after a saved dashboard change (DIR-4)');
+
+  /* (b) the read path never writes. */
+  const frozen = area._data[KEY];
+  if (guide.w.eval('BLStore.isReadOnly()') === true) ok('hydrate() marked the Guide read-only');
+  else bad('the Guide is not read-only after hydrate()');
+  const saved = guide.w.eval('BLStore.save()');
+  guide.w.eval('BLStore.reset()');
+  const started = guide.w.eval('BLStore.start({})');
+  nudge(guide.w); await settle(guide.w);
+  if (saved === false && started === 'refused' && area._data[KEY] === frozen)
+    ok('save(), reset() and start() are all dead on the Guide — storage stays byte-identical');
+  else bad('the Guide wrote, reset or wired autosave (DIR-4)');
+
+  /* (c) the allowlist is the boundary, and no private collection is
+     registered or even present. */
+  if (guide.w.eval("BLStore.names().sort().join(',')") ===
+        'fairEditions,fairHalls,fairParticipations,fairSeries,fairStands' &&
+      guide.w.eval('typeof fairAdmissions') === 'undefined' &&
+      read(area).data.fairAdmissions)
+    ok('the Guide registers exactly the public collections, loads no admission, and leaves the private ones in storage (FR-11)');
+  else bad('the Guide registered or reached a private collection');
+  const refused = guide.w.eval(
+    "BLStore.register({ fairAdmissions: [function () { return []; }, function () {}] }); BLStore.hydrate()");
+  if (refused === 'refused' && area._data[KEY] === frozen)
+    ok('registering a private collection against hydrate() is refused WHOLE on this page too');
+  else bad('hydrate() served the Guide a collection outside the fixed allowlist');
+
+  /* (d) the counter-proof: the same page through start() destroys the
+     dashboard's snapshot. This is why the read-only entry exists, and
+     the proof is that the damage is real on THIS document as well. */
+  {
+    const area2 = makeStorageArea();
+    const seed2 = enter(openTab(area2, { persist: true }));
+    act(seed2.w, "publishFairEdition('FE-7102')");
+    await settle(seed2.w);
+    if (!read(area2) || !read(area2).data.fairAdmissions) bad('could not seed the full snapshot for the counter-proof');
+    else {
+      const rogue = openGuide(area2, { patch: { from: 'BLStore.hydrate();', to: 'BLStore.start({});' } });
+      nudge(rogue.w); await settle(rogue.w);
+      const after = read(area2);
+      if (!after || !after.data || !after.data.fairAdmissions)
+        ok('caught: the start() route destroys the dashboard\'s snapshot from the Guide too — the read-only entry is what prevents it');
+      else bad('the start() route left the full snapshot intact — DIR-4\'s reasoning is unproven here');
+    }
+  }
+
+  /* (e) no valid snapshot → fixtures; an invalid one → IGNORED under
+     the store's ONE contract, and never deleted. */
+  {
+    const empty = openGuide(makeStorageArea());
+    if (empty.w.eval("fairEditionById('FE-7102').status") === 'draft' &&
+        !/Autumn edition/.test(directoryText(empty)))
+      ok('with no snapshot at all, the Guide renders the canonical fixtures — and the draft stays off the directory');
+    else bad('the Guide needs a snapshot to render, or listed a draft');
+
+    const area3 = makeStorageArea();
+    const stale = JSON.parse(JSON.stringify(seeded));
+    stale.v = stale.v - 1;
+    area3._data[KEY] = JSON.stringify(stale);
+    const old = openGuide(area3);
+    if (old.w.eval("fairEditionById('FE-7102').status") === 'draft' &&
+        area3._data[KEY] === JSON.stringify(stale))
+      ok('an outdated snapshot follows the store\'s own version rule — ignored, fixtures render, the Guide DELETES nothing');
+    else bad('the Guide restored, reinterpreted or deleted an outdated snapshot');
+
+    /* And the counter-proof that the SHARED contract is what did it:
+       skip snapshotInvalidWhy() and the same stale bytes hydrate. */
+    const area4 = makeStorageArea();
+    area4._data[KEY] = JSON.stringify(stale);
+    const rogue = openGuide(area4, { patch: {
+      from: 'var invalid = snapshotInvalidWhy(p);   /* the one shared contract */',
+      to:   'var invalid = null;' } });
+    if (rogue.w.eval("fairEditionById('FE-7102').status") === 'published')
+      ok('caught: with the shared contract skipped, the stale snapshot hydrates on the Guide — the contract is what stops it, and no second check exists to');
+    else bad('the stale snapshot was held back even without the contract — the check above proves less than it says');
+  }
+}
+
 console.log(fail ? '\n✗ ' + fail + ' failure(s)' : '\n✓ all checks passed');
 process.exit(fail ? 1 : 0);
 
