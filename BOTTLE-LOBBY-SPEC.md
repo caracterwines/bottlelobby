@@ -634,15 +634,17 @@ The Wine Guide must be a **pure query/aggregation layer** over the relational da
 | Distributors | Same aggregate pattern |
 | Restaurants | Aggregate view — **membership-gated** |
 | Retailers | Aggregate view — **membership-gated** |
-| **Events** | Live query over `wine_shows` and `events`, joined into one derived directory — **role- and reach-dependent** (A16.14d) |
+| **Events** | Live query over `wine_shows`, `events`, `fair_editions` and `fair_participations`, joined into one derived directory — **role- and reach-dependent** (A16.14d) |
 
-**Events is the last tab, after Retailers**, and it is a projection, not a sixth store: a show is never copied into `events` and an event is never copied into `wine_shows` (ME-1). What the tab renders is the same authoritative record the dashboards and the public Wine Shows page render, through the same visibility functions (A16.6, A16.14a).
+**Events is the last tab, after Retailers**, and it is a projection, not a sixth store: a show is never copied into `events` and an event is never copied into `wine_shows` (ME-1). Since **O5** the same sentence covers the two fair record sorts: a fair edition and a fair participation are read where they live (A19, A21) and are copied nowhere. What the tab renders is the same authoritative record the dashboards, the public Wine Shows page and the canonical Participation Page render, through the same visibility functions (A16.6, A16.14a, `fairEditionDiscoverable()`, `fairParticipationPublic()`).
+
+**The Guide reads the demo state and can never write it (O5).** So that a change saved in a dashboard reaches the directory, the public Guide document hydrates through **`BLStore.hydrate()`** — the read-only entry with the fixed public allowlist and the store's **one** validity interpretation, the same path the canonical Participation Page has used since O4 (A21.8, FP-13). Never `start()`, no autosave, no heartbeat, no reset, no partial overwrite, and no private collection — `fairAdmissions` above all. Without a valid snapshot the shared fixtures render. **Cross-tab live updating is deliberately absent**: a reload is the way, and building a live channel onto a read-only public surface would be a write path looking for a reason.
 
 **All filter facets and counts computed live from the current filtered result set** (classic faceted search pattern), so a new wine/winery/distributor appears and is instantly filterable the moment it's entered — with zero separate action.
 
 **Membership gate:** Restaurant and Retailer profiles in the Wine Guide must only be visible to logged-in, paying members. Winery and distributor profiles remain publicly visible to everyone (they benefit from being found by non-members). Restaurant/retail buyer identities are gated behind membership to protect them from being scraped or solicited outside the platform. This is an admin-panel-level access control in the real backend. The static prototype deliberately shows all profiles to everyone, with an inline UI note flagging this as temporary.
 
-**Prototype blueprint:** `bottle-lobby-wine-guide.html` — one JS `wines` array as source of truth; wineries/distributors and every filter facet computed from it, never hardcoded. `restaurantsData` / `retailersData` plug into the same generic `filterConfig` / `state` / `renderResults()` engine.
+**Prototype blueprint:** `bottle-lobby-wine-guide.html` — one JS `wines` array as source of truth; wineries/distributors and every filter facet computed from it, never hardcoded. `restaurantsData` / `retailersData` plug into the same generic `filterConfig` / `state` / `renderResults()` engine. **Events plugs into that same engine** (O5): its `filterConfig` entry is built live from the directory entries the viewer may see — `renderSidebarShell('events')` and `clearFilters('events')` are the other five tabs' own functions, and the two former top dropdowns are gone rather than kept beside it. The store is loaded read-only on this page for the reason above.
 
 ---
 
@@ -3102,21 +3104,94 @@ renderers — the A16.6 single-answer rule, already implemented as
 1. **`/bottle-lobby#shows`** — explains and markets the format. Not a directory.
 2. **The standalone Wine Shows page** — a curated landing: format, background,
    case studies, selected upcoming and past shows.
-3. **Wine Guide → Events** (A10) — the full filterable directory over Wine
-   Shows, member events and, where they exist, external fairs and
-   participations. Role- and reach-dependent; for a non-member it is today's
-   public page plus the join prompt.
+3. **Wine Guide → Events** (A10) — the full filterable directory. Since **O5**
+   it carries **FOUR record sorts in ONE chronological list**: Wine Shows ·
+   member events · **published fair editions** · **publicly released fair
+   participations** (A19, A21). Role- and reach-dependent; for a non-member it
+   is today's public page plus the join prompt.
+
+> **"External fairs" was this section's word for the canonical fair before the
+> fair existed as a record.** It is the vocabulary of the superseded
+> `events.event_kind = 'external_fair'` sketch that **D45** replaced with the
+> `fair_series` + `fair_editions` pair; the replacement simply did not reach
+> this sentence. No new decision — the same one, carried to where it had been
+> missed. Since O2/O3/O4 a fair in this model is canonical, owned by a verified
+> organizer workspace (A18, D44), and its exhibitor presence is an A21
+> participation.
+
+**Four record sorts, THREE event families.** The top-level family filter is and
+stays exactly three-part — **Wine Show · Member Event · Fair** — and a fair
+edition and a fair participation **both belong to Fair**. A participation is
+**not** a fourth family and never a top-level option of its own: it is one
+exhibitor's presence AT a fair, its own record sort stays legible on its card,
+and it links to the one canonical Participation Page (A21.7) and to no invented
+detail target.
+
+**Where the two fair sorts come from, and from nowhere else.** A fair edition
+reaches the directory only through `fairEditionDiscoverable()` (A19.3), a
+participation only through `fairParticipationPublic()` (A21.7) — the existing
+derivations, referenced and never re-answered. There is **no public admission
+register**: applicants, open invitations, rejected and merely-admitted
+organisations appear neither on the surface nor anywhere in its data path
+(FR-11), and the public documents do not load `fairAdmissions` at all.
 
 **Filters only where real data covers them** — no invented counts, no empty
-categories: kind (Wine Show / Member Event / external fair) · stage (Planning /
-Published / Upcoming / Completed) · date · country, region, city · event category
-· wine colour, origin, variety, style · theme · host role · relation (Hosted by
-Me / Participating / Invited / Applied / My Events / Other Events).
+categories, and **no typed option and no typed count**: every option AND every
+figure is derived live from the result set the reading viewer may actually see
+(A10's faceted-search rule, applied to a mixed list). The Events tab carries
+**the same left filter sidebar as the other five Guide tabs**, not a second
+filter mechanism beside it.
 
-**Cards are reused, never copied.** Wine Shows keep their card; member events get
-a matching one that **must not assert the Bottle Lobby guarantee** (ME-3). A
-reviewed, platform-released show and a self-published event may sit in one list
-and may not make the same promise (A16.8).
+Measured against the records at O5 and carried: **event family** (the three
+above) · **upcoming / past**, derived from the records' own dates and states and
+never stored · **city** · **fair type** (Trade / Consumer / Hybrid), offered
+**only inside the Fair context** · **member-event host role**. Measured and
+deliberately **not** carried, with the reason each time: **country and region** —
+no record sort holds either, only `city`; **wine origin, region and variety** —
+the canonical product row holds name, vintage, type and url, and a facet may not
+invent what the record does not carry (A15.2a's direction); **wine colour** — it
+is on the product row, but across the entries that publicly name wines it
+separates nothing, and a facet that cannot narrow is decoration, which is the
+same objection as an empty category. They become filters when the data behind
+them does, and not before.
+
+**Cards are reused, never copied — and the four promises stay apart.** Wine
+Shows keep their card and the Bottle Lobby guarantee; member events get a
+matching one that **must not assert it** (ME-3); a **fair edition** is answered
+for by its verified organizer and is neither a Wine Show nor a member event; a
+**fair participation** shows one exhibitor's concrete presence. What the four
+sorts SHARE is the shell that carries no promise: the grid, the outer sizing,
+the image-area logic, the type scale, the spacing, the information hierarchy and
+**the one expand interaction**. What they do not share is the composition — a
+single renderer over all four would mix exactly the promises this section keeps
+apart. A reviewed, platform-released show and a self-published event may sit in
+one list and may not make the same promise (A16.8); the same sentence now has
+two more subjects.
+
+**The Wine-Show guarantee markers stay Wine-Show-only.** The classes and phrases
+the renderer names (`SHOW_CARD_CLASSES`, `SHOW_GUARANTEE_MARKERS`) are the
+measurement, not a retyped list; no member event, fair edition or participation
+inherits one, and no toggle logic exists twice.
+
+**The image area carries a data-free state.** Hero media are their own pass: a
+record sort the model gives no image concept renders the shell's typographic
+band — not an empty frame, and not somebody else's photograph.
+
+**The external ticket / accreditation link is rendered here** (A19.5, FS-7),
+and only here: when the edition carries a **valid absolute http(s) URL**, never
+as an empty reserved area, opened safely (`target="_blank"`,
+`rel="noopener noreferrer"`), captioned from **one** derivation over the fair
+type — **Trade Accreditation · Consumer Tickets · Hybrid Tickets &
+Accreditation**. No second meaning field, no internal ticketing, no checkout, no
+price.
+
+**Figures on a fair card are derived, and only the ones the model holds.** A
+fair edition card may state the number of **public active exhibitor presences**,
+derived live from the participation rows; where represented houses appear they
+are named **"represented wineries"** (A21.3) and derived from the same rows.
+There is **no visitor, attendee, ticket or expected-reach figure** — the model
+has no such registration, and a number nobody records is a number nobody may
+print (invariant 7, and A1 one step further).
 
 #### A16.14e Communication — three kinds, kept apart
 
@@ -3220,6 +3295,40 @@ Member events:
   failure (A15.2a).
 - **ME-7 — no consumer checkout or ticketing structures exist.**
 
+The directory (A16.14d, O5) — four record sorts on one surface:
+
+- **DIR-1 — one directory, no second list.** The Events tab is a projection over
+  the four record sorts; nothing is copied onto it, no parallel fair directory
+  exists, and no second visibility derivation is written beside `showVisibleTo`,
+  `eventVisibleTo`, `fairEditionDiscoverable` and `fairParticipationPublic`.
+  Applicants, open invitations, rejected and merely-admitted organisations reach
+  neither the surface nor its data path (FR-11).
+- **DIR-2 — four sorts, three families.** A fair edition and a fair
+  participation are both **Fair**; a participation is never a fourth family and
+  never a top-level filter option, and it links to the canonical Participation
+  Page (A21.7).
+- **DIR-3 — one shell, four compositions.** Shared: grid, outer sizing,
+  image-area logic, type scale, spacing, hierarchy and the ONE expand
+  interaction. Not shared: the composition. No single renderer over all four, no
+  copied toggle logic, no Wine-Show guarantee marker on any other sort, and the
+  Wine Show and member-event cards stay functionally and semantically as they
+  are.
+- **DIR-4 — the public Guide reads and never writes.** `BLStore.hydrate()`, the
+  fixed public allowlist, the store's one validity interpretation; no `start()`,
+  no autosave, no reset, no partial overwrite, no private collection; without a
+  valid snapshot the fixtures render; cross-tab live updating is deliberately
+  absent.
+- **DIR-5 — every option and every count is derived live** from the visible
+  result set. No typed option, no stored count, no empty category, and no
+  filtering that shows a viewer a set his reach does not grant. The fair-type
+  facet exists only in the Fair context.
+- **DIR-6 — the ticket link renders only as a valid absolute http(s) URL**, with
+  the three captions from one derivation, opened safely; NULL or invalid renders
+  nothing at all — no button and no reserved space.
+- **DIR-7 — no invented figure.** Fair-card counts derive from the participation
+  rows; no visitor, attendee, ticket or reach counter exists anywhere; typed
+  text reaches the DOM only through the one canonical escaper.
+
 **Harness homes:** `tests/shows-reach.js` for WS-1..WS-5 and
 `tests/shows-release.js` for WS-6 and WS-7 — **with guards
 that actually look**, which is the A16.6 lesson (C7) — and a new
@@ -3228,6 +3337,15 @@ against the rendered surfaces rather than the arrays behind them. **ME-4 and the
 A16.14e campaign rules live in their own `tests/campaigns.js`** — announcement
 audience, reminder resolution, stages, the suppression resolver and the volume
 limit, for both carrier kinds.
+
+**DIR-1..DIR-3 and DIR-5..DIR-7 live in `tests/wine-guide-page.js`** — the
+directory's own harness since O9's Events tab, extended rather than doubled:
+A16.14d is one rule and a second file over the same surface would be two places
+to keep it. **The persistence half of DIR-4** — a change saved in the dashboard
+reaching the Guide, and the Guide never writing — lives as its own section in
+`tests/persistence.js`, for the measured reason FP-13's persistence half already
+does: that file is the ONE harness allowed to run a live store, and a hydration
+check anywhere else could not run against one.
 
 ---
 
@@ -4521,8 +4639,13 @@ record, dates and history untouched.
 this rule, as **ONE derivation** read by the organizer surface and the
 harness, and as nothing else. **Since O4 the derivation lives in the shared
 public asset and has its first public reader: the canonical Participation
-Page reads it as gate factor (c) (A21.7/A21.8).** The public directory and
-its cards arrive with O5, which also renders the external ticketing links.
+Page reads it as gate factor (c) (A21.7/A21.8).** **Since O5 its second
+reader is the public directory** — Wine Guide → Events lists published
+editions of all three types through this derivation and no other (A16.14d,
+DIR-1); a draft and a cancelled edition are on no directory. **"Past" is
+derived there too**, from the edition's own fair days against the demo's
+today (`fairEditionPast()`), which is why the directory can split Coming up
+from Previously without any edition carrying a stored past flag.
 
 ### A19.4 Two publication preconditions — both the register's last word
 
@@ -4555,9 +4678,19 @@ is not stored a second time (invariant 7): tickets for a consumer fair,
 accreditation for a trade fair, both for a hybrid. It is maintained in the
 organizer's edition basics. When set, the value is a **valid absolute
 http(s) URL** — any other scheme or an unparsable value is refused without
-touching the record; NULL stays the "none yet" answer. **No checkout, no
-internal ticketing, no public rendering in this pass** — O5 renders the
-link on the public surfaces.
+touching the record; NULL stays the "none yet" answer. **No checkout and no
+internal ticketing, ever.**
+
+**Since O5 the link is rendered publicly** (A16.14d, DIR-6), and the rules of
+that rendering are the field's own rules read at the other end: it appears
+**only** for a valid absolute http(s) URL — the same validity question the
+write act asks, asked through the same function rather than a second one — and
+NULL or invalid means **no button and no reserved space**, never an empty
+frame. It opens in a new context, safely (`target="_blank"`,
+`rel="noopener noreferrer"`). Its caption is the **one** derivation over the
+fair type, stored nowhere: **Trade Accreditation · Consumer Tickets · Hybrid
+Tickets & Accreditation**. The organizer cockpit reads that same derivation —
+one wording, two surfaces, because "what the link is" is one fact.
 
 ### A19.6 Tables
 
@@ -4613,7 +4746,10 @@ is the maximum). Since O3 the edition additionally carries
   Published editions of all three types are publicly findable by default;
   findability grants no action.
 - **FS-7 — the ticketing link is external.** One nullable URL, maintained
-  in the edition basics; no checkout, and no public rendering before O5.
+  in the edition basics; no checkout ever. Public rendering exists since O5
+  and follows DIR-6: only a valid absolute http(s) URL, three captions from
+  one derivation, opened safely, and nothing at all where the value is NULL
+  or invalid.
 
 **Prototype blueprint:** `fairSeries` and `fairEditions` arrays (+ their id
 counters) live in `assets/bottle-lobby-data.js` since O4 — the move this
@@ -4635,8 +4771,10 @@ smuggled in as owner, each of the two publication preconditions withdrawn
 by a later rejected row (one counter-mutation per level), the lifecycle
 bars (date change after publication, reschedule or cancellation without a
 reason, deletion), draft absence outside the workspace, published
-findability per fair type, the ticketing link stored but not publicly
-rendered, and unchanged samples of the four trade dashboards.
+findability per fair type, the ticketing link stored and editable and absent
+from every TRADE surface — its public rendering is the directory's, measured
+under DIR-6 in `tests/wine-guide-page.js` — and unchanged samples of the four
+trade dashboards.
 
 ---
 
@@ -5208,11 +5346,19 @@ A12/data.js rule). Applicants, open invitations, rejected and
 merely-admitted organisations appear **nowhere** on it (FR-11 carried
 forward).
 
-**The O5 boundary:** O4 builds the target page, NOT findability. No
-public fair directory, no Wine Guide cards, no unified event cards, no
-filters, no ticket-link rendering. The existing public surfaces and the
-Wine Guide stay content-identical; only the new canonical page renders
-behind the fulfilled gate.
+**The O5 boundary, as O4 drew it:** O4 builds the target page, NOT
+findability — no public fair directory, no Wine Guide cards, no unified
+event cards, no filters, no ticket-link rendering.
+
+**O5 crosses that line and nothing beyond it.** The directory (A16.14d)
+now lists a publicly released participation as one of its four record
+sorts, through `fairParticipationPublic()` and no second gate, and its
+card's one target is **this** page — the directory writes no detail view
+of its own and no static per-participation file appears beside it. The
+page itself is unchanged by O5: same route, same triple gate, same one
+neutral answer, same renderer. What O5 adds around it is findability,
+which A19.3 has always kept apart from entitlement — being listed grants
+no application, appointment or other business right.
 
 ### A21.8 One canonical source instead of object identity — the data move
 
@@ -5383,8 +5529,11 @@ renderer live in `assets/bottle-lobby-public-shows.js`; the public page
 is `bottle-lobby-fair-participation.html?id=…`, hydrating through
 `BLStore.hydrate()` — the read-only entry with the fixed
 `PUBLIC_COLLECTIONS` allowlist in `assets/bottle-lobby-store.js`. The
-organizer surface is the **Stand Placement & Occupancy** view on the
-edition detail inside My Fairs (the "Participation Pages" row leaves the
+**Since O5 `bottle-lobby-wine-guide.html` is the second document on that
+same read-only path** — same `hydrate()`, same allowlist, same validity
+contract, no second hydration semantics (DIR-4). The organizer surface is
+the **Stand Placement & Occupancy** view on the edition detail inside My
+Fairs (the "Participation Pages" row leaves the
 locked target navigation); the trade surface extends the A20.6 block on
 Events → Wine Shows with creation and care of the own participation and
 the link to the own public page — no new nav entry anywhere.
