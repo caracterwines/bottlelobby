@@ -603,10 +603,15 @@ expectRed('the brand review dated after the publication it gates', () => {
 console.log('\n§9 trade dashboards untouched — samples');
 
 {
+  /* Since O3 the ONE legitimate trade-side fair surface is the
+     measured recruiting block on the Wine Shows sub-page (A20.6),
+     which is not built here — tests/fair-recruiting.js governs it.
+     Everything ELSE — the dashboards as loaded, every sidebar —
+     still carries no fair content. */
   const leak = TRADE_ROLES.find(r =>
     /Atrium Wine Days|My Fairs|FE-71\d\d|FS-70\d\d/.test(
       d.getElementById('dash-' + r).innerHTML + d.getElementById('sidebar-' + r).innerHTML));
-  if (!leak) ok('no trade dashboard or sidebar carries any fair content');
+  if (!leak) ok('no trade dashboard or sidebar carries fair content outside the measured A20.6 block');
   else bad('fair content leaked into the ' + leak + ' view (A18.3)');
   const fansDom = d.querySelectorAll('#dfans-list .wn-card').length;
   const fansDerived = w.eval("fansOf('Hawesko GmbH')").length;
@@ -624,15 +629,18 @@ console.log('\n§9 trade dashboards untouched — samples');
   else bad('the campaign audience moved: live ' + audSize + ' vs snapshot ' + snap);
 }
 
-/* The locked target navigation after O2: exactly the remaining SEVEN
-   rows stay locked with reasons, and "My Fairs" is live — never a
-   second entry beside a still-locked "Fair Series & Editions". */
+/* The locked target navigation after O3: exactly the remaining FIVE
+   rows stay locked with reasons — "Exhibitor Recruitment" and
+   "Stands & Halls" left the list with A20 (they live on the edition
+   inside My Fairs), the way "Fair Series & Editions" left it with
+   O2. Never a locked row beside its live feature. */
 {
   const lockedNav = w.eval('PARTNER_LOCKED_NAV');
   const total = lockedNav.fairs.length + lockedNav.community.length;
-  if (total === 7 && !lockedNav.fairs.some(l => /Fair Series & Editions/.test(l[0])))
-    ok('seven target-navigation entries stay locked; the eighth is live as My Fairs');
-  else bad('the locked navigation is not the agreed seven (' + total + ')');
+  const gone = ['Fair Series & Editions', 'Exhibitor Recruitment', 'Stands & Halls'];
+  if (total === 5 && !lockedNav.fairs.some(l => gone.some(g => l[0].indexOf(g) !== -1)))
+    ok('five target-navigation entries stay locked; the three live features carry no locked row');
+  else bad('the locked navigation is not the agreed five (' + total + ')');
   /* Rendered rows, not raw HTML — a source comment naming the old
      entry is history, not a nav row. */
   const fairsEntries = Array.from(d.querySelectorAll('#sidebar-partner .nav-item'))

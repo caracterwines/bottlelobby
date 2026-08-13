@@ -6074,6 +6074,10 @@ let fairEditions = [
     city:'Wiesbaden', venue:'Atrium Halle, Wiesbaden',
     description:'Two trade days: open tasting floor, importer round tables, focus region Rheingau.',
     status:'published',
+    /* The exhibitor call is OPEN on the published run (A20.5): the
+       trade block has something real to reach, and closing it is a
+       live act of the acceptance, not a fixture edit. */
+    exhibitorCallOpen:true,
     externalTicketingUrl:'https://atrium-wine-days.example/accreditation',
     history:[
       { at:'2026-07-18', actor:'Atrium Fairs GmbH', action:'created',   reason:null },
@@ -6087,6 +6091,7 @@ let fairEditions = [
     city:'Wiesbaden', venue:'Atrium Halle, Wiesbaden',
     description:'Autumn edition — trade morning, public afternoon. Concept in planning.',
     status:'draft',
+    exhibitorCallOpen:false,
     externalTicketingUrl:null,
     history:[
       { at:'2026-07-28', actor:'Atrium Fairs GmbH', action:'created', reason:null }
@@ -6203,6 +6208,7 @@ function createFairEdition(seriesId, fields) {
                city: fields.city || '', venue: fields.venue || '',
                description: fields.description || '',
                status:'draft',
+               exhibitorCallOpen:false,   /* never open by default (A20.5) */
                externalTicketingUrl: fields.externalTicketingUrl || null,
                history: [] };
   logFairEdition(ed, 'created', null);
@@ -6286,6 +6292,351 @@ function cancelFairEdition(id, reason) {
   return true;
 }
 
+/* ═══ FAIR EXHIBITOR RECRUITING, ADMISSION, HALLS & STANDS (A20) ═══
+   One canonical workflow row per (edition, organisation), three
+   entrances — application, invitation, external record — converging
+   on the ONE final state `admitted`, which entitles the O4
+   participation and creates nothing else (FR-6, WS-5). The current
+   state is the row's single `status`; the append-only `history` is
+   the audit of the acts and never a second status copy (A20.3). */
+const FAIR_ADMISSION_STATUSES = ['applied','invited','admitted','rejected',
+                                 'declined','withdrawn','revoked'];
+/* `rejected` and `declined` have ANSWERED — no further act on the row
+   in this pass; `withdrawn` and `revoked` leave the door open (D28's
+   distinction, A20.2). */
+const FAIR_ADMISSION_REOPENABLE = ['withdrawn','revoked'];
+const FAIR_EXHIBITOR_ORG_TYPES = ['winery','distributor'];
+const FAIR_ADMISSION_LABEL = {
+  applied:'Applied', invited:'Invited', admitted:'Admitted',
+  rejected:'Rejected', declined:'Invitation declined',
+  withdrawn:'Withdrawn', revoked:'Invitation revoked'
+};
+
+let fairAdmissions = [
+  /* All four fixtures hang off the fictitious Atrium fixture (C7) and
+     name existing trade organisations; the two ACTING demo entities —
+     Cantina Rossi and Hawesko GmbH — deliberately have no row, so the
+     live acts of a session start from a clean pair. Dates: the
+     edition published 25 Jul, everything here after that and before
+     SHOW_TODAY (31 Jul); the external agreement date is the one date
+     that MAY precede everything — the platform did not witness it. */
+  { id:'FA-9101', editionId:'FE-7101', orgType:'winery', org:'Weingut Schmitt',
+    source:'application', status:'applied',
+    externalSource:null, externalActor:null, externalAt:null,
+    history:[ { at:'2026-07-28', actor:'Weingut Schmitt', action:'applied', reason:null } ] },
+  { id:'FA-9102', editionId:'FE-7101', orgType:'distributor', org:'Enoteca Milano Import Srl',
+    source:'invitation', status:'invited',
+    externalSource:null, externalActor:null, externalAt:null,
+    history:[ { at:'2026-07-26', actor:'Atrium Fairs GmbH', action:'invited', reason:null } ] },
+  { id:'FA-9103', editionId:'FE-7101', orgType:'winery', org:'Domaine Lefèvre',
+    source:'external', status:'admitted',
+    externalSource:'Signed exhibitor agreement, Atrium office Wiesbaden',
+    externalActor:'Atrium Fairs GmbH / Domaine Lefèvre', externalAt:'2026-07-10',
+    history:[ { at:'2026-07-26', actor:'Atrium Fairs GmbH', action:'recorded_external', reason:null } ] },
+  { id:'FA-9104', editionId:'FE-7101', orgType:'winery', org:'Bodegas Ruiz',
+    source:'application', status:'rejected',
+    externalSource:null, externalActor:null, externalAt:null,
+    history:[ { at:'2026-07-26', actor:'Bodegas Ruiz', action:'applied', reason:null },
+              { at:'2026-07-27', actor:'Atrium Fairs GmbH', action:'rejected',
+                reason:'Focus region Rheingau this run — the Rioja portfolio does not fit the hall concept.' } ] }
+];
+let fairAdmissionSeq = 9105;
+
+/* Halls and stands are EDITION inventory (A20.9): a stand reaches its
+   edition through its hall — no editionId copy on the stand row
+   (invariant 1) — and NO occupant or booking field on either row,
+   ever: who stands where is O4's participation row, and occupancy is
+   derived from it once it exists (invariant 7). */
+let fairHalls = [
+  { id:'FH-9201', editionId:'FE-7101', name:'Hall 1 — Tasting Floor' }
+];
+let fairHallSeq = 9202;
+let fairStands = [
+  { id:'FB-9301', hallId:'FH-9201', label:'A-01' },
+  { id:'FB-9302', hallId:'FH-9201', label:'A-02' }
+];
+let fairStandSeq = 9303;
+
+function fairAdmissionById(id) { return fairAdmissions.find(a => a.id === id) || null; }
+/* FR-1's structural half: THE row per (edition, organisation). */
+function fairAdmissionFor(editionId, org) {
+  return fairAdmissions.find(a => a.editionId === editionId && a.org === org) || null;
+}
+function fairAdmissionsOfEdition(editionId) {
+  return fairAdmissions.filter(a => a.editionId === editionId);
+}
+function fairAdmissionsOfOrg(org) {
+  return fairAdmissions.filter(a => a.org === org);
+}
+/* Derived, never stored (invariant 7): the organizer's admitted count. */
+function fairAdmittedCount(editionId) {
+  return fairAdmissionsOfEdition(editionId).filter(a => a.status === 'admitted').length;
+}
+/* An application needs the OPEN CALL of a PUBLISHED edition (FR-7). */
+function fairCallOpenFor(ed) {
+  return !!ed && ed.status === 'published' && !!ed.exhibitorCallOpen;
+}
+function fairOrgEligible(orgType) {
+  return FAIR_EXHIBITOR_ORG_TYPES.indexOf(orgType) !== -1;
+}
+/* Append-only, the logFairEdition discipline: one act, one row. */
+function logFairAdmission(row, action, actor, reason) {
+  row.history = row.history || [];
+  row.history.push({ at: todayISO(), actor: actor, action: action, reason: reason || null });
+}
+function fairAdmissionHistoryText(h) {
+  if (h.action === 'applied')           return 'Applied to exhibit';
+  if (h.action === 'invited')           return 'Invited by the organizer';
+  if (h.action === 'admitted')          return 'Application admitted by the organizer';
+  if (h.action === 'accepted')          return 'Invitation accepted — admitted';
+  if (h.action === 'recorded_external') return 'Externally agreed admission recorded';
+  if (h.action === 'rejected')          return 'Application rejected — ' + h.reason;
+  if (h.action === 'declined')          return 'Invitation declined' + (h.reason ? ' — ' + h.reason : '');
+  if (h.action === 'withdrawn')         return 'Application withdrawn' + (h.reason ? ' — ' + h.reason : '');
+  if (h.action === 'revoked')           return 'Invitation revoked by the organizer — ' + h.reason;
+  return h.action;
+}
+
+/* The shared entrance arithmetic: may (edition, org) start a NEW
+   procedure, and on which row? Returns { row } (continue the resting
+   row), { fresh:true } (no row yet), or { refuse:'…' }. */
+function fairAdmissionEntrance(editionId, org) {
+  const ex = fairAdmissionFor(editionId, org);
+  if (!ex) return { fresh:true };
+  if (FAIR_ADMISSION_REOPENABLE.indexOf(ex.status) !== -1) return { row: ex };
+  if (ex.status === 'admitted') return { refuse: org + ' is already admitted to this edition' };
+  if (ex.status === 'applied' || ex.status === 'invited')
+    return { refuse: org + ' already has an open procedure on this edition — one workflow per organisation (FR-1)' };
+  return { refuse: org + ' has answered on this edition (' + FAIR_ADMISSION_LABEL[ex.status] + ') — the resting state is the record' };
+}
+function newFairAdmissionRow(editionId, orgType, org, source, status) {
+  const row = { id:'FA-' + (fairAdmissionSeq++), editionId: editionId,
+                orgType: orgType, org: org, source: source, status: status,
+                externalSource:null, externalActor:null, externalAt:null,
+                history: [] };
+  fairAdmissions.push(row);
+  return row;
+}
+
+/* ── The three entrances (A20.1) ─────────────────────────────────── */
+/* The ORGANISATION applies — only as itself (A20.11): the acting
+   entity is the row's org, handed in by the trade surface. */
+function applyToFair(editionId, orgType, org) {
+  const ed = fairEditionById(editionId);
+  if (!ed) { actionSay('That fair edition no longer exists'); return null; }
+  if (!fairOrgEligible(orgType)) { actionSay('Only a winery or a distributor exhibits at a fair — this workspace cannot apply (FR-2)'); return null; }
+  if (!fairCallOpenFor(ed)) { actionSay('This edition is not taking applications — the organizer has not opened an exhibitor call'); return null; }
+  const way = fairAdmissionEntrance(editionId, org);
+  if (way.refuse) { actionSay(way.refuse); return null; }
+  const row = way.row || newFairAdmissionRow(editionId, orgType, org, 'application', 'applied');
+  row.source = 'application'; row.status = 'applied';
+  logFairAdmission(row, 'applied', org, null);
+  return row;
+}
+/* The ORGANIZER invites — call-independent (FR-7), possible on a
+   draft: that is the ONE narrow FS-6 exception (A20.8, D46). */
+function inviteToFair(editionId, orgType, org) {
+  const ed = fairEditionById(editionId);
+  if (!ed) { actionSay('That fair edition no longer exists'); return null; }
+  const s = fairSeriesById(ed.seriesId);
+  if (!fairSeriesManagedHere(s)) { actionSay('Only the organizer workspace that owns this series manages its recruiting'); return null; }
+  if (ed.status === 'cancelled') { actionSay('A cancelled edition recruits nobody'); return null; }
+  if (!fairOrgEligible(orgType)) { actionSay('Only a winery or a distributor exhibits at a fair (FR-2)'); return null; }
+  const way = fairAdmissionEntrance(editionId, org);
+  if (way.refuse) { actionSay(way.refuse); return null; }
+  const row = way.row || newFairAdmissionRow(editionId, orgType, org, 'invitation', 'invited');
+  row.source = 'invitation'; row.status = 'invited';
+  logFairAdmission(row, 'invited', platformPartners[0].name, null);
+  return row;
+}
+/* The ORGANIZER records an admission both sides already agreed
+   OUTSIDE Bottle Lobby — same record, same final state, and the row
+   says in writing who agreed it, where, and when (A20.1). All three
+   external facts are checked BEFORE anything is written: a refused
+   record leaves no partial row and no history line. */
+function recordExternalFairAdmission(editionId, orgType, org, extSource, extActor, extAt) {
+  const ed = fairEditionById(editionId);
+  if (!ed) { actionSay('That fair edition no longer exists'); return null; }
+  const s = fairSeriesById(ed.seriesId);
+  if (!fairSeriesManagedHere(s)) { actionSay('Only the organizer workspace that owns this series manages its recruiting'); return null; }
+  if (ed.status === 'cancelled') { actionSay('A cancelled edition recruits nobody'); return null; }
+  if (!fairOrgEligible(orgType)) { actionSay('Only a winery or a distributor exhibits at a fair (FR-2)'); return null; }
+  if (!extSource || !extSource.trim() || !extActor || !extActor.trim() || !extAt) {
+    actionSay('An externally agreed admission is recorded with its source, actor and date — all three, or it is not a record (FR-3)'); return null;
+  }
+  const way = fairAdmissionEntrance(editionId, org);
+  if (way.refuse) { actionSay(way.refuse); return null; }
+  const row = way.row || newFairAdmissionRow(editionId, orgType, org, 'external', 'admitted');
+  row.source = 'external'; row.status = 'admitted';
+  row.externalSource = extSource.trim(); row.externalActor = extActor.trim(); row.externalAt = extAt;
+  logFairAdmission(row, 'recorded_external', platformPartners[0].name, null);
+  return row;
+}
+
+/* ── The decisions (A20.2, A20.4) — each act ONE function that
+   writes status and history together, so the two cannot drift. ──── */
+/* Organizer admits an application. NO reason field — nobody owes a
+   justification for a yes (A20.4). */
+function admitFairApplication(admissionId) {
+  const a = fairAdmissionById(admissionId);
+  if (!a) { actionSay('That admission record no longer exists'); return false; }
+  const ed = fairEditionById(a.editionId), s = ed && fairSeriesById(ed.seriesId);
+  if (!fairSeriesManagedHere(s)) { actionSay('Only the organizer workspace that owns this series decides its applications'); return false; }
+  if (a.status !== 'applied') { actionSay('Only an open application is admitted — this record reads ' + FAIR_ADMISSION_LABEL[a.status]); return false; }
+  a.status = 'admitted';
+  logFairAdmission(a, 'admitted', platformPartners[0].name, null);
+  return true;
+}
+/* Organizer rejects an application — WITH a reason (A16.14c
+   precedent): an applicant told only "no" stops asking (D29). */
+function rejectFairApplication(admissionId, reason) {
+  const a = fairAdmissionById(admissionId);
+  if (!a) { actionSay('That admission record no longer exists'); return false; }
+  const ed = fairEditionById(a.editionId), s = ed && fairSeriesById(ed.seriesId);
+  if (!fairSeriesManagedHere(s)) { actionSay('Only the organizer workspace that owns this series decides its applications'); return false; }
+  if (a.status !== 'applied') { actionSay('Only an open application is rejected — this record reads ' + FAIR_ADMISSION_LABEL[a.status]); return false; }
+  if (!reason || !reason.trim()) { showToast('✗ A rejection needs a reason — it goes to the applicant and on the record (FR-5)'); return false; }
+  a.status = 'rejected';
+  logFairAdmission(a, 'rejected', platformPartners[0].name, reason.trim());
+  return true;
+}
+/* The ADDRESSED RECIPIENT answers its invitation — nobody else
+   (A20.11). Accepting reaches the same single `admitted` the
+   organizer's admission reaches; declining needs no reason (A16.4
+   precedent — an invited house owes no justification). */
+function answerFairInvitation(admissionId, actingOrg, accept, reason) {
+  const a = fairAdmissionById(admissionId);
+  if (!a) { actionSay('That invitation no longer exists'); return false; }
+  if (a.org !== actingOrg) { actionSay('Only the invited organisation answers its invitation'); return false; }
+  if (a.status !== 'invited') { actionSay('This invitation is not open — the record reads ' + FAIR_ADMISSION_LABEL[a.status]); return false; }
+  if (accept) {
+    a.status = 'admitted';
+    logFairAdmission(a, 'accepted', actingOrg, null);
+  } else {
+    a.status = 'declined';
+    logFairAdmission(a, 'declined', actingOrg, (reason || '').trim() || null);
+  }
+  return true;
+}
+/* The organisation withdraws its OWN application — reason optional
+   (the A16.9 `withdrawn` precedent: leaving explains itself). */
+function withdrawFairApplication(admissionId, actingOrg, reason) {
+  const a = fairAdmissionById(admissionId);
+  if (!a) { actionSay('That application no longer exists'); return false; }
+  if (a.org !== actingOrg) { actionSay('An organisation withdraws only its own application'); return false; }
+  if (a.status !== 'applied') { actionSay('Only an open application is withdrawn — the record reads ' + FAIR_ADMISSION_LABEL[a.status]); return false; }
+  a.status = 'withdrawn';
+  logFairAdmission(a, 'withdrawn', actingOrg, (reason || '').trim() || null);
+  return true;
+}
+/* The organizer revokes his OWN open invitation — WITH a reason
+   (A19.3 precedent): retracting what another party may be relying on
+   states why, and the record must say why the invitation view fell. */
+function revokeFairInvitation(admissionId, reason) {
+  const a = fairAdmissionById(admissionId);
+  if (!a) { actionSay('That invitation no longer exists'); return false; }
+  const ed = fairEditionById(a.editionId), s = ed && fairSeriesById(ed.seriesId);
+  if (!fairSeriesManagedHere(s)) { actionSay('Only the organizer workspace that owns this series manages its invitations'); return false; }
+  if (a.status !== 'invited') { actionSay('Only an open invitation is revoked — the record reads ' + FAIR_ADMISSION_LABEL[a.status]); return false; }
+  if (!reason || !reason.trim()) { showToast('✗ Revoking an invitation needs a reason — it goes on the record (FR-5)'); return false; }
+  a.status = 'revoked';
+  logFairAdmission(a, 'revoked', platformPartners[0].name, reason.trim());
+  return true;
+}
+
+/* ── The exhibitor call (A20.5) — explicit per published edition.
+   Closing refuses NEW applications and touches NOTHING existing. ── */
+function setFairExhibitorCall(editionId, open) {
+  const ed = fairEditionById(editionId);
+  if (!ed) { actionSay('That edition no longer exists'); return false; }
+  const s = fairSeriesById(ed.seriesId);
+  if (!fairSeriesManagedHere(s)) { actionSay('Only the organizer workspace that owns this series opens or closes its exhibitor call'); return false; }
+  if (open && ed.status !== 'published') { actionSay('An exhibitor call opens on a PUBLISHED edition — publish first (A20.5)'); return false; }
+  ed.exhibitorCallOpen = !!open;
+  return true;
+}
+
+/* ── Halls & stands (A20.9) ──────────────────────────────────────── */
+function fairHallsOfEdition(editionId) { return fairHalls.filter(h => h.editionId === editionId); }
+function fairStandsOfHall(hallId) { return fairStands.filter(st => st.hallId === hallId); }
+function addFairHall(editionId, name) {
+  const ed = fairEditionById(editionId);
+  if (!ed) { actionSay('That edition no longer exists'); return null; }
+  const s = fairSeriesById(ed.seriesId);
+  if (!fairSeriesManagedHere(s)) { actionSay('Only the organizer workspace that owns this series manages its halls'); return null; }
+  if (ed.status === 'cancelled') { actionSay('A cancelled edition plans no halls'); return null; }
+  if (!name || !name.trim()) { showToast('✗ A hall needs a name'); return null; }
+  const h = { id:'FH-' + (fairHallSeq++), editionId: editionId, name: name.trim() };
+  fairHalls.push(h);
+  return h;
+}
+function addFairStand(hallId, label) {
+  const h = fairHalls.find(x => x.id === hallId);
+  if (!h) { actionSay('That hall no longer exists'); return null; }
+  const ed = fairEditionById(h.editionId), s = ed && fairSeriesById(ed.seriesId);
+  if (!fairSeriesManagedHere(s)) { actionSay('Only the organizer workspace that owns this series manages its stands'); return null; }
+  if (!label || !label.trim()) { showToast('✗ A stand needs a label'); return null; }
+  if (fairStandsOfHall(hallId).some(st => st.label === label.trim())) {
+    showToast('✗ Stand ' + label.trim() + ' already exists in this hall — two stands with one label are un-referenceable inventory'); return null;
+  }
+  const st = { id:'FB-' + (fairStandSeq++), hallId: hallId, label: label.trim() };
+  fairStands.push(st);
+  return st;
+}
+
+/* ── The candidate read path (A20.7, FR-9) ─────────────────────────
+   THE ALLOWLIST IS A PLATFORM BOUNDARY, NOT AN ORGANIZER RECORD. It
+   is fixed here, deep-frozen, and owned by NO workspace — the
+   entitled organizer of an edition included. It is explicit, never
+   "everything minus a blocklist": a private trade fact added
+   elsewhere NEVER enters this search by side effect. The extractors
+   below are the ONLY way a value reaches a result row, and each
+   reads an already-public source — the stakeholder identity facts
+   and the public catalogue. */
+const FAIR_RECRUITING_READ_FIELDS = Object.freeze({
+  winery:      Object.freeze(['org', 'role', 'region', 'city', 'wines']),
+  distributor: Object.freeze(['org', 'role', 'region', 'city'])
+});
+const FAIR_RECRUITING_EXTRACTORS = Object.freeze({
+  org:    function (st) { return st.name; },
+  role:   function (st) { return st.type; },
+  region: function (st) { return st.region || null; },
+  city:   function (st) { return st.city || null; },
+  wines:  function (st) { return partnerWinesPool.filter(w => w.winery === st.name).map(w => w.name); }
+});
+/* The search takes a QUERY and nothing else. A payload trying to
+   hand in fields or sources is refused out loud (B12) — the read
+   path takes no configuration from any workspace (FR-9). */
+function organizerCandidateSearch(query, payload) {
+  if (payload !== undefined) {
+    actionSay('The candidate read path serves the platform allowlist only — it takes no field or source configuration from any workspace');
+    return [];
+  }
+  const q = (query || '').toLowerCase().trim();
+  const out = [];
+  stakeholders.forEach(st => {
+    if (!fairOrgEligible(st.type)) return;
+    const fields = FAIR_RECRUITING_READ_FIELDS[st.type];
+    const row = {};
+    fields.forEach(f => { row[f] = FAIR_RECRUITING_EXTRACTORS[f](st); });
+    /* The match reason comes from the allowlist facts DIRECTLY —
+       never from a score, an opportunity or anything private. */
+    let reason = null;
+    if (!q) reason = 'Listed ' + st.type;
+    else if ((row.org || '').toLowerCase().indexOf(q) !== -1) reason = 'Name matches';
+    else if ((row.region || '').toLowerCase().indexOf(q) !== -1) reason = 'Region: ' + row.region;
+    else if ((row.city || '').toLowerCase().indexOf(q) !== -1) reason = 'City: ' + row.city;
+    else if (row.wines) {
+      const hit = row.wines.find(n => n.toLowerCase().indexOf(q) !== -1);
+      if (hit) reason = 'Lists ' + hit;
+    }
+    if (!reason) return;
+    row.matchReason = reason;
+    out.push(row);
+  });
+  return out;
+}
+
 /* ── The organizer cockpit — a hull, honestly empty (A18.7) ────────
    The target navigation exists as NAMED, SHOWN, LOCKED rows with the
    reason on the row (C2, the REACH_LOCKED shape) — never as dead
@@ -6298,9 +6649,10 @@ const PARTNER_LOCKED_NAV = {
      nav entry "My Fairs" now (A19). The reasons below no longer say
      "editions are not built yet" — they name what each later pass
      still has to bring. */
+  /* "Exhibitor Recruitment" and "Stands & Halls" left this list with
+     O3 (A20): both live on the edition itself, inside My Fairs — a
+     separate nav entry would only re-ask which edition is meant. */
   fairs: [
-    ['Exhibitor Recruitment',  'Applications and admissions on an edition are their own pass (O3) — a form here would promise a workflow that does not exist yet.'],
-    ['Stands & Halls',         'Stand and hall planning is its own pass (O3) — an edition carries no floor plan yet.'],
     ['Participation Pages',    'A participation row (A16.8) is O4’s first record — nothing can render before it exists.'],
     ['Schedule & Agenda',      'Programme and agenda on an edition are their own pass (O12).']
   ],
@@ -6434,8 +6786,190 @@ function fairEditionDetailHtml(ed) {
       (ed.externalTicketingUrl ? '<span style="color:var(--paper)">' + notifEsc(ed.externalTicketingUrl) + '</span> <span style="color:var(--dim)">(external — no checkout here)</span>' : '— none yet') +
     '</div>' +
     '<div style="display:flex;gap:0.6rem;align-items:center;margin-top:0.8rem;flex-wrap:wrap">' + actions + '</div>' +
+    fairRecruitingSectionHtml(ed) +
+    fairInventorySectionHtml(ed) +
     '<div class="form-block-title" style="margin-top:1rem">History</div>' + history +
   '</div>';
+}
+
+/* ── EXHIBITOR RECRUITING on the edition (A20) — the former locked
+   nav row, live where the work is: on the edition itself. ───────── */
+function fairRecruitingSectionHtml(ed) {
+  if (ed.status === 'cancelled') return '';
+  /* The call line: explicit per PUBLISHED edition (A20.5); a draft
+     names the bar instead of hiding the concept. */
+  const call = ed.status === 'published'
+    ? (ed.exhibitorCallOpen
+        ? '<span class="ord-chip chip-promo">Exhibitor call open</span> ' +
+          '<button class="btn-sm btn-outline" onclick="doSetFairCall(\'' + ed.id + '\',false)">Close the call</button>' +
+          '<span style="font-size:0.72rem;color:var(--dim);margin-left:0.6rem">Closing stops NEW applications — nothing existing changes.</span>'
+        : '<span class="ord-chip chip-manual">Call closed</span> ' +
+          '<button class="btn-sm btn-outline" onclick="doSetFairCall(\'' + ed.id + '\',true)">Open Exhibitor Call</button>')
+    : '<span style="font-size:0.72rem;color:var(--dim)">The exhibitor call opens once this edition is published (A20.5) — ' +
+      'targeted invitations are possible now, and only their recipients see this draft (A20.8).</span>';
+
+  const rows = fairAdmissionsOfEdition(ed.id).map(a => {
+    const last = (a.history || [])[a.history.length - 1];
+    const acts = a.status === 'applied'
+      ? '<button class="btn-sm btn-gold" onclick="doAdmitFairApplication(\'' + a.id + '\')">Admit</button>' +
+        '<button class="btn-sm btn-outline" onclick="doRejectFairApplication(\'' + a.id + '\')">Reject…</button>'
+      : a.status === 'invited'
+        ? '<button class="btn-sm btn-outline" onclick="doRevokeFairInvitation(\'' + a.id + '\')">Revoke…</button>'
+        : '';
+    const ext = a.source === 'external' && a.externalSource
+      ? '<div class="edit-sub" style="margin-top:0.2rem">External agreement: ' + notifEsc(a.externalSource) +
+        ' · ' + notifEsc(a.externalActor) + ' · ' + a.externalAt + '</div>'
+      : '';
+    return '<div style="padding:0.45rem 0;border-top:1px solid rgba(247,243,238,0.06)">' +
+      '<div style="display:flex;gap:0.6rem;align-items:center;flex-wrap:wrap">' +
+        '<strong>' + notifEsc(a.org) + '</strong>' +
+        '<span style="font-size:0.7rem;color:var(--dim)">' + a.orgType + '</span>' +
+        '<span class="ord-chip ' + (a.status === 'admitted' ? 'chip-deal' : 'chip-manual') + '">' + FAIR_ADMISSION_LABEL[a.status] + '</span>' +
+        acts +
+      '</div>' +
+      (last ? '<div class="edit-sub" style="margin-top:0.2rem">' + last.at + ' — ' + notifEsc(fairAdmissionHistoryText(last)) + '</div>' : '') +
+      ext +
+    '</div>';
+  }).join('');
+
+  /* Eligible organisations for the targeted acts — wineries and
+     distributors only (FR-2), from the public identity register. */
+  const orgOptions = stakeholders.filter(st => fairOrgEligible(st.type))
+    .map(st => '<option value="' + notifEsc(st.name) + '">' + notifEsc(st.name) + ' (' + st.type + ')</option>').join('');
+
+  return '<div class="form-block-title" style="margin-top:1rem">Exhibitor Recruiting</div>' +
+    '<div style="margin-top:0.4rem">' + call + '</div>' +
+    '<div class="edit-sub" style="margin-top:0.5rem">Admitted exhibitors: <b>' + fairAdmittedCount(ed.id) + '</b> (derived — an admission entitles the O4 participation and creates nothing else)</div>' +
+    (rows || '<div class="edit-sub" style="margin-top:0.4rem">No applications or invitations yet.</div>') +
+    /* Candidate search — the platform-fixed read path (A20.7). No
+       surface here or anywhere edits the allowlist: it is not a
+       record, it is a boundary. */
+    '<div class="form-block-title" style="margin-top:1rem">Find Candidates</div>' +
+    '<div class="edit-sub">Searches public organisation and catalogue facts over the platform’s fixed read path — ' +
+    'no private portfolio, follow, partnership or sales data, no score.</div>' +
+    '<div style="display:flex;gap:0.6rem;margin-top:0.5rem;flex-wrap:wrap">' +
+      '<input class="field-input" style="max-width:240px;margin:0" id="fcs-q-' + ed.id + '" placeholder="Name, region, city or wine…">' +
+      '<button class="btn-sm btn-outline" onclick="doFairCandidateSearch(\'' + ed.id + '\')">Search</button>' +
+    '</div>' +
+    '<div id="fcs-results-' + ed.id + '"></div>' +
+    /* The external entrance (A20.1): an admission both sides already
+       agreed outside Bottle Lobby — recorded with source, actor and
+       date, never a quiet bypass. */
+    '<div class="form-block-title" style="margin-top:1rem">Record an Externally Agreed Admission</div>' +
+    '<div style="display:flex;gap:0.6rem;margin-top:0.5rem;flex-wrap:wrap">' +
+      '<select class="field-input" style="max-width:220px;margin:0" id="fex-org-' + ed.id + '">' + orgOptions + '</select>' +
+      '<input class="field-input" style="max-width:220px;margin:0" id="fex-src-' + ed.id + '" placeholder="Source — e.g. signed agreement">' +
+      '<input class="field-input" style="max-width:200px;margin:0" id="fex-actor-' + ed.id + '" placeholder="Who agreed it">' +
+      '<input class="field-input" type="date" style="max-width:160px;margin:0" id="fex-at-' + ed.id + '">' +
+      '<button class="btn-sm btn-outline" onclick="doRecordExternalFairAdmission(\'' + ed.id + '\')">Record</button>' +
+    '</div>';
+}
+
+/* ── HALLS & STANDS on the edition (A20.9) — inventory, and only
+   inventory: no occupant field, no counts, no floor plan. Who stands
+   where is O4's participation row. ──────────────────────────────── */
+function fairInventorySectionHtml(ed) {
+  if (ed.status === 'cancelled') return '';
+  const halls = fairHallsOfEdition(ed.id);
+  const rows = halls.map(h => {
+    const stands = fairStandsOfHall(h.id);
+    return '<div style="padding:0.45rem 0;border-top:1px solid rgba(247,243,238,0.06)">' +
+      '<div style="display:flex;gap:0.6rem;align-items:center;flex-wrap:wrap">' +
+        '<strong>' + notifEsc(h.name) + '</strong>' +
+        '<span style="font-size:0.7rem;color:var(--dim)">' + stands.length + ' stand' + (stands.length === 1 ? '' : 's') + '</span>' +
+        '<button class="btn-sm btn-outline" onclick="doAddFairStand(\'' + h.id + '\')">+ Stand</button>' +
+      '</div>' +
+      (stands.length
+        ? '<div class="edit-sub" style="margin-top:0.2rem">' + stands.map(st => notifEsc(st.label)).join(' · ') + '</div>'
+        : '') +
+    '</div>';
+  }).join('');
+  return '<div class="form-block-title" style="margin-top:1rem">Halls &amp; Stands</div>' +
+    '<div class="edit-sub">Edition inventory. Who exhibits on which stand is the O4 participation — nothing here holds an occupant.</div>' +
+    (rows || '<div class="edit-sub" style="margin-top:0.4rem">No halls yet.</div>') +
+    '<div style="margin-top:0.5rem"><button class="btn-sm btn-outline" onclick="doAddFairHall(\'' + ed.id + '\')">+ Add Hall</button></div>';
+}
+
+/* ── The organizer-side handlers ─────────────────────────────────── */
+function doSetFairCall(editionId, open) {
+  if (!setFairExhibitorCall(editionId, open)) return;
+  renderPartnerFairs();
+  showToast(open ? '✓ Exhibitor call open — eligible organisations can apply now'
+                 : 'Exhibitor call closed — existing procedures are untouched');
+}
+function doAdmitFairApplication(admissionId) {
+  const a = fairAdmissionById(admissionId);
+  if (!admitFairApplication(admissionId)) return;
+  renderPartnerFairs();
+  showToast('✓ Admitted — ' + a.org + ' may set up its participation (O4)');
+}
+/* The reason prompt follows doCancelFairEdition — the named C7 debt,
+   reused rather than re-invented. */
+function doRejectFairApplication(admissionId) {
+  const why = (window.prompt('Why is this application rejected? The reason goes to the applicant and on the record.') || '').trim();
+  if (!why) { showToast('✗ A rejection needs a reason'); return; }
+  if (!rejectFairApplication(admissionId, why)) return;
+  renderPartnerFairs();
+  showToast('Application rejected — the record and its reason remain');
+}
+function doRevokeFairInvitation(admissionId) {
+  const why = (window.prompt('Why is this invitation revoked? The reason goes on the record.') || '').trim();
+  if (!why) { showToast('✗ Revoking an invitation needs a reason'); return; }
+  if (!revokeFairInvitation(admissionId, why)) return;
+  renderPartnerFairs();
+  showToast('Invitation revoked — the record and its reason remain');
+}
+function doFairCandidateSearch(editionId) {
+  const q = (document.getElementById('fcs-q-' + editionId).value || '').trim();
+  const box = document.getElementById('fcs-results-' + editionId);
+  if (!box) return;
+  const hits = organizerCandidateSearch(q);
+  box.innerHTML = hits.length
+    ? hits.map(h => {
+        const ex = fairAdmissionFor(editionId, h.org);
+        const state = ex && FAIR_ADMISSION_REOPENABLE.indexOf(ex.status) === -1
+          ? '<span class="ord-chip chip-manual">' + FAIR_ADMISSION_LABEL[ex.status] + '</span>'
+          : '<button class="btn-sm btn-outline" onclick="doInviteFairCandidate(\'' + editionId + '\',\'' + notifEsc(h.org) + '\')">Invite</button>';
+        return '<div style="padding:0.35rem 0;border-top:1px solid rgba(247,243,238,0.06);display:flex;gap:0.6rem;align-items:center;flex-wrap:wrap">' +
+          '<strong>' + notifEsc(h.org) + '</strong>' +
+          '<span style="font-size:0.7rem;color:var(--dim)">' + h.role + (h.region ? ' · ' + notifEsc(h.region) : '') + '</span>' +
+          '<span style="font-size:0.72rem;color:var(--dim)">' + notifEsc(h.matchReason) + '</span>' +
+          state +
+        '</div>';
+      }).join('')
+    : '<div class="edit-sub" style="margin-top:0.4rem">No candidate matches those public facts.</div>';
+}
+function doInviteFairCandidate(editionId, org) {
+  const st = stakeholder(org);
+  if (!st) { actionSay('Unknown organisation — the read path serves listed organisations only'); return; }
+  if (!inviteToFair(editionId, st.type, org)) return;
+  renderPartnerFairs();
+  showToast('✓ Invitation sent to ' + org);
+}
+function doRecordExternalFairAdmission(editionId) {
+  const org   = document.getElementById('fex-org-' + editionId).value;
+  const src   = document.getElementById('fex-src-' + editionId).value;
+  const actor = document.getElementById('fex-actor-' + editionId).value;
+  const at    = document.getElementById('fex-at-' + editionId).value;
+  const st = stakeholder(org);
+  if (!st) { actionSay('Unknown organisation'); return; }
+  if (!recordExternalFairAdmission(editionId, st.type, org, src, actor, at)) return;
+  renderPartnerFairs();
+  showToast('✓ Externally agreed admission recorded — ' + org + ' is admitted');
+}
+function doAddFairHall(editionId) {
+  const name = (window.prompt('Name of the hall — e.g. "Hall 2 — Sparkling"') || '').trim();
+  if (!name) { showToast('✗ A hall needs a name'); return; }
+  if (!addFairHall(editionId, name)) return;
+  renderPartnerFairs();
+  showToast('✓ Hall added');
+}
+function doAddFairStand(hallId) {
+  const label = (window.prompt('Label of the stand — e.g. "B-04"') || '').trim();
+  if (!label) { showToast('✗ A stand needs a label'); return; }
+  if (!addFairStand(hallId, label)) return;
+  renderPartnerFairs();
+  showToast('✓ Stand added');
 }
 function openFairEditionDetail(id) {
   fairOpenEditionId = fairOpenEditionId === id ? null : id;
@@ -12525,6 +13059,11 @@ function showShellHtml(role) {
         'placeholder="Search show, city or producer…" oninput="renderWineShows(\'' + role + '\')">' +
     '</div>' +
     '<div id="' + p + '-table"></div>' +
+    /* The fair-recruiting block (A20.6): the measured smallest real
+       entry — the A16.4 precedent, calls land "under Wine Shows".
+       The container exists for every role; content renders only for
+       the two eligible ones (winery, distributor). */
+    '<div id="' + p + '-fairs"></div>' +
   '</div>' +
   '<div id="' + p + '-detail-pane" style="display:none"></div>';
 }
@@ -12806,6 +13345,131 @@ function renderWineShows(role) {
     badge.textContent = n || '';
     badge.style.display = n ? '' : 'none';
   }
+
+  renderFairRecruitingBlock(role);
+}
+
+/* ══ THE FAIR-RECRUITING BLOCK (A20.6) ═══════════════════════════
+   The measured smallest real entry: B8 gives the trade roles no fair
+   nav entry, and A16.4's precedent puts open calls "under Wine Shows
+   in their dashboard" — so this block sits on the same sub-page, for
+   WINERY and DISTRIBUTOR only (FR-2; restaurant and retail are not
+   eligible, and an entry that only ever refuses would be noise). It
+   NEVER borrows the Wine Show's dress or promise: a canonical fair
+   is organizer-run and carries no Bottle Lobby release (the ME-3
+   argument, applied to fairs). */
+function fairEditionFactsHtml(ed) {
+  /* The decision-minimum facts (A20.8): series name, dates, type,
+     place, description — organizer-typed text through the page's one
+     escaper on the way to the DOM. */
+  const s = fairSeriesById(ed.seriesId);
+  const dates = blDate(ed.startDate) + (ed.endDate ? ' – ' + blDate(ed.endDate) : '');
+  return '<strong>' + notifEsc(s ? s.name : '?') + '</strong> · ' + dates +
+    ' · ' + FAIR_TYPE_LABEL[ed.fairType] +
+    '<em>' + notifEsc(ed.city) + (ed.venue ? ' — ' + notifEsc(ed.venue) : '') +
+    (ed.description ? '<br>' + notifEsc(ed.description) : '') + '</em>';
+}
+function renderFairRecruitingBlock(role) {
+  const cfg = SHOW_ROLES[role], p = cfg.prefix;
+  const box = document.getElementById(p + '-fairs');
+  if (!box) return;
+  if (role !== 'winery' && role !== 'distributor') { box.innerHTML = ''; return; }
+  const me = cfg.entity;
+  const mine = fairAdmissionsOfOrg(me);
+  const invitations = mine.filter(a => a.status === 'invited');
+  const openCalls = fairEditions.filter(fairCallOpenFor);
+  const callIds = openCalls.map(ed => ed.id);
+  /* Rows on editions the open-call list does not already show —
+     e.g. an admission whose call has closed since. */
+  const others = mine.filter(a => a.status !== 'invited' && callIds.indexOf(a.editionId) === -1);
+
+  let html = '<div class="disc-head disc-head-member" style="margin-top:1.6rem">Fairs — Exhibitor Recruiting' +
+    '<em>Canonical fairs, run by verified fair organizers (A18). An admission entitles your fair participation — ' +
+    'it creates no participation, no partnership and no order by itself.</em></div>';
+
+  if (invitations.length) {
+    html += invitations.map(a => {
+      const ed = fairEditionById(a.editionId);
+      if (!ed) return '';
+      const draftNote = ed.status === 'draft'
+        ? '<div class="edit-sub" style="margin-top:0.3rem">Not yet published — you see these facts because this ' +
+          'invitation addresses you, and only you (A20.8). Nobody else can find this edition.</div>'
+        : '';
+      return '<div class="profile-section" style="margin-top:0.8rem">' +
+        '<div class="ord-chip chip-offer">Invitation — awaiting your answer</div>' +
+        '<div class="otbl-cust" style="margin-top:0.4rem">' + fairEditionFactsHtml(ed) + '</div>' +
+        draftNote +
+        '<div style="display:flex;gap:0.6rem;margin-top:0.7rem">' +
+          '<button class="btn-sm btn-gold" onclick="doAnswerFairInvitation(\'' + role + '\',\'' + a.id + '\',true)">Accept — exhibit at this fair</button>' +
+          '<button class="btn-sm btn-outline" onclick="doAnswerFairInvitation(\'' + role + '\',\'' + a.id + '\',false)">Decline</button>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  if (openCalls.length) {
+    html += openCalls.map(ed => {
+      const a = fairAdmissionFor(ed.id, me);
+      let act;
+      if (!a || FAIR_ADMISSION_REOPENABLE.indexOf(a.status) !== -1) {
+        act = '<button class="btn-sm btn-outline" onclick="doApplyToFair(\'' + role + '\',\'' + ed.id + '\')">Apply to exhibit →</button>';
+      } else if (a.status === 'applied') {
+        act = '<span class="ord-chip chip-manual">Applied — waiting for the organizer</span> ' +
+          '<button class="btn-sm btn-outline" onclick="doWithdrawFairApplication(\'' + role + '\',\'' + a.id + '\')">Withdraw</button>';
+      } else if (a.status === 'admitted') {
+        act = '<span class="ord-chip chip-deal">Admitted — your participation follows in its own pass (O4)</span>';
+      } else {
+        act = '<span class="ord-chip chip-manual">' + FAIR_ADMISSION_LABEL[a.status] + '</span>';
+      }
+      return '<div class="profile-section" style="margin-top:0.8rem">' +
+        '<div class="ord-chip chip-promo">Exhibitor call open</div>' +
+        '<div class="otbl-cust" style="margin-top:0.4rem">' + fairEditionFactsHtml(ed) + '</div>' +
+        '<div style="margin-top:0.7rem">' + act + '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  if (others.length) {
+    html += others.map(a => {
+      const ed = fairEditionById(a.editionId);
+      if (!ed) return '';
+      const last = (a.history || [])[a.history.length - 1];
+      return '<div class="profile-section" style="margin-top:0.8rem">' +
+        '<span class="ord-chip chip-manual">' + FAIR_ADMISSION_LABEL[a.status] + '</span>' +
+        '<div class="otbl-cust" style="margin-top:0.4rem">' + fairEditionFactsHtml(ed) + '</div>' +
+        (last ? '<div class="edit-sub" style="margin-top:0.3rem">' + last.at + ' — ' + notifEsc(fairAdmissionHistoryText(last)) + '</div>' : '') +
+      '</div>';
+    }).join('');
+  }
+
+  if (!invitations.length && !openCalls.length && !others.length) {
+    html += '<div class="ord-empty">No open exhibitor calls and no invitations right now — a fair organizer ' +
+      'opens a call or invites you, and it lands here.</div>';
+  }
+  box.innerHTML = html;
+}
+
+/* The trade-side acts: the acting organisation is THIS role's entity
+   and never a parameter a foreign surface could bend (A20.11). */
+function doApplyToFair(role, editionId) {
+  const me = SHOW_ROLES[role].entity;
+  const row = applyToFair(editionId, role, me);
+  if (!row) return;
+  renderFairRecruitingBlock(role);
+  showToast('✓ Applied to exhibit — waiting for the organizer');
+}
+function doWithdrawFairApplication(role, admissionId) {
+  const me = SHOW_ROLES[role].entity;
+  if (!withdrawFairApplication(admissionId, me, null)) return;
+  renderFairRecruitingBlock(role);
+  showToast('Application withdrawn — the record remains readable');
+}
+function doAnswerFairInvitation(role, admissionId, accept) {
+  const me = SHOW_ROLES[role].entity;
+  if (!answerFairInvitation(admissionId, me, accept, null)) return;
+  renderFairRecruitingBlock(role);
+  showToast(accept ? '✓ Accepted — you are admitted to this fair edition'
+                   : 'Invitation declined — the record remains readable');
 }
 
 /* The venue is part of the protected detail until a show is published
@@ -17539,6 +18203,13 @@ BLStore.register({
   fairSeriesSeq:          [function () { return fairSeriesSeq; },          function (v) { fairSeriesSeq = v; }],
   fairEditions:           [function () { return fairEditions; },           function (v) { fairEditions = v; }],
   fairEditionSeq:         [function () { return fairEditionSeq; },         function (v) { fairEditionSeq = v; }],
+  /* The O3 recruiting and inventory records (A20). */
+  fairAdmissions:         [function () { return fairAdmissions; },         function (v) { fairAdmissions = v; }],
+  fairAdmissionSeq:       [function () { return fairAdmissionSeq; },       function (v) { fairAdmissionSeq = v; }],
+  fairHalls:              [function () { return fairHalls; },              function (v) { fairHalls = v; }],
+  fairHallSeq:            [function () { return fairHallSeq; },            function (v) { fairHallSeq = v; }],
+  fairStands:             [function () { return fairStands; },             function (v) { fairStands = v; }],
+  fairStandSeq:           [function () { return fairStandSeq; },           function (v) { fairStandSeq = v; }],
 
   /* Partnerships — one row, four dashboards read it (A6). It replaced
      wineryPartners, which was registered here, plus three `const`
