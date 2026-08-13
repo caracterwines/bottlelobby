@@ -13434,9 +13434,18 @@ function renderFairRecruitingBlock(role) {
       const ed = fairEditionById(a.editionId);
       if (!ed) return '';
       const last = (a.history || [])[a.history.length - 1];
+      /* The edition FACTS are entitled by an open invitation or by
+         publication — a resting row on a DRAFT keeps only the
+         organisation's OWN record: series name, state, history
+         (A20.8/FR-11: the view falls with the invitation). */
+      const s = fairSeriesById(ed.seriesId);
+      const facts = fairEditionDiscoverable(ed)
+        ? fairEditionFactsHtml(ed)
+        : '<strong>' + notifEsc(s ? s.name : '?') + '</strong><em>Unpublished edition — ' +
+          'the details left with the open invitation; this line is your own record.</em>';
       return '<div class="profile-section" style="margin-top:0.8rem">' +
         '<span class="ord-chip chip-manual">' + FAIR_ADMISSION_LABEL[a.status] + '</span>' +
-        '<div class="otbl-cust" style="margin-top:0.4rem">' + fairEditionFactsHtml(ed) + '</div>' +
+        '<div class="otbl-cust" style="margin-top:0.4rem">' + facts + '</div>' +
         (last ? '<div class="edit-sub" style="margin-top:0.3rem">' + last.at + ' — ' + notifEsc(fairAdmissionHistoryText(last)) + '</div>' : '') +
       '</div>';
     }).join('');
