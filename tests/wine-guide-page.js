@@ -954,5 +954,39 @@ console.log('\n── deep links, old and new');
   }
 }
 
+/* ── O7 changed nothing here, and that is the assurance (A16.14d) ───
+   Booth appointments are a private matter between two houses. Whether
+   an exhibitor takes requests belongs on that exhibitor's own
+   Participation Page and NOWHERE else: not as a fifth card sort, not
+   as a fourth family, not as a badge, not as a facet and not as a
+   figure — the directory has no number for it, and a filter that
+   ranked open appointment doors would turn a business door into a
+   discovery signal. */
+console.log('\n── the directory is untouched by O7: four sorts, three families, no appointment marker');
+{
+  const g = boot('#events');
+  const gd = g.document;
+  const gcells = id => [...gd.querySelectorAll('#' + id + ' > div')];
+  const all = gcells('events-upcoming').concat(gcells('events-past'));
+  const sorts = [...new Set(all.map(c => c.className.trim().split(/\s+/)[0]))].sort();
+  if (sorts.join(',') === 'fe-cell,fp-cell,me-cell,ws-cell')
+    ok('still exactly four card sorts in the two grids: ' + sorts.join(' · '));
+  else bad('the card sorts moved: ' + sorts.join(', '));
+
+  const body = gd.getElementById('gpanel-events').textContent;
+  const html = gd.getElementById('gpanel-events').innerHTML;
+  const leaks = [];
+  if (/appointment|meeting slot|booth slot/i.test(body)) leaks.push('the word appointment');
+  if (/F[TM]-9\d{3}/.test(html))                         leaks.push('a slot or appointment id');
+  if (/appt=/.test(html))                                leaks.push('a booking deep link');
+  if (!leaks.length) ok('no card, filter, badge or count on the directory mentions an appointment (A16.14d, AP-10)');
+  else bad('the directory grew an appointment marker: ' + leaks.join(', '));
+
+  const fams = g.eval('DIRECTORY_FAMILIES');
+  if (fams.join('|') === 'Wine Show|Member Event|Fair')
+    ok('and the family vocabulary is still the three it has always been: ' + fams.join(' · '));
+  else bad('the family vocabulary moved: ' + fams.join(', '));
+}
+
 console.log(fail ? '\n' + fail + ' failure(s)' : '\nwine guide: the Events tab answers like every other public surface');
 process.exit(fail ? 1 : 0);

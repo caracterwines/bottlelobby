@@ -1393,6 +1393,73 @@ console.log('\n── the public directory reads the same snapshot, and can neve
   }
 }
 
+/* ── 12. The private booth-appointment collections (A22, O7) ────────
+   They persist like every other dashboard record — the embedded
+   append-only history included — and they must NEVER reach a public
+   page. The second half is not a promise but a structural fact: the
+   fixed PUBLIC_COLLECTIONS allowlist refuses a registration outside
+   it WHOLE, before a single value is read (FP-13), and this section
+   proves the refusal by attempting exactly that registration. */
+console.log('\n── booth appointments persist privately, and no public page can register them');
+{
+  const area = makeStorageArea();
+  const dash = enter(openTab(area, { persist: true }));
+
+  /* A real act through the real path: the exhibitor confirms an open
+     request, which appends one history row. */
+  dash.w.eval("showWineShows('distributor')");
+  if (dash.w.eval("confirmFairAppointment('FM-9603')") !== true)
+    bad('the appointment act did not run in the persisting tab');
+  dash.w.eval("addFairAppointmentSlot('FP-9402','2027-06-12','16:00',45)");
+  if (dash.w.eval('BLStore.save()') !== true) bad('the persisting tab refused to save');
+
+  const stored = JSON.parse(area._data[KEY]);
+  const names = Object.keys(stored.data);
+  if (['fairAppointments', 'fairAppointmentSeq', 'fairAppointmentSlots', 'fairAppointmentSlotSeq']
+        .every(n => names.includes(n)))
+    ok('all four O7 registrations are in the snapshot — the two collections and their counters');
+  else bad('an O7 registration is missing from the snapshot: ' + names.join(','));
+
+  const again = enter(openTab(area, { persist: true }));
+  const row = again.w.eval("JSON.stringify(fairAppointmentById('FM-9603'))");
+  const live = dash.w.eval("JSON.stringify(fairAppointmentById('FM-9603'))");
+  if (row === live && JSON.parse(row).status === 'confirmed' && JSON.parse(row).history.length === 2)
+    ok('the appointment and its EMBEDDED append-only history survive the round trip byte-identical (A22.15)');
+  else bad('the embedded history did not come back unchanged: ' + row);
+  if (again.w.eval("fairAppointmentSlots.length") === dash.w.eval("fairAppointmentSlots.length") &&
+      again.w.eval('fairAppointmentSlotSeq') === dash.w.eval('fairAppointmentSlotSeq'))
+    ok('and the slot board comes back with its counter, so no reload reissues an FT- id that exists');
+  else bad('the slot board or its counter did not survive');
+
+  /* THE REFUSAL, attempted rather than asserted: a page that registers
+     a private appointment collection against the read-only entry. */
+  const PAGE2 = path.join(__dirname, '..', 'bottle-lobby-fair-participation.html');
+  const errs = [];
+  const html = loadDashboard(PAGE2, { persist: true }).html.replace(
+    'fairParticipations: [function () { return fairParticipations; }, function (v) { fairParticipations = v; }]',
+    'fairParticipations: [function () { return fairParticipations; }, function (v) { fairParticipations = v; }],\n' +
+    '    fairAppointments:   [function () { return window.__appts; },  function (v) { window.__appts = v; }]');
+  const dom = new JSDOM(html, {
+    runScripts: 'dangerously', pretendToBeVisual: true,
+    url: 'http://localhost/bottle-lobby-fair-participation.html?id=FP-9402',
+    beforeParse(win) {
+      const self = () => win;
+      Object.defineProperty(win, 'localStorage', { value: area.api(self), configurable: true });
+      win.scrollTo = () => {};
+    },
+    virtualConsole: new VirtualConsole().on('jsdomError', e => errs.push(e.message))
+  });
+  const pw = dom.window;
+  if (errs.length) { console.log('SCRIPT ERRORS:\n' + errs.join('\n')); process.exit(1); }
+  if (pw.eval("BLStore.hydrate()") === 'refused' && pw.eval('typeof window.__appts') === 'undefined' &&
+      area._data[KEY] === JSON.stringify(stored))
+    ok('a public page that registers fairAppointments is refused WHOLE — nothing hydrated, nothing written, the snapshot byte-identical (FP-13, A22)');
+  else bad('the read-only entry hydrated a private appointment collection');
+  if (pw.eval("BLStore.PUBLIC_COLLECTIONS.join(',')") === 'fairSeries,fairEditions,fairHalls,fairStands,fairParticipations')
+    ok('and the allowlist itself is unchanged by O7 — five collections, no appointment among them');
+  else bad('PUBLIC_COLLECTIONS moved: ' + pw.eval("BLStore.PUBLIC_COLLECTIONS.join(',')"));
+}
+
 console.log(fail ? '\n✗ ' + fail + ' failure(s)' : '\n✓ all checks passed');
 process.exit(fail ? 1 : 0);
 
