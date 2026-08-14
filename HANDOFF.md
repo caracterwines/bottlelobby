@@ -1322,6 +1322,40 @@ Funktionen aufrufen, `transferSize` vorher lesen (C7).
 > DAS die `activeShowRole`-Ableitung dieses Prototyps 1:1:**
 > `fairActingContext()` liest dann die Session statt des Cockpit-Umschalters,
 > **ohne dass A22.12 sich inhaltlich aendert.**
+>
+> **Codex-Korrektur nach Claude Chats unabhaengiger Abnahme des O7-
+> Abschlussstands (14.08., `0636410` — dieser Stand wurde NICHT
+> abgenommen: der Testlauf fand `tests/persistence.js` rot, alle 31
+> uebrigen Harnesses gruen).** Der Befund war reproduzierbar (zwei
+> isolierte Wiederholungen, derselbe Fehler: „a default-loaded harness
+> page wrote to localStorage"), aber NICHT am Codex-Arbeitsstand — dort
+> lief derselbe Test lokal vollstaendig gruen. **Ein Harnessfehler, kein
+> O7-Produktfehler:** die Isolationspruefung in `tests/persistence.js`
+> §1 liess den vergiftenden Seed-Tab (`persist:true`) waehrend der
+> spaeteren Kill-Switch- und Standard-Tab-Schreibpruefungen am selben
+> Storage-Bereich haengen. Dessen eigener Store-Heartbeat (echte
+> 2000-ms-`setInterval` in `assets/bottle-lobby-store.js`, wall-clock,
+> in diesem Harness nie virtualisiert) schreibt den Bereich neu, sobald
+> er vom vergifteten Snapshot abweicht — was er immer tut — und auf
+> einem hinreichend langsamen Lauf faellt dieser Schreibvorgang in das
+> Pruefungsfenster und wird dem jeweils geprueften Tab faelschlich
+> zugerechnet. Gemessen, nicht vermutet: mit auf 30 ms beschleunigtem
+> Heartbeat faellt die alte, gemeinsame Isolation 5/5 rot, dieselbe
+> Pruefung mit einem eigenen Storage-Bereich je Tab bleibt 5/5 gruen
+> (Korrektur-Commit `c069858`). Fix: Kill-Switch- und
+> Standard-Tab-Pruefung erhalten je einen frischen, mit denselben
+> vergifteten Bytes gefuellten Storage-Bereich ohne den Seed als
+> Mitschreiber, plus eine Gegenprobe, die ein absichtliches weiteres
+> Speichern des Seed-Tabs gegen den separat geprueften Bereich
+> nachweist. Ausschliesslich `tests/persistence.js` veraendert — kein
+> Produktcode, keine Spec, keine Daten, kein Asset; `VERSION` bleibt 12,
+> `SCHEMA_HASH` bleibt `b29a32a`. `node tests/run-all.js` danach am
+> neuen Stand ein zweites Mal vollstaendig gelaufen: **32/32 gruen.**
+> Kein Browserlauf in dieser Korrektur — nur Test-/Dokumentationscode
+> ist betroffen, Produkt- und Darstellungsverhalten unveraendert seit
+> der O7-Browser-Abnahme oben. `0636410` bleibt NICHT abgenommen; der
+> finale HEAD nach dieser Korrektur und dem folgenden Doku-Commit ist
+> der einzige Abnahmekandidat.
 
 ---
 
