@@ -335,7 +335,24 @@ window.BLStore = (function () {
      exist — while `fairEditionSeq` reissues ids that now do. Measured,
      not predicted: the fingerprints were compared before and after and
      all 40 are identical, which is precisely why the bump is the only
-     lever left. */
+     lever left.
+
+     O7 — MEASURED, AND IT NEEDS NO BUMP. The pass changes the FORM of
+     an already registered collection: `fairParticipations` gains
+     `appointmentsOpen` on every row (A22.4). Guard 2 fingerprints
+     SHAPE, so it sees that by construction — and the shared contract
+     sees it a second time, because the shape change moved
+     SCHEMA_HASH (6d204f48 → 9b503d88, set in the same commit as the
+     field, C8), and every older snapshot carries the old `sh` and
+     breaks on check (5) before a single value is read. A pre-O7
+     snapshot is therefore already refused twice over, by both
+     documents, without VERSION moving. The pass ALSO adds two new
+     registrations (fairAppointmentSlots / fairAppointments and their
+     seqs), which would discard older snapshots a third time — and
+     that alone is expressly NOT a bump reason (the Durchgang-11
+     note above says why: a neighbouring registration's protection
+     vanishes the day it is reverted or split). The lever stays where
+     it is because the FIELD, not the neighbour, does the work. */
   var VERSION   = 12;
   var DEBOUNCE  = 200;   /* ms after the last event before a write */
   var HEARTBEAT = 2000;  /* ms between "does storage still match?" checks */
@@ -366,7 +383,7 @@ window.BLStore = (function () {
      C8 gains the matching duty: when fixtures change SHAPE, the same
      commit updates SCHEMA_HASH (the harness names the value; VERSION
      keeps its own, separate rule). */
-  var SCHEMA_HASH = '6d204f48';
+  var SCHEMA_HASH = '9b503d88';
 
   var entries      = [];   /* { name, get, set } in registration order */
   var fixtureFp    = {};   /* name → hash of the pristine fixture shape */

@@ -1571,6 +1571,17 @@ function fairStandsOfHall(hallId) { return fairStands.filter(st => st.hallId ===
    active · withdrawn (the exhibitor's act) · rescinded (the
    organizer's act) — two actors, two resting states, no deletion.
 
+   `appointmentsOpen` (O7, A22.4) is the exhibitor's appointment door
+   and THE ONE PUBLICLY READABLE APPOINTMENT FACT — which is why it
+   sits here, on the row the public page already reads, and not in the
+   private appointment collections (those live in the dashboard for
+   good, A22's blueprint). Everything else about an appointment —
+   slots, times, topics, messages, counterparts, history — is private
+   to the two sides. Closing the door refuses NEW requests and changes
+   no existing record (the FR-7 pattern, AP-5). Both fixture rows ship
+   OPEN, so that both row sorts — winery and distributor — are
+   serviceable from the first click.
+
    FIXTURE DATES (C7): every participation postdates its admission,
    every stand assignment postdates the creation, and everything
    sits before SHOW_TODAY (31 Jul). The acting demo pair — Cantina
@@ -1588,6 +1599,7 @@ let fairParticipations = [
     products:[ { productId:'PRD-1013' }, { productId:'PRD-1021' }, { productId:'PRD-1012' } ],
     representing:null,
     status:'active',
+    appointmentsOpen:true,
     history:[
       { at:'2026-07-27', actor:'Domaine Lefèvre',  action:'created',        reason:null },
       { at:'2026-07-28', actor:'Atrium Fairs GmbH', action:'stand_assigned', reason:null }
@@ -1612,6 +1624,7 @@ let fairParticipations = [
         products:[ { productId:'PRD-1024' }, { productId:'PRD-1018' } ] }
     ],
     status:'active',
+    appointmentsOpen:true,
     history:[
       { at:'2026-07-29', actor:'Hawesko GmbH',      action:'created',        reason:null },
       { at:'2026-07-30', actor:'Atrium Fairs GmbH', action:'stand_assigned', reason:null }

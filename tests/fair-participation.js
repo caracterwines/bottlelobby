@@ -86,8 +86,15 @@ function restoreAdm()   { w.eval('(function(){ const s = window.__faStack.pop();
 function snapInv()      { w.eval('window.__fiStack.push([JSON.stringify(fairHalls), JSON.stringify(fairStands), fairHallSeq, fairStandSeq])'); }
 function restoreInv()   { w.eval('(function(){ const s = window.__fiStack.pop(); fairHalls = JSON.parse(s[0]); fairStands = JSON.parse(s[1]); fairHallSeq = s[2]; fairStandSeq = s[3]; })()'); }
 
+/* `appointmentsOpen` joined this list with O7 (A22.4): it is the
+   exhibitor's appointment door and the ONE publicly readable
+   appointment fact, which is why it sits on this row and not in the
+   private appointment collections. It is a FLAG, not a copy — the
+   check's target is unchanged: no copied fair, series, organizer or
+   identity data reaches the row (FP-3). */
 const ROW_KEYS = ['id','editionId','orgType','org','standId','days','description',
-                  'products','representing','status','history'].sort().join(',');
+                  'products','representing','status','appointmentsOpen',
+                  'history'].sort().join(',');
 
 /* ── §1 Explicit creation, one per pair, eligible owners (FP-1, FP-2) ─ */
 console.log('§1 the admission entitles — the organisation itself creates, once, and only the eligible');

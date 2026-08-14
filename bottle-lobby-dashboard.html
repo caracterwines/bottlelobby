@@ -4134,8 +4134,8 @@ With an annual production capacity of over 1.2 million bottles, Cantina Rossi is
      fails the run if any asset is missing or empty. That same file
      also switches persistence off for every harness. See tests/README.
 -->
-<script src="assets/bottle-lobby-store.js?v=9f5a38ea"></script>
-<script src="assets/bottle-lobby-data.js?v=ec08f60e"></script>
+<script src="assets/bottle-lobby-store.js?v=ffeee8fe"></script>
+<script src="assets/bottle-lobby-data.js?v=e92c5fc3"></script>
 <script src="assets/bottle-lobby-public-shows.js?v=fa4cd233"></script>
 
 <script>
@@ -6523,7 +6523,16 @@ function createFairParticipation(editionId, orgType, org) {
                 standId:null, days:[], description:'',
                 products:    orgType === 'winery'      ? [] : null,
                 representing:orgType === 'distributor' ? [] : null,
-                status:'active', history:[] };
+                status:'active',
+                /* The appointment door starts CLOSED (A22.4): a brand
+                   new participation has no slots yet, so an open door
+                   would promise availability that does not exist. The
+                   exhibitor opens it deliberately, once it has times
+                   to offer — the two fixtures ship open because they
+                   ship with slots. A reactivated withdrawn row keeps
+                   whatever it had; the return is not a new record. */
+                appointmentsOpen:false,
+                history:[] };
   logFairParticipation(row, 'created', org, null);
   fairParticipations.push(row);
   return row;
