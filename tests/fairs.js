@@ -366,17 +366,31 @@ expectRed('the published fixture pulled back to draft', () => {
   finally { w.eval('fairEditionDiscoverable = window.__fairDisc; delete window.__fairDisc'); }
 });
 
-/* ── §5 Findability is not entitlement — as-is state of Durchgang 12 ─
-   No application, appointment or any other business action hangs off
-   an edition today. This pins the CURRENT state; O3 (recruiting) and
-   O7 (appointments) move these assertions deliberately when they
-   arrive with their measurement — they are announced, not forbidden. */
+/* ── §5 Findability is not entitlement (A19.3) ─────────────────────
+   Being publicly findable grants no business action ON THE EDITION —
+   that is the rule, and it outlives every pass. O3 and O7 moved the
+   two acts this section once pinned by absence, and each landed
+   where the rule says it belongs: an admission hangs off the
+   (edition, organisation) pair through its own workflow row, and a
+   booth appointment hangs off a SLOT of a participation (A22.1) —
+   never off the edition, and never off its public findability. So
+   the measurement changed shape and kept its target: no act is
+   KEYED ON AN EDITION, and the organizer's edition surface offers
+   none. */
 console.log('\n§5 findability grants no action');
 
 function assertNoEntitlement() {
-  if (w.eval("typeof applyToFairEdition === 'undefined' && typeof requestFairAppointment === 'undefined'"))
-    ok('no application or appointment act exists on an edition');
-  else bad('an edition already carries a business action (O3/O7 are later passes)');
+  /* `requestFairAppointment` exists since O7 — and its first
+     argument is a SLOT id, which is the whole point: the appointment
+     path starts at a published slot of an active participation, so
+     there is no way from "this edition is findable" to "I may act". */
+  const noEditionAct = w.eval("typeof applyToFairEdition === 'undefined' && " +
+    "typeof requestFairAppointmentAtEdition === 'undefined'");
+  const apptOnSlot = w.eval("typeof requestFairAppointment === 'function' && " +
+    "/^function requestFairAppointment\\s*\\(\\s*slotId\\s*,/.test(String(requestFairAppointment))");
+  if (noEditionAct && apptOnSlot)
+    ok('no act is keyed on an edition — the O7 appointment act starts at a slot of a participation (A22.1)');
+  else bad('an edition carries a business action of its own (findability ≠ entitlement)');
   w.eval("fairOpenEditionId = 'FE-7101'");
   const html = ROOT();
   if (!/Apply|Request Appointment|Book a slot/i.test(html))

@@ -13973,6 +13973,13 @@ function showShellHtml(role) {
        The container exists for every role; content renders only for
        the two eligible ones (winery, distributor). */
     '<div id="' + p + '-fairs"></div>' +
+    /* The booth-appointment block (A22, O7) needs its OWN container,
+       measured: renderFairRecruitingBlock() EMPTIES the box above for
+       restaurant and retail, because neither may exhibit (FR-2) — and
+       all four roles may REQUEST an appointment (AP-4). Sharing one
+       container would have made the requesting surface disappear for
+       exactly the two roles that visit a fair to buy. */
+    '<div id="' + p + '-appointments"></div>' +
   '</div>' +
   '<div id="' + p + '-detail-pane" style="display:none"></div>';
 }
@@ -14255,7 +14262,7 @@ function renderWineShows(role) {
     badge.style.display = n ? '' : 'none';
   }
 
-  renderFairRecruitingBlock(role);
+  renderFairBlocks(role);
 }
 
 /* ══ THE FAIR-RECRUITING BLOCK (A20.6) ═══════════════════════════
@@ -14277,6 +14284,16 @@ function fairEditionFactsHtml(ed) {
     ' · ' + FAIR_TYPE_LABEL[ed.fairType] +
     '<em>' + notifEsc(ed.city) + (ed.venue ? ' — ' + notifEsc(ed.venue) : '') +
     (ed.description ? '<br>' + notifEsc(ed.description) : '') + '</em>';
+}
+/* ONE render chain for the two fair blocks on this sub-page
+   (A22, measured): the appointments block reads the SAME
+   participation rows the recruiting block does — a created,
+   withdrawn or rescinded participation changes both — so refreshing
+   one without the other would leave the second a full act behind.
+   Every existing call site now goes through here. */
+function renderFairBlocks(role) {
+  renderFairRecruitingBlock(role);
+  renderFairAppointmentsBlock(role);
 }
 function renderFairRecruitingBlock(role) {
   const cfg = SHOW_ROLES[role], p = cfg.prefix;
@@ -14374,19 +14391,19 @@ function doApplyToFair(role, editionId) {
   const me = SHOW_ROLES[role].entity;
   const row = applyToFair(editionId, role, me);
   if (!row) return;
-  renderFairRecruitingBlock(role);
+  renderFairBlocks(role);
   showToast('✓ Applied to exhibit — waiting for the organizer');
 }
 function doWithdrawFairApplication(role, admissionId) {
   const me = SHOW_ROLES[role].entity;
   if (!withdrawFairApplication(admissionId, me, null)) return;
-  renderFairRecruitingBlock(role);
+  renderFairBlocks(role);
   showToast('Application withdrawn — the record remains readable');
 }
 function doAnswerFairInvitation(role, admissionId, accept) {
   const me = SHOW_ROLES[role].entity;
   if (!answerFairInvitation(admissionId, me, accept, null)) return;
-  renderFairRecruitingBlock(role);
+  renderFairBlocks(role);
   showToast(accept ? '✓ Accepted — you are admitted to this fair edition'
                    : 'Invitation declined — the record remains readable');
 }
@@ -14490,6 +14507,9 @@ function fairParticipationTradeHtml(role, ed, adm) {
       '<button class="btn-sm btn-outline" onclick="doSaveFairDays(\'' + role + '\',\'' + p.id + '\')">Save Days</button>' +
     '</div>' +
     content +
+    /* The exhibitor's own appointment board (A22, O7) — inside this
+       same block, no new nav entry (A20.6 carried forward). */
+    fairBoothAppointmentsHtml(role, p) +
     '<div style="margin-top:0.7rem;display:flex;gap:0.8rem;align-items:center;flex-wrap:wrap">' +
       pubLink +
       '<button class="btn-sm btn-outline" onclick="doWithdrawFairParticipation(\'' + role + '\',\'' + p.id + '\')">Withdraw…</button>' +
@@ -14503,7 +14523,7 @@ function doCreateFairParticipation(role, editionId) {
   const me = SHOW_ROLES[role].entity;
   const p = createFairParticipation(editionId, role, me);
   if (!p) return;
-  renderFairRecruitingBlock(role);
+  renderFairBlocks(role);
   showToast('✓ Fair participation created — fill days, description and wines');
 }
 function doSaveFairDescription(role, participationId) {
@@ -14511,7 +14531,7 @@ function doSaveFairDescription(role, participationId) {
   const el = document.getElementById('fpdesc-' + participationId);
   if (!el) return;
   if (!setFairParticipationDescription(participationId, me, el.value)) return;
-  renderFairRecruitingBlock(role);
+  renderFairBlocks(role);
   showToast('✓ Description saved');
 }
 function doSaveFairDays(role, participationId) {
@@ -14520,7 +14540,7 @@ function doSaveFairDays(role, participationId) {
     document.querySelectorAll('input[name="fpd-' + participationId + '"]:checked'),
     el => el.value);
   if (!setFairParticipationDays(participationId, me, days)) return;
-  renderFairRecruitingBlock(role);
+  renderFairBlocks(role);
   showToast('✓ Attendance days saved');
 }
 function doSaveFairWines(role, participationId) {
@@ -14529,7 +14549,7 @@ function doSaveFairWines(role, participationId) {
     document.querySelectorAll('input[name="fpw-' + participationId + '"]:checked'),
     el => el.value);
   if (!setFairParticipationProducts(participationId, me, ids)) return;
-  renderFairRecruitingBlock(role);
+  renderFairBlocks(role);
   showToast('✓ Presented wines saved — references into your catalogue');
 }
 function doAddFairRepWinery(role, participationId) {
@@ -14537,7 +14557,7 @@ function doAddFairRepWinery(role, participationId) {
   const sel = document.getElementById('fprw-' + participationId);
   if (!sel || !sel.value) return;
   if (!addFairRepresentedWinery(participationId, me, sel.value)) return;
-  renderFairRecruitingBlock(role);
+  renderFairBlocks(role);
   showToast('✓ ' + sel.value + ' is on your stand — set its two presence statements yourself');
 }
 function doRemoveFairRepWinery(role, participationId, idx) {
@@ -14546,7 +14566,7 @@ function doRemoveFairRepWinery(role, participationId, idx) {
   const rep = p && (p.representing || [])[idx];
   if (!rep) return;
   if (!removeFairRepresentedWinery(participationId, me, rep.winery)) return;
-  renderFairRecruitingBlock(role);
+  renderFairBlocks(role);
   showToast(rep.winery + ' removed from the stand');
 }
 function doToggleFairPresence(role, participationId, idx, field, el) {
@@ -14555,7 +14575,7 @@ function doToggleFairPresence(role, participationId, idx, field, el) {
   const rep = p && (p.representing || [])[idx];
   if (!rep) return;
   if (!setFairRepresentationPresence(participationId, me, rep.winery, field, el.checked)) {
-    renderFairRecruitingBlock(role);   /* refused — the box snaps back to the record */
+    renderFairBlocks(role);   /* refused — the box snaps back to the record */
     return;
   }
   showToast(field === 'representedAtBooth'
@@ -14571,7 +14591,7 @@ function doSaveFairRepWines(role, participationId, idx) {
     document.querySelectorAll('input[name="fpw-' + participationId + '-' + idx + '"]:checked'),
     el => el.value);
   if (!setFairRepresentedProducts(participationId, me, rep.winery, ids)) return;
-  renderFairRecruitingBlock(role);
+  renderFairBlocks(role);
   showToast('✓ Wines saved for ' + rep.winery);
 }
 function doWithdrawFairParticipation(role, participationId) {
@@ -14579,8 +14599,372 @@ function doWithdrawFairParticipation(role, participationId) {
   const why = window.prompt('Withdraw your participation? A reason is optional — leave empty to withdraw without one.');
   if (why === null) return;
   if (!withdrawFairParticipation(participationId, me, why)) return;
-  renderFairRecruitingBlock(role);
+  renderFairBlocks(role);
   showToast('Participation withdrawn — the record remains readable');
+}
+
+/* ══ THE EXHIBITOR'S BOOTH APPOINTMENTS (A22) ════════════════════
+   Inside the participation block on Events → Wine Shows — no new nav
+   entry, the A20.6 rule carried one chapter on. Three parts, in the
+   order the exhibitor works in them: the door, the slot board, and
+   the incoming requests.
+
+   THE HANDLERS BELOW PASS NO IDENTITY. They take `role` to know
+   which block to repaint and which text to show — display, which
+   A22.12 expressly allows — and hand the mutating functions nothing
+   but business arguments. None of those functions has a parameter
+   for an actor, and a value appended anyway dies unread at the
+   surplus-argument check. ═══════════════════════════════════════ */
+const FAIR_APPT_DURATIONS = [15, 30, 45, 60, 75, 90, 105, 120];
+function fairApptStartOptions(selected) {
+  let out = '';
+  for (let m = 8 * 60; m <= 20 * 60 + 45; m += 15) {
+    const t = fairApptClock(m);
+    out += '<option value="' + t + '"' + (t === selected ? ' selected' : '') + '>' + t + '</option>';
+  }
+  return out;
+}
+/* Every time on every surface says WHOSE clock it is (A22.6): a
+   booth appointment happens at the fairground, the edition stores no
+   zone, and the label carries the meaning the record does not. */
+function fairApptWhenText(slot) {
+  return blDate(slot.day) + ' · ' + fairSlotTimeText(slot) + ' · ' + slot.durationMin + ' min';
+}
+function fairApptHistoryHtml(a) {
+  return (a.history || []).map(h =>
+    '<div class="edit-sub">' + h.at + ' — ' + notifEsc(fairAppointmentHistoryText(h)) +
+    (h.action === 'countered' && h.fromSlot
+      ? ' <span style="color:var(--dim)">(' + notifEsc(h.fromSlot) + ' → ' + notifEsc(h.toSlot) + ')</span>'
+      : '') + '</div>').join('');
+}
+/* The counterpart is a NAME with a canonical profile link and
+   nothing else (A22.11, AP-16) — resolved through the stakeholder
+   record at render time, never copied onto the appointment, and no
+   e-mail, telephone number or address anywhere. */
+function fairApptCounterpartHtml(name) { return fairStakeholderLink(name); }
+
+function fairBoothAppointmentsHtml(role, p) {
+  const slots = fairAppointmentSlotsOf(p.id);
+  const reqs  = fairAppointmentsOfParticipation(p.id);
+  const free  = fairFreeSlotsOf(p.id);
+
+  let html = '<div class="form-block-title" style="margin-top:1.1rem">Booth Appointments</div>' +
+    '<label style="font-size:0.78rem;display:block">' +
+      '<input type="checkbox"' + (p.appointmentsOpen ? ' checked' : '') +
+      ' onchange="doToggleFairAppointmentsOpen(\'' + role + '\',\'' + p.id + '\',this)"> ' +
+      'Take appointment requests at this stand</label>' +
+    '<div class="edit-sub">Open, your public participation page shows a neutral note and a "Request an appointment" ' +
+      'entry — never your slots, times or contact details. Closing refuses NEW requests only: every appointment ' +
+      'already agreed stays exactly as it is.</div>';
+
+  /* ── The slot board (A22.5/A22.6) ── */
+  html += '<div class="form-block-title" style="margin-top:0.8rem">Your Slots — on your attendance days, fair local time</div>';
+  html += slots.length
+    ? slots.map(s => {
+        const taken = fairSlotTaken(s.id);
+        return '<div style="font-size:0.78rem;margin-top:0.2rem">' + fairApptWhenText(s) +
+          (taken ? ' <span class="ord-chip chip-deal">Confirmed — ' + notifEsc(taken.requester) + '</span>' : '') +
+          ' <button class="btn-sm btn-outline" onclick="doRemoveFairAppointmentSlot(\'' + role + '\',\'' + s.id + '\')">Remove</button>' +
+          '</div>';
+      }).join('')
+    : '<div class="edit-sub">No slots yet — publish the times you can be met, and members pick one of them. ' +
+      'A free wish-time from the other side would be a calendar nobody owns (A22.5).</div>';
+  html += (p.days || []).length
+    ? '<div style="display:flex;gap:0.5rem;margin-top:0.5rem;flex-wrap:wrap;align-items:center">' +
+        '<select class="field-input" style="max-width:190px;margin:0" id="fts-day-' + p.id + '">' +
+          p.days.map(dy => '<option value="' + dy + '">' + blDate(dy) + '</option>').join('') + '</select>' +
+        '<select class="field-input" style="max-width:110px;margin:0" id="fts-time-' + p.id + '">' +
+          fairApptStartOptions('10:00') + '</select>' +
+        '<select class="field-input" style="max-width:130px;margin:0" id="fts-dur-' + p.id + '">' +
+          FAIR_APPT_DURATIONS.map(d => '<option value="' + d + '"' + (d === 30 ? ' selected' : '') + '>' + d + ' min</option>').join('') +
+        '</select>' +
+        '<button class="btn-sm btn-outline" onclick="doAddFairAppointmentSlot(\'' + role + '\',\'' + p.id + '\')">+ Add slot</button>' +
+      '</div>' +
+      '<div class="edit-sub">15 to 120 minutes, in 15-minute steps; the appointment ends on the same day.</div>'
+    : '<div class="edit-sub" style="margin-top:0.4rem">Set your attendance days above first — a slot lies on a day you are actually there.</div>';
+
+  /* ── Incoming requests (A22.10, the exhibitor's internal view) ── */
+  html += '<div class="form-block-title" style="margin-top:0.9rem">Incoming appointment requests</div>';
+  if (!reqs.length) {
+    html += '<div class="edit-sub">' + (p.appointmentsOpen
+      ? (slots.length
+          ? 'Nothing asked for yet — members find your stand through the fair directory and your participation page.'
+          : 'Nothing can be asked for yet, because you have published no slot.')
+      : 'Your appointment door is closed, so no new request can arrive.') + '</div>';
+    return html;
+  }
+  html += reqs.map(a => {
+    const s = fairAppointmentSlotById(a.slotId);
+    let act;
+    if (a.status === 'requested') {
+      act = '<button class="btn-sm btn-gold" onclick="doConfirmFairAppointment(\'' + role + '\',\'' + a.id + '\')">Confirm</button> ' +
+        '<button class="btn-sm btn-outline" onclick="doDeclineFairAppointment(\'' + role + '\',\'' + a.id + '\')">Decline…</button>' +
+        (free.filter(x => x.id !== a.slotId).length
+          ? ' <select class="field-input" style="max-width:230px;margin:0;display:inline-block" id="fmc-' + a.id + '">' +
+              free.filter(x => x.id !== a.slotId).map(x => '<option value="' + x.id + '">' + fairApptWhenText(x) + '</option>').join('') +
+            '</select> <button class="btn-sm btn-outline" onclick="doCounterFairAppointment(\'' + role + '\',\'' + a.id + '\')">Propose this instead…</button>'
+          : ' <span class="edit-sub">No other free slot to propose.</span>');
+    } else if (a.status === 'countered') {
+      /* FROM `countered` THE EXHIBITOR HAS NO ACT (A22.7, AP-7): a
+         proposal both proposed and accepted by the same house is not
+         an agreement. The line says who is at the table, and offers
+         no button at all. */
+      act = '<span class="edit-sub">Waiting for ' + notifEsc(a.requester) +
+        ' — you proposed this time, so the answer is theirs. An exhibitor never confirms its own counter-proposal.</span>';
+    } else if (a.status === 'confirmed') {
+      act = '<button class="btn-sm btn-outline" onclick="doCancelFairAppointment(\'' + role + '\',\'' + a.id + '\')">Cancel…</button>' +
+        ' <span class="edit-sub">Cancelling states a reason — the other side has planned its fair day around this.</span>';
+    } else {
+      act = '<span class="edit-sub">This appointment has come to rest; the record stays readable.</span>';
+    }
+    return '<div style="padding:0.5rem 0;border-top:1px solid rgba(247,243,238,0.06)">' +
+      '<div style="display:flex;gap:0.6rem;align-items:center;flex-wrap:wrap">' +
+        '<strong>' + fairApptCounterpartHtml(a.requester) + '</strong>' +
+        '<span class="ord-chip chip-manual">' + FAIR_APPOINTMENT_LABEL[a.status] + '</span>' +
+      '</div>' +
+      '<div class="edit-sub">' + (s ? fairApptWhenText(s) : 'slot removed') + '</div>' +
+      (a.topicWinery ? '<div class="edit-sub">Wants to talk about <strong>' + notifEsc(a.topicWinery) +
+        '</strong> — a conversation topic on your stand, nothing more (A22.9)</div>' : '') +
+      (a.message ? '<div style="font-size:0.78rem;margin-top:0.2rem">' + notifEsc(a.message) + '</div>' : '') +
+      fairApptHistoryHtml(a) +
+      '<div style="margin-top:0.4rem">' + act + '</div>' +
+    '</div>';
+  }).join('');
+  return html;
+}
+
+/* The exhibitor-side handlers. `role` is for the repaint and the
+   wording; the identity travels through fairActingContext() and
+   through nothing that appears in these calls (A22.12). */
+function doToggleFairAppointmentsOpen(role, participationId, el) {
+  const opened = el.checked;
+  if (!setFairParticipationAppointmentsOpen(participationId, opened)) {
+    renderFairBlocks(role);          /* refused — the box snaps back to the record */
+    return;
+  }
+  renderFairBlocks(role);
+  showToast(opened
+    ? '✓ Taking appointment requests — your participation page now says so, and nothing more'
+    : 'Appointment door closed — new requests are refused, agreed appointments are untouched');
+}
+function doAddFairAppointmentSlot(role, participationId) {
+  const day  = document.getElementById('fts-day-' + participationId);
+  const time = document.getElementById('fts-time-' + participationId);
+  const dur  = document.getElementById('fts-dur-' + participationId);
+  if (!day || !time || !dur) return;
+  const row = addFairAppointmentSlot(participationId, day.value, time.value, Number(dur.value));
+  if (!row) return;
+  renderFairBlocks(role);
+  showToast('✓ Slot added — ' + fairApptWhenText(row));
+}
+function doRemoveFairAppointmentSlot(role, slotId) {
+  if (!removeFairAppointmentSlot(slotId)) return;
+  renderFairBlocks(role);
+  showToast('Slot removed');
+}
+function doConfirmFairAppointment(role, appointmentId) {
+  if (!confirmFairAppointment(appointmentId)) return;
+  renderFairBlocks(role);
+  showToast('✓ Appointment confirmed — both sides now read the same row');
+}
+function doDeclineFairAppointment(role, appointmentId) {
+  const why = window.prompt('Decline this appointment request? A reason is optional — leave empty to decline without one.');
+  if (why === null) return;
+  if (!declineFairAppointment(appointmentId, why)) return;
+  renderFairBlocks(role);
+  showToast('Request declined — the record remains readable');
+}
+function doCounterFairAppointment(role, appointmentId) {
+  const sel = document.getElementById('fmc-' + appointmentId);
+  if (!sel || !sel.value) return;
+  const note = window.prompt('Propose this slot instead. A short note is optional.');
+  if (note === null) return;
+  if (!counterFairAppointment(appointmentId, sel.value, note)) return;
+  renderFairBlocks(role);
+  showToast('✓ Counter-proposal sent — the answer is theirs now');
+}
+function doCancelFairAppointment(role, appointmentId) {
+  const why = window.prompt('Cancel this confirmed appointment? A reason is required — the other side has planned its fair day around it.');
+  if (why === null) return;
+  if (!cancelFairAppointment(appointmentId, why)) return;
+  renderFairBlocks(role);
+  showToast('Appointment cancelled — the reason and the actor stand in the history');
+}
+
+/* ══ THE REQUESTING SIDE (A22.3/A22.10) — ALL FOUR TRADE ROLES ═══
+   A fair is where houses without an existing relationship meet
+   (A20.1), restaurants and retailers travel to one to buy, and an
+   exhibitor walks to another exhibitor's stand. So this block is
+   built for winery, distributor, restaurant and retail alike, with
+   NO partnership and NO admission precondition (AP-4). The winery
+   and distributor blocks show both halves at once: they are
+   exhibitors AND possible guests.
+
+   Two headings, and they are the ones the flow is named by: the
+   exhibitor reads "Incoming appointment requests" in the block
+   above, the requesting side reads "My appointment requests" here.
+
+   Which participation's request form is unfolded is view state and
+   nothing more — it persists nowhere, and a reload starts folded. */
+let fairApptOpenFor = null;
+
+function fairApptRequestableFor(me) {
+  return fairParticipations.filter(function (p) {
+    return p.org !== me && p.appointmentsOpen &&
+           fairParticipationPublic(p) && !fairAppointmentsActionable(p);
+  });
+}
+/* The slots this house may still ask for: free of a confirmed
+   appointment (AP-6) AND not already carrying an active request of
+   its own (AP-14 — several appointments are fine, twice on the same
+   slot is not). */
+function fairApptOfferableSlots(p, me) {
+  return fairFreeSlotsOf(p.id).filter(function (s) {
+    return !fairAppointments.some(a => a.slotId === s.id && a.requester === me &&
+                                       FAIR_APPOINTMENT_ACTIVE.indexOf(a.status) !== -1);
+  });
+}
+
+function renderFairAppointmentsBlock(role) {
+  const cfg = SHOW_ROLES[role], pfx = cfg.prefix;
+  const box = document.getElementById(pfx + '-appointments');
+  if (!box) return;
+  const me = cfg.entity;
+  const offers = fairApptRequestableFor(me);
+  const mine   = fairAppointmentsOfRequester(me);
+
+  let html = '<div class="disc-head disc-head-member" style="margin-top:1.6rem">Booth Appointments' +
+    '<em>Meet an exhibitor at their stand. An appointment is a calendar act between two houses — it creates no ' +
+    'fair participation, no partnership and no order (AP-9). Every time is fair local time.</em></div>';
+
+  /* ── (a) Who is taking requests ───────────────────────────────── */
+  if (!offers.length) {
+    html += '<div class="ord-empty">No exhibitor is taking appointment requests right now — a stand appears here once ' +
+      'its participation is publicly released, its fair still lies ahead and its owner has opened the door.</div>';
+  } else {
+    html += offers.map(function (p) {
+      const ed = fairEditionById(p.editionId);
+      const se = ed && fairSeriesById(ed.seriesId);
+      const dates = ed ? blDate(ed.startDate) + (ed.endDate ? ' – ' + blDate(ed.endDate) : '') : '';
+      const open = fairApptOpenFor === p.id;
+      const free = fairApptOfferableSlots(p, me);
+      let act;
+      if (!open) {
+        act = '<button class="btn-sm btn-gold" onclick="doOpenFairAppointmentRequest(\'' + role + '\',\'' + p.id + '\')">Request an appointment →</button>';
+      } else if (!free.length) {
+        act = '<div class="edit-sub">No slot you can still ask for — either every published time is taken, or you ' +
+          'already have an open request on each of them. Several appointments with one exhibitor are fine, on ' +
+          'different slots (AP-14).</div>' +
+          '<button class="btn-sm btn-outline" onclick="doCloseFairAppointmentRequest(\'' + role + '\')">Close</button>';
+      } else {
+        const topics = p.orgType === 'distributor' ? (p.representing || []) : [];
+        act = '<div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center">' +
+            '<select class="field-input" style="max-width:280px;margin:0" id="' + pfx + '-fmr-slot-' + p.id + '">' +
+              free.map(s => '<option value="' + s.id + '">' + fairApptWhenText(s) + '</option>').join('') +
+            '</select>' +
+            (topics.length
+              ? '<select class="field-input" style="max-width:230px;margin:0" id="' + pfx + '-fmr-topic-' + p.id + '">' +
+                  '<option value="">No particular winery</option>' +
+                  topics.map(r => '<option value="' + notifEsc(r.winery) + '">Talk about ' + notifEsc(r.winery) + '</option>').join('') +
+                '</select>'
+              : '') +
+          '</div>' +
+          '<div style="display:flex;gap:0.5rem;margin-top:0.4rem;flex-wrap:wrap">' +
+            '<input class="field-input" style="max-width:420px;margin:0" id="' + pfx + '-fmr-msg-' + p.id + '" placeholder="What you would like to discuss (optional)">' +
+            '<button class="btn-sm btn-gold" onclick="doRequestFairAppointment(\'' + role + '\',\'' + p.id + '\')">Send request</button>' +
+            '<button class="btn-sm btn-outline" onclick="doCloseFairAppointmentRequest(\'' + role + '\')">Cancel</button>' +
+          '</div>' +
+          (topics.length
+            ? '<div class="edit-sub">Naming a represented winery is a conversation topic on this distributor\'s stand — ' +
+              'the appointment stays theirs to manage, and the named house gets no calendar of its own (AP-3).</div>'
+            : '');
+      }
+      return '<div class="profile-section" style="margin-top:0.8rem" id="' + pfx + '-fmr-box-' + p.id + '">' +
+        '<div class="ord-chip chip-promo">Taking appointment requests</div>' +
+        '<div class="otbl-cust" style="margin-top:0.4rem"><strong>' + fairApptCounterpartHtml(p.org) + '</strong> · ' +
+          notifEsc(se ? se.name : '?') + ' · ' + dates + '<em>' + notifEsc(ed ? ed.city : '') +
+          ((p.days || []).length ? ' — at the stand on ' + p.days.map(blDate).join(', ') : '') + '</em></div>' +
+        '<div style="margin-top:0.6rem">' + act + '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  /* ── (b) My appointment requests ──────────────────────────────── */
+  html += '<div class="form-block-title" style="margin-top:1.1rem">My appointment requests</div>';
+  if (!mine.length) {
+    html += '<div class="edit-sub">You have asked for no booth appointment yet — pick a stand above and a time it ' +
+      'has published, and the request lands on both sides at once.</div>';
+  } else {
+    html += mine.map(function (a) {
+      const s = fairAppointmentSlotById(a.slotId);
+      const p = fairAppointmentParticipation(a.id);
+      let act;
+      if (a.status === 'requested') {
+        act = '<button class="btn-sm btn-outline" onclick="doWithdrawFairAppointment(\'' + role + '\',\'' + a.id + '\')">Withdraw…</button>';
+      } else if (a.status === 'countered') {
+        act = '<button class="btn-sm btn-gold" onclick="doAcceptFairAppointmentCounter(\'' + role + '\',\'' + a.id + '\')">Accept the proposed time</button> ' +
+          '<button class="btn-sm btn-outline" onclick="doWithdrawFairAppointment(\'' + role + '\',\'' + a.id + '\')">Withdraw…</button>';
+      } else if (a.status === 'confirmed') {
+        act = '<button class="btn-sm btn-outline" onclick="doCancelFairAppointment(\'' + role + '\',\'' + a.id + '\')">Cancel…</button>' +
+          ' <span class="edit-sub">Cancelling states a reason — the exhibitor has planned its fair day around this.</span>';
+      } else {
+        act = '<span class="edit-sub">This appointment has come to rest; the record stays readable.</span>';
+      }
+      return '<div style="padding:0.5rem 0;border-top:1px solid rgba(247,243,238,0.06)">' +
+        '<div style="display:flex;gap:0.6rem;align-items:center;flex-wrap:wrap">' +
+          '<strong>' + fairApptCounterpartHtml(p ? p.org : '?') + '</strong>' +
+          '<span class="ord-chip chip-manual">' + FAIR_APPOINTMENT_LABEL[a.status] + '</span>' +
+        '</div>' +
+        '<div class="edit-sub">' + (s ? fairApptWhenText(s) : 'slot removed') + '</div>' +
+        (a.topicWinery ? '<div class="edit-sub">Topic: <strong>' + notifEsc(a.topicWinery) + '</strong></div>' : '') +
+        (a.message ? '<div style="font-size:0.78rem;margin-top:0.2rem">' + notifEsc(a.message) + '</div>' : '') +
+        fairApptHistoryHtml(a) +
+        '<div style="margin-top:0.4rem">' + act + '</div>' +
+      '</div>';
+    }).join('');
+  }
+  box.innerHTML = html;
+}
+
+/* The requesting-side handlers — same discipline as the exhibitor's:
+   `role` decides what to repaint, never who acts (A22.12). */
+function doOpenFairAppointmentRequest(role, participationId) {
+  fairApptOpenFor = participationId;
+  renderFairAppointmentsBlock(role);
+  const el = document.getElementById(SHOW_ROLES[role].prefix + '-fmr-box-' + participationId);
+  if (el && el.scrollIntoView) el.scrollIntoView({ behavior:'smooth', block:'center' });
+}
+function doCloseFairAppointmentRequest(role) {
+  fairApptOpenFor = null;
+  renderFairAppointmentsBlock(role);
+}
+function doRequestFairAppointment(role, participationId) {
+  /* The three inputs are namespaced by the ROLE PREFIX, because all
+     four cockpits build their shell once and keep it in the DOM: an
+     unprefixed id would exist four times over for the same stand
+     (measured by tests/wine-shows.js's duplicate-id scan). */
+  const pfx   = SHOW_ROLES[role].prefix;
+  const slot  = document.getElementById(pfx + '-fmr-slot-' + participationId);
+  const msg   = document.getElementById(pfx + '-fmr-msg-' + participationId);
+  const topic = document.getElementById(pfx + '-fmr-topic-' + participationId);
+  if (!slot || !slot.value) return;
+  const row = requestFairAppointment(slot.value, msg ? msg.value : '', topic ? topic.value : '');
+  if (!row) return;
+  fairApptOpenFor = null;
+  renderFairBlocks(role);
+  showToast('✓ Appointment requested — it is on both sides now, under the same row');
+}
+function doAcceptFairAppointmentCounter(role, appointmentId) {
+  if (!acceptFairAppointmentCounter(appointmentId)) return;
+  renderFairBlocks(role);
+  showToast('✓ Counter-proposal accepted — the appointment is confirmed');
+}
+function doWithdrawFairAppointment(role, appointmentId) {
+  const why = window.prompt('Withdraw this request? A reason is optional — leave empty to withdraw without one.');
+  if (why === null) return;
+  if (!withdrawFairAppointment(appointmentId, why)) return;
+  renderFairBlocks(role);
+  showToast('Request withdrawn — the record remains readable');
 }
 
 /* The venue is part of the protected detail until a show is published
