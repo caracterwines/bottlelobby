@@ -12824,6 +12824,477 @@ function fairArgGuard(fn, args) {
   return false;
 }
 
+/* ══════════════════════════════════════════════════════════════════
+   BOOTH APPOINTMENTS — DERIVATIONS AND ACTS (A22, pass O7)
+   ------------------------------------------------------------------
+   NOTHING HERE IS STORED THAT CAN BE ASKED (invariant 7, AP-9): no
+   appointment counter, no participant counter, no "slot is taken"
+   flag. Whether a slot is free, which slots are free, whether a
+   requester collides with itself elsewhere at the same edition — all
+   of it is read off the rows at the moment of the question.
+
+   ALL TEN MUTATING FUNCTIONS BELOW share one shape (A22.12, AP-15):
+   the surplus-argument check is their FIRST statement, the acting
+   identity comes from fairActingContext() and from nowhere else, and
+   every check runs BEFORE the first write — a refused act changes
+   nothing at all. What separates them is history: the SEVEN
+   lifecycle acts each write exactly ONE embedded history row, the
+   TWO slot mutations and the ONE gate mutation write NONE (AP-13).
+   ═══════════════════════════════════════════════════════════════ */
+
+/* The four authenticated trade roles, and only they, may request
+   (A22.3, AP-4). A partner workspace and an organizer are not in
+   SHOW_ROLES at all, so fairActingContext() already answers null for
+   them — this list is the positive statement beside that structural
+   one, so the rule is readable where it applies. */
+const FAIR_APPOINTMENT_REQUESTER_ROLES = ['winery','distributor','restaurant','retail'];
+/* ACTIVE means "still occupies the requester's place in the queue":
+   the three non-terminal states. `declined`, `withdrawn` and
+   `cancelled` are terminal and are never reopened (A22.7). */
+const FAIR_APPOINTMENT_ACTIVE = ['requested','countered','confirmed'];
+const FAIR_APPOINTMENT_LABEL = {
+  requested:'Requested', countered:'Counter-proposal sent', confirmed:'Confirmed',
+  declined:'Declined',   withdrawn:'Withdrawn',             cancelled:'Cancelled'
+};
+
+function fairAppointmentSlotById(id) { return fairAppointmentSlots.find(s => s.id === id) || null; }
+function fairAppointmentById(id)     { return fairAppointments.find(a => a.id === id) || null; }
+function fairAppointmentSlotsOf(participationId) {
+  return fairAppointmentSlots.filter(s => s.participationId === participationId);
+}
+/* THE slot of an appointment, and the participation THROUGH it — the
+   appointment row carries no participationId, because the slot
+   already answers that question (A22.1, invariant 1). */
+function fairAppointmentSlot(appointmentId) {
+  const a = fairAppointmentById(appointmentId);
+  return a ? fairAppointmentSlotById(a.slotId) : null;
+}
+function fairAppointmentParticipation(appointmentId) {
+  const s = fairAppointmentSlot(appointmentId);
+  return s ? fairParticipationById(s.participationId) : null;
+}
+function fairAppointmentsOfParticipation(participationId) {
+  const ids = fairAppointmentSlotsOf(participationId).map(s => s.id);
+  return fairAppointments.filter(a => ids.indexOf(a.slotId) !== -1);
+}
+function fairAppointmentsOfRequester(org) {
+  return fairAppointments.filter(a => a.requester === org);
+}
+/* AT MOST ONE CONFIRMED APPOINTMENT PER SLOT (AP-6) — derived, never
+   flagged. Open requests on the same slot are NOT taken: several
+   houses may ask for the same half hour, and exactly one of them can
+   get it. */
+function fairSlotTaken(slotId) {
+  return fairAppointments.find(a => a.slotId === slotId && a.status === 'confirmed') || null;
+}
+function fairFreeSlotsOf(participationId) {
+  return fairAppointmentSlotsOf(participationId).filter(s => !fairSlotTaken(s.id));
+}
+
+/* Time arithmetic over 'HH:MM' in fair local time (A22.6). Minutes
+   since midnight is the only representation used anywhere; no Date,
+   no zone, no locale — a stand appointment happens at the fairground
+   and the label carries that meaning. */
+const FAIR_TIME_RE = /^([01]\d|2[0-3]):([0-5]\d)$/;
+function fairApptMinutes(hhmm) {
+  const m = FAIR_TIME_RE.exec(String(hhmm || ''));
+  return m ? Number(m[1]) * 60 + Number(m[2]) : null;
+}
+function fairApptClock(mins) {
+  const h = Math.floor(mins / 60), m = mins % 60;
+  return (h < 10 ? '0' : '') + h + ':' + (m < 10 ? '0' : '') + m;
+}
+function fairSlotEndMinutes(slot) { return fairApptMinutes(slot.startTime) + slot.durationMin; }
+function fairSlotTimeText(slot) {
+  return slot.startTime + '–' + fairApptClock(fairSlotEndMinutes(slot)) + ' fair local time';
+}
+/* Two slots collide when they share a day and their half-open
+   intervals overlap. Touching ends do not collide: 10:00–10:30 and
+   10:30–11:00 are two appointments, not one conflict. */
+function fairSlotsCollide(a, b) {
+  if (a.day !== b.day) return false;
+  return fairApptMinutes(a.startTime) < fairSlotEndMinutes(b) &&
+         fairApptMinutes(b.startTime) < fairSlotEndMinutes(a);
+}
+
+/* THE EDITION-WIDE COLLISION CHECK (A22.8, AP-14). A house cannot be
+   in two halls at 10:15 — so before a confirmation and before the
+   acceptance of a counter-proposal, every CONFIRMED appointment the
+   same requester holds AT THE SAME FAIR EDITION is compared against
+   the slot in question, expressly including appointments at ANOTHER
+   exhibitor's stand. Derived on the spot; no calendar is stored. */
+function fairRequesterEditionConflict(editionId, org, slot, exceptId) {
+  return fairAppointments.find(function (a) {
+    if (a.id === exceptId || a.status !== 'confirmed' || a.requester !== org) return false;
+    const s = fairAppointmentSlotById(a.slotId);
+    if (!s || !fairSlotsCollide(s, slot)) return false;
+    const p = fairParticipationById(s.participationId);
+    return !!p && p.editionId === editionId;
+  }) || null;
+}
+
+/* THE END COMES BY DERIVATION, NOT BY CASCADE (A22.13, AP-12): the
+   moment the participation ends, the edition falls or the fair days
+   pass, the appointment path is dead — no new request, no act on an
+   existing row. Nothing is rewritten to record that; the rows rest
+   with their history readable and this one function answers for all
+   of them. Returns the REASON, or null when the path is open. */
+function fairAppointmentsActionable(p) {
+  if (!p) return 'That fair participation no longer exists';
+  if (p.status !== 'active')
+    return 'This fair participation is ' + FAIR_PARTICIPATION_LABEL[p.status].toLowerCase() +
+           ' — the appointment path closed with it, and no appointment was rewritten to say so (AP-12)';
+  const ed = fairEditionById(p.editionId);
+  if (!ed) return 'That fair edition no longer exists';
+  if (!fairEditionDiscoverable(ed))
+    return 'This fair edition is no longer published — the appointment path closed with it (AP-12)';
+  if (fairEditionPast(ed))
+    return 'This fair edition is over — an appointment cannot be agreed or moved afterwards (AP-12)';
+  return null;
+}
+
+/* ONE act, ONE append-only history row, embedded on the appointment
+   (A22.15, AP-13). Nothing is ever overwritten or removed. */
+function logFairAppointment(row, action, actor, reason, fromSlot, toSlot) {
+  row.history.push({ at: SHOW_TODAY, actor: actor, action: action,
+                     reason: reason || null,
+                     fromSlot: fromSlot || null, toSlot: toSlot || null });
+}
+function fairAppointmentHistoryText(h) {
+  if (h.action === 'requested') return 'Requested by ' + h.actor;
+  if (h.action === 'confirmed') return 'Confirmed by ' + h.actor;
+  if (h.action === 'countered')
+    return 'Counter-proposal by ' + h.actor + (h.reason ? ' — ' + h.reason : '');
+  if (h.action === 'accepted')  return 'Counter-proposal accepted by ' + h.actor;
+  if (h.action === 'declined')  return 'Declined by ' + h.actor + (h.reason ? ' — ' + h.reason : '');
+  if (h.action === 'withdrawn') return 'Withdrawn by ' + h.actor + (h.reason ? ' — ' + h.reason : '');
+  if (h.action === 'cancelled') return 'Cancelled by ' + h.actor + ' — ' + h.reason;
+  return h.action;
+}
+
+/* ── THE GATE MUTATION (A22.4, AP-5) ──────────────────────────────
+   It writes ONE field on the participation and nothing else. Opening
+   and closing leave every existing appointment and every history row
+   byte-identical — the FR-7 pattern, where closing an exhibitor call
+   "stops new applications and touches nothing". It is NOT a
+   lifecycle act and writes NO appointment history row (AP-13). */
+function setFairParticipationAppointmentsOpen(participationId, open) {
+  if (!fairArgGuard(setFairParticipationAppointmentsOpen, arguments)) return false;
+  const who = fairActingContext();
+  if (!who) { actionSay('No acting trade cockpit — a booth appointment is managed by the exhibiting organisation (AP-4)'); return false; }
+  const p = fairParticipationById(participationId);
+  if (!p) { actionSay('That fair participation no longer exists'); return false; }
+  if (p.org !== who.entity) { actionSay('Only the exhibiting organisation opens or closes its own appointment door (AP-2)'); return false; }
+  const why = fairAppointmentsActionable(p);
+  if (why) { actionSay(why); return false; }
+  p.appointmentsOpen = !!open;
+  return true;
+}
+
+/* ── THE TWO SLOT MUTATIONS (A22.5/A22.6, AP-6) ───────────────────
+   Inventory, like halls and stands: no history on the slot, and no
+   appointment history row from either of these two (AP-13). Every
+   condition is checked BEFORE the first change, so a refused slot
+   leaves the board exactly as it was. */
+function addFairAppointmentSlot(participationId, day, startTime, durationMin) {
+  if (!fairArgGuard(addFairAppointmentSlot, arguments)) return null;
+  const who = fairActingContext();
+  if (!who) { actionSay('No acting trade cockpit — slots are published by the exhibiting organisation (AP-2)'); return null; }
+  const p = fairParticipationById(participationId);
+  if (!p) { actionSay('That fair participation no longer exists'); return null; }
+  if (p.org !== who.entity) { actionSay('Only the exhibiting organisation publishes slots on its own participation (AP-2)'); return null; }
+  const why = fairAppointmentsActionable(p);
+  if (why) { actionSay(why); return null; }
+  /* The day must be an attendance day of THIS participation — and
+     therefore, indirectly, within the edition's fair days (FP-5). */
+  if ((p.days || []).indexOf(day) === -1) {
+    actionSay('A slot lies on a day this participation actually attends (A22.5) — ' +
+      ((p.days || []).length ? 'yours are ' + p.days.map(blDate).join(', ') : 'you have not set any attendance day yet'));
+    return null;
+  }
+  const start = fairApptMinutes(startTime);
+  if (start === null) { actionSay('A start time is written as HH:MM in 24-hour notation, fair local time (A22.6)'); return null; }
+  const dur = Number(durationMin);
+  if (!isFinite(dur) || dur % 15 !== 0 || dur < 15 || dur > 120) {
+    actionSay('A slot lasts 15 to 120 minutes, in 15-minute steps (A22.6) — ' + durationMin + ' is not one of them');
+    return null;
+  }
+  if (start + dur > 24 * 60) { actionSay('An appointment ends on the same calendar day (A22.6) — this one would run past midnight'); return null; }
+  const candidate = { day: day, startTime: startTime, durationMin: dur };
+  const clash = fairAppointmentSlotsOf(participationId).find(s => fairSlotsCollide(s, candidate));
+  if (clash) {
+    actionSay('This overlaps your slot on ' + blDate(clash.day) + ', ' + fairSlotTimeText(clash) +
+      ' — an exhibitor cannot be at its own stand twice at once (AP-6)');
+    return null;
+  }
+  const row = { id:'FT-' + (fairAppointmentSlotSeq++), participationId: participationId,
+                day: day, startTime: startTime, durationMin: dur };
+  fairAppointmentSlots.push(row);
+  return row;
+}
+function removeFairAppointmentSlot(slotId) {
+  if (!fairArgGuard(removeFairAppointmentSlot, arguments)) return false;
+  const who = fairActingContext();
+  if (!who) { actionSay('No acting trade cockpit — slots are managed by the exhibiting organisation (AP-2)'); return false; }
+  const s = fairAppointmentSlotById(slotId);
+  if (!s) { actionSay('That slot no longer exists'); return false; }
+  const p = fairParticipationById(s.participationId);
+  if (!p || p.org !== who.entity) { actionSay('Only the exhibiting organisation removes a slot from its own participation (AP-2)'); return false; }
+  const why = fairAppointmentsActionable(p);
+  if (why) { actionSay(why); return false; }
+  /* A slot somebody is waiting on is not swept away underneath them.
+     The exhibitor answers the appointment first — confirm, decline
+     or counter — and the slot becomes removable by that answer. */
+  const live = fairAppointments.find(a => a.slotId === slotId && FAIR_APPOINTMENT_ACTIVE.indexOf(a.status) !== -1);
+  if (live) {
+    actionSay('This slot carries ' + live.requester + "'s appointment (" +
+      FAIR_APPOINTMENT_LABEL[live.status].toLowerCase() + ') — answer it first, then the slot is free to remove');
+    return false;
+  }
+  fairAppointmentSlots.splice(fairAppointmentSlots.indexOf(s), 1);
+  return true;
+}
+
+/* ── THE SEVEN LIFECYCLE ACTS (A22.7, AP-7/AP-13) ─────────────────
+   Actor-exclusive, each writing EXACTLY ONE history row, none of
+   them reopening a terminal state, and none of them touching a row
+   it refuses. The two confirmation paths never mix: the exhibitor
+   confirms from `requested`, the requesting side accepts from
+   `countered`, and neither may stand in for the other. */
+
+function requestFairAppointment(slotId, message, topicWinery) {
+  if (!fairArgGuard(requestFairAppointment, arguments)) return null;
+  const who = fairActingContext();
+  if (!who || FAIR_APPOINTMENT_REQUESTER_ROLES.indexOf(who.role) === -1) {
+    actionSay('Only an authenticated trade member requests a booth appointment — a partner workspace and an organizer never do (AP-4)');
+    return null;
+  }
+  const s = fairAppointmentSlotById(slotId);
+  if (!s) { actionSay('That slot no longer exists'); return null; }
+  const p = fairParticipationById(s.participationId);
+  if (!p) { actionSay('That fair participation no longer exists'); return null; }
+  if (p.org === who.entity) { actionSay('A house does not book a meeting at its own stand (AP-4)'); return null; }
+  const why = fairAppointmentsActionable(p);
+  if (why) { actionSay(why); return null; }
+  /* The public release is the same triple gate the page asks — never
+     a second answer (FP-11). */
+  if (!fairParticipationPublic(p)) { actionSay('This stand is not publicly released — there is nothing to book here yet (A21.7)'); return null; }
+  if (!p.appointmentsOpen) {
+    actionSay(p.org + ' is not taking appointment requests at the moment — the door is closed (AP-5). ' +
+      'Nothing already agreed is affected by that.');
+    return null;
+  }
+  if (fairSlotTaken(s.id)) { actionSay('This slot already carries a confirmed appointment (AP-6) — pick another one'); return null; }
+  const mine = fairAppointments.find(a => a.slotId === s.id && a.requester === who.entity &&
+                                          FAIR_APPOINTMENT_ACTIVE.indexOf(a.status) !== -1);
+  if (mine) {
+    actionSay('You already have an open request on this slot (' + FAIR_APPOINTMENT_LABEL[mine.status].toLowerCase() +
+      '). Several appointments with the same exhibitor are fine — on different slots (AP-14).');
+    return null;
+  }
+  /* The conversation topic is CONTENT and nothing else (A22.9,
+     AP-3): valid only on a distributor participation, and only for a
+     winery that really stands in its `representing`. Being named
+     gives that winery no appointment, no calendar, no read path and
+     no notification. */
+  const topic = (topicWinery || '').trim();
+  if (topic) {
+    if (p.orgType !== 'distributor') {
+      actionSay('A conversation topic names a represented winery, which only a distributor participation has (A22.9)');
+      return null;
+    }
+    if (!(p.representing || []).some(r => r.winery === topic)) {
+      actionSay(topic + ' is not among the wineries ' + p.org + ' represents at this stand (A22.9)');
+      return null;
+    }
+  }
+  const row = { id:'FM-' + (fairAppointmentSeq++), slotId: s.id,
+                requesterType: who.role, requester: who.entity,
+                message: (message || '').trim(), topicWinery: topic || null,
+                status:'requested', history:[] };
+  logFairAppointment(row, 'requested', who.entity, null, null, null);
+  fairAppointments.push(row);
+  return row;
+}
+
+function confirmFairAppointment(appointmentId) {
+  if (!fairArgGuard(confirmFairAppointment, arguments)) return false;
+  const who = fairActingContext();
+  if (!who) { actionSay('No acting trade cockpit — only the exhibitor confirms an appointment (AP-7)'); return false; }
+  const a = fairAppointmentById(appointmentId);
+  if (!a) { actionSay('That appointment no longer exists'); return false; }
+  const s = fairAppointmentSlotById(a.slotId);
+  const p = s && fairParticipationById(s.participationId);
+  if (!p || p.org !== who.entity) { actionSay('Only the exhibiting organisation confirms an appointment at its own stand (AP-7)'); return false; }
+  const why = fairAppointmentsActionable(p);
+  if (why) { actionSay(why); return false; }
+  if (a.status !== 'requested') {
+    actionSay(a.status === 'countered'
+      ? 'You proposed this time yourself — ' + a.requester + ' answers it. An exhibitor never confirms its own counter-proposal (AP-7).'
+      : 'This appointment is ' + FAIR_APPOINTMENT_LABEL[a.status].toLowerCase() + ' — only a requested appointment is confirmed (AP-7)');
+    return false;
+  }
+  const taken = fairSlotTaken(a.slotId);
+  if (taken) {
+    actionSay('This slot already carries ' + taken.requester + "'s confirmed appointment (AP-6). " +
+      'The other requests on it stay as they are — decline them expressly if you cannot take them.');
+    return false;
+  }
+  const clash = fairRequesterEditionConflict(p.editionId, a.requester, s, a.id);
+  if (clash) {
+    const cs = fairAppointmentSlotById(clash.slotId);
+    const cp = fairAppointmentParticipation(clash.id);
+    actionSay(a.requester + ' already holds a confirmed appointment at this fair at ' +
+      (cs ? blDate(cs.day) + ', ' + fairSlotTimeText(cs) : 'that time') +
+      (cp ? ' with ' + cp.org : '') + ' — nobody can be in two halls at once (AP-14)');
+    return false;
+  }
+  a.status = 'confirmed';
+  logFairAppointment(a, 'confirmed', who.entity, null, null, null);
+  return true;
+}
+
+function counterFairAppointment(appointmentId, newSlotId, note) {
+  if (!fairArgGuard(counterFairAppointment, arguments)) return false;
+  const who = fairActingContext();
+  if (!who) { actionSay('No acting trade cockpit — only the exhibitor counter-proposes (AP-7)'); return false; }
+  const a = fairAppointmentById(appointmentId);
+  if (!a) { actionSay('That appointment no longer exists'); return false; }
+  const s = fairAppointmentSlotById(a.slotId);
+  const p = s && fairParticipationById(s.participationId);
+  if (!p || p.org !== who.entity) { actionSay('Only the exhibiting organisation counter-proposes at its own stand (AP-7)'); return false; }
+  const why = fairAppointmentsActionable(p);
+  if (why) { actionSay(why); return false; }
+  /* ONCE, and it is structural rather than a counter: there is no
+     path back from `countered` to `requested`, so a second
+     counter-proposal has no state to start from (A22.7). */
+  if (a.status !== 'requested') {
+    actionSay(a.status === 'countered'
+      ? 'You have already proposed another time for this request — one counter-proposal per appointment (AP-7)'
+      : 'This appointment is ' + FAIR_APPOINTMENT_LABEL[a.status].toLowerCase() + ' — only a requested appointment is counter-proposed (AP-7)');
+    return false;
+  }
+  const target = fairAppointmentSlotById(newSlotId);
+  if (!target) { actionSay('That slot no longer exists'); return false; }
+  if (target.participationId !== p.id) {
+    actionSay('A counter-proposal moves the appointment onto another slot of THIS participation — never onto somebody else\'s stand (AP-8)');
+    return false;
+  }
+  if (target.id === a.slotId) { actionSay('A counter-proposal names a DIFFERENT slot than the one requested (AP-8)'); return false; }
+  if (fairSlotTaken(target.id)) { actionSay('That slot already carries a confirmed appointment — a counter-proposal moves onto a FREE slot (AP-8)'); return false; }
+  const from = a.slotId;
+  a.slotId = target.id;
+  a.status = 'countered';
+  logFairAppointment(a, 'countered', who.entity, (note || '').trim() || null, from, target.id);
+  return true;
+}
+
+function acceptFairAppointmentCounter(appointmentId) {
+  if (!fairArgGuard(acceptFairAppointmentCounter, arguments)) return false;
+  const who = fairActingContext();
+  if (!who) { actionSay('No acting trade cockpit — the requesting organisation answers a counter-proposal (AP-7)'); return false; }
+  const a = fairAppointmentById(appointmentId);
+  if (!a) { actionSay('That appointment no longer exists'); return false; }
+  if (a.requester !== who.entity) { actionSay('Only the requesting organisation accepts a counter-proposal — the exhibitor never accepts its own (AP-7)'); return false; }
+  const s = fairAppointmentSlotById(a.slotId);
+  const p = s && fairParticipationById(s.participationId);
+  const why = fairAppointmentsActionable(p);
+  if (why) { actionSay(why); return false; }
+  if (a.status !== 'countered') {
+    actionSay('This appointment is ' + FAIR_APPOINTMENT_LABEL[a.status].toLowerCase() +
+      ' — only a counter-proposal is accepted (AP-7)');
+    return false;
+  }
+  const taken = fairSlotTaken(a.slotId);
+  if (taken) { actionSay('The proposed slot has been confirmed for ' + taken.requester + ' in the meantime (AP-6) — ask the exhibitor for another time'); return false; }
+  const clash = fairRequesterEditionConflict(p.editionId, a.requester, s, a.id);
+  if (clash) {
+    const cs = fairAppointmentSlotById(clash.slotId);
+    const cp = fairAppointmentParticipation(clash.id);
+    actionSay('You already hold a confirmed appointment at this fair at ' +
+      (cs ? blDate(cs.day) + ', ' + fairSlotTimeText(cs) : 'that time') +
+      (cp ? ' with ' + cp.org : '') + ' — nobody can be in two halls at once (AP-14)');
+    return false;
+  }
+  a.status = 'confirmed';
+  logFairAppointment(a, 'accepted', who.entity, null, null, null);
+  return true;
+}
+
+function declineFairAppointment(appointmentId, reason) {
+  if (!fairArgGuard(declineFairAppointment, arguments)) return false;
+  const who = fairActingContext();
+  if (!who) { actionSay('No acting trade cockpit — only the exhibitor declines a request (AP-7)'); return false; }
+  const a = fairAppointmentById(appointmentId);
+  if (!a) { actionSay('That appointment no longer exists'); return false; }
+  const s = fairAppointmentSlotById(a.slotId);
+  const p = s && fairParticipationById(s.participationId);
+  if (!p || p.org !== who.entity) { actionSay('Only the exhibiting organisation declines a request at its own stand (AP-7)'); return false; }
+  const why = fairAppointmentsActionable(p);
+  if (why) { actionSay(why); return false; }
+  if (a.status !== 'requested') {
+    actionSay('This appointment is ' + FAIR_APPOINTMENT_LABEL[a.status].toLowerCase() +
+      ' — only a requested appointment is declined (AP-7)');
+    return false;
+  }
+  /* Reason OPTIONAL (A22.7, the A16.4/D28 precedent): nobody owes a
+     justification for a no thanks. */
+  a.status = 'declined';
+  logFairAppointment(a, 'declined', who.entity, (reason || '').trim() || null, null, null);
+  return true;
+}
+
+function withdrawFairAppointment(appointmentId, reason) {
+  if (!fairArgGuard(withdrawFairAppointment, arguments)) return false;
+  const who = fairActingContext();
+  if (!who) { actionSay('No acting trade cockpit — the requesting organisation withdraws its own request (AP-7)'); return false; }
+  const a = fairAppointmentById(appointmentId);
+  if (!a) { actionSay('That appointment no longer exists'); return false; }
+  if (a.requester !== who.entity) { actionSay('Only the requesting organisation withdraws its own request (AP-7)'); return false; }
+  const p = fairAppointmentParticipation(a.id);
+  const why = fairAppointmentsActionable(p);
+  if (why) { actionSay(why); return false; }
+  /* From `requested` AND from `countered` — without this path an
+     unanswered request could never be taken back, and it touches
+     none of the three exhibitor acts (A22.7). */
+  if (a.status !== 'requested' && a.status !== 'countered') {
+    actionSay('This appointment is ' + FAIR_APPOINTMENT_LABEL[a.status].toLowerCase() +
+      ' — a confirmed appointment is cancelled with a reason, not withdrawn (AP-7)');
+    return false;
+  }
+  a.status = 'withdrawn';
+  logFairAppointment(a, 'withdrawn', who.entity, (reason || '').trim() || null, null, null);
+  return true;
+}
+
+function cancelFairAppointment(appointmentId, reason) {
+  if (!fairArgGuard(cancelFairAppointment, arguments)) return false;
+  const who = fairActingContext();
+  if (!who) { actionSay('No acting trade cockpit — a confirmed appointment is cancelled by one of its two sides (AP-7)'); return false; }
+  const a = fairAppointmentById(appointmentId);
+  if (!a) { actionSay('That appointment no longer exists'); return false; }
+  const p = fairAppointmentParticipation(a.id);
+  if (!p) { actionSay('That fair participation no longer exists'); return false; }
+  if (p.org !== who.entity && a.requester !== who.entity) {
+    actionSay('Only the two sides of an appointment cancel it (AP-7)');
+    return false;
+  }
+  const why = fairAppointmentsActionable(p);
+  if (why) { actionSay(why); return false; }
+  if (a.status !== 'confirmed') {
+    actionSay('This appointment is ' + FAIR_APPOINTMENT_LABEL[a.status].toLowerCase() +
+      ' — only a confirmed appointment is cancelled (AP-7)');
+    return false;
+  }
+  /* Reason MANDATORY (A22.7, the A19.3/`revoked` precedent): the
+     other side has put this half hour in its fair day. */
+  const txt = (reason || '').trim();
+  if (!txt) { actionSay('Cancelling a confirmed appointment states why — the other side has planned its fair day around it (AP-7)'); return false; }
+  a.status = 'cancelled';
+  logFairAppointment(a, 'cancelled', who.entity, txt, null, null);
+  return true;
+}
+
 /* ══ WHO SEES WHAT ═══════════════════════════════════════════════ */
 /* A show is visible to its host always, and to a producer once it has
    been invited. Everything else follows from the stage (A16.6). */
