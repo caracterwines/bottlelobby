@@ -4,7 +4,7 @@
 > Dateiliste, Dateianzahl und Aenderungshistorie stehen in der Git-Historie — nicht hier.
 > Dauerhafte Regeln stehen in `BOTTLE-LOBBY-SPEC.md`, kurze Invarianten in `CLAUDE.md` — nicht hier.
 
-**Letzte Aktualisierung:** 13. August 2026
+**Letzte Aktualisierung:** 14. August 2026
 
 ---
 
@@ -21,7 +21,7 @@ Kein Build-Command, Publish-Directory = Repo-Root.
 
 ---
 
-## ▶ EINSTIEG — Stand 13. August 2026
+## ▶ EINSTIEG — Stand 14. August 2026
 
 > **Was Git nicht weiss, steht hier. Alles andere nicht.** Diese Datei fuehrt
 > keine Chronik: was gebaut wurde, wann und von wem, beantwortet `git log`
@@ -31,12 +31,12 @@ Kein Build-Command, Publish-Directory = Repo-Root.
 > Dauerhafte Regeln gehoeren in `BOTTLE-LOBBY-SPEC.md`, kurze Invarianten in
 > `CLAUDE.md`. Findet sich hier eine Regel, ist sie am falschen Ort.
 
-**Baum sauber, `main` gepusht, 31 Harnesses gruen** (nachgezaehlt 13.08. nach O5 — O5 brachte KEIN neues File, sondern erweiterte `wine-guide-page.js`, `persistence.js` und `fairs.js`; `fair-participation.js` kam mit Durchgang O4 dazu, davor `fair-recruiting.js` mit O3, `fairs.js` mit 12, `platform-partners.js` mit 11, `campaigns.js` mit 10, `wine-guide-page.js` mit 9, `member-events.js` mit 7). **`BLStore.VERSION` steht auf 12** — O5 hat gemessen einen Bump auf 12 gebraucht (neue Fixture-Zeilen in den bestehenden Sammlungen `fairSeries`/`fairEditions`/`reviews`, D2D-Klasse; `SCHEMA_HASH` blieb `6d204f48`, alle 40 Fingerprints identisch); O4 hat gemessen einen Bump auf 10 gebraucht (Fixture-Zeilen in den BESTEHENDEN Sammlungen `fairHalls`/`fairStands`/`fairAdmissions`, D2D-Klasse), die Codex-Korrektur einen weiteren auf 11 (FORMAT-Klasse: das Schema-Feld `sh` im Snapshot-Blob; Begruendung jeweils am `VERSION` und in den Bloecken unten); Durchgang 12 brauchte einen (RVW-3005), **O3 gemessen keinen**. **Mit `sh` kam eine neue C8-Pflicht: aendern Fixtures ihre FORM, wird `SCHEMA_HASH` in `assets/bottle-lobby-store.js` im selben Commit nachgezogen — `tests/persistence.js` wird sonst rot und nennt den neuen Wert.**
+**Baum sauber, `main` gepusht, 32 Harnesses gruen** (nachgezaehlt 14.08. nach O7 — O7 brachte `fair-appointments.js` als neues File; davor 31, nachgezaehlt 13.08. nach O5 — O5 brachte KEIN neues File, sondern erweiterte `wine-guide-page.js`, `persistence.js` und `fairs.js`; `fair-participation.js` kam mit Durchgang O4 dazu, davor `fair-recruiting.js` mit O3, `fairs.js` mit 12, `platform-partners.js` mit 11, `campaigns.js` mit 10, `wine-guide-page.js` mit 9, `member-events.js` mit 7). **`BLStore.VERSION` steht auf 12** — O5 hat gemessen einen Bump auf 12 gebraucht (neue Fixture-Zeilen in den bestehenden Sammlungen `fairSeries`/`fairEditions`/`reviews`, D2D-Klasse; `SCHEMA_HASH` blieb `6d204f48`, alle 40 Fingerprints identisch; O7 hat gemessen KEINEN Bump gebraucht und `SCHEMA_HASH` zweimal nachgezogen, `6d204f48` → `9b503d88` → `b29a32a`, jeweils im selben Commit); O4 hat gemessen einen Bump auf 10 gebraucht (Fixture-Zeilen in den BESTEHENDEN Sammlungen `fairHalls`/`fairStands`/`fairAdmissions`, D2D-Klasse), die Codex-Korrektur einen weiteren auf 11 (FORMAT-Klasse: das Schema-Feld `sh` im Snapshot-Blob; Begruendung jeweils am `VERSION` und in den Bloecken unten); Durchgang 12 brauchte einen (RVW-3005), **O3 gemessen keinen**. **Mit `sh` kam eine neue C8-Pflicht: aendern Fixtures ihre FORM, wird `SCHEMA_HASH` in `assets/bottle-lobby-store.js` im selben Commit nachgezogen — `tests/persistence.js` wird sonst rot und nennt den neuen Wert.**
 
 ### Womit eine Sitzung anfaengt
 
 ```
-node tests/run-all.js        →  31 Harnesses, muss gruen sein, bevor irgendetwas beginnt
+node tests/run-all.js        →  32 Harnesses, muss gruen sein, bevor irgendetwas beginnt
 node tests/serve.js          →  http://localhost:8765   (no-store — NIE python http.server)
 node tests/stamp-assets.js   →  nach jeder Aenderung an assets/, sonst wird check-static rot
 ```
@@ -518,8 +518,10 @@ Funktionen aufrufen, `transferSize` vorher lesen (C7).
 > Auftragsbestand:** ~~Fair Series & Editions~~ (**O2 — gebaut, Durchgang 12,
 > Block unten**) · ~~Exhibitor Recruiting mit
 > Bewerbungs-/Zulassungsworkflow · Staende & Hallen~~ (**O3 — gebaut,
-> Block unten**) · Fair Participation
-> Pages · Termine & Agenda · **O9: oeffentliches Organizer-Profil & Follow,
+> Block unten**) · ~~Fair Participation Pages~~ (**O4/O5 — gebaut, Bloecke
+> unten**) · ~~B2B-Termine und Slots~~ (**O7 — gebaut, Block unten**;
+> AUSGEHENDE Termineinladungen und die Terminnachbereitung bleiben je ein
+> eigener spaeterer Durchgang) · Agenda (**O12**) · **O9: oeffentliches Organizer-Profil & Follow,
 > einschliesslich vorgelagertem Follow-Messdurchgang** · **O10:
 > Opportunities** · **O11: Fair-Benachrichtigungen & Organizer-Kommunikation
 > als D10-Erweiterung** · Hero-Medien mit zweigeteilter Abhaengigkeit ·
@@ -553,7 +555,7 @@ Funktionen aufrufen, `transferSize` vorher lesen (C7).
 >   (created/rescheduled/published/cancelled), der gerenderte Satz leitet ab
 >   · `endDate` null = eintaegig. **Verschoben:** Hallen/Staende (O3) ·
 >   Aussteller-/Teilnehmerzaehler (abgeleitet aus O4-Teilnahmezeilen, wenn es
->   sie gibt) · Termine/Slots (O7) · Agenda (O12) · Hero-Medien (eigener
+>   sie gibt) · Termine/Slots (O7 — gebaut) · Agenda (O12) · Hero-Medien (eigener
 >   Durchgang). **Ausgeschlossen:** jedes Preis-/Checkout-Feld — der EXTERNE
 >   Ticket-/Akkreditierungslink ist das Maximum: EIN nullable URL-Feld
 >   (`externalTicketingUrl`), dessen BEDEUTUNG aus dem Messetyp abgeleitet
@@ -649,7 +651,7 @@ Funktionen aufrufen, `transferSize` vorher lesen (C7).
 > Fair Participation +
 > Participation Pages samt der verschobenen Zaehler-Felder (**O4**) ·
 > oeffentliches Verzeichnis/Eventkarten — rendert auch die Ticket-Links und
-> zieht Sammlungen + Ableitung ins Asset um (**O5**) · B2B-Termine (**O7**)
+> zieht Sammlungen + Ableitung ins Asset um (**O5**) · B2B-Termine und Slots (**O7 — gebaut**)
 > · Agenda (**O12**) · Hero-Medien (eigener Durchgang) · ~~Hallen/Staende
 > (**O3**)~~ (gebaut, Block unten) · Consumer-Ticketing-Checkout
 > (ausgeschlossen, der externe Link
@@ -758,7 +760,7 @@ Funktionen aufrufen, `transferSize` vorher lesen (C7).
 > Block unten — samt vorgezogenem Datenumzug) · oeffentliches
 > Verzeichnis/Karten/Ticket-Link-Rendering (**O5** — der Umzug der
 > Sammlungen ins Asset ist mit O4 bereits geschehen) · B2B-Termine
-> (**O7**) · Organizer-Profil & Follow
+> (**O7 — gebaut**) · Organizer-Profil & Follow
 > (**O9**) · Opportunities (**O10**) · Fair-Benachrichtigungen &
 > Organizer-Kommunikation (**O11**) · Agenda (**O12**) · Hero-Medien
 > (eigener Durchgang). ~~**Inventar-Edit und -Loeschung bleiben bewusst
@@ -911,7 +913,7 @@ Funktionen aufrufen, `transferSize` vorher lesen (C7).
 > allgemeine Auffindbarkeit und Ticket-Link-Rendering (**O5** — baut
 > jetzt auf der BEREITS VERSCHOBENEN Quelle und dem bestehenden
 > Hydrationsweg auf; die kanonische Zielseite existiert) · B2B-Termine,
-> Slots, Follow-ups — der O7-Terminweg adressiert ausschliesslich den
+> Slots — der O7-Terminweg adressiert ausschliesslich den
 > AUSSTELLENDEN Distributor, nie eine vertretene Winery (**O7**) ·
 > Organizer-Profil & Follow (**O9**) · Opportunities (**O10**) ·
 > Fair-Benachrichtigungen & Organizer-Kommunikation — die Page ist das
@@ -1132,7 +1134,7 @@ Funktionen aufrufen, `transferSize` vorher lesen (C7).
 >   Teständerung zurueckgeblieben. Kein Produktfehler in beiden Proben.
 >
 > **Was Durchgang O5 bewusst NICHT gebaut hat, mit Ziel-Durchgaengen:**
-> B2B-Termine, Slots, Follow-ups (**O7**) · oeffentliches
+> B2B-Termine und Slots (**O7 — gebaut, Block unten**) · Terminnachbereitung (eigener spaeterer Durchgang) · oeffentliches
 > Organizer-Profil & Follow (**O9**) · Opportunities (**O10**) ·
 > Fair-Benachrichtigungen & Organizer-Kommunikation (**O11**) · Agenda
 > und Unterveranstaltungen (**O12**) · **Hero-Medien und Uploads
@@ -1144,6 +1146,182 @@ Funktionen aufrufen, `transferSize` vorher lesen (C7).
 > Besucher-, Teilnehmer-, Ticket- oder Reichweitenzaehler ·
 > oeffentliche Organizer-Profilseiten · eine Umstrukturierung der
 > Dashboard-Events-Navigation.
+
+---
+
+### Durchgang O7 — B2B-Termine und Slots an der Fair Participation (14.08.)
+
+> **Der Name ist entschieden und aufgeloest:** O7 heisst **„B2B-Termine und
+> Slots"**. Das Wort **„Follow-ups"** kommt in keiner O7-Bezeichnung mehr vor.
+> Post-Meeting-Notizen, Gespraechsprotokolle, automatische Zusammenfassungen
+> und gebuendelte Folgenachrichten sind ein **eigener, ausdruecklich
+> zurueckgestellter spaeterer Durchgang „Terminnachbereitung"** — ohne
+> Nummernanspruch, ohne Vorbau, ohne Feld.
+>
+> **Die Regeln stehen in der Spec, Kapitel A22 (AP-1..AP-17), nicht hier.**
+> Hier steht nur, was Git und Spec nicht wissen.
+>
+> **Der Zuschnitt in einem Satz:** ein Termin haengt ueber seinen SLOT an genau
+> einer aktiven Fair Participation; der Aussteller besitzt Slots und Antworten;
+> alle vier Handelsrollen duerfen anfragen, ohne Partnerschaft und ohne
+> Zulassung; der Ablauf ist zweiseitig und akteursexklusiv; und **die handelnde
+> Identitaet wird IMMER abgeleitet, nie uebergeben**.
+>
+> **Was die Messung VOR dem Bau ergeben hat, und was daraus wurde:**
+>
+> - **Deep-Link- und Rueckkehrmechanik.** Gemessen: der Prototyp hat **keinen
+>   Login und keine Session**. `rolesByHash` + `switchDashboard()` sind der
+>   einzige Adressierungsweg (`#winery` … `#partner`), `history.replaceState`
+>   der bestehende Aufraeumweg, `?id=` / `?grape=` / `?preview=embed` die
+>   vorhandenen Query-Praezedenzfaelle, und der **„Member Login"-Knopf jeder
+>   oeffentlichen Seite zeigt heute ohne Hash auf das Dashboard** — genau das
+>   laesst den Rollenwaehler erscheinen. **Der Rollenwaehler ist damit der Ort
+>   der Rueckfuehrung**, und der Einstieg wurde ausschliesslich aus diesen
+>   Teilen gebaut: `?appt=<participationId>`, bei gesetztem Hash direkt in den
+>   Buchungsbereich, ohne Hash ueber den bestehenden Waehler, danach **genau
+>   einmal konsumiert** und per `replaceState` aus der Adresse entfernt. Kein
+>   neuer Anmeldeweg, kein zweiter Router.
+> - **Die eine Akteursquelle.** Bestaetigt: `activeShowRole` wird **an genau
+>   einer Stelle** geschrieben, am Kopf von `showWineShows(role, tab)`, und
+>   nirgends sonst; die Wine-Show-`leadHost`-Pruefung vertraut ihr bereits an
+>   sicherheitsrelevanter Stelle. Darauf sitzt **eine** neue Ableitung,
+>   `fairActingContext()`, direkt neben der Deklaration. Bestaetigt auch:
+>   `renderFairAppointmentsBlock(role)` und `renderFairRecruitingBlock(role)`
+>   liegen in **derselben** Renderkette, `activeShowRole` ist beim Rendern
+>   immer schon gesetzt.
+> - **Zweiter Container noetig — ja.** `renderFairRecruitingBlock()` **leert**
+>   `p + '-fairs'` fuer Restaurant und Retail (FR-2). Ein geteilter Container
+>   haette die Anfrageflaeche ausgerechnet den zwei Rollen genommen, die eine
+>   Messe zum Einkaufen besuchen. Deshalb `p + '-appointments'` in
+>   `showShellHtml(role)`, fuer alle vier Rollen.
+> - **Wiederverwendet, nichts dupliziert:** `fairParticipationPublic`,
+>   `fairEditionPast`, `fairEditionDiscoverable`, `fairEditionDays` (mittelbar,
+>   ueber `participation.days`), `fairParticipationById` / `-For` /
+>   `-sOfEdition`, `stakeholder` (ueber `fairStakeholderLink`), `actionSay`,
+>   `showToast`, `notifEsc`, `blDate`, `SHOW_TODAY`, `logFair…`-Muster.
+>   **Nicht** verwendet: `fairParticipationActable()` — es ist die
+>   *Inhaltspflege*-Pruefung der Exponatdaten (Eigentuemer + aktiv) und kennt
+>   weder Edition noch Zeit; der Terminweg braucht zusaetzlich „Edition noch
+>   publiziert" und „Messe noch nicht vorbei", also gibt es dafuer
+>   `fairAppointmentsActionable()` als eigene, ebenfalls EINE Ableitung.
+>   **Nicht** verwendet: `todayISO()` — Fixtures und History folgen `SHOW_TODAY`,
+>   der Demo-Uhr, nie der echten Systemzeit (C7).
+>
+> **Was das Verhalten praegt und nirgends sonst steht:**
+>
+> - **Eine neue Participation startet mit GESCHLOSSENER Tuer**
+>   (`appointmentsOpen:false`). Sie hat noch keinen Slot, und eine offene Tuer
+>   ohne Zeiten waere ein Versprechen ohne Deckung. Die zwei Fixtures liefern
+>   offen aus, weil sie mit Slots ausliefern.
+> - **Der `countered`-Fixture-Termin FM-9604 darf vom Distributor nicht
+>   bestaetigt werden.** Er ist genau dafuer da: aus `countered` hat der
+>   Aussteller **gar keine Handlung**, und die Zeile zeigt statt eines Knopfes,
+>   wer am Zug ist.
+> - **Eine zweite Bestaetigung auf einem belegten Slot wird MIT MELDUNG
+>   abgewiesen** und laesst die uebrigen offenen Anfragen genau stehen. Der
+>   Aussteller lehnt sie ausdruecklich ab — es gibt keine stille Bereinigung.
+> - **Mehrere Termine beim selben Aussteller sind erlaubt.** Die Begrenzung auf
+>   einen aktiven Termin je (Participation, Organisation) ist **entfallen** und
+>   ist **kein Weitungskandidat** — bitte nicht wieder vorschlagen.
+> - **Die Anfrageflaeche bietet einen Slot gar nicht erst an, auf dem das
+>   eigene Haus schon eine aktive Anfrage hat.** Die Abweisung im Datenkern
+>   existiert trotzdem und ist im Harness gemessen; im Browser ist deshalb der
+>   sichtbare Fall der **benannte Grund** („kein Slot, den Sie noch anfragen
+>   koennen"), nicht die Fehlermeldung.
+>
+> **Browser-Abnahme am finalen Stand, gebuendelt, mit `transferSize` vorher
+> gelesen** (Dokument 1.171.634 B frisch, `data.js` 103.296, `store.js` 41.951,
+> `public-shows.js` 69.977, `public-shows.css` 17.513 — alle nahe der
+> dekodierten Groesse, also kein Cache, kein 304). **Einschraenkung, offen
+> gesagt:** Screenshots liefen durchgaengig in Injection-Timeouts, und der Tab
+> war die ganze Sitzung ueber `document.visibilityState === 'hidden'` — in
+> einem Hintergrund-Tab laufen CSS-Transitions nicht an, weshalb der
+> Rollenwaehler zwar die Klasse `show` und 305 px Hoehe hatte, `opacity` aber
+> auf 0 stehen blieb. **Das ist kein Produktfehler**, sondern die bekannte
+> C7-Fremdkoerperklasse. Abgenommen wurde deshalb ueber gerenderten DOM,
+> berechnete Darstellung (`getComputedStyle`, Geometrie) und **echte
+> `element.click()` auf sichtbare Bedienelemente** — kein Bildabgleich.
+> Durchgespielt und bestanden: Entdeckungsweg Guide → Edition → Ausstellerliste
+> → Participation Page → Einstieg → Rollenwaehler → Buchungsbereich, Adresse
+> danach sauber und ein **echter** Reload (`navType:"reload"`) loest nichts
+> erneut aus · Restaurant fragt an, ein zweites Mal beim selben Aussteller,
+> nimmt zurueck · Distributor legt einen Slot an, bestaetigt, wird bei der
+> zweiten Bestaetigung auf demselben Slot mit sichtbarer Meldung abgewiesen,
+> hat am `countered`-Termin **null Knoepfe und null Selects**, lehnt ab,
+> schliesst die Tuer (bestehende Termine byteidentisch) · Gegenangebot und
+> Annahme vollstaendig, beide Seiten auf FT-9507 mit derselben History ·
+> Stornierung ohne Grund abgewiesen, mit Grund durchgefuehrt, Gegenseite sieht
+> Zustand, Akteur und Grund · Winery legt eine Participation neu an (bewerben →
+> zulassen → anlegen → Tage → Tuer → Slot) und kann einen belegten Slot nicht
+> entfernen · Winery fragt beim Distributor an, die Themenauswahl zeigt
+> **ausschliesslich** die dort vertretenen Wineries · Retail hat den Block, der
+> Leerfall nennt den Grund · Organizer: My Fairs, Editionsdetail FE-7103 und
+> Kandidatensuche — **nirgends** ein Termin, ein Slot, eine Gegenseite, ein
+> Thema oder eine Uhrzeit · oeffentlich: bei offener Tuer genau Hinweis +
+> Einstieg und **keine** Uhrzeit, Dauer, Slot-Id, Gegenseite, Nachricht,
+> Kontaktangabe oder Formular; bei geschlossener Tuer **kein Wort** ueber
+> Termine · Guide `#events` unveraendert (12 Eintraege vor der Sitzung, 13
+> waehrend ihr — die neu angelegte Cantina-Rossi-Participation —, 12 nach dem
+> Reset; vier Kartensorten, keine Terminmarkierung).
+>
+> **Akteursableitung — die eine benannte Konsolen-Gegenprobe** (Punkt 4 der
+> Abnahme, und der einzige nicht geklickte Schritt, weil eine absichtlich
+> unzulaessige fremde Handlung **kein** Bedienelement hat und keines bekommen
+> soll): bei aktivem **Restaurant**-Cockpit ueber die Konsole
+> `confirmFairAppointment('FM-9604')` auf einen **fremden** Termin →
+> abgewiesen, Meldung *„Only the exhibiting organisation confirms an
+> appointment at its own stand (AP-7)"*, Datensatz byteidentisch. Danach
+> derselbe Aufruf **mit angehaengtem `'distributor'`** → ebenfalls abgewiesen,
+> aber mit **anderer** Meldung: *„… The call carried 2 argument(s) where 1 are
+> declared; the surplus was discarded unread …"* — also **wegen der
+> Argumentzahl, nicht wegen des Cockpits**. Danach ueber den **sichtbaren**
+> Umschalter zur Distributor-Rolle gewechselt und dieselbe Bestaetigung fuer
+> den **eigenen** Termin **geklickt** → erfolgreich (FM-9608 `confirmed`). Der
+> Unterschied der drei Ausgaenge ist der Beleg.
+>
+> **Reset ueber den sichtbaren Knopf:** `window.confirm` fuer diese eine Probe
+> auf `() => true` gestubbt, dann `#demo-reset` („↺ Reset demo") per echtem
+> `element.click()` — `BLStore.reset()` wurde **nicht** direkt aufgerufen. Nach
+> Reset und Reload nachgemessen: Participations wieder
+> `FP-9401:active:true FP-9402:active:true`, sechs Slots FT-9501..FT-9506, vier
+> Termine `FM-9601:confirmed FM-9602:requested FM-9603:requested
+> FM-9604:countered` auf ihren Ausgangsslots, Zaehler zurueck auf
+> 9507/9605/9403/9106, Zulassungen wieder die fuenf Fixture-Zeilen ohne Cantina
+> Rossi. Keine Testaenderung zurueckgeblieben.
+>
+> **Was Durchgang O7 bewusst NICHT gebaut hat, mit Ziel-Durchgaengen:**
+> **AUSGEHENDE Termineinladungen des Ausstellers (eigener spaeterer Durchgang
+> „Termineinladungen"** — A16.8 bleibt fuer sie massgeblich, A22.14 sagt es
+> ausdruecklich; O7 hat davon **kein** Feld, **keinen** Status und **keinen**
+> Platzhalter vorweggenommen) · **Terminnachbereitung** (Post-Meeting-Notizen,
+> Protokolle, automatische Zusammenfassungen, gebuendelte Folgenachrichten —
+> eigener spaeterer Durchgang, von Serge ausdruecklich zurueckgestellt) ·
+> **kanonische Kontakt-Masterdatenquelle** (existiert heute nicht: der
+> `stakeholders`-Datensatz fuehrt keine E-Mail, Telefonnummer oder Adresse, und
+> die statischen Profilseiten sind **keine** gemeinsame Quelle; bis dahin sehen
+> die zwei Terminparteien **Name plus kanonischen Profillink und sonst
+> nichts** — sobald eine kanonische Quelle existiert, duerfen sie daraus
+> FREIGEGEBENE Geschaeftskontaktdaten sehen) · oeffentliches Organizer-Profil
+> und Follow (**O9**) · Opportunities (**O10**) · Fair-Benachrichtigungen und
+> Organizer-Kommunikation (**O11** — in O7 entsteht **keine**
+> Benachrichtigung, **keine** Kampagne und **kein** Suppression-Eintrag; das
+> FR-12-Muster gilt weiter) · Agenda und Unterveranstaltungen (**O12**) ·
+> Hero-Medien und Uploads (eigener Durchgang) · Cross-Tab-Live-Nachfuehrung
+> (bewusst nicht gebaut — Reload ist der Weg) · internes Ticketing, Checkout
+> und Preise (ein Termin traegt **keinen** Preis und **keine** Gebuehr) ·
+> oeffentliche Organizer-Profilseiten · Aenderungen an den
+> Wine-Guide-Verzeichniskarten · Matchmaking (A8), Messages und jede
+> Erweiterung des Follow-Graphen · vertretene Wineries als eigene Aussteller,
+> Subaccounts, Termininhaber oder Empfaenger · **eine zweite Ableitung fuer den
+> handelnden Akteur neben `fairActingContext()`, gleich unter welchem Namen** ·
+> die **Umstrukturierung der Dashboard-Events-Navigation** einschliesslich
+> `My Events`, `Participating` und `Schedule` (die Zielansichten stehen
+> unveraendert als eigener Restpunkt unter "Offene Punkte").
+>
+> **Wenn der echte Supabase-Bau spaeter Login und Session einfuehrt, ersetzt
+> DAS die `activeShowRole`-Ableitung dieses Prototyps 1:1:**
+> `fairActingContext()` liest dann die Session statt des Cockpit-Umschalters,
+> **ohne dass A22.12 sich inhaltlich aendert.**
 
 ---
 
@@ -1550,6 +1728,34 @@ angefangene Stueck) · Catering 7–9 (`wine_show_catering` fehlt noch als
 `orders.source`) · oeffentliche Profile von Restaurant und Retail · Open Call mit
 Master-Data-Filtern (A16.4). **Member Events (A16.8) haengen jetzt an den
 Durchgaengen 7 und 8 der Konsolidierung** und stehen nicht mehr einzeln hier.
+
+### Events-Navigation — die spaeteren Zielansichten, in O7 NICHT gebaut
+
+Praezise zu erhalten, weil die Bedeutung nirgends sonst steht. Alle drei
+Ansichten leiten sich aus **denselben kanonischen Datensaetzen** ab; **KEINE
+Kopien.**
+
+- **`My Events`** — Veranstaltungen, die das Mitglied **selbst organisiert**.
+- **`Participating`** — Veranstaltungen, an denen das Mitglied als Host,
+  Aussteller, Location oder Teilnehmer beteiligt ist. Eine Veranstaltung
+  erscheint dort als **EIN verwaltbarer Beteiligungsdatensatz**, Pending-Status
+  eingeschlossen.
+- **`Schedule`** — die chronologische **persoenliche** Zeitansicht mit
+  bestaetigten Veranstaltungstagen, **Messeterminen** und spaeter
+  Agenda-Sessions.
+- Eine **mehrtaegige Fair erscheint unter `Participating` EINMAL**, kann im
+  `Schedule` aber **mehrere Tage und mehrere Termine** erzeugen.
+- **Offene Bewerbungen und unbestaetigte Terminanfragen sind KEINE festen
+  Schedule-Eintraege**; sie duerfen hoechstens getrennt als *Pending*
+  erscheinen.
+- Der persoenliche Handelsmitglieder-`Schedule` ist **NICHT** das
+  Organizer-Modul "Schedule & Agenda".
+- Die spaetere Events-Sektion bleibt **zwischen Portfolio und Network**
+  vorgesehen; Wine Shows, Member Events, Fairs und eigene Teilnahmen werden
+  spaeter nachvollziehbar getrennt.
+
+**Vor jeder Datenbankarbeit stehen weiterhin die drei modellbewegenden
+Bereiche:** Events (A16.8), Matchmaking (A8), Messages.
 
 ---
 
