@@ -12649,6 +12649,62 @@ Object.keys(SHOW_ROLES).forEach(r => {
 });
 let activeShowRole = 'distributor';
 
+/* ══ THE ONE DERIVED ACTING IDENTITY (A22.12, AP-15) ═════════════
+   `activeShowRole` is the ONE thing in this page that answers "who is
+   acting right now" and that no caller can bend: it is written in
+   exactly one place — the head of showWineShows(role, tab), a few
+   lines below — and nowhere else. The Bestand already trusts it at a
+   security-relevant spot: the Wine Show ownership check reads
+
+       if (s.leadHost !== SHOW_ROLES[activeShowRole].entity) …
+
+   and never a function parameter. That is the PRECEDENT this
+   derivation is built on, read rather than copied.
+
+   From here on this function is the ONLY place in the appointment
+   code where a role becomes an acting organisation. The ten mutating
+   appointment functions call it internally; none of them takes a
+   `role`, `actor`, `actingOrg` or `requester` parameter, and none of
+   them may grow one. Renderers may read a role for DISPLAY — to
+   decide whose line this is — and never hand it on as an identity.
+
+   Returns null for anything that is not one of the four trade
+   cockpits: a partner workspace and an organizer are not in
+   SHOW_ROLES, and an act with no derivable actor is refused (AP-4).
+
+   When the real Supabase build introduces a login and a session, this
+   function reads the session instead of the cockpit switch — a 1:1
+   replacement that leaves A22.12 unchanged in substance. */
+function fairActingContext() {
+  const cfg = SHOW_ROLES[activeShowRole];
+  if (!cfg) return null;
+  return { role: activeShowRole, entity: cfg.entity };
+}
+
+/* ══ THE ONE SURPLUS-ARGUMENT CHECK (A22.12, AP-15) ══════════════
+   The single answer to "what if something extra arrives anyway".
+   Every one of the ten mutating appointment functions calls this as
+   its VERY FIRST statement, before any read and before any change,
+   and passes itself plus its own `arguments`.
+
+   IT COUNTS, IT DOES NOT READ. The surplus value is never inspected,
+   never compared against SHOW_ROLES, never treated as a role or an
+   organisation — the whole call dies on its LENGTH alone. That is
+   what makes a valid-but-foreign role key ('distributor' while the
+   cockpit is restaurant), an unknown key ('atrium') and a bare
+   organisation name ('Hawesko GmbH') refusable ALIKE and unread.
+
+   Missing optional business arguments stay admissible: they only
+   lower the count, and message / topicWinery / reason / note are all
+   optional by design. */
+function fairArgGuard(fn, args) {
+  if (args.length <= fn.length) return true;
+  actionSay('Refused whole: this act takes no acting role and no acting organisation — who acts is derived from the ' +
+    'active cockpit (A22.12). The call carried ' + args.length + ' argument(s) where ' + fn.length +
+    ' are declared; the surplus was discarded unread and nothing was changed.');
+  return false;
+}
+
 /* ══ WHO SEES WHAT ═══════════════════════════════════════════════ */
 /* A show is visible to its host always, and to a producer once it has
    been invited. Everything else follows from the stage (A16.6). */
