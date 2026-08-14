@@ -1912,14 +1912,16 @@ flag, a price note, an external booking or contact link, and the host
 information — and nothing else. **No consumer ticketing, no consumer accounts,
 no checkout** without a separate decision (ME-7).
 
-**External fairs — the canonical core is A19, the participation is A21; what
-remains here is the appointment model.** ProWein, Vinitaly and the rest exist
-in this repo today only as marketing prose and as *award* strings. The
-series/edition core and its organizer management are **built (A19, pass
-O2)**, recruiting and admission are **built (A20, pass O3)**, and the
-participation row with its canonical public page is **built (A21, pass
-O4)**; the booth appointments below are still unbuilt and stay written down
-so that no stand-in gets modelled in the meantime:
+**External fairs — the canonical core is A19, the participation is A21, the
+incoming booth appointment is A22; what remains here is the OUTGOING
+invitation.** ProWein, Vinitaly and the rest exist in this repo today only as
+marketing prose and as *award* strings. The series/edition core and its
+organizer management are **built (A19, pass O2)**, recruiting and admission are
+**built (A20, pass O3)**, the participation row with its canonical public page
+is **built (A21, pass O4)**, and the **incoming appointment request and booking
+path is built (A22, pass O7)**. What is still unbuilt below — the exhibitor's
+**outgoing** appointment invitation — stays written down so that no stand-in
+gets modelled in the meantime:
 
 - One **canonical record per fair** — since A19 that is a **Fair Series with
   its Fair Editions**, its own record pair, never an `events` row (the
@@ -1938,16 +1940,20 @@ so that no stand-in gets modelled in the meantime:
 - **Optional meeting slots and invitations** hang off the participation. A
   **booked booth appointment does not make the booking house a fair
   participant** — exhibiting and holding an appointment are two different
-  facts.
+  facts. **The slots and the incoming request are now canonical in A22
+  (pass O7); the OUTGOING invitation is not, and this sentence keeps
+  guarding it** — A22.14 supersedes this sketch for the incoming half only.
 - The appointment has its **own two-sided flow** — request · confirmation ·
   counter-proposal — and it is a calendar act, not a commercial one: **a booth
   appointment creates no order**. A later order may reference the fair or the
   appointment as **provenance** only, exactly as A16.12 lets an order carry a
-  show id.
+  show id. **This is the model A22.7 made canonical, actor-exclusive and
+  measurable (AP-7, AP-9); read it there.**
 - **Visibility:** public are the participation, the booth, the days, the
   presented wines and the fact that meetings can be requested — **since O4
   the first four render behind A21.7's triple gate on the canonical
-  Participation Page**; "meetings can be requested" arrives with O7.
+  Participation Page, and since O7 the fifth is redeemed: the page carries
+  the neutral note plus the safe entry, and nothing more (A22.10, AP-10).**
   Concrete slots and the booking act are for entitled members. What was
   discussed, who the counterpart was and the full calendar belong to the two
   sides of each appointment and to nobody else.
@@ -1956,9 +1962,11 @@ so that no stand-in gets modelled in the meantime:
   lifecycle is **in** scope and lives in **A19**; exhibitor recruiting,
   admission and the hall/stand inventory are **in** scope and live in
   **A20**; the participation, its content, its placement and its public
-  page are **in** scope and live in **A21**; still out are appointments,
-  agenda, ticket checkout and every further fair feature — each in its own
-  later pass. The
+  page are **in** scope and live in **A21**; the incoming booth appointment,
+  its slots and its two-sided flow are **in** scope and live in **A22**;
+  still out are the exhibitor's OUTGOING appointment invitation, post-meeting
+  notes and follow-up messages, the agenda, ticket checkout and every further
+  fair feature — each in its own later pass. The
   existing Vinitaly award strings stay what they are — recognition (A5), not
   participation — and nothing is migrated into fair records.
 - **A ProWein participation is never modelled as a member event of a winery** —
@@ -3172,6 +3180,16 @@ two more subjects.
 the renderer names (`SHOW_CARD_CLASSES`, `SHOW_GUARANTEE_MARKERS`) are the
 measurement, not a retyped list; no member event, fair edition or participation
 inherits one, and no toggle logic exists twice.
+
+**O7 changes nothing here, and that is a decision.** The directory cards stay
+exactly as O5 left them: **four record sorts, three event families, one expand
+interaction** — and **no appointment marker of any kind**. Whether an exhibitor
+takes appointment requests is a fact for that exhibitor's own Participation
+Page (A22.10), not a facet, not a badge and not a card line: a directory that
+advertised open appointment doors would turn a private business door into a
+ranking signal, and a filter over it would be a facet the model has no figure
+for (invariant 7). The card's one fair-participation target remains the
+canonical Participation Page.
 
 **The image area carries a data-free state.** Hero media are their own pass: a
 record sort the model gives no image concept renders the shell's typographic
@@ -4715,7 +4733,11 @@ as series name + year — storing one would copy the series name, invariant
 1) · halls, stands, floor space (built in O3 — **A20.9**, as their own
 edition-owned records, never fields here) · exhibitor and participant
 counts (derived live from A21's participation rows since O4 — never
-stored) · appointment slots (O7) · agenda (O12) · hero media (its own pass) · any
+stored) · ~~appointment slots (O7)~~ — **resolved: since O7 slots are built,
+and they are records OWNED BY THE PARTICIPATION (`fair_appointment_slots`,
+A22.5/A22.15), never a field of the edition; the edition's own rules reach them
+only indirectly, through the participation's attendance days (FP-5)** ·
+agenda (O12) · hero media (its own pass) · any
 ticket price or checkout field (excluded by decision — the external link
 is the maximum). Since O3 the edition additionally carries
 `exhibitor_call_open` (A20.5).
@@ -4786,8 +4808,8 @@ trade dashboards.
 > hall/stand inventory. Everything is owned and managed by the verified
 > organizer workspace (A18, D44); none of the four trade roles creates, owns
 > or hosts any of it (A19, FS-2). Participations and participation pages
-> (O4), the public directory and its cards (O5), appointments (O7) and the
-> agenda (O12) stay in their own passes — A16.8's external-fair block keeps
+> (O4), the public directory and its cards (O5), booth appointments (O7, A22)
+> and the agenda (O12) stay in their own passes — A16.8's external-fair block keeps
 > guarding them.
 
 ### A20.1 The admission record — one workflow, three entrances
@@ -5154,8 +5176,8 @@ the two activated rows.
 > — not O5 — is the first public reader of the fair data, and the data
 > move A19.7/A20.13 announced for O5 happens here: a **sequence
 > correction, not a new business decision**. The public directory, its
-> cards, filters and ticket-link rendering stay O5; appointments stay O7;
-> the agenda stays O12 — A16.8's external-fair block keeps guarding them.
+> cards, filters and ticket-link rendering stay O5; booth appointments stay O7
+> (built there, A22); the agenda stays O12 — A16.8's external-fair block keeps guarding them.
 
 ### A21.1 The participation record — explicit creation, one per pair
 
@@ -5227,8 +5249,9 @@ fair is copied onto the row.
 - A represented winery gains **no participation of its own, no
   sub-account in the distributor workspace and no management right** on
   the distributor's participation. The distributor remains sole owner and
-  manager; the later O7 appointment flow addresses the exhibiting
-  distributor exclusively — O4 builds no appointment mechanics.
+  manager; the O7 appointment flow addresses the exhibiting
+  distributor exclusively — O4 builds no appointment mechanics, and **A22
+  built them on exactly this sentence (A22.2, AP-3)**.
 
 ### A21.4 Where a represented winery may come from — measured
 
@@ -5350,6 +5373,18 @@ forward).
 findability — no public fair directory, no Wine Guide cards, no unified
 event cards, no filters, no ticket-link rendering.
 
+**The booking entry, since O7, and what it is NOT.** The page carries one more
+thing and only under `appointmentsOpen`: the neutral note that this exhibitor
+takes appointment requests, and the entry **"Request an appointment"**
+(A22.10, AP-10). That entry is **a link into the private area** — it opens the
+member's own dashboard, already set on this participation and this exhibitor.
+It is **not a second booking form, not a public calendar and not a parallel
+workflow**: the page shows no slot, no time, no duration and no contact detail,
+and the request itself is made **exclusively in the private dashboard**. An
+unauthenticated reader meets the existing login path first and is returned to
+exactly this entry afterwards. With the switch closed, or below the triple
+gate, the page says nothing about appointments at all.
+
 **O5 crosses that line and nothing beyond it.** The directory (A16.14d)
 now lists a publicly released participation as one of its four record
 sorts, through `fairParticipationPublic()` and no second gate, and its
@@ -5437,6 +5472,7 @@ identity fields.
                           days,                      -- within the edition span
                           description,
                           status enum('active','withdrawn','rescinded'),
+                          appointments_open bool,    -- since O7, A22.4
                           -- winery rows: presented wines, own catalogue only
                           products    ( product_id FK ),
                           -- distributor rows: the representation model
@@ -5453,8 +5489,18 @@ Deliberately **not** here, each with its reason: copied fair, series,
 organizer or stakeholder data (invariant 1, A21.9) · an occupant field on
 halls or stands (A20.9/A21.5) · stored occupancy or exhibitor counts
 (invariant 7) · a public admission register or copied admission status
-(A21.1) · appointment slots (O7) · a reason column beside the history
+(A21.1) · ~~appointment slots (O7)~~ — **resolved: since O7 slots are their own
+records referencing the participation (`fair_appointment_slots`, A22.15), never
+a field or a list on this row** · a reason column beside the history
 (A20.3) · a fourth publicness status field (the gate is derived, A21.7).
+
+**`appointments_open`, added by O7, is the one exception to that list and
+carries its reason with it (A22.4/A22.10):** it is the exhibitor's door, and
+it is the **ONE publicly readable appointment fact** — the participation page
+must decide whether to show the neutral note, and that decision cannot live in
+a private collection the page may not load (FP-13). Everything else about an
+appointment — slots, times, topics, messages, counterparts, history — stays
+private to the two sides and to the dashboard.
 
 ### A21.11 Invariants
 
@@ -5465,7 +5511,9 @@ halls or stands (A20.9/A21.5) · stored occupancy or exhibitor counts
 - **FP-2 — a represented winery is content, not an exhibitor.** It gains
   no participation, no sub-account and no management right; the
   distributor stays the one owner and the one future appointment
-  addressee.
+  addressee. **Carried into the built appointment flow as AP-3** (A22.9):
+  being named as a conversation topic gives the winery no appointment, no
+  calendar, no read path and no notification.
 - **FP-3 — the participation references, never copies.** Edition by key,
   organisation by key, wines by `productId`; no fair, organizer, series,
   edition or identity data on the row.
@@ -5550,6 +5598,433 @@ run against a live store. `tests/fairs.js` §9's locked-navigation count
 follows the activated row; `tests/fair-recruiting.js`'s asset scan
 narrows to `fairAdmissions` — the collections that moved are public now,
 the assurance about admissions stands word for word.
+
+---
+
+## A22. Fair Booth Appointments — B2B Meetings and Slots
+
+> Serge's decision of 14 Aug 2026 — fair-track anchor **O7**. The two-sided
+> booth appointment A16.8 sketched and A21 gave a stand: an exhibiting member
+> offers meeting slots at its booth on ONE active Fair Participation,
+> authenticated trade members request one of them, and the flow is explicit,
+> actor-exclusive and two-sided — request · confirmation · counter-proposal.
+> The acting identity is ALWAYS derived and never passed. O7 builds the
+> INCOMING request and booking path and nothing else: outgoing appointment
+> invitations stay unbuilt under A16.8 (A22.14), post-meeting notes and
+> follow-up messages are a later pass of their own ("Terminnachbereitung"),
+> the organizer profile is O9, opportunities O10, fair notifications O11 and
+> the agenda O12.
+
+### A22.1 One appointment, one active participation — through the slot
+
+A booth appointment hangs off **exactly ONE active Fair Participation** of the
+exhibiting organisation. It **references the SLOT**, and the participation
+resolves **through** the slot — a `participation_id` on the appointment row
+would be a copy of a fact the slot already carries (invariant 1).
+
+It is **not a second fair**, not a Fair Edition, not a Member Event, not a Wine
+Show and not a participation of its own. Nothing about the fair, the edition,
+the organizer or either house is repeated on the appointment row.
+
+### A22.2 Who owns the appointment
+
+- **A winery participation:** the winery is the appointment holder and the
+  contact — it offers the slots, it answers the requests.
+- **A distributor participation:** the **exhibiting distributor** is the
+  appointment holder, the recipient and the manager of **every** request —
+  exclusively, and also when a represented winery is named as the desired
+  conversation partner. That is FP-2 carried one chapter further: a
+  represented winery is content, never an exhibitor, and the "one future
+  appointment addressee" A21.3 named is the distributor. **The distributor
+  coordinates in full.**
+
+### A22.3 Who may request — all four authenticated trade roles
+
+**Winery · Distributor · Restaurant · Retail.** All four, and the reason is
+written out because it differs from A20.1's exhibitor rule on purpose:
+
+- **A fair is the place where houses without an existing relationship meet.**
+  A20.1 says it in the exhibitor's direction — *"recruiting the open market is
+  what a fair is for"*. The same sentence read from the visitor's side is the
+  whole argument for the request path.
+- **Restaurant and Retail visit a fair to buy.** A20.1 excludes them from
+  *exhibiting* — a visitor has nothing to exhibit — and says in the same breath
+  that their presence is visitor business. Booking a meeting at somebody else's
+  stand IS visitor business, and it is the one thing a buyer travels to a fair
+  for.
+- **An exhibitor meets another exhibitor at their stand.** A winery walks to a
+  distributor's booth; a distributor walks to another distributor's. Being an
+  exhibitor is no bar to being a guest.
+
+Therefore, expressly: **no partnership precondition and no admission
+precondition on the requesting side.** A6 authorises selling on somebody's
+behalf (A16.4's reason for its precondition) and a fair admission entitles
+*exhibiting* (A20.1) — neither is what asking for a half hour at a stand is.
+Requiring either would close the fair to exactly the houses it exists to
+introduce.
+
+Two exclusions, both structural: **a partner workspace never requests** — it
+neither buys nor sells wine (A18.1) and is not in the trade enumeration
+(PP-3) — and **an organizer never requests**; managing the fair is not being at
+it. And **an organisation never requests at its own participation**: a house
+does not book a meeting with itself.
+
+### A22.4 The door — `appointmentsOpen`
+
+One exhibitor-owned switch on the participation row, `appointmentsOpen`
+(bool). It is the **FR-7 pattern, cited rather than reinvented**: exactly as
+closing an exhibitor call *"stops new applications and touches nothing"*,
+closing the appointment door **refuses NEW requests and alters no existing
+record** — no appointment changes state, no history row is written, nothing is
+deleted. An existing confirmed meeting survives a closed door, because the
+door is about what may still arrive, never about what has already been agreed.
+
+### A22.5 Slots are supply-side
+
+**The exhibitor publishes the times it can be met; the requesting side picks
+one of them.** The reason is written out: Serge's guard-rail gives the
+exhibitor the management of its available appointments, and a free wish-time
+from the requesting side would be a **second calendar with no owner** — the
+exhibitor would end up administering times it never offered, which is the one
+thing slot ownership exists to prevent.
+
+A slot carries **day, start time and duration**, and:
+
+- the day **MUST be an attendance day of the participation** (`days`) — and
+  therefore, indirectly, within the edition's fair days (FP-5). A participation
+  that attends one of two fair days offers slots on that one day only;
+- **slots of one participation never overlap** — an exhibitor cannot be at its
+  own stand twice at once;
+- a slot carries **at most ONE confirmed appointment**. Several open requests
+  may sit on the same slot; only one of them can become the meeting.
+
+Slots are **inventory, like `fair_halls` / `fair_stands`** — they carry no
+history of their own (A22.15).
+
+### A22.6 Duration and time — implementable, not merely plausible
+
+- **Duration is chosen in 15-minute steps**, minimum **15**, maximum **120**.
+- The appointment **MUST end on the same calendar day** — start plus duration
+  never crosses midnight. An out-of-range or midnight-crossing slot is refused
+  whole, before anything is written.
+- **Start time is `'HH:MM'` in 24-hour notation** — the notation the existing
+  event fixtures already use (`time:'HH:MM'`), taken over rather than invented.
+- **NO stored time zone**, and both sides label every time expressly as **fair
+  local time**.
+
+Why no time zone, written out: a booth appointment takes place **at the
+fairground**. The local time of the edition is the only meaning the figure can
+have; the edition itself stores no time zone (A19.6); and a zone stored per
+slot would be **the copy of somebody else's fact** (invariant 1) — the day the
+organizer moved the fair to another city, every slot would carry a stale
+answer. The label carries the meaning, the record carries the time.
+
+### A22.7 The two-sided lifecycle — ACTOR-EXCLUSIVE
+
+The two confirmation paths are never mixed. Who may do what, from where:
+
+| From | Act | ONLY this actor | To |
+|---|---|---|---|
+| — | request a free slot | the requesting organisation | `requested` |
+| `requested` | confirm | **the exhibitor** | `confirmed` |
+| `requested` | decline | **the exhibitor** | `declined` |
+| `requested` | counter-propose another FREE slot of the SAME participation, **once** | **the exhibitor** | `countered` |
+| `requested` | withdraw | **the requesting organisation** | `withdrawn` |
+| `countered` | accept the counter-proposal | **the requesting organisation** | `confirmed` |
+| `countered` | withdraw | **the requesting organisation** | `withdrawn` |
+| `confirmed` | cancel, with a **mandatory reason** | **either side**; the actor stands in the history | `cancelled` |
+
+Read the table twice, because two rows carry the whole point:
+
+- **From `countered` the exhibitor has NO act.** It may not confirm its own
+  counter-proposal — a proposal both proposed and accepted by the same house is
+  not an agreement. The answer belongs to the side that has to be there.
+- **Withdrawal from `requested` is the requesting side's own act**, and it
+  exists because without it an unanswered request could never be taken back. It
+  touches none of the three exhibitor acts and is not a fourth one.
+
+`declined`, `withdrawn` and `cancelled` are **TERMINAL** and are never
+reopened. A `countered` record is **never countered a second time**: there is
+no path back to `requested`, so "once" is structural rather than a counter.
+
+**Reasons, per the A20.4 pattern** — measured per act, no blanket rule:
+**mandatory** on `cancelled` (the A19.3 / `revoked` precedent: retracting
+something the other side is already relying on states why — a house has put the
+half hour in its fair day); **optional** on `declined` and `withdrawn` (A16.4 /
+D28: nobody owes a justification for a no thanks or for leaving of one's own
+accord); **never demanded** on `requested`, `countered` and `confirmed` —
+nobody owes a justification for a yes.
+
+**No silent transitions.** When a confirmation takes a slot, the other open
+requests on that slot **stay exactly where they are** — they are not
+auto-declined, not auto-moved and not quietly hidden. A **second confirmation
+on the same slot is refused WHOLE, with a message (B12)**, and the exhibitor
+declines the remaining ones expressly. A rejected act changes nothing at all.
+
+### A22.8 Several appointments with the same exhibitor — expressly allowed
+
+There is **no limit of one appointment per (participation, requesting
+organisation)**. A buyer with two topics, or two people, books two meetings;
+the model has no reason to forbid it and no place to store the ban. What holds
+instead:
+
+- the appointments sit on **different, non-colliding slots**;
+- the same organisation does not request **the same slot** twice **actively**
+  (`requested` / `countered` / `confirmed`);
+- a slot carries **at most one confirmed appointment**;
+- **before every confirmation and before every acceptance of a
+  counter-proposal** it is checked that the requesting organisation holds **no
+  colliding confirmed appointment at the SAME Fair Edition** — expressly
+  including one **at another exhibitor's stand**. A house cannot be in two
+  halls at 10:15;
+- **no stored appointment or participant counters** (invariant 7) — every
+  figure is derived from the rows.
+
+### A22.9 The represented winery as a conversation topic
+
+Optional field `topic_winery` on the appointment. Valid **only** on a
+**distributor** participation and **only** for a name that stands in that
+participation's `representing` list — anything else refuses the request whole,
+before any write. It is the requesting side's way of saying *"we would like to
+talk about the Mosel estate you pour"*.
+
+What expressly does **NOT** follow from being named: **no appointment of its
+own, no participation, no sub-account, no calendar, no management right, no
+read path and no notification** for the named winery. It is content on somebody
+else's record, exactly as its wines are (FP-2, A21.3). The distributor remains
+the sole holder and the sole coordinator.
+
+### A22.10 Visibility — three levels
+
+**PUBLIC, on the canonical Participation Page:** a **neutral note** that this
+exhibitor takes appointment requests from Bottle Lobby members at this fair,
+and the safe entry **"Request an appointment"** — and **nothing else**. No
+slots, no times, no durations, no calendar, no topic, no message, no name of a
+counterpart, **no contact details**, no counter, no booking form. With the
+switch closed, or with the triple gate shut, the page says **nothing about
+appointments at all** — not even that they exist.
+
+**MUTUAL, for the two sides of one appointment only:** slot, day, time,
+duration, message, conversation topic, status, history, and the counterpart
+organisation as a **name with a clickable canonical profile**.
+
+**INTERNAL, for the exhibitor only:** its complete slot calendar and all
+incoming requests.
+
+**The organizer gets none of it** — not the cockpit, not the edition detail,
+not the stand placement, not the candidate search. And **no notification and no
+campaign arises here**: the suppression register is neither read nor extended —
+the **FR-12 pattern, cited**, for the same reason it held for recruiting. A
+booth appointment is a targeted business act between two houses, not a
+broadcast.
+
+### A22.11 Contact details — the measured state and what follows from it
+
+**Measured, not assumed:** the canonical `stakeholders` record carries `name`,
+`type`, `avatar`, `region`, in part `city`, and `url` — and **no canonical
+e-mail address, telephone number or postal address**. The static profile pages
+carry contact lines in places, but they are hand-written page content and **no
+shared data source**. From that, and only from that:
+
+- both sides see the counterpart organisation as a **name with a clickable
+  canonical profile**, resolved through `stakeholder(...).url` and **never
+  copied onto the appointment**;
+- **no e-mail, telephone number or address is read out of static HTML, copied
+  or invented** — a contact detail nobody records is one nobody may print
+  (the A16.14d sentence, one subject further);
+- a **canonical contact master source is a named open item**. The day it
+  exists, the two parties to an appointment may see **released business contact
+  details** from it — a release decision of the owning house, not a side effect
+  of a booking;
+- the **public** Participation Page shows no contact detail of any kind.
+
+### A22.12 The acting identity is DERIVED, never passed — enforced structurally
+
+The Bestand already carries the ONE source for "who is acting right now" that
+no parameter can bend: **`activeShowRole`**, set **exclusively** at the head of
+`showWineShows(role, tab)` and already trusted at a security-relevant place —
+the Wine Show ownership check reads `SHOW_ROLES[activeShowRole].entity` and
+never a function argument. O7 builds **exactly ONE new derivation** on top of
+it, **`fairActingContext()`**, which returns `{ role, entity }` from
+`activeShowRole` and from nothing else.
+
+Binding:
+
+- **None of the TEN mutating functions** — the **seven appointment acts**
+  (`requestFairAppointment`, `confirmFairAppointment`, `counterFairAppointment`,
+  `acceptFairAppointmentCounter`, `declineFairAppointment`,
+  `withdrawFairAppointment`, `cancelFairAppointment`), the **two slot
+  mutations** (`addFairAppointmentSlot`, `removeFairAppointmentSlot`) and the
+  **one gate mutation** (`setFairParticipationAppointmentsOpen`) — has a formal
+  role or organisation parameter. No `role`, no `actor`, no `actingOrg`, no
+  `requester` in any of the ten signatures.
+- **Each of the ten calls `fairActingContext()` internally** and derives role
+  AND organisation exclusively from it — never from a caller's argument.
+- **THE SURPLUS-ARGUMENT CHECK**, as ONE shared, neutral rule for all ten, and
+  the single answer to the question *"what if something extra arrives anyway"*:
+  each function checks **before its first change** that its argument count is
+  admissible — `arguments.length` against its own declared parameter count
+  (`fn.length`), through one shared helper — and **refuses ANY unexpected
+  additional argument WHOLE and WITH A MESSAGE (B12), before anything is read
+  or changed**. Missing optional business arguments (`message`, `topicWinery`,
+  `reason`, `note`) stay admissible, because they only lower the count.
+  **This check is expressly NOT a second actor derivation:** it never reads the
+  surplus value as a role or an organisation and does not interpret it at all —
+  it discards the whole call on its **length** alone. A valid but **foreign**
+  role key, an **unknown** role key and an **organisation name** are therefore
+  refused **alike, unread**.
+- **Renderers and `onclick` handlers may read role values for DISPLAY** — to
+  decide whose line this is, which text a row shows — but **never hand one to a
+  mutating function as the acting identity.** None of the ten takes a parameter
+  for it, and a value appended regardless dies at the surplus-argument check.
+
+Two sentences on what this is a stand-in for: the prototype has no login and no
+session, and the cockpit switch is the only thing that answers "who is acting".
+When the real Supabase build introduces a session, it replaces this derivation
+**1:1** — `fairActingContext()` then reads the session instead of the cockpit
+switch, and nothing in A22.12 changes in substance.
+
+### A22.13 The end comes by derivation, not by cascade
+
+Ends the participation (`withdrawn` / `rescinded`), falls the edition
+(`cancelled`, no longer discoverable) or does it lie in the past — then the
+appointment path is **dead**: no new request, no act on an existing row, and
+**both sides see the reason**. **No stored status change, no cascade write** —
+exactly the A21.6 discipline with which an ended participation frees its stand
+and its public presence by derivation alone. The rows rest with their history
+readable; nothing is rewritten to say so.
+
+### A22.14 INCOMING, not outgoing
+
+A16.8 names *"meeting slots AND invitations"*. **A22 supersedes that sketch for
+the INCOMING request and booking path only** — expressly **not** for the
+invitations named there, which stay unbuilt and for which **A16.8 remains
+authoritative**. Outgoing appointment invitations by the exhibitor are a later
+pass of their own, "Termineinladungen". Nothing here anticipates that parallel
+workflow: **no field, no status, no surface, no placeholder.**
+
+### A22.15 Tables — TWO record sorts, the history EMBEDDED
+
+    fair_appointment_slots ( id,
+               participation_id FK → fair_participations,
+               day,            -- an attendance day of the participation
+               start_time,     -- 'HH:MM', fair local time
+               duration_min )  -- 15-minute grid, 15..120
+
+    fair_appointments      ( id,
+               slot_id FK → fair_appointment_slots,
+               requester_type enum('winery','distributor',
+                                   'restaurant','retail'),
+               requester_id,
+               message,        -- optional, the requesting side's concern
+               topic_winery,   -- nullable, distributor participation only
+               status enum('requested','countered','confirmed',
+                           'declined','withdrawn','cancelled'),
+               history )       -- APPEND-ONLY, EMBEDDED:
+                               -- ( at, actor, action, reason,
+                               --   from_slot, to_slot )
+                               -- from_slot/to_slot on countered only
+
+Deliberately **not** here, each with its reason: **a third collection or a
+parallel history register** — the embedded history is the measured fair pattern
+(`fair_editions`, `fair_admissions`, `fair_participations` all carry theirs) ·
+**a history on the slot** — a slot is inventory like `fair_halls` /
+`fair_stands`, and inventory records no acts (A20.9) · **a `participation_id`
+on the appointment** — it resolves through the slot (invariant 1, A22.1) · **a
+time-zone column** (A22.6) · **contact details of any kind** (A22.11) · **stored
+counters** (invariant 7) · **post-meeting notes, minutes, summaries, bundled
+follow-up messages** — a later pass of its own, "Terminnachbereitung" · **outgoing
+invitations** (A22.14) · **a second visibility field beside
+`appointmentsOpen`** — one door, one switch · **a stored field for the acting
+actor outside the history** — the actor is derived, not carried on the row
+(A22.12), and the history row is where an act's actor belongs (A20.3).
+
+### A22.16 Invariants
+
+- **AP-1 — one appointment, one active participation, through the slot.** It is
+  no fair, no member event, no wine show and no participation of its own.
+- **AP-2 — the exhibitor owns.** Only the exhibiting organisation creates
+  slots, removes them, confirms, declines and counter-proposes.
+- **AP-3 — a represented winery is content, never the appointment holder**
+  (FP-2 one chapter on): no appointment, no participation, no sub-account, no
+  calendar, no management right, no read path, no notification.
+- **AP-4 — requests only from the four authenticated trade roles**; never from
+  a partner workspace, never from an organizer, never from the exhibiting
+  organisation itself; **no partnership and no admission precondition.**
+- **AP-5 — `appointmentsOpen` is the door.** Closing refuses NEW requests and
+  changes no existing record (the FR-7 pattern).
+- **AP-6 — slots are supply-side:** on an attendance day, on the 15-minute grid
+  from 15 to 120 minutes, ending on the same calendar day, never overlapping
+  within one participation, and at most one confirmed appointment per slot.
+- **AP-7 — the lifecycle is actor-exclusive** per A22.7: confirm only the
+  exhibitor from `requested`; counter only the exhibitor from `requested`, once;
+  accept only the requesting organisation from `countered`; decline only the
+  exhibitor from `requested`; withdraw only the requesting organisation from
+  `requested` / `countered`; cancel only from `confirmed`, either side,
+  mandatory reason. Terminal states are never reopened. No silent transitions.
+- **AP-8 — a counter-proposal moves the appointment only onto a FREE slot of
+  the SAME participation.**
+- **AP-9 — a booking creates nothing:** no participation, no partnership, no
+  order, no admission, no counter.
+- **AP-10 — public is exactly the neutral note plus the entry.** Slot, time,
+  duration, calendar, counterpart, topic, message, contact details and every
+  count belong to the two sides alone.
+- **AP-11 — the organizer sees none of it:** no organizer cockpit, no candidate
+  search and no allowlist reads a slot or an appointment; FR-9 stays untouched.
+- **AP-12 — the end comes by derivation:** ends the participation, falls or
+  passes the edition, the appointment path is dead — with no stored status
+  change and no cascade.
+- **AP-13 — history discipline, per function group.** Each of the **seven**
+  appointment lifecycle acts writes **exactly ONE** append-only history row,
+  embedded on the appointment row; no third collection, no parallel register,
+  no deletion, no overwrite. The **slot and gate mutations are NOT lifecycle
+  acts and write NO appointment history row**: slots carry no history (A22.15),
+  and opening or closing `appointmentsOpen` leaves every existing appointment
+  and its history untouched.
+- **AP-14 — several appointments with the same exhibitor are allowed**; the
+  same organisation does not request the same slot twice actively; before
+  confirmation and acceptance the collision with the requesting organisation's
+  confirmed appointments **at the same Fair Edition** is checked.
+- **AP-15 — the acting actor is derived exclusively through
+  `fairActingContext()` from `activeShowRole`.** None of the ten mutating
+  functions has a formal role or organisation parameter, and none interprets a
+  surplus argument as an identity. Each checks its argument count before its
+  first change and refuses an unexpected additional argument — foreign valid
+  role key, unknown role key or organisation name alike — **whole, with a
+  message, unread**. Record and history stay byte-identical.
+- **AP-16 — no contact details:** the counterpart appears as a name with a
+  canonical profile link through `stakeholder(...).url` and nowhere else;
+  nothing is read out of static HTML, copied or invented.
+- **AP-17 — O7 builds the incoming request path only;** outgoing appointment
+  invitations exist nowhere — no field, no status, no surface, no placeholder.
+
+**Prototype blueprint:** `fairAppointmentSlots` (+ `fairAppointmentSlotSeq`) and
+`fairAppointments` (+ `fairAppointmentSeq`), with the append-only history
+embedded per appointment row, live **for good in
+`bottle-lobby-dashboard.html`** — as `fairAdmissions` has since O3 (FR-11) —
+because no public surface ever reads them and the store's `PUBLIC_COLLECTIONS`
+allowlist refuses a registration on a public page **whole**. The **ONE public
+fact**, `appointmentsOpen`, sits on the participation row in
+`assets/bottle-lobby-data.js`, where the public page already reads the record.
+`fairActingContext()` lives with the rest of the fair act code in the dashboard,
+**directly beside the existing `activeShowRole` declaration**, with a comment
+block pointing at the Wine Show `leadHost` check as its precedent; the shared
+surplus-argument helper sits beside it, and the ten mutating functions follow
+it. The exhibitor surface is a **Booth Appointments** section inside the
+existing participation block on Events → Wine Shows (no new nav entry, A20.6);
+the requesting surface is a second block, `renderFairAppointmentsBlock()`, in
+its own container on the same sub-page **for all four trade roles**, with the
+two headings **"Incoming appointment requests"** (exhibitor) and **"My
+appointment requests"** (requesting side). The public entry is a link into the
+dashboard carrying the participation id as a query parameter, consumed exactly
+once and cleared through the existing `history.replaceState` path.
+
+**Harness home:** `tests/fair-appointments.js` — its own file, for the same
+reason A20 and A21 each got one: AP-1..AP-17 under effective
+counter-mutations, including the two-part actor-derivation counter-mutation
+(surplus argument refused unread; the same call without it judged on
+`activeShowRole` alone), the signature scan over the ten function heads, and
+unchanged samples of the four trade dashboards and the directory count.
 
 ---
 
