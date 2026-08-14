@@ -156,10 +156,31 @@ console.log('── isolation: a harness can never inherit another\'s state');
   if (!snap) bad('could not seed a snapshot to poison with — the rest of this section is meaningless');
   else {
     snap.data.wineShows = snap.data.wineShows.filter(s => s.id === 'WS-2603');
-    area._data[KEY] = JSON.stringify(snap);
+    const poison = JSON.stringify(snap);
+
+    /* The seed tab stays open and persisting for the rest of this
+       block — on purpose, it is the real store that produced the
+       poison. That means its own HEARTBEAT (assets/bottle-lobby-store.js,
+       a real wall-clock setInterval in jsdom, see the comment on
+       `settle` above) is still ticking, and save() rewrites storage
+       whenever it differs from the seed's live state — which poisoned
+       storage always does. Sharing one storage area between the seed
+       and the tabs under test therefore made the write-checks below
+       depend on whether that heartbeat happened to land inside the
+       checked window: on a slow enough run its write would land there
+       and get credited to whichever tab was being tested, not to the
+       seed. (Forcing the heartbeat down to 30ms reproduces that
+       misattribution on demand — this is not hypothetical.)
+
+       So (a) and (b) each get their OWN freshly-poisoned storage area,
+       with the seed never attached to either — there is structurally
+       no other writer left in the area under test, regardless of
+       machine speed or heartbeat timing. */
 
     /* (a) explicit kill switch */
-    const t = openTab(area, { persist: true, killSwitch: true });
+    const areaKS = makeStorageArea();
+    areaKS._data[KEY] = poison;
+    const t = openTab(areaKS, { persist: true, killSwitch: true });
     const n = t.w.eval('wineShows.length');
     if (n === 1) bad('BL_NO_PERSIST did not stop the store — poisoned data was read');
     else if (n === 6) ok('BL_NO_PERSIST ignores a poisoned localStorage (6 fixture shows, not 1)');
@@ -167,21 +188,37 @@ console.log('── isolation: a harness can never inherit another\'s state');
     if (t.w.eval('BLStore.isActive()')) bad('BLStore reports itself active with BL_NO_PERSIST set');
     else ok('BLStore.isActive() is false with the kill switch set');
     /* And it must not write either. */
-    const before = area._data[KEY];
+    const before = areaKS._data[KEY];
     nudge(t.w); await settle(t.w);
-    if (area._data[KEY] !== before) bad('a disabled store still wrote to localStorage');
+    if (areaKS._data[KEY] !== before) bad('a disabled store still wrote to localStorage');
     else ok('a disabled store writes nothing');
 
     /* (b) the default every other harness gets, with no switch passed
        by hand — this is the check that protects the other 11 files. */
-    const plain = openTab(area, {});
+    const areaPlain = makeStorageArea();
+    areaPlain._data[KEY] = poison;
+    const plain = openTab(areaPlain, {});
     const pn = plain.w.eval('wineShows.length');
     if (pn === 6) ok('loadDashboard() defaults to persistence off — the other harnesses are safe');
     else bad('loadDashboard() default did NOT disable persistence (shows: ' + pn + ')');
-    const before2 = area._data[KEY];
+    const before2 = areaPlain._data[KEY];
     nudge(plain.w); await settle(plain.w);
-    if (area._data[KEY] !== before2) bad('a default-loaded harness page wrote to localStorage');
+    if (areaPlain._data[KEY] !== before2) bad('a default-loaded harness page wrote to localStorage');
     else ok('a default-loaded harness page writes nothing');
+
+    /* Counter-proof: the isolation above is only worth anything if a
+       genuine write from the seed truly cannot reach `areaPlain`. Force
+       one — the seed is still alive, on the original `area` — and
+       check that the separately-tested area never saw it. */
+    const beforeSeedArea = area._data[KEY];
+    seed.w.eval("wineShows[0].capacity = wineShows[0].capacity + 1;");
+    nudge(seed.w); await settle(seed.w);
+    if (area._data[KEY] === beforeSeedArea)
+      bad('counter-proof setup failed — the seed tab did not write, so it proves nothing');
+    else if (areaPlain._data[KEY] !== before2)
+      bad('a write from the seed tab reached the separately-poisoned default-tab area — the isolation is not real');
+    else
+      ok('a genuine write from the seed tab cannot reach the separately isolated default-tab area');
   }
 }
 
