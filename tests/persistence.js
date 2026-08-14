@@ -546,6 +546,7 @@ console.log('\n── the one list stays the one list');
     tAwSelectedWine:       'ditto, retail side',
     editingPressId:        'the press entry an open editor is about',
     fairOpenEditionId:     'the fair edition whose detail pane is unfolded in My Fairs — a reload starts folded. What HAS to survive is fairEditions and its history, and both are registered (A19)',
+    fairApptEntryPending:  'the participation id the public "Request an appointment" link carried in, before it is consumed. It is an ADDRESS, not state: it is read from the query once, cleared through replaceState, and a reload must fire nothing again (A22) — persisting it would make exactly that reload re-open the entry for good',
     fairApptOpenFor:       'which exhibitor\'s booth-appointment request form is unfolded on the Wine Shows sub-page — a reload starts folded, and the deep link from the public participation page sets it once and clears its own parameter (A22). What HAS to survive is fairAppointmentSlots and fairAppointments, and both are registered',
     fairModalSeriesId:     'the series an open edition modal belongs to',
     fairEditModalId:       'the edition an open edit modal is about (null = the modal is creating one)',

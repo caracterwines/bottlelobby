@@ -1141,7 +1141,7 @@ body {
 </style>
 <!-- The classes the shared public renderer emits. Defined once, loaded
      by every surface that renders a show (A16.7). -->
-<link rel="stylesheet" href="assets/bottle-lobby-public-shows.css?v=6272e58f">
+<link rel="stylesheet" href="assets/bottle-lobby-public-shows.css?v=54414986">
 </head>
 <body>
 
@@ -1173,7 +1173,7 @@ body {
         <span class="role-picker-sub">Wine shop or Fachhandel</span>
       </button>
     </div>
-    <button class="role-picker-skip" onclick="closeRolePicker()">Skip, just show me around →</button>
+    <button class="role-picker-skip" onclick="skipRolePicker()">Skip, just show me around →</button>
   </div>
 </div>
 
@@ -4136,7 +4136,7 @@ With an annual production capacity of over 1.2 million bottles, Cantina Rossi is
 -->
 <script src="assets/bottle-lobby-store.js?v=f2a1f502"></script>
 <script src="assets/bottle-lobby-data.js?v=e92c5fc3"></script>
-<script src="assets/bottle-lobby-public-shows.js?v=fa4cd233"></script>
+<script src="assets/bottle-lobby-public-shows.js?v=93a9abbf"></script>
 
 <script>
 
@@ -11075,6 +11075,19 @@ function closeRolePicker() {
 function pickRole(role) {
   const btn = document.querySelectorAll('.demo-btn')[rolesByHash[role]];
   switchDashboard(role, btn);
+  closeRolePicker();
+  /* THE RETURN HALF OF THE BOOKING ENTRY (A22): a visitor who came
+     from a public participation page has no role in the address, so
+     the picker stands where a login would. After the choice the SAME
+     parameter leads to the SAME entry — no second sign-in path and
+     no second router. */
+  openFairAppointmentEntry(role);
+}
+/* The skip is not a role choice, so it opens nothing — but it does
+   consume the parameter, so a later reload cannot fire the entry a
+   second time (A22: consumed exactly once). */
+function skipRolePicker() {
+  clearFairAppointmentEntry();
   closeRolePicker();
 }
 // Show the picker on first load, unless the visitor arrived via a direct
@@ -19817,6 +19830,79 @@ BLStore.start({
   notify:     showToast,
   onExternal: function () { showToast('↻ Updated in another tab'); }
 });
+
+/* ══════════════════════════════════════════════════════════════════
+   THE BOOKING ENTRY FROM THE PUBLIC PARTICIPATION PAGE (A22)
+   ------------------------------------------------------------------
+   MEASURED BEFORE IT WAS BUILT, and built ON the measurement rather
+   than beside it. What the Bestand actually has:
+
+     · no login and no session — the ROLE PICKER is the only thing
+       standing where a sign-in would, and every public page's
+       "Member Login" button already points at this file with NO hash,
+       which is precisely what makes that picker appear;
+     · `rolesByHash` + `switchDashboard()` as the one way a dashboard
+       view is addressed (#winery … #partner);
+     · `history.replaceState` as the existing way a consumed address
+       is tidied up;
+     · query parameters as the existing dynamic-record convention —
+       `?id=` on the participation page, `?grape=` in the Wine Guide,
+       `?preview=embed` on the profiles.
+
+   So the entry is built out of exactly those parts and adds no new
+   sign-in path and no second router: the public page links here with
+   `?appt=<participationId>`; a hash role already set goes straight
+   into the private booking area, set on this participation and this
+   exhibitor; no hash shows the EXISTING picker, and pickRole() then
+   carries the same parameter to the same entry. The parameter is
+   consumed EXACTLY ONCE and removed through replaceState, so a
+   reload fires nothing again.
+
+   AND THE DOOR ANSWERS RATHER THAN GOING BLANK: a cockpit that may
+   not request, a stand that is no longer released, a closed door or
+   one's own participation each produce the REASON, never an empty
+   surface. This runs last in the file because it drives the real
+   surfaces — SHOW_ROLES and the render chain must already exist.
+   ═══════════════════════════════════════════════════════════════ */
+let fairApptEntryPending = new URLSearchParams(window.location.search).get('appt') || null;
+
+function clearFairAppointmentEntry() {
+  fairApptEntryPending = null;
+  const q = new URLSearchParams(window.location.search);
+  if (!q.has('appt')) return;
+  q.delete('appt');                       /* only ours — anything else stays */
+  const rest = q.toString();
+  history.replaceState(null, '', window.location.pathname + (rest ? '?' + rest : '') + window.location.hash);
+}
+
+function openFairAppointmentEntry(role) {
+  const id = fairApptEntryPending;
+  if (!id) return;
+  clearFairAppointmentEntry();            /* consumed, once, whatever follows */
+  if (!SHOW_ROLES[role]) {
+    showToast('✗ A booth appointment is requested by a trade member — a partner workspace never does (AP-4)');
+    return;
+  }
+  showWineShows(role, 'current');
+  const p = fairParticipationById(id);
+  if (!p) { actionSay('That fair participation no longer exists'); return; }
+  if (p.org === SHOW_ROLES[role].entity) {
+    actionSay('This is your own stand — a house does not book a meeting with itself (AP-4). Your incoming requests are in the block above.');
+    return;
+  }
+  const why = fairAppointmentsActionable(p) ||
+    (!fairParticipationPublic(p)
+      ? 'This stand is not publicly released — there is nothing to book here yet (A21.7)' : null) ||
+    (!p.appointmentsOpen
+      ? p.org + ' is not taking appointment requests at the moment — the door is closed (AP-5)' : null);
+  if (why) { actionSay(why); return; }
+  doOpenFairAppointmentRequest(role, p.id);
+  showToast('Booth appointments — ' + p.org + '. Pick one of the times they have published.');
+}
+
+/* The direct half: a reader who was already in a cockpit arrives with
+   both the role hash and the parameter, and lands in one step. */
+if (fairApptEntryPending && hashRole) openFairAppointmentEntry(hashRole);
 </script>
 
 <!-- ══ SHIP ORDER MODAL — seller marks an order as shipped ══ -->

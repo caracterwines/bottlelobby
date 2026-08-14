@@ -1304,5 +1304,38 @@ function fairParticipationPageHtml(p) {
     '</div>' +
     (p.description ? '<p class="fpp-desc">' + notifEsc(p.description) + '</p>' : '') +
     content +
+    fairParticipationAppointmentHtml(p) +
+  '</div>';
+}
+
+/* ══ THE PUBLIC APPOINTMENT NOTE AND ENTRY (A22.10, AP-10) ════════
+   THE WHOLE PUBLIC SURFACE OF THE APPOINTMENT MODEL IS THESE FEW
+   LINES: a neutral note that this exhibitor takes requests, and a
+   safe way into the member's own dashboard. Nothing else — no slot
+   count, no time, no duration, no calendar, no counterpart, no
+   topic, no message, no contact detail, no counter and no booking
+   form. With the door closed the page says NOTHING about
+   appointments at all, not even that they exist.
+
+   THIS ASSET READS NO SLOT AND NO APPOINTMENT — and it CANNOT: both
+   collections live in the dashboard and are deliberately absent from
+   the store's PUBLIC_COLLECTIONS allowlist, which refuses such a
+   registration whole. The ONE fact this needs, `appointmentsOpen`,
+   sits on the participation row the page already holds.
+
+   The entry is a LINK INTO THE PRIVATE AREA, not a second booking
+   mask (A21.7): it opens the dashboard with this participation as a
+   query parameter, the dashboard consumes that parameter exactly
+   once and clears it, and an unauthenticated reader meets the
+   existing role picker first and is returned to the same entry
+   afterwards. The request itself is made only in the dashboard. */
+function fairParticipationAppointmentHtml(p) {
+  if (!p.appointmentsOpen) return '';
+  return '<div class="fpp-appt">' +
+    '<div class="fpp-block-title">Appointments</div>' +
+    '<p class="fpp-appt-note">This exhibitor takes appointment requests from Bottle Lobby members for this fair. ' +
+      'Times are arranged between the two houses, in the members\' area.</p>' +
+    '<a class="fpp-appt-cta" href="bottle-lobby-dashboard.html?appt=' + encodeURIComponent(p.id) + '">' +
+      'Request an appointment →</a>' +
   '</div>';
 }

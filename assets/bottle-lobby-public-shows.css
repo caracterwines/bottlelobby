@@ -248,3 +248,14 @@
   border-bottom:1px solid rgba(184,151,90,0.3); }
 .fpp-link:hover { border-color:var(--gold, #b8975a); }
 .fpp-none { font-size:0.86rem; color:rgba(247,243,238,0.5); line-height:1.9; }
+/* The appointment note and its entry (A22.10) — a neutral panel and
+   one link. There is no slot, time, calendar or contact style here
+   because the public page renders none of those, ever. */
+.fpp-appt { border:1px solid rgba(247,243,238,0.09); background:rgba(247,243,238,0.03);
+  padding:1.1rem 1.3rem; margin-top:1.6rem; }
+.fpp-appt .fpp-block-title { margin-top:0; }
+.fpp-appt-note { font-size:0.82rem; color:rgba(247,243,238,0.65); line-height:1.8; margin:0 0 0.9rem; }
+.fpp-appt-cta { display:inline-block; font-size:0.7rem; letter-spacing:0.12em; text-transform:uppercase;
+  color:var(--gold, #b8975a); text-decoration:none;
+  border:1px solid rgba(184,151,90,0.45); padding:0.55rem 1.1rem; }
+.fpp-appt-cta:hover { border-color:var(--gold, #b8975a); background:rgba(184,151,90,0.08); }
