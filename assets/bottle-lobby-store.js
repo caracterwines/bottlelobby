@@ -343,7 +343,8 @@ window.BLStore = (function () {
      SHAPE, so it sees that by construction — and the shared contract
      sees it a second time, because the shape change moved
      SCHEMA_HASH (6d204f48 → 9b503d88, set in the same commit as the
-     field, C8), and every older snapshot carries the old `sh` and
+     field, C8; the two new registrations of the following commit
+     moved it on to b29a32a, again in their own commit), and every older snapshot carries the old `sh` and
      breaks on check (5) before a single value is read. A pre-O7
      snapshot is therefore already refused twice over, by both
      documents, without VERSION moving. The pass ALSO adds two new
@@ -383,7 +384,7 @@ window.BLStore = (function () {
      C8 gains the matching duty: when fixtures change SHAPE, the same
      commit updates SCHEMA_HASH (the harness names the value; VERSION
      keeps its own, separate rule). */
-  var SCHEMA_HASH = '9b503d88';
+  var SCHEMA_HASH = 'b29a32a';
 
   var entries      = [];   /* { name, get, set } in registration order */
   var fixtureFp    = {};   /* name → hash of the pristine fixture shape */

@@ -4134,7 +4134,7 @@ With an annual production capacity of over 1.2 million bottles, Cantina Rossi is
      fails the run if any asset is missing or empty. That same file
      also switches persistence off for every harness. See tests/README.
 -->
-<script src="assets/bottle-lobby-store.js?v=ffeee8fe"></script>
+<script src="assets/bottle-lobby-store.js?v=f2a1f502"></script>
 <script src="assets/bottle-lobby-data.js?v=e92c5fc3"></script>
 <script src="assets/bottle-lobby-public-shows.js?v=fa4cd233"></script>
 
@@ -6191,6 +6191,125 @@ let fairAdmissions = [
     history:[ { at:'2026-07-28', actor:'Atrium Fairs GmbH', action:'recorded_external', reason:null } ] }
 ];
 let fairAdmissionSeq = 9106;
+
+/* ══════════════════════════════════════════════════════════════════
+   BOOTH APPOINTMENTS (A22, pass O7) — SLOTS AND APPOINTMENTS
+   ------------------------------------------------------------------
+   TWO record sorts, and they stay in THIS FILE for good, exactly as
+   `fairAdmissions` has since O3 (FR-11): no public surface reads a
+   slot or an appointment, and none ever will. That is not a wish but
+   a structural fact — the store's PUBLIC_COLLECTIONS allowlist
+   refuses a registration of anything outside it WHOLE, so a public
+   page could not load these two even if somebody wired it up. The
+   ONE publicly readable appointment fact is `appointmentsOpen`, and
+   it sits on the participation row in assets/bottle-lobby-data.js,
+   where the public page already reads the record (A22.10, AP-10).
+
+   SLOTS ARE SUPPLY-SIDE INVENTORY (A22.5). The exhibitor publishes
+   the times it can be met; the requesting side picks one of them. A
+   free wish-time from the other side would be a second calendar with
+   no owner. A slot reaches its edition through its participation —
+   no editionId copy here (invariant 1) — carries day, 'HH:MM' start
+   and a duration on the 15-minute grid from 15 to 120 minutes, and
+   carries NO HISTORY: a slot is inventory like fairHalls/fairStands,
+   and inventory records no acts (A20.9, A22.15, AP-13).
+
+   AN APPOINTMENT REFERENCES ITS SLOT, and the participation resolves
+   THROUGH the slot (A22.1) — a participationId on the appointment
+   row would be a copy of a fact the slot already holds. Its
+   append-only `history` is EMBEDDED on the row, the measured fair
+   pattern (fairEditions, fairAdmissions, fairParticipations all
+   carry theirs); there is no third collection and no parallel
+   register. `fromSlot`/`toSlot` are filled on `countered` and
+   nowhere else.
+
+   NO STORED TIME ZONE (A22.6): a booth appointment happens at the
+   fairground, the edition's local time is the only meaning the
+   figure can have, the edition stores no zone itself (A19.6), and a
+   zone per slot would be the copy of somebody else's fact. Every
+   surface labels the time as fair local time instead.
+
+   FIXTURE DATES (C7): every appointment history row postdates the
+   creation of its participation — FP-9401 created 27 Jul, FP-9402
+   created 29 Jul — and everything sits before SHOW_TODAY (31 Jul).
+   The four ACTING demo entities (Cantina Rossi, Hawesko GmbH, Bistro
+   Laurent, Weinhaus Müller) request nothing here: every fixture
+   requester is a house the session does not drive, so the live acts
+   start from a clean board on both sides. `declined`, `withdrawn`
+   and `cancelled` are deliberately absent — they are produced by the
+   harness and by the browser acceptance, not typed in. */
+let fairAppointmentSlots = [
+  /* Domaine Lefèvre's two Wiesbaden days (FP-9401): three slots, one
+     of them free — the winery exhibitor's board. */
+  { id:'FT-9501', participationId:'FP-9401', day:'2027-02-08', startTime:'10:00', durationMin:30 },
+  { id:'FT-9502', participationId:'FP-9401', day:'2027-02-08', startTime:'11:00', durationMin:45 },
+  { id:'FT-9503', participationId:'FP-9401', day:'2027-02-09', startTime:'14:00', durationMin:60 },
+  /* Hawesko's one summer day (FP-9402): three slots on the single
+     attendance day. FT-9506 is deliberately FREE — it is the target a
+     live counter-proposal moves an appointment onto. */
+  { id:'FT-9504', participationId:'FP-9402', day:'2027-06-12', startTime:'09:30', durationMin:30 },
+  { id:'FT-9505', participationId:'FP-9402', day:'2027-06-12', startTime:'10:15', durationMin:30 },
+  { id:'FT-9506', participationId:'FP-9402', day:'2027-06-12', startTime:'11:00', durationMin:45 }
+];
+let fairAppointmentSlotSeq = 9507;
+
+let fairAppointments = [
+  /* CONFIRMED, at the winery stand: a restaurant buyer who asked on
+     the 29th and got the slot on the 30th. Two history rows, two
+     actors — the request is the requester's act, the confirmation is
+     the exhibitor's (A22.7). */
+  { id:'FM-9601', slotId:'FT-9501',
+    requesterType:'restaurant', requester:'Osteria Marconi',
+    message:'We pour Burgundy by the glass and would like to taste the new Mâcon-Villages before the list closes.',
+    topicWinery:null, status:'confirmed',
+    history:[
+      { at:'2026-07-29', actor:'Osteria Marconi',  action:'requested', reason:null, fromSlot:null, toSlot:null },
+      { at:'2026-07-30', actor:'Domaine Lefèvre',  action:'confirmed', reason:null, fromSlot:null, toSlot:null }
+    ] },
+  /* REQUESTED, still open at the winery stand — the row the exhibitor
+     answers, and the second half of "several requesters, one slot
+     each". */
+  { id:'FM-9602', slotId:'FT-9502',
+    requesterType:'retail', requester:'Vinoteca Roma',
+    message:'Looking for a Chablis for the autumn shelf — half an hour would be enough.',
+    topicWinery:null, status:'requested',
+    history:[
+      { at:'2026-07-30', actor:'Vinoteca Roma', action:'requested', reason:null, fromSlot:null, toSlot:null }
+    ] },
+  /* REQUESTED at the distributor stand — THE exhibitor-confirm case
+     of the acceptance: Hawesko answers this one by hand. */
+  { id:'FM-9603', slotId:'FT-9504',
+    requesterType:'restaurant', requester:'Casa Elena',
+    message:'Our list needs a German riesling section. Which of your estates travels to the summer day?',
+    topicWinery:null, status:'requested',
+    history:[
+      { at:'2026-07-30', actor:'Casa Elena', action:'requested', reason:null, fromSlot:null, toSlot:null }
+    ] },
+  /* COUNTERED at the distributor stand, WITH a conversation topic:
+     the requester named Weingut Schmitt, which really stands in
+     FP-9402's `representing` (A22.9) — and being named gives that
+     winery NOTHING: no appointment, no calendar, no read path, no
+     notification (AP-3). Hawesko moved the request from FT-9504 to
+     FT-9505, so `fromSlot`/`toSlot` are filled and `slotId` already
+     names the proposed slot.
+
+     THIS ROW MUST NOT BE CONFIRMED BY THE DISTRIBUTOR. From
+     `countered` the exhibitor has no act at all — a proposal both
+     proposed and accepted by the same house is not an agreement
+     (A22.7, AP-7). It is the fixture the refusal is shown on. */
+  { id:'FM-9604', slotId:'FT-9505',
+    requesterType:'retail', requester:'Vinstuen København',
+    message:'We would like to talk about the Mosel range you pour — and about landed prices for Denmark.',
+    topicWinery:'Weingut Schmitt', status:'countered',
+    history:[
+      { at:'2026-07-30', actor:'Vinstuen København', action:'requested', reason:null,
+        fromSlot:null, toSlot:null },
+      { at:'2026-07-30', actor:'Hawesko GmbH',       action:'countered',
+        reason:'The 09:30 is taken by a standing customer — 10:15 works, same table.',
+        fromSlot:'FT-9504', toSlot:'FT-9505' }
+    ] }
+];
+let fairAppointmentSeq = 9605;
 
 /* `fairHalls` / `fairStands` (+ seqs, finders) live in
    assets/bottle-lobby-data.js since O4 — still edition inventory,
@@ -18739,6 +18858,21 @@ BLStore.register({
      orderSeq reason. */
   fairParticipations:     [function () { return fairParticipations; },     function (v) { fairParticipations = v; }],
   fairParticipationSeq:   [function () { return fairParticipationSeq; },   function (v) { fairParticipationSeq = v; }],
+  /* The O7 booth-appointment records (A22) — NEW registrations, which
+     discard older snapshots by themselves. They are registered HERE
+     and belong in NO public page: PUBLIC_COLLECTIONS names the five
+     fair collections a public document may hydrate, and these two are
+     deliberately not among them — a public surface reads no slot and
+     no appointment, and the store refuses such a registration whole
+     (A22's blueprint, the FR-11 assurance one chapter on). The
+     counters travel with their collections for the orderSeq reason.
+     The VERSION decision of this pass is measured at the VERSION
+     constant: the lever is the `appointmentsOpen` SHAPE change, not
+     these two neighbours. */
+  fairAppointmentSlots:   [function () { return fairAppointmentSlots; },   function (v) { fairAppointmentSlots = v; }],
+  fairAppointmentSlotSeq: [function () { return fairAppointmentSlotSeq; }, function (v) { fairAppointmentSlotSeq = v; }],
+  fairAppointments:       [function () { return fairAppointments; },       function (v) { fairAppointments = v; }],
+  fairAppointmentSeq:     [function () { return fairAppointmentSeq; },     function (v) { fairAppointmentSeq = v; }],
 
   /* Partnerships — one row, four dashboards read it (A6). It replaced
      wineryPartners, which was registered here, plus three `const`
