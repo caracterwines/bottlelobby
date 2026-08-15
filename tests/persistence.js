@@ -584,6 +584,8 @@ console.log('\n── the one list stays the one list');
     editingPressId:        'the press entry an open editor is about',
     fairOpenEditionId:     'the fair edition whose detail pane is unfolded in My Fairs — a reload starts folded. What HAS to survive is fairEditions and its history, and both are registered (A19)',
     fairApptEntryPending:  'the participation id the public "Request an appointment" link carried in, before it is consumed. It is an ADDRESS, not state: it is read from the query once, cleared through replaceState, and a reload must fire nothing again (A22) — persisting it would make exactly that reload re-open the entry for good',
+    activeCockpit:         'which cockpit the demo switcher shows — the ONE source the partner-follow acts derive their acting identity from (A23.3, the activeShowRole pattern). View state; a reload starts on the default cockpit like activeShowRole starts on its default',
+    organizerEntryPending: 'the two parameters the public organizer profile\'s Save & Follow and exhibitor-call links carry in (?follow=, ?calls=), before they are consumed. ADDRESSES, not state — the fairApptEntryPending reasoning word for word (A23.3): read once, cleared through replaceState, and a reload must fire nothing again',
     fairApptOpenFor:       'which exhibitor\'s booth-appointment request form is unfolded on the Wine Shows sub-page — a reload starts folded, and the deep link from the public participation page sets it once and clears its own parameter (A22). What HAS to survive is fairAppointmentSlots and fairAppointments, and both are registered',
     fairModalSeriesId:     'the series an open edition modal belongs to',
     fairEditModalId:       'the edition an open edit modal is about (null = the modal is creating one)',
@@ -1495,6 +1497,136 @@ console.log('\n── booth appointments persist privately, and no public page c
   if (pw.eval("BLStore.PUBLIC_COLLECTIONS.join(',')") === 'fairSeries,fairEditions,fairHalls,fairStands,fairParticipations')
     ok('and the allowlist itself is unchanged by O7 — five collections, no appointment among them');
   else bad('PUBLIC_COLLECTIONS moved: ' + pw.eval("BLStore.PUBLIC_COLLECTIONS.join(',')"));
+}
+
+/* ── 13. The organizer profile's public verdict and the partner follow
+   (A23, O9) — the LIVE-STORE half of OP-6/OP-9 ─────────────────────
+   The public organizer page derives its Verified badge from the
+   register's last word WITHOUT ever loading the register: the store
+   reads the validated snapshot inside its closure and hands out the
+   verdict alone. So the proof needs a real snapshot: the fixture state
+   (approved) must stand the badge; a rejecting row written by an
+   ordinary dashboard act must fell it after an ordinary reload; the
+   page never writes; and the partner follow persists privately —
+   present in the snapshot, absent from every public page. */
+console.log('\n── the organizer profile reads the verdict from the snapshot, rows never crossing');
+{
+  const OPAGE = path.join(__dirname, '..', 'bottle-lobby-organizer-atrium-fairs-gmbh.html');
+  function openOrganizer(area, opts) {
+    opts = opts || {};
+    const errs = [];
+    let html = loadDashboard(OPAGE, { persist: true }).html;
+    if (opts.patch) {
+      const before = html;
+      html = html.replace(opts.patch.from, opts.patch.to);
+      if (html === before) throw new Error('openOrganizer: patch never applied — ' + opts.patch.from);
+    }
+    const dom = new JSDOM(html, {
+      runScripts: 'dangerously', pretendToBeVisual: true,
+      url: 'http://localhost/bottle-lobby-organizer-atrium-fairs-gmbh.html',
+      beforeParse(w) {
+        if (area) {
+          const self = () => w;
+          Object.defineProperty(w, 'localStorage', { value: area.api(self), configurable: true });
+        }
+        w.scrollTo = () => {};
+      },
+      virtualConsole: new VirtualConsole().on('jsdomError', e => {
+        if (!/Not implemented: navigation/.test(e.message)) errs.push(e.message);
+      })
+    });
+    const w = dom.window;
+    w.__onStorage = () => {};
+    if (area) area._tabs.push({ w });
+    if (errs.length) { console.log('SCRIPT ERRORS:\n' + errs.join('\n')); process.exit(1); }
+    return { w, d: w.document };
+  }
+  const verdictOf = tab => tab.d.documentElement.getAttribute('data-verdict');
+  const badgeOf   = tab => !!tab.d.querySelector('.profile-hero .badge-verified');
+  const textOf    = tab => { const c = tab.d.body.cloneNode(true); [...c.querySelectorAll('script,style')].forEach(n => n.remove()); return c.textContent; };
+
+  /* (a) fixture state, ordinarily saved by the dashboard: the badge
+     stands, with the ONE disclaimer sentence. */
+  const area = makeStorageArea();
+  const dash = enter(openTab(area, { persist: true }));
+  if (dash.w.eval('BLStore.save()') !== true) bad('the persisting tab refused to save');
+  const disclaimer = dash.w.eval('PARTNER_VERIFIED_DISCLAIMER');
+  const p1 = openOrganizer(area);
+  if (verdictOf(p1) === 'approved' && badgeOf(p1) && textOf(p1).indexOf(disclaimer) !== -1 &&
+      p1.d.querySelectorAll('.op-brand-badge').length === 2)
+    ok('with the dashboard\'s snapshot present, the page derives approved: Verified badge + disclaimer, both brand badges');
+  else bad('the page did not derive the approved verdict from the snapshot (' + verdictOf(p1) + ')');
+  if (p1.w.eval('typeof reviews') === 'undefined' && p1.w.eval('typeof partnerFollows') === 'undefined' &&
+      p1.w.eval("BLStore.names().sort().join(',')") === 'fairEditions,fairHalls,fairParticipations,fairSeries,fairStands' &&
+      JSON.parse(area._data[KEY]).data.reviews && JSON.parse(area._data[KEY]).data.partnerFollows)
+    ok('reviews and partnerFollows sit in the snapshot and reach no binding on the page — only the verdict crossed');
+  else bad('a private collection crossed onto the public organizer page');
+  const frozen = area._data[KEY];
+  if (p1.w.eval('BLStore.isReadOnly()') === true && p1.w.eval('BLStore.save()') === false &&
+      p1.w.eval('BLStore.start({})') === 'refused' && area._data[KEY] === frozen)
+    ok('the page is read-only: save() and start() are dead, storage byte-identical');
+  else bad('the organizer page wrote or wired autosave (OP-9)');
+
+  /* (b) a LATER rejecting row written by an ordinary dashboard act —
+     the register's last word moves, and the badge falls on reload. */
+  act(dash.w, "writeReview('partner','PP-9001','rejected','Bottle Lobby','probe: authority withdrawn','partner_verification')");
+  await settle(dash.w);
+  const stored = read(area);
+  const lastRow = stored.data.reviews.filter(r => r.subjectType === 'partner' && r.approvalType === 'partner_verification').pop();
+  if (lastRow && lastRow.reviewStatus === 'rejected') ok('the rejecting row sits in the ordinarily saved snapshot as the register\'s last word');
+  else bad('the rejecting row never reached the snapshot — the rest of this section is meaningless');
+  const p2 = openOrganizer(area);
+  if (verdictOf(p2) === 'refused' && !badgeOf(p2) && textOf(p2).indexOf(disclaimer) === -1)
+    ok('after an ordinary reload the badge has fallen and the disclaimer with it — the last word rules, no stored flag survived (PP-4/OP-6)');
+  else bad('the badge survived a later rejection (' + verdictOf(p2) + ')');
+  if (p2.d.querySelectorAll('.op-brand-badge').length === 2)
+    ok('the two series brand badges still stand — a different subject, a different last word (FS-4)');
+  else bad('the brand badges fell with the workspace verdict — the two badges merged');
+  /* The dashboard says the same about the same bytes. */
+  if (dash.w.eval('partnerVerificationApproved(platformPartners[0])') === false)
+    ok('and the dashboard reads the same last word from the live register — one derivation, two documents');
+  else bad('dashboard and page disagree about the verdict');
+
+  /* (c) the follow persists privately: a real act, a real reload. */
+  const area2 = makeStorageArea();
+  const dash2 = enter(openTab(area2, { persist: true }));
+  dash2.w.eval("switchDashboard('winery', document.querySelectorAll('.demo-btn')[rolesByHash.winery])");
+  const wrote = dash2.w.eval("JSON.stringify(followPartnerTarget('organizer','PP-9001'))");
+  nudge(dash2.w); await settle(dash2.w);
+  if (dash2.w.eval('BLStore.save()') === true || read(area2).data.partnerFollows.length === 3) ok('the follow reached the ordinarily saved snapshot');
+  else bad('the follow never reached the snapshot');
+  const again = enter(openTab(area2, { persist: true }));
+  if (JSON.parse(wrote).follower === 'Cantina Rossi' &&
+      again.w.eval("partnerFollows.some(f => f.follower === 'Cantina Rossi' && f.targetId === 'PP-9001')") &&
+      again.d.querySelector('#wstars-partners .pn-card[data-target-id="PP-9001"]'))
+    ok('a follow written as the winery survives the reload and stands in My Stars — the act persists (OP-4)');
+  else bad('the partner follow did not survive the round trip');
+  const p3 = openOrganizer(area2);
+  if (textOf(p3).indexOf('Cantina Rossi') === -1 || !p3.d.querySelector('.op-fair a'))
+    ok('the follower is named nowhere on the public page');
+  else {
+    /* Cantina Rossi could legitimately be an exhibitor; outside stand
+       links the name must not appear. */
+    const c = p3.d.body.cloneNode(true); [...c.querySelectorAll('script,style,.op-fair a')].forEach(n => n.remove());
+    if (c.textContent.indexOf('Cantina Rossi') === -1) ok('the follower is named nowhere on the public page outside exhibitor stand links');
+    else bad('a follower name reached the public organizer page (A23.1)');
+  }
+
+  /* (d) the counter-proofs. */
+  const areaR = makeStorageArea();
+  areaR._data[KEY] = JSON.stringify(stored);          /* the rejected state */
+  const rogue = openOrganizer(areaR, { patch: {
+    from: "var last = lastWord(hydrated.data.reviews, PUBLIC_VERDICTS[approvalType], subjectId, approvalType);\n    return !!last && last.reviewStatus === 'approved';",
+    to:   "return hydrated.data.reviews.some(function (r) { return r.subjectId === subjectId && r.approvalType === approvalType && r.reviewStatus === 'approved'; });" } });
+  if (verdictOf(rogue) === 'approved' && badgeOf(rogue))
+    ok('caught: an any-row derivation in the store lets the badge survive the rejection — lastWord() is what fells it, and nothing else could have');
+  else bad('the any-row rogue did not stand the badge — the check above may pass for another reason');
+  const rogue2 = openOrganizer(areaR, { patch: {
+    from: 'BLStore.register({\n    fairSeries:',
+    to:   'BLStore.register({\n    reviews: [function () { return window.__rv || []; }, function (v) { window.__rv = v; }],\n    fairSeries:' } });
+  if (rogue2.w.eval('typeof window.__rv') === 'undefined' && verdictOf(rogue2) === 'none' && areaR._data[KEY] === JSON.stringify(stored))
+    ok('a page that registers reviews is refused WHOLE — nothing hydrated, no verdict, storage untouched (OP-6/FP-13)');
+  else bad('the read-only entry hydrated the register onto a public page');
 }
 
 console.log(fail ? '\n✗ ' + fail + ' failure(s)' : '\n✓ all checks passed');
