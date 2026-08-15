@@ -1319,6 +1319,55 @@ function stakeholder(name) {
    publish, recruit, assign…) lives in the dashboard and checks its
    acting workspace there (A20.11). This file holds records and
    finders, nothing gated. */
+
+/* ══════════════════════════════════════════════════════════════════
+   VERIFIED PLATFORM PARTNERS (A18) — the record and its constants
+   ------------------------------------------------------------------
+   MOVED HERE IN O9 (A23.5, the A21.8 precedent — a move, never a
+   copy): the public organizer profile is the partner record's first
+   public reader, and the directory's fair listing names the organizer
+   since the same pass. The dashboard keeps registering the binding
+   with BLStore exactly as before; the public pages read the canonical
+   fixture record (nothing writes a partner row today, so the
+   hydration allowlist does not carry it — A23.5).
+
+   A partner workspace is NOT a stakeholder: no row in `stakeholders`,
+   no key in any trade registry, no place in the reach taxonomy or the
+   campaign resolver (PP-1, PP-3). CAPABILITIES ARE A LIST, NOT A TYPE
+   (A18.2); `media_partner` is a permitted VALUE and nothing else
+   anywhere (PP-5). THERE IS NO `verified` FIELD: verification is the
+   register's last word (A18.4, PP-4) — read in the dashboard over the
+   live register and, on a public page, only through the store's
+   encapsulated public verdict (A23.4). */
+const PARTNER_CAPABILITIES = ['organizer', 'media_partner'];
+const PARTNER_CAPABILITY_LABEL = { organizer: 'Fair & Event Organizer' };
+/* One sentence, one place, rendered wherever the badge appears
+   (A18.4) — the MEMBER_EVENT_DISCLAIMER discipline. */
+const PARTNER_VERIFIED_DISCLAIMER =
+  'Verified confirms the organisation’s identity and its representative’s ' +
+  'authority — it is not a quality judgement, a release or a recommendation ' +
+  'by Bottle Lobby.';
+let platformPartners = [
+  /* THE ONE FIXTURE, AND IT IS FICTITIOUS ON PURPOSE: no real fair or
+     media brand ever becomes demo data — real names (ProWein,
+     Vinitaly) stay spec prose and award strings (A16.8). "Atrium
+     Fairs GmbH" is invented for this demo.
+     C7 derivation: the organisation predates its verification
+     (2026-07-15, RVW-3004), which predates SHOW_TODAY — the earliest
+     dependent fact is the cockpit showing a verified organizer
+     "today", so the row needs nothing earlier and claims nothing
+     else. `url` is the canonical public profile, exactly as every
+     `stakeholders` row carries one (FP-14: a link only where the
+     target exists) — since O9 the target exists. */
+  { id:'PP-9001', name:'Atrium Fairs GmbH', capabilities:['organizer'],
+    city:'Wiesbaden', country:'Germany',
+    about:'Independent organiser of regional wine trade fairs and portfolio tastings.',
+    url:'bottle-lobby-organizer-atrium-fairs-gmbh.html' }
+];
+function platformPartner(id) {
+  return platformPartners.find(function (p) { return p.id === id; }) || null;
+}
+
 const FAIR_TYPES = ['trade', 'consumer', 'hybrid'];
 const FAIR_TYPE_LABEL = { trade:'Trade Fair', consumer:'Consumer Fair', hybrid:'Hybrid Fair' };
 

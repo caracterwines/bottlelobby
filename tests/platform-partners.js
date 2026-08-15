@@ -166,8 +166,8 @@ function assertPartnerOutsideRelations() {
   else bad('the partner has a stakeholders row (PP-2: a workspace is one nature)');
   const graph = w.eval('wineFollowGraph');
   if (!graph.some(e => e.follower === name || e.winery === name))
-    ok('the follow graph carries no partner edge (A18.5: unbuilt on purpose)');
-  else bad('a follow edge names the partner — the follow pass has not been measured yet');
+    ok('the A7 trade graph carries no partner edge — partner follows live in their own store (A23.2, D47)');
+  else bad('a wineFollowGraph edge names the partner — the A7 graph was generalised against the O9 measurement (D47)');
   const aud = w.eval("announcementAudience('event', campaignSubject('event','ME-3103'), true)");
   if (aud.indexOf(name) === -1)
     ok('the campaign resolver does not address the partner');
@@ -321,11 +321,25 @@ console.log('\n§6 trade dashboards untouched — samples');
 
 {
   const name = PARTNER().name;
-  const leak = TRADE_ROLES.find(r =>
-    new RegExp(name + '|Platform Partner').test(
-      d.getElementById('dash-' + r).innerHTML + d.getElementById('sidebar-' + r).innerHTML));
-  if (!leak) ok('no trade dashboard or sidebar mentions the partner workspace');
-  else bad('the ' + leak + ' view mentions the partner (workspaces bleed, A18.3)');
+  /* Since O9 exactly ONE named read path is open (PP-3, A23.6): the My
+     Stars partner block of each cockpit renders the house's OWN partner
+     follows. That block is measured in tests/organizer-profile.js;
+     HERE it is cut out, and everything else in the four trade views
+     must still be free of the partner workspace. */
+  const outsideStars = r => {
+    const c = d.getElementById('dash-' + r).cloneNode(true);
+    [...c.querySelectorAll('[id$="stars-partners"]')].forEach(n => n.remove());
+    return c.innerHTML + d.getElementById('sidebar-' + r).innerHTML;
+  };
+  const leak = TRADE_ROLES.find(r => new RegExp(name + '|Platform Partner').test(outsideStars(r)));
+  if (!leak) ok('outside the one opened My Stars read path, no trade dashboard or sidebar mentions the partner workspace');
+  else bad('the ' + leak + ' view mentions the partner outside My Stars (workspaces bleed, A18.3 / PP-3)');
+  const opened = TRADE_ROLES.filter(r => {
+    const box = d.querySelector('#dash-' + r + ' [id$="stars-partners"]');
+    return box && /Platform Partners/.test(box.textContent);
+  });
+  if (opened.length === 4) ok('the one opened path exists in all four cockpits — the My Stars partner block (PP-3 since O9)');
+  else bad('the named PP-3 read path is missing in: ' + TRADE_ROLES.filter(r => opened.indexOf(r) === -1).join(', '));
   const fansDom = d.querySelectorAll('#dfans-list .wn-card').length;
   const fansDerived = w.eval("fansOf('Hawesko GmbH')").length;
   if (fansDom === fansDerived && fansDerived > 0)

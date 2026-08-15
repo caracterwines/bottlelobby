@@ -353,7 +353,21 @@ window.BLStore = (function () {
      that alone is expressly NOT a bump reason (the Durchgang-11
      note above says why: a neighbouring registration's protection
      vanishes the day it is reverted or split). The lever stays where
-     it is because the FIELD, not the neighbour, does the work. */
+     it is because the FIELD, not the neighbour, does the work.
+
+     O9 — MEASURED, AND IT NEEDS NO BUMP EITHER, for O7's reason. Two
+     of 47 prints move against the O7 build (e0ffd0b): `platformPartners`
+     (8d34c198 → ac24c394) because the partner row gains its canonical
+     `url` — a real field on the row, so guard 2 sees it by
+     construction, not by a coincidental nullable combination — and the
+     NEW registration `partnerFollows` (3eb21263, the bounded partner
+     follow store, A23/D47). The other 45 hash identically: no row was
+     added to an existing collection, no value changed format. Both
+     changes move SCHEMA_HASH (b29a32a → b33a99e8, set in this same
+     commit), so every older snapshot breaks on check (5) in both
+     documents before a value is read; the new registration would
+     discard it a second time, and that alone is expressly not a bump
+     reason. The lever stays where it is. */
   var VERSION   = 12;
   var DEBOUNCE  = 200;   /* ms after the last event before a write */
   var HEARTBEAT = 2000;  /* ms between "does storage still match?" checks */
@@ -384,7 +398,7 @@ window.BLStore = (function () {
      C8 gains the matching duty: when fixtures change SHAPE, the same
      commit updates SCHEMA_HASH (the harness names the value; VERSION
      keeps its own, separate rule). */
-  var SCHEMA_HASH = 'b29a32a';
+  var SCHEMA_HASH = 'b33a99e8';
 
   var entries      = [];   /* { name, get, set } in registration order */
   var fixtureFp    = {};   /* name → hash of the pristine fixture shape */
@@ -607,12 +621,67 @@ window.BLStore = (function () {
     var invalid = snapshotInvalidWhy(p);   /* the one shared contract */
     if (invalid) return ignore(invalid);
     entries.forEach(function (e) { e.set(p.data[e.name]); });
+    hydrated = p;   /* the validated snapshot, kept for the public verdicts below */
     return 'hydrated';
   }
   function ignore(why) {
     if (window.console && console.info)
       console.info('[BLStore] stored demo data ignored on this read-only page — ' + why);
     return 'ignored';
+  }
+
+  /* ── The PUBLIC VERDICT — one register, no row leaves it (A23.4) ──
+     A public page has to say whether a platform partner is verified
+     (A18.4) and whether a fair brand is approved (A19.4) — each the
+     LAST WORD of the `reviews` register (PP-4, FS-3), which is private:
+     it carries Bottle Lobby's own notes and rows about memberships,
+     contracts, projects and show releases, is not in the hydration
+     allowlist and never will be. So the store — already the platform's
+     public read boundary — derives the verdict INSIDE this closure over
+     the validated snapshot and hands out the verdict alone: never a
+     row, never a note, never a date. The real build does this as a
+     server function over `reviews` behind RLS; this is its stand-in.
+
+     THE ALLOWLIST IS FIXED HERE, in platform code, exactly like
+     PUBLIC_COLLECTIONS: only these approval types have a public verdict,
+     each about the one subject type it belongs to. Nothing widens it —
+     not a page, not a parameter, not a stored value.
+
+     ONE derivation for both documents: lastWord() is the last row about
+     (subjectType, subjectId) with that approvalType — the dashboard's
+     partnerVerificationLatest() / seriesBrandLatest() call it over the
+     live register, publicVerdict() calls it over the snapshot's. Two
+     callers, one answer.
+
+     Returns true (last word approved), false (last word not approved,
+     or no row about the subject), or null (no readable word: no valid
+     snapshot on this device — the register's fixture ground lives in
+     the dashboard document by design, so a page opened before the demo
+     state exists has nothing to derive from and renders no badge;
+     A23.4 names this limit). A type outside the allowlist is refused
+     with a warning and answers null. */
+  var PUBLIC_VERDICTS = Object.freeze({
+    partner_verification: 'partner',
+    series_brand_review:  'fair_series'
+  });
+  var hydrated = null;   /* set by hydrate() on a valid snapshot only */
+  function lastWord(rows, subjectType, subjectId, approvalType) {
+    var last = null;
+    (rows || []).forEach(function (r) {
+      if (r && r.subjectType === subjectType && r.subjectId === subjectId &&
+          r.approvalType === approvalType) last = r;
+    });
+    return last;
+  }
+  function publicVerdict(approvalType, subjectId) {
+    if (!PUBLIC_VERDICTS.hasOwnProperty(approvalType)) {
+      if (window.console && console.warn)
+        console.warn('[BLStore] publicVerdict refused — "' + approvalType + '" has no public verdict');
+      return null;
+    }
+    if (!hydrated || !hydrated.data || !Array.isArray(hydrated.data.reviews)) return null;
+    var last = lastWord(hydrated.data.reviews, PUBLIC_VERDICTS[approvalType], subjectId, approvalType);
+    return !!last && last.reviewStatus === 'approved';
   }
 
   /* ── Writing ─────────────────────────────────────────────────────
@@ -816,6 +885,11 @@ window.BLStore = (function () {
     restore:  restore,
     reset:    reset,
     hydrate:  hydrate,
+    /* The public verdict path (A23.4): the ONE last-word derivation and
+       the row-free public entry over the validated snapshot. */
+    lastWord:      lastWord,
+    publicVerdict: publicVerdict,
+    PUBLIC_VERDICTS: PUBLIC_VERDICTS,
     /* Read-only surface for the harnesses and for the console. */
     PUBLIC_COLLECTIONS: PUBLIC_COLLECTIONS.slice(),
     SCHEMA_HASH:  SCHEMA_HASH,

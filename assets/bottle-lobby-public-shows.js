@@ -1067,8 +1067,9 @@ function fairEditionCellHtml(ed) {
    The exhibitors link at the ONE canonical Participation Page (A21.7);
    the directory builds no detail view of its own. */
 function fairEditionListingHtml(ed) {
-  const ex   = fairEditionExhibitors(ed);
-  const reps = fairEditionRepresentedWineries(ed);
+  const ex     = fairEditionExhibitors(ed);
+  const reps   = fairEditionRepresentedWineries(ed);
+  const series = fairSeriesById(ed.seriesId);
   /* `fe-fact`, NOT the show card's `ws-public-line`. The ws-* classes
      are SHOW_CARD_CLASSES — the Wine Show's guarantee markers — and a
      fair borrowing one of them would be exactly the look ME-3 says is
@@ -1086,7 +1087,16 @@ function fairEditionListingHtml(ed) {
       }).join('')
     : '<div class="fe-fact">Exhibitor presences appear here as exhibitors publish their stands.</div>';
 
+  /* The organizer, since O9 (A23.5): resolved through the partner
+     register at render time and never written onto the edition — the
+     one public entry point to the organizer profile, a link only where
+     the target exists (FP-14). The teaser composition above is
+     untouched (DIR-3). */
+  const org = series ? platformPartner(series.organizerId) : null;
   return (ed.description ? '<div class="fe-listing-desc">' + notifEsc(ed.description) + '</div>' : '') +
+    (org ? kv('Organizer', org.url
+        ? '<a class="fpp-link" href="' + notifEsc(org.url) + '">' + notifEsc(org.name) + '</a>'
+        : notifEsc(org.name)) : '') +
     kv('Where', notifEsc(ed.venue || ed.city)) +
     kv('Fair days', blDate(ed.startDate) + (ed.endDate ? ' – ' + blDate(ed.endDate) : ' (one day)')) +
     kv('Type', notifEsc(FAIR_TYPE_LABEL[ed.fairType] || '')) +
@@ -1213,6 +1223,35 @@ function fairStandOccupant(standId) {
   return fairParticipations.find(function (p) {
     return p.standId === standId && p.status === 'active';
   }) || null;
+}
+
+/* ══ THE PUBLIC ORGANIZER PROFILE — its derivations (A23.5, pass O9) ══
+   What a visitor may see of an organizer's fairs is the SAME two
+   questions the directory asks — discoverable, and past — asked once
+   more over the organizer's own series and never re-answered: no
+   second visibility derivation (DIR-1), no stored list, no figure.
+   The page renders these; the organizer cockpit may read them too. */
+function organizerUpcomingEditions(partnerId) {
+  const mine = fairSeriesOf(partnerId).map(function (s) { return s.id; });
+  return fairEditions.filter(function (ed) {
+    return mine.indexOf(ed.seriesId) !== -1 && fairEditionDiscoverable(ed) && !fairEditionPast(ed);
+  }).sort(function (a, b) { return a.startDate < b.startDate ? -1 : a.startDate > b.startDate ? 1 : 0; });
+}
+/* An OPEN exhibitor call is a fact of a discoverable, upcoming edition
+   (A20.5): a draft's call, a cancelled edition's call and a past
+   edition's call are no calls to anybody. */
+function organizerOpenCalls(partnerId) {
+  return organizerUpcomingEditions(partnerId).filter(function (ed) { return !!ed.exhibitorCallOpen; });
+}
+/* ONE derivation over the count, stored nowhere (A23.5, OP-7): the
+   public page cannot know the visitor's role, so it promises exactly
+   what the entry keeps — one open call reads as the thing to do,
+   several as the list to look at, none as no action and no reserved
+   space. */
+function organizerCallCaption(openCalls) {
+  const n = (openCalls || []).length;
+  if (n === 0) return null;
+  return n === 1 ? 'Apply to Exhibit' : 'View Exhibitor Calls';
 }
 
 /* ══ THE CANONICAL PARTICIPATION PAGE — the one renderer (A21.7) ══ */

@@ -1151,6 +1151,9 @@ body {
     <p class="role-picker-eyebrow">Welcome to Bottle Lobby</p>
     <h2>What best describes you?</h2>
     <p>Pick your role and we'll show you the dashboard exactly as you'd see it.</p>
+    <!-- Filled only when a public organizer profile sent the visitor here
+         (A23.3): the honest word on what the choice will do. -->
+    <p id="role-picker-entry-note" style="display:none;color:var(--gold);font-size:0.78rem;margin-top:-0.4rem"></p>
     <div class="role-picker-options">
       <button class="role-picker-option" onclick="pickRole('winery')">
         <span class="role-picker-icon">🍇</span>
@@ -2080,6 +2083,10 @@ With an annual production capacity of over 1.2 million bottles, Cantina Rossi is
             </div>
             <div class="edit-section-sub" style="margin-top:-0.8rem">Distributors, restaurants and retailers you follow — a way to bookmark accounts you like, want to remember, or are considering for a future partnership.</div>
             <div id="wstars-list"></div>
+            <!-- The one opened partner read path (A23.6, PP-3): own
+                 partner follows, visibly separate, resolved through the
+                 partner register — never a trade action here. -->
+            <div id="wstars-partners"></div>
           </div>
 
           <!-- MY FANS -->
@@ -2565,6 +2572,10 @@ With an annual production capacity of over 1.2 million bottles, Cantina Rossi is
             </div>
             <div class="edit-section-sub" style="margin-top:-0.8rem">Wineries, restaurants and retailers you follow — a way to bookmark producers and accounts you like, want to remember, or are considering for a future partnership.</div>
             <div id="dstars-list"></div>
+            <!-- The one opened partner read path (A23.6, PP-3): own
+                 partner follows, visibly separate, resolved through the
+                 partner register — never a trade action here. -->
+            <div id="dstars-partners"></div>
           </div>
 
           <div class="profile-section" id="dsection-fans">
@@ -2949,6 +2960,10 @@ With an annual production capacity of over 1.2 million bottles, Cantina Rossi is
             </div>
             <div class="edit-sub" style="margin-top:-0.8rem">Wineries, distributors and other accounts you follow — a way to bookmark producers you like, want to remember, or already list through your distributor and want to flag as a favourite.</div>
             <div id="rstars-list"></div>
+            <!-- The one opened partner read path (A23.6, PP-3): own
+                 partner follows, visibly separate, resolved through the
+                 partner register — never a trade action here. -->
+            <div id="rstars-partners"></div>
           </div>
 
           <div class="profile-section" id="rsection-fans">
@@ -3332,6 +3347,10 @@ With an annual production capacity of over 1.2 million bottles, Cantina Rossi is
             </div>
             <div class="edit-sub" style="margin-top:-0.8rem">Wineries, distributors and other accounts you follow — a way to bookmark producers you like, want to remember, or already list through your distributor and want to flag as a favourite.</div>
             <div id="tstars-list"></div>
+            <!-- The one opened partner read path (A23.6, PP-3): own
+                 partner follows, visibly separate, resolved through the
+                 partner register — never a trade action here. -->
+            <div id="tstars-partners"></div>
           </div>
 
           <div class="profile-section" id="tsection-fans">
@@ -4134,9 +4153,9 @@ With an annual production capacity of over 1.2 million bottles, Cantina Rossi is
      fails the run if any asset is missing or empty. That same file
      also switches persistence off for every harness. See tests/README.
 -->
-<script src="assets/bottle-lobby-store.js?v=f2a1f502"></script>
-<script src="assets/bottle-lobby-data.js?v=e92c5fc3"></script>
-<script src="assets/bottle-lobby-public-shows.js?v=93a9abbf"></script>
+<script src="assets/bottle-lobby-store.js?v=3656e619"></script>
+<script src="assets/bottle-lobby-data.js?v=f3d32614"></script>
+<script src="assets/bottle-lobby-public-shows.js?v=675b3c81"></script>
 
 <script>
 
@@ -5855,43 +5874,25 @@ function showReleaseApproved(show) {
    Bottle Lobby decision lives — one `reviews` row, subjectType
    'partner' (A18.4, invariant 6). The badge derives; remove the row
    and the badge falls (PP-4). */
-const PARTNER_CAPABILITIES = ['organizer', 'media_partner'];
-const PARTNER_CAPABILITY_LABEL = { organizer: 'Fair & Event Organizer' };
-/* One sentence, one place, rendered wherever the badge appears
-   (A18.4) — the MEMBER_EVENT_DISCLAIMER discipline. */
-const PARTNER_VERIFIED_DISCLAIMER =
-  'Verified confirms the organisation’s identity and its representative’s ' +
-  'authority — it is not a quality judgement, a release or a recommendation ' +
-  'by Bottle Lobby.';
-let platformPartners = [
-  /* THE ONE FIXTURE, AND IT IS FICTITIOUS ON PURPOSE: no real fair or
-     media brand ever becomes demo data — real names (ProWein,
-     Vinitaly) stay spec prose and award strings (A16.8). "Atrium
-     Fairs GmbH" is invented for this demo.
-     C7 derivation: the organisation predates its verification
-     (2026-07-15, RVW-3004), which predates SHOW_TODAY — the earliest
-     dependent fact is the cockpit showing a verified organizer
-     "today", so the row needs nothing earlier and claims nothing
-     else. No fair series, no editions, no events: those records
-     arrive with the fair passes, and inventing one here would be the
-     stand-in A16.8 forbids. */
-  { id:'PP-9001', name:'Atrium Fairs GmbH', capabilities:['organizer'],
-    city:'Wiesbaden', country:'Germany',
-    about:'Independent organiser of regional wine trade fairs and portfolio tastings.' }
-];
-function platformPartner(id) {
-  return platformPartners.find(function (p) { return p.id === id; }) || null;
-}
+/* `PARTNER_CAPABILITIES`, `PARTNER_CAPABILITY_LABEL`,
+   `PARTNER_VERIFIED_DISCLAIMER`, `platformPartners` and
+   `platformPartner()` MOVED to assets/bottle-lobby-data.js in O9
+   (A23.5) — the public organizer profile is their first public reader.
+   The store registration below stays here (the `wineShows` precedent);
+   this file keeps everything that acts or derives over the private
+   register. */
 /* PP-4 IN TWO FUNCTIONS — the showReviewLatest() discipline on the
    new subject: the register is append-only, so the partner's current
    verification state is the LAST row about it (A18.4), never "any
    approved row ever". An any-row reading would survive a later
    rejection — exactly the stale answer the register's own comment
    forbids. Asked of the register, never of a flag. */
+/* Since O9 the last-word derivation itself lives ONCE in the store
+   (BLStore.lastWord, A23.4): this cockpit reads it over the live
+   register, the public organizer page reads the same function over the
+   snapshot inside the store's closure — two callers, one answer. */
 function partnerVerificationLatest(partner) {
-  const rows = reviewsFor('partner', partner.id)
-    .filter(r => r.approvalType === 'partner_verification');
-  return rows.length ? rows[rows.length - 1] : null;
+  return BLStore.lastWord(reviews, 'partner', partner.id, 'partner_verification');
 }
 function partnerVerificationApproved(partner) {
   const last = partnerVerificationLatest(partner);
@@ -5965,9 +5966,7 @@ function fairSeriesManagedHere(series) {
    rejection pulls the approval (FS-3), which an any-row reading would
    survive. */
 function seriesBrandLatest(series) {
-  const rows = reviewsFor('fair_series', series.id)
-    .filter(r => r.approvalType === 'series_brand_review');
-  return rows.length ? rows[rows.length - 1] : null;
+  return BLStore.lastWord(reviews, 'fair_series', series.id, 'series_brand_review');
 }
 function seriesBrandApproved(series) {
   const last = seriesBrandLatest(series);
@@ -6930,10 +6929,14 @@ const PARTNER_LOCKED_NAV = {
   fairs: [
     ['Schedule & Agenda',      'Programme and agenda on an edition are their own pass (O12).']
   ],
+  /* "Organizer Profile & Follow" left this list with O9 (A23): the
+     public profile is live (View Public Profile on the Organization
+     Profile), and following it is a trade member's act stored in its
+     own bounded store (D47). What the organizer SEES of its followers
+     is communication, and communication is O11 — named on that row. */
   community: [
-    ['Organizer Profile & Follow', 'Its own later pass — following an organizer is a directed relation, never a trade partnership (A18.5), and its storage is measured before anything is built.'],
-    ['Opportunities',              'Organizer opportunities come after profile and follow exist.'],
-    ['Communications',             'Fair notifications extend the derived notification model (C9) in their own pass; no message table is built for them.']
+    ['Opportunities',              'Organizer opportunities come after profile and follow exist (O10).'],
+    ['Communications',             'Fair notifications, the follower view and the "started following you" line into this workspace, and inquiries reaching it extend the derived notification model (C9) in their own pass (O11); no message table is built for them.']
   ]
 };
 
@@ -7508,7 +7511,14 @@ function renderPartnerCockpit() {
       'About: ' + p.about +
       (vrow ? '<br>Verified by ' + vrow.reviewedBy + ' on ' + vrow.reviewedAt : '') +
     '</div>' +
-    '<div class="ws-demo-note">' + PARTNER_VERIFIED_DISCLAIMER + '</div>';
+    '<div class="ws-demo-note">' + PARTNER_VERIFIED_DISCLAIMER + '</div>' +
+    /* B6 (A23.5): the trade cockpits' embed-preview pattern, taking the
+       partner's canonical page — the page as it really is, never a
+       second rendering here. Only where the target exists (FP-14). */
+    (p.url
+      ? '<div style="margin-top:1rem"><button class="btn-sm btn-outline" ' +
+          'onclick="openEmbedPreview(' + JSON.stringify(p.url).replace(/"/g, '&quot;') + ', \'Public Profile\')">👁 View Public Profile</button></div>'
+      : '');
 
   const lockRow = l =>
     '<div class="nav-item nav-locked"><span class="nav-icon">◇</span> ' + l[0] +
@@ -10442,6 +10452,189 @@ renderRestaurantFans();
 renderRetailFans();
 
 /* ══════════════════════════════════════════════════════════════════
+   PARTNER FOLLOWS (A23, pass O9) — the SECOND follow store, bounded on
+   purpose (D47)
+   ------------------------------------------------------------------
+   MEASURED before this was built (A23.2): every reader of the A7 graph
+   above resolves both endpoints through stakeholder(name) — the My
+   Stars renderer, the fans renderer, the C9 "started following you"
+   line, the two A8 signals, the distributor's Opportunities, the reach
+   level `community`, and the D43 audience resolver fansOf(). A partner
+   workspace has no stakeholders row and must never gain one (PP-2); a
+   fair series or edition is a record KEY, not an account. A partner
+   target inside wineFollowGraph would therefore have rendered as an
+   avatar-less card, surfaced as "New winery for you — Consider
+   onboarding →" (a trade action on a platform partner, PP-1), counted
+   in a trade host's reach community (PP-3), and stayed out of the D43
+   resolver only because no partner happens to be named like a trade
+   host. So the A7 graph stays technically unchanged for trade targets,
+   and partner follows live HERE.
+
+   THE EDGE IS ONLY THE EDGE (A7's lesson): follower (the trade house's
+   name, the organisation key every other row uses — FP-14), the target
+   SORT, the target KEY, and since when. Nothing about either side is
+   copied onto the row: name, badge, city and page come from the
+   register the sort names, at read time.
+
+   THREE TARGET SORTS FROM DAY ONE — organizer · fair_series ·
+   fair_edition — semantically different, never interchangeable. The
+   sort is not the `followedType` A7 removed (that described what a
+   trade account IS, a fact the account owns): it is the ADDRESS of the
+   register that owns the key, the reviews.subjectType precedent
+   (A18.4). The map below is that address book, frozen: a sort outside
+   it, or a key its register does not resolve, is refused before
+   anything is written (B12). Only the organizer sort has a surface in
+   O9 (the public organizer profile's Save & Follow); the surfaces that
+   own a series or an edition bring their own entry when their pass
+   comes — the store carries them today.
+
+   PRIVATE, like wineFollowGraph: registered with the store, never in
+   the public hydration allowlist, read by no public page — which is
+   what keeps "no follower names, no follower figure, no foreign graph"
+   (A23.1) structural. The D43 resolver reads wineFollowGraph and
+   nothing else, so no row here can ever become an audience (OP-2). */
+const PARTNER_FOLLOW_TARGETS = Object.freeze({
+  organizer:    function (id) { return platformPartner(id); },
+  fair_series:  function (id) { return fairSeriesById(id); },
+  fair_edition: function (id) { return fairEditionById(id); }
+});
+const PARTNER_FOLLOW_TARGET_LABEL = Object.freeze({
+  organizer: 'Platform Partner', fair_series: 'Fair Series', fair_edition: 'Fair Edition'
+});
+let partnerFollows = [
+  /* Two demo rows by A7's fixture precedent — a restaurant and a
+     distributor follow the demo organizer — so the one opened read
+     path (My Stars, PP-3) is visible without explanation. C7: both
+     postdate the workspace verification (15 Jul, RVW-3004) — nobody
+     follows an organizer the platform has not yet shown — and lie
+     before SHOW_TODAY (31 Jul). No figure is derived from them. */
+  { follower:'Bistro Laurent', targetType:'organizer', targetId:'PP-9001', at:'2026-07-21' },
+  { follower:'Hawesko GmbH',   targetType:'organizer', targetId:'PP-9001', at:'2026-07-26' }
+];
+
+/* ── THE ACTING IDENTITY FOR A FOLLOW — derived from the cockpit switch
+   (A22.12's principle, one surface over). Measured: `activeShowRole`
+   is written only at the head of showWineShows() and starts as
+   'distributor' while the winery cockpit is what loads — it answers
+   "who is acting" on the Wine Shows surface and would attribute a
+   follow made from the winery's My Stars to Hawesko GmbH. So O9 adds
+   exactly ONE further single-write source, `activeCockpit`, written
+   ONLY by switchDashboard() below (the cockpit switch itself — the very
+   thing A22.12 names as the prototype's stand-in for a session), and
+   ONE derivation over it. Null for the partner workspace: an organizer
+   follows nobody in this pass, and an act with no derivable trade
+   actor is refused. The real build replaces this with the session,
+   1:1, like fairActingContext(). */
+let activeCockpit = 'winery';
+function followActingContext() {
+  const cfg = SHOW_ROLES[activeCockpit];
+  if (!cfg) return null;
+  return { role: activeCockpit, entity: cfg.entity };
+}
+
+/* One resolver for "is this a valid target": the sort must be in the
+   address book and the key must resolve in the register it names. A
+   NAME instead of a key fails here — the registers resolve keys, so a
+   copied name is refused, not stored (OP-3). */
+function partnerFollowTarget(targetType, targetId) {
+  const resolve = PARTNER_FOLLOW_TARGETS[targetType];
+  if (!resolve) return null;
+  return resolve(targetId) || null;
+}
+function partnerFollowEdge(follower, targetType, targetId) {
+  return partnerFollows.find(function (f) {
+    return f.follower === follower && f.targetType === targetType && f.targetId === targetId;
+  }) || null;
+}
+/* What a partner-follow entry shows: name, page and mark, resolved from
+   the register the sort names — never from stakeholder() (PP-3). */
+function partnerFollowTargetView(f) {
+  const t = partnerFollowTarget(f.targetType, f.targetId);
+  if (!t) return null;
+  if (f.targetType === 'organizer')
+    return { name: t.name, url: t.url || null,
+             sub: PARTNER_FOLLOW_TARGET_LABEL.organizer + ' · ' +
+                  (t.capabilities || []).map(c => PARTNER_CAPABILITY_LABEL[c] || c).join(' · ') };
+  if (f.targetType === 'fair_series')
+    return { name: t.name, url: null, sub: PARTNER_FOLLOW_TARGET_LABEL.fair_series };
+  const s = fairSeriesById(t.seriesId);
+  return { name: (s ? s.name + ' · ' : '') + (t.startDate || '').slice(0, 4), url: null,
+           sub: PARTNER_FOLLOW_TARGET_LABEL.fair_edition };
+}
+
+/* ── THE TWO ACTS — no role, no actor parameter; the surplus-argument
+   check first (fairArgGuard, A22.12); the identity from
+   followActingContext() and nowhere else; every check BEFORE the first
+   write; each act says what it did or why not (B12, OP-4). */
+function followPartnerTarget(targetType, targetId) {
+  if (!fairArgGuard(followPartnerTarget, arguments)) return null;
+  const who = followActingContext();
+  if (!who) { actionSay('Following is a trade member\'s act — the partner workspace follows nobody here (A23.3)'); return null; }
+  const target = partnerFollowTarget(targetType, targetId);
+  if (!target) { actionSay('Nothing to follow: "' + targetType + ' ' + targetId + '" is not a known target (A23.2)'); return null; }
+  const view = partnerFollowTargetView({ targetType: targetType, targetId: targetId });
+  if (partnerFollowEdge(who.entity, targetType, targetId)) {
+    showToast('Already following ' + view.name + ' — nothing changed');
+    return partnerFollowEdge(who.entity, targetType, targetId);
+  }
+  const row = { follower: who.entity, targetType: targetType, targetId: targetId, at: SHOW_TODAY };
+  partnerFollows.push(row);
+  renderAllPartnerStars();
+  showToast('✓ Following ' + view.name + ' — saved to My Stars');
+  return row;
+}
+function unfollowPartnerTarget(targetType, targetId) {
+  if (!fairArgGuard(unfollowPartnerTarget, arguments)) return false;
+  const who = followActingContext();
+  if (!who) { actionSay('The partner workspace follows nobody here (A23.3)'); return false; }
+  const edge = partnerFollowEdge(who.entity, targetType, targetId);
+  if (!edge) { showToast('You were not following this — nothing changed'); return false; }
+  partnerFollows.splice(partnerFollows.indexOf(edge), 1);
+  renderAllPartnerStars();
+  const view = partnerFollowTargetView({ targetType: targetType, targetId: targetId });
+  showToast('Unfollowed ' + (view ? view.name : targetId) + ' — removed from My Stars');
+  return true;
+}
+
+/* ── THE ONE OPENED READ PATH (PP-3, A23.6): a house's OWN partner
+   follows, as a visibly separate block under My Stars. Resolved through
+   the partner register, never through stakeholder(); no Request
+   Partnership and no trade action on an entry (OP-5); a real Unfollow. */
+function renderPartnerStarsFor(followerName, hostId) {
+  const el = document.getElementById(hostId);
+  if (!el) return;
+  const mine = partnerFollows.filter(f => f.follower === followerName);
+  const cards = mine.map(f => {
+    const v = partnerFollowTargetView(f);
+    if (!v) return '';
+    const initials = v.name.split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
+    return `
+    <div class="pn-card pn-card-partner" data-target-type="${notifEsc(f.targetType)}" data-target-id="${notifEsc(f.targetId)}">
+      <div class="pn-avatar" style="background:rgba(184,151,90,0.18);color:var(--gold)">${notifEsc(initials)}</div>
+      <div class="pn-info">
+        <div class="pn-name">${notifEsc(v.name)}</div>
+        <div class="pn-meta">${notifEsc(v.sub)} · Following since ${blDate(f.at)}</div>
+      </div>
+      ${v.url ? `<a class="pn-link" href="${notifEsc(v.url)}" target="_blank" rel="noopener">View profile →</a>` : ''}
+      <button class="pn-link" onclick="unfollowPartnerTarget('${notifEsc(f.targetType)}','${notifEsc(f.targetId)}')">Unfollow</button>
+    </div>`;
+  }).join('');
+  el.innerHTML =
+    '<div class="profile-section-title" style="font-size:0.95rem;margin:1.6rem 0 0.4rem">Platform Partners ' +
+      '<span class="profile-section-count">(' + mine.length + ')</span></div>' +
+    '<div class="edit-section-sub" style="margin-top:0">Organizers you follow — a bookmark and a signal, never a partnership (A18.5). ' +
+      'What they publish reaches you through the platform, not through this list.</div>' +
+    (cards || '<div class="pn-empty">You follow no platform partner yet — Save &amp; Follow on an organizer\'s public profile adds one here.</div>');
+}
+function renderAllPartnerStars() {
+  renderPartnerStarsFor('Cantina Rossi',   'wstars-partners');
+  renderPartnerStarsFor('Hawesko GmbH',    'dstars-partners');
+  renderPartnerStarsFor('Bistro Laurent',  'rstars-partners');
+  renderPartnerStarsFor('Weinhaus Müller', 'tstars-partners');
+}
+renderAllPartnerStars();
+
+/* ══════════════════════════════════════════════════════════════════
    PROMO MATERIALS — created by Distributor, unlocked by their
    Restaurant/Retail partners once a purchase condition is met
 ══════════════════════════════════════════════════════════════════ */
@@ -11029,6 +11222,10 @@ renderExclusiveDealsRetail();
 renderPartnerCockpit();
 
 function switchDashboard(role, btn) {
+  /* THE ONE WRITE of activeCockpit (A23.3): the cockpit switch is the
+     prototype's stand-in for a session, and the partner-follow acts
+     derive their acting identity from it and from nothing else. */
+  activeCockpit = role;
   // Demo buttons
   document.querySelectorAll('.demo-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
@@ -11082,12 +11279,14 @@ function pickRole(role) {
      parameter leads to the SAME entry — no second sign-in path and
      no second router. */
   openFairAppointmentEntry(role);
+  openOrganizerEntries(role);        /* the organizer profile's two doors (A23) */
 }
 /* The skip is not a role choice, so it opens nothing — but it does
    consume the parameter, so a later reload cannot fire the entry a
    second time (A22: consumed exactly once). */
 function skipRolePicker() {
   clearFairAppointmentEntry();
+  clearOrganizerEntries();
   closeRolePicker();
 }
 // Show the picker on first load, unless the visitor arrived via a direct
@@ -18431,6 +18630,7 @@ function redrawAll() {
   renderDistributorWineStars();
   renderRestaurantWineStars();
   renderRetailWineStars();
+  renderAllPartnerStars();
   renderDistributorOpportunities();
   renderDistributorPromo();
   renderRestaurantPromo();
@@ -19785,6 +19985,9 @@ BLStore.register({
   /* My Stars / My Fans (A7). Read-only in the prototype today —
      see the note at the declaration. */
   wineFollowGraph:        [function () { return wineFollowGraph; },        function (v) { wineFollowGraph = v; }],
+  /* The partner follow store (A23, D47) — private like the graph
+     above; never in the public hydration allowlist. */
+  partnerFollows:         [function () { return partnerFollows; },         function (v) { partnerFollows = v; }],
 
   /* The notification read marker (C9). The only stored part of
      Notifications — everything else is derived on read. */
@@ -19903,6 +20106,89 @@ function openFairAppointmentEntry(role) {
 /* The direct half: a reader who was already in a cockpit arrives with
    both the role hash and the parameter, and lands in one step. */
 if (fairApptEntryPending && hashRole) openFairAppointmentEntry(hashRole);
+
+/* ══ THE PUBLIC ORGANIZER PROFILE'S TWO DOORS (A23.3/A23.5, pass O9) ═
+   The same construction as the booking entry above, two parameters
+   further — measured and reused, not re-invented: `?follow=<partnerId>`
+   from the profile's Save & Follow, `?calls=<partnerId>` from its
+   exhibitor-call action. The public page owns NO write path (DIR-4):
+   the follow ACT happens here, in the chosen cockpit's My Stars, under
+   the identity derived from the cockpit switch (followActingContext) —
+   never from the address. No hash → the existing role picker; the
+   choice carries the same parameters to the same entry; consumed
+   exactly once and cleared through replaceState. Every door answers
+   with the reason when it cannot open (B12). */
+const ORGANIZER_ENTRY_PARAMS = ['follow', 'calls'];
+let organizerEntryPending = (function () {
+  const q = new URLSearchParams(window.location.search), out = {};
+  ORGANIZER_ENTRY_PARAMS.forEach(function (k) { out[k] = q.get(k) || null; });
+  return out;
+})();
+function clearOrganizerEntries() {
+  ORGANIZER_ENTRY_PARAMS.forEach(function (k) { organizerEntryPending[k] = null; });
+  const q = new URLSearchParams(window.location.search);
+  if (!ORGANIZER_ENTRY_PARAMS.some(function (k) { return q.has(k); })) return;
+  ORGANIZER_ENTRY_PARAMS.forEach(function (k) { q.delete(k); });   /* only ours */
+  const rest = q.toString();
+  history.replaceState(null, '', window.location.pathname + (rest ? '?' + rest : '') + window.location.hash);
+}
+/* The four cockpits' way to their My Stars sub-page — the existing
+   per-role routers, addressed by role. Display routing only; the acting
+   identity is NOT read from here (A22.12). */
+const MY_STARS_VIEW = {
+  winery:      function () { showWineryView('profile', 'winestars'); },
+  distributor: function () { showDistributorView('profile', 'winestars'); },
+  restaurant:  function () { showRestaurantView('profile', 'winestars'); },
+  retail:      function () { showRetailView('profile', 'winestars'); }
+};
+function openOrganizerEntries(role) {
+  const follow = organizerEntryPending.follow, calls = organizerEntryPending.calls;
+  if (!follow && !calls) return;
+  clearOrganizerEntries();            /* consumed, once, whatever follows */
+  if (follow) {
+    if (!SHOW_ROLES[role] || !MY_STARS_VIEW[role]) {
+      showToast('✗ Following is a trade member\'s act — the partner workspace follows nobody here (A23.3)');
+    } else {
+      MY_STARS_VIEW[role]();
+      /* The act derives its actor from activeCockpit, which
+         switchDashboard() set on the way in — the role above is display
+         routing and is handed to nothing that writes. */
+      followPartnerTarget('organizer', follow);
+    }
+  }
+  if (calls) {
+    const cfg = SHOW_ROLES[role];
+    if (!cfg) {
+      showToast('✗ Exhibitor calls are answered by trade members — the partner workspace does not apply (FR-2)');
+      return;
+    }
+    if (role !== 'winery' && role !== 'distributor') {
+      showToast('✗ Restaurants and retailers do not exhibit at a fair (FR-2) — nothing to apply for here');
+      return;
+    }
+    showWineShows(role, 'current');
+    const p = platformPartner(calls);
+    setTimeout(function () {
+      const box = document.getElementById(cfg.prefix + '-fairs');
+      if (box) box.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 60);
+    showToast((p ? p.name + '\'s' : 'The') + ' open exhibitor calls are listed here — apply from the fair-recruiting block');
+  }
+}
+if ((organizerEntryPending.follow || organizerEntryPending.calls) && hashRole) openOrganizerEntries(hashRole);
+/* The picker's honest word (B12): what choosing a role will do with the
+   pending entry — before anything is written. */
+(function () {
+  const note = document.getElementById('role-picker-entry-note');
+  if (!note || hashRole) return;
+  const pid = organizerEntryPending.follow || organizerEntryPending.calls;
+  const p = pid ? platformPartner(pid) : null;
+  if (!p) return;
+  note.textContent = organizerEntryPending.follow
+    ? 'You came from ' + p.name + '\'s public profile — pick your role and the follow is saved under My Stars, as that member. Nothing has been saved yet.'
+    : 'You came from ' + p.name + '\'s public profile — pick your role to reach the open exhibitor calls under Events → Wine Shows (wineries and distributors apply; nothing is sent from here).';
+  note.style.display = '';
+})();
 </script>
 
 <!-- ══ SHIP ORDER MODAL — seller marks an order as shipped ══ -->
