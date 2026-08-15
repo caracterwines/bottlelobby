@@ -4,7 +4,7 @@
 > Dateiliste, Dateianzahl und Aenderungshistorie stehen in der Git-Historie — nicht hier.
 > Dauerhafte Regeln stehen in `BOTTLE-LOBBY-SPEC.md`, kurze Invarianten in `CLAUDE.md` — nicht hier.
 
-**Letzte Aktualisierung:** 14. August 2026
+**Letzte Aktualisierung:** 15. August 2026
 
 ---
 
@@ -21,7 +21,7 @@ Kein Build-Command, Publish-Directory = Repo-Root.
 
 ---
 
-## ▶ EINSTIEG — Stand 14. August 2026
+## ▶ EINSTIEG — Stand 15. August 2026
 
 > **Was Git nicht weiss, steht hier. Alles andere nicht.** Diese Datei fuehrt
 > keine Chronik: was gebaut wurde, wann und von wem, beantwortet `git log`
@@ -31,12 +31,12 @@ Kein Build-Command, Publish-Directory = Repo-Root.
 > Dauerhafte Regeln gehoeren in `BOTTLE-LOBBY-SPEC.md`, kurze Invarianten in
 > `CLAUDE.md`. Findet sich hier eine Regel, ist sie am falschen Ort.
 
-**Baum sauber, `main` gepusht, 32 Harnesses gruen** (nachgezaehlt 14.08. nach O7 — O7 brachte `fair-appointments.js` als neues File; davor 31, nachgezaehlt 13.08. nach O5 — O5 brachte KEIN neues File, sondern erweiterte `wine-guide-page.js`, `persistence.js` und `fairs.js`; `fair-participation.js` kam mit Durchgang O4 dazu, davor `fair-recruiting.js` mit O3, `fairs.js` mit 12, `platform-partners.js` mit 11, `campaigns.js` mit 10, `wine-guide-page.js` mit 9, `member-events.js` mit 7). **`BLStore.VERSION` steht auf 12** — O5 hat gemessen einen Bump auf 12 gebraucht (neue Fixture-Zeilen in den bestehenden Sammlungen `fairSeries`/`fairEditions`/`reviews`, D2D-Klasse; `SCHEMA_HASH` blieb `6d204f48`, alle 40 Fingerprints identisch; O7 hat gemessen KEINEN Bump gebraucht und `SCHEMA_HASH` zweimal nachgezogen, `6d204f48` → `9b503d88` → `b29a32a`, jeweils im selben Commit); O4 hat gemessen einen Bump auf 10 gebraucht (Fixture-Zeilen in den BESTEHENDEN Sammlungen `fairHalls`/`fairStands`/`fairAdmissions`, D2D-Klasse), die Codex-Korrektur einen weiteren auf 11 (FORMAT-Klasse: das Schema-Feld `sh` im Snapshot-Blob; Begruendung jeweils am `VERSION` und in den Bloecken unten); Durchgang 12 brauchte einen (RVW-3005), **O3 gemessen keinen**. **Mit `sh` kam eine neue C8-Pflicht: aendern Fixtures ihre FORM, wird `SCHEMA_HASH` in `assets/bottle-lobby-store.js` im selben Commit nachgezogen — `tests/persistence.js` wird sonst rot und nennt den neuen Wert.**
+**Baum sauber, `main` gepusht, 33 Harnesses gruen** (nachgezaehlt 15.08. nach O9 — O9 brachte `organizer-profile.js` als neues File; davor 32, nachgezaehlt 14.08. nach O7 — O7 brachte `fair-appointments.js` als neues File; davor 31, nachgezaehlt 13.08. nach O5 — O5 brachte KEIN neues File, sondern erweiterte `wine-guide-page.js`, `persistence.js` und `fairs.js`; `fair-participation.js` kam mit Durchgang O4 dazu, davor `fair-recruiting.js` mit O3, `fairs.js` mit 12, `platform-partners.js` mit 11, `campaigns.js` mit 10, `wine-guide-page.js` mit 9, `member-events.js` mit 7). **`BLStore.VERSION` steht auf 12** — O5 hat gemessen einen Bump auf 12 gebraucht (neue Fixture-Zeilen in den bestehenden Sammlungen `fairSeries`/`fairEditions`/`reviews`, D2D-Klasse; `SCHEMA_HASH` blieb `6d204f48`, alle 40 Fingerprints identisch; O7 hat gemessen KEINEN Bump gebraucht und `SCHEMA_HASH` zweimal nachgezogen, `6d204f48` → `9b503d88` → `b29a32a`, jeweils im selben Commit); O4 hat gemessen einen Bump auf 10 gebraucht (Fixture-Zeilen in den BESTEHENDEN Sammlungen `fairHalls`/`fairStands`/`fairAdmissions`, D2D-Klasse), die Codex-Korrektur einen weiteren auf 11 (FORMAT-Klasse: das Schema-Feld `sh` im Snapshot-Blob; Begruendung jeweils am `VERSION` und in den Bloecken unten); Durchgang 12 brauchte einen (RVW-3005), **O3 gemessen keinen**. **Mit `sh` kam eine neue C8-Pflicht: aendern Fixtures ihre FORM, wird `SCHEMA_HASH` in `assets/bottle-lobby-store.js` im selben Commit nachgezogen — `tests/persistence.js` wird sonst rot und nennt den neuen Wert.**
 
 ### Womit eine Sitzung anfaengt
 
 ```
-node tests/run-all.js        →  32 Harnesses, muss gruen sein, bevor irgendetwas beginnt
+node tests/run-all.js        →  33 Harnesses, muss gruen sein, bevor irgendetwas beginnt
 node tests/serve.js          →  http://localhost:8765   (no-store — NIE python http.server)
 node tests/stamp-assets.js   →  nach jeder Aenderung an assets/, sonst wird check-static rot
 ```
@@ -495,8 +495,9 @@ Funktionen aufrufen, `transferSize` vorher lesen (C7).
 > - **Follow ist ausschliesslich Geschaeftssemantik in A18.5:** gerichtete
 >   Beziehung, keine Handelspartnerschaft, kein Request Partnership. **A7 ist
 >   technisch unveraendert**; ob der bestehende Follow-Speicher sicher
->   generalisiert oder ein abgegrenzter Weg noetig ist, misst der **O9
->   vorgelagerte Follow-Messdurchgang**, vorher wird nichts gebaut.
+>   generalisiert oder ein abgegrenzter Weg noetig ist, hat der **O9
+>   vorgelagerte Follow-Messdurchgang** inzwischen gemessen (15.08., Block
+>   „Durchgang O9" unten): abgegrenzter Speicher `partnerFollows`, D47, A23.
 > - **Browser-Abnahme am finalen Stand, mit der bekannten Einschraenkung**
 >   (Screenshot-/Injection-Timeout am ~1-MB-Dokument, EIN Versuch, keine
 >   Serie — C7; abgenommen ueber gerenderten DOM, berechnete Darstellung und
@@ -521,8 +522,8 @@ Funktionen aufrufen, `transferSize` vorher lesen (C7).
 > Block unten**) · ~~Fair Participation Pages~~ (**O4/O5 — gebaut, Bloecke
 > unten**) · ~~B2B-Termine und Slots~~ (**O7 — gebaut, Block unten**;
 > AUSGEHENDE Termineinladungen und die Terminnachbereitung bleiben je ein
-> eigener spaeterer Durchgang) · Agenda (**O12**) · **O9: oeffentliches Organizer-Profil & Follow,
-> einschliesslich vorgelagertem Follow-Messdurchgang** · **O10:
+> eigener spaeterer Durchgang) · Agenda (**O12**) · ~~O9: oeffentliches Organizer-Profil & Follow,
+> einschliesslich vorgelagertem Follow-Messdurchgang~~ (**O9 — gebaut, Block unten**) · **O10:
 > Opportunities** · **O11: Fair-Benachrichtigungen & Organizer-Kommunikation
 > als D10-Erweiterung** · Hero-Medien mit zweigeteilter Abhaengigkeit ·
 > Marketing-/Why-Join-Rollout der in A18.6 festgelegten EN-Formeln. Die
@@ -1369,6 +1370,126 @@ Funktionen aufrufen, `transferSize` vorher lesen (C7).
 > Der Austausch gegen die bisherige Fassung im Projektwissen erfolgt
 > erst NACH erfolgreicher unabhaengiger Abnahme des neuen finalen HEAD,
 > nicht vorher.
+
+---
+
+### Durchgang O9 — Oeffentliches Organizer-Profil und Follow, mit vorgelagerter A18.5-Follow-Messung (15.08.)
+
+> **Die Regeln stehen in der Spec, Kapitel A23 (OP-1..OP-10) und D47, nicht
+> hier.** Hier steht nur, was Git und Spec nicht wissen.
+>
+> **Der Zuschnitt in einem Satz:** der A7-Follow-Weg wurde VOR jeder
+> Speicherentscheidung vermessen und NICHT generalisiert (D47: eigener,
+> abgegrenzter Speicher `partnerFollows` mit den drei Zielarten
+> `organizer · fair_series · fair_edition`, Schluessel statt Namen); die
+> oeffentliche Organizer-Seite `bottle-lobby-organizer-atrium-fairs-gmbh.html`
+> liest nur (`hydrate()`, feste Allowlist unveraendert fuenf Sammlungen); der
+> Follow-Akt laeuft im Dashboard unter der aus dem Cockpit-Umschalter
+> abgeleiteten Identitaet (`activeCockpit` → `followActingContext()`); My
+> Stars ist der EINE geoeffnete PP-3-Lesepfad; das Verified-Badge kommt aus
+> dem gekapselten Store-Verdict (`BLStore.publicVerdict`) — Registerzeilen
+> verlassen den Store nie.
+>
+> **Was Git nicht sagt — Messbefunde, die den Zuschnitt bestimmt haben:**
+>
+> - **M1 (A7):** alle Leser des Graphen loesen beide Enden ueber
+>   `stakeholder(name)` auf; ein Partnerziel im Graphen waere als
+>   Distributor-„Opportunity" mit Handelsaktion erschienen (PP-1), in
+>   `hostCommunity()` gezaehlt worden (PP-3) und dem D43-Resolver nur durch
+>   Namenszufall ferngeblieben. Ausserdem: **es gibt keinen A7-Follow-Akt im
+>   Bestand** — „Unfollow" in My Stars entfernte nur eine DOM-Karte, „Save &
+>   Follow" der Profile war ein Klassen-Toggle. Der O9-Akt ist der erste
+>   persistierende Follow-Akt der Demo ueberhaupt (nur fuer Partnerziele).
+> - **M2a:** `platformPartners` + Konstanten nach `assets/bottle-lobby-data.js`
+>   VERSCHOBEN (nie kopiert); die Partnerzeile traegt jetzt `url` (FP-14).
+>   `platformPartners` ist bewusst NICHT in der Hydration-Allowlist — nichts
+>   schreibt heute eine Partnerzeile; der Tag, an dem ein Schreiber kommt,
+>   erweitert die Allowlist.
+> - **M2b — die EINE benannte Prototyp-Grenze:** das `reviews`-Register lebt
+>   nur im Dashboard-Dokument. Der Store leitet das Verdict aus dem
+>   VALIDIERTEN Snapshot ab; **ein Geraet, das das Dashboard nie geoeffnet
+>   hat, hat kein Registerwort** — die Seite zeigt dann KEIN Badge und
+>   behauptet nichts (`data-verdict="none"`). Sobald das Dashboard einmal lief
+>   (erster Heartbeat), steht das Badge. Bewusst NICHT gebaut: eine
+>   Build-Zeit-Verdict-Konstante (gespeichertes Derivat), das Register oder
+>   eine notizenfreie Kopie im oeffentlichen Asset, ein Flag. Im Real-Build
+>   beantwortet das eine Server-Funktion ueber `reviews` hinter RLS.
+> - **M3:** die Deep-Link-/Rollenwahlmechanik von O7 (`?appt=`) ist 1:1
+>   wiederverwendet — `?follow=<partnerId>` und `?calls=<partnerId>`, einmal
+>   konsumiert, `replaceState`. **`activeShowRole` war NICHT die richtige
+>   Identitaetsquelle** (nur am Kopf von `showWineShows()` geschrieben, startet
+>   als `distributor`, waehrend das Winery-Cockpit laedt) — daher die EINE
+>   weitere Single-Write-Quelle `activeCockpit` in `switchDashboard()`.
+> - **M3b:** „Send Inquiry" ist auf JEDEM Handelsprofil ein Button ohne
+>   Handler. Die Organizer-Seite spiegelt ihn und sagt ehrlich (B12): nichts
+>   gesendet, der Weg zum Organizer ist O11.
+> - **M4/B3:** kein Solid-Gold-Tier (das ist der A6-Einstieg); beide
+>   Messe-Aktionen `btn-gold-outline`, Send Inquiry und Save & Follow wie B4.
+>   Caption-Regel der Call-Aktion: EIN offener Call → „Apply to Exhibit",
+>   mehrere → „View Exhibitor Calls", keiner → keine Aktion.
+> - **M5:** Einstiegspunkt = Zeile „Organizer · <Name>" im aufgeklappten
+>   Fair-Listing des Wine Guide (Komposition der Teaser-Karte unangetastet,
+>   DIR-3); B6 = „View Public Profile" im Organizer-Cockpit ueber
+>   `openEmbedPreview`.
+> - **M6/M7:** A23, D47; „since O9's Events tab" in A16.14d meinte den
+>   Alt-Durchgang 9 (09.08., `wine-guide-page.js` als 26. Harness) und ist
+>   redaktionell praezisiert.
+> - **C8 gemessen:** 45 von 47 Fingerprints identisch; `platformPartners`
+>   (8d34c198 → ac24c394, echtes `url`-Feld) und NEU `partnerFollows`
+>   (3eb21263). `SCHEMA_HASH` b29a32a → **b33a99e8**; **VERSION bleibt 12**
+>   (O7-Begruendung: beide Aenderungen sieht Guard 2 konstruktiv).
+>
+> **Notwendige Anpassungen an Bestandsflaechen (jede mit Messbefund oben):**
+> `switchDashboard()` eine Zuweisung; die vier My-Stars-Sektionen ein
+> Partner-Block; das Fair-Listing eine Organizer-Zeile;
+> `partnerVerificationLatest()`/`seriesBrandLatest()` delegieren an
+> `BLStore.lastWord` (eine Implementierung); Organizer-Cockpit Button + zwei
+> statt drei Locked-Rows; Rollenwahl-Overlay eine Notizzeile bei anhaengiger
+> Tuer. Wine Shows, Member Events, Termine, Kampagnen, Suppressions und die
+> vier Handelscockpits sonst unveraendert (Stichproben in
+> `tests/organizer-profile.js` §9).
+>
+> **Browser-Abnahme (Chrome ueber die Extension, `tests/serve.js`):**
+> Screenshot-/Find-Injection lief in dieser Sitzung durchgehend in den
+> bekannten Timeout; die Abnahme wurde per JavaScript-Auslese und echten
+> DOM-Klicks (`element.click()` auf die realen Links/Buttons) gefahren.
+> Durchgespielt: Organizer-Seite ohne gueltigen Snapshot (kein Badge,
+> `none`) → Dashboard einmal geladen → Seite mit Badge, Disclaimer, beiden
+> Brand-Badges (`approved`); Hero-Reihenfolge und Stile; 5 Upcoming Fairs;
+> Klick Save & Follow → Rollenwahl mit ehrlicher Notiz, nichts gespeichert →
+> Winery gewaehlt → `✓ Following Atrium Fairs GmbH — saved to My Stars`, Kante
+> `Cantina Rossi`, My Stars offen, Snapshot traegt sie; zweite Rolle Retail
+> ueber `#retail` (asynchron, Kante `Weinhaus Müller`), Unfollow per Klick;
+> Klick Call-Aktion → Rollenwahl → Winery → Events → Wine Shows mit
+> Recruiting-Block; Call live geschlossen → Caption „Apply to Exhibit",
+> wieder geoeffnet; Wine Guide Fair-Karte aufgeklappt → Organizer-Zeile →
+> Klick → Profil; Organizer-Cockpit View Public Profile (Iframe,
+> `?preview=embed`, Verdict approved), keine Follower-Flaeche;
+> Cantina-Rossi-Profil unveraendert (Request Partnership · Request Tasting ·
+> Send Inquiry · Save & Follow).
+>
+> **In O9 ausdruecklich vertagt (mit Ziel):** organizer-seitige
+> Follower-Sicht, „started following you" in den Organizer-Workspace,
+> Inquiry-Weg zum Organizer (**O11**) · Follow-Akte fuer Serien-/Editionsziele
+> auf den Oberflaechen, denen diese Datensaetze gehoeren (deren Durchgaenge —
+> der Speicher traegt die Sorten heute) · Opportunities (**O10**) · Agenda
+> (**O12**) · Hero-Medien · `platformPartners` in der Allowlist (der Tag des
+> ersten Schreibers).
+>
+> **Offene Geschaeftsfrage (nicht entschieden, nicht geloest):** faellt die
+> oeffentliche Organizer-Seite SELBST mit dem Verifikationswort (Triple-Gate-
+> Form der Participation Page) oder rendert sie ohne Badge weiter, wie O9 sie
+> gebaut hat? O9 baut das Badge nach A18.4; das Seiten-Gate ist eine
+> Entscheidung von Serge.
+>
+> **`run-all` lief am finalen Produktstand genau EIN Mal vollstaendig: 33/33
+> gruen** (`organizer-profile.js` wird von `run-all.js` per Verzeichnisscan
+> aufgenommen — keine Registrierungszeile noetig).
+>
+> **Spec-Austausch:** `BOTTLE-LOBBY-SPEC.md` (525.475 Bytes, Git-Blob
+> `3cdc4c335bfc66361cfdd723eecd44dab3d958fe`) enthaelt A23 und D47 und ist
+> die O9-Spec; Austausch im Projektwissen NACH unabhaengiger Abnahme des
+> finalen HEAD.
 
 ---
 
