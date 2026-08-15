@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Atrium Fairs GmbH — Organizer Profile · Bottle Lobby</title>
+<!-- ══════════════════════════════════════════════════════════════════
+     THE PUBLIC ORGANIZER PROFILE (A23.5, pass O9)
+     ------------------------------------------------------------------
+     One static page per platform partner, the trade profiles' slug
+     pattern — and NOT a trade profile: no wines, no portfolio, no
+     partnership, no Request Partnership anywhere (PP-1, PP-6). The
+     vocabulary is A18.6's: a Platform Partner, never a fifth trade
+     role.
+
+     IT READS AND NEVER WRITES (DIR-4). The demo state arrives through
+     BLStore.hydrate() over the fixed public allowlist — the fair
+     collections — and the partner record is the canonical fixture in
+     the shared data asset (nothing writes a partner row today, A23.5).
+     The Verified badge and the fair-brand badges come from the store's
+     encapsulated PUBLIC VERDICT (A23.4): the register's last word,
+     derived inside the store over the validated snapshot, rows never
+     leaving it; without a valid snapshot there is no word and the badge
+     simply does not stand — the page then claims nothing.
+
+     Save & Follow is a LINK into the private area (?follow=): the act
+     is executed in the member's own dashboard under the identity
+     derived there (A23.3). This page records no follow, shows no
+     follower name and no follower figure (A23.1).
+     ══════════════════════════════════════════════════════════════════ -->
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --ink:   #0e0b0b;
+  --paper: #f7f3ee;
+  --wine:  #6b1a1a;
+  --gold:  #b8975a;
+  --smoke: #1a1212;
+  --dim:   rgba(247,243,238,0.45);
+  --line:  rgba(247,243,238,0.07);
+  --green: #2d6a4f;
+}
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--ink);
+  color: var(--paper);
+  font-size: 14px;
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+/* ── NAV (B1) ── */
+nav {
+  position: sticky; top: 0; z-index: 100;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 1.4rem 3rem;
+  background: rgba(14,11,11,0.97);
+  border-bottom: 1px solid var(--line);
+  backdrop-filter: blur(4px);
+}
+.nav-logo {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.35rem; font-weight: 300;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--paper); text-decoration: none;
+}
+.nav-logo span { color: var(--gold); }
+.nav-links { display:flex; gap:1.5rem; list-style:none; }
+.nav-links a { font-size:0.66rem; letter-spacing:0.07em; text-transform:uppercase; color:rgba(247,243,238,0.6); text-decoration:none; transition:color .2s; }
+.nav-links a:hover { color:var(--paper); }
+.btn { font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; padding: 0.55rem 1.4rem; border-radius: 2px; text-decoration: none; font-weight: 500; transition: all 0.2s; border: 1px solid transparent; cursor: pointer; font-family: 'Inter', sans-serif; display: inline-block; }
+.nav-right { display: flex; gap: 0.6rem; align-items: center; }
+.btn-sm {
+  font-size: 0.65rem; letter-spacing: 0.12em; text-transform: uppercase;
+  padding: 0.5rem 1.1rem; border-radius: 2px; cursor: pointer;
+  border: none; font-family: 'Inter', sans-serif; font-weight: 500;
+  transition: opacity 0.2s; text-decoration: none; display: inline-block;
+}
+.btn-sm:hover { opacity: 0.8; }
+.btn-gold { background: var(--gold); color: var(--ink); }
+.btn-outline { background: transparent; border: 1px solid var(--line); color: var(--dim); }
+.btn-gold-outline { background:transparent; border:1px solid var(--gold); color:var(--gold); }
+.follow-btn { border: 1px solid var(--line); }
+
+/* ── HERO (B3 template metrics) ── */
+.profile-hero {
+  height: 300px;
+  background: linear-gradient(135deg, #2a1f0d 0%, #14100a 40%, #0e0b0b 100%);
+  position: relative; overflow: hidden;
+  display: flex; align-items: flex-end;
+}
+.profile-hero::before {
+  content: '';
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(135deg, rgba(184,151,90,0.10) 1px, transparent 1px),
+    linear-gradient(45deg, rgba(184,151,90,0.05) 1px, transparent 1px);
+  background-size: 60px 60px, 100px 100px;
+}
+.profile-hero-overlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(to top, rgba(14,11,11,0.92) 0%, transparent 60%);
+}
+.hero-vineyard-text {
+  position: absolute;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 16vw; font-weight: 300;
+  color: rgba(184,151,90,0.06);
+  white-space: nowrap; top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+.profile-hero-content {
+  position: relative; z-index: 2;
+  padding: 2rem 3rem;
+  display: flex; align-items: flex-end; gap: 2rem; width: 100%;
+}
+.profile-avatar-large {
+  width: 80px; height: 80px; border-radius: 4px;
+  background: #2b2416;
+  border: 2px solid rgba(184,151,90,0.45);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 2rem; color: var(--paper);
+  flex-shrink: 0;
+}
+.profile-hero-info { flex: 1; }
+.profile-hero-name {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 2.4rem; font-weight: 300; color: var(--paper); line-height: 1;
+  margin-bottom: 0.4rem;
+}
+.profile-hero-meta { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; }
+.profile-hero-location { font-size: 0.78rem; color: var(--dim); }
+.profile-badge {
+  font-size: 0.58rem; letter-spacing: 0.12em; text-transform: uppercase;
+  padding: 0.2rem 0.6rem; border-radius: 2px; font-weight: 500;
+}
+.badge-verified { background: rgba(45,106,79,0.2); color: #4caf7d; }
+.badge-partner  { background: rgba(184,151,90,0.12); color: var(--gold); }
+.badge-brand    { background: rgba(30,60,120,0.3); color: #7faaf0; }
+.profile-hero-actions { display: flex; gap: 0.6rem; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
+
+/* ── LAYOUT ── */
+.profile-layout {
+  max-width: 1100px; margin: 0 auto;
+  display: grid; grid-template-columns: 2fr 1fr;
+  gap: 2rem; padding: 2rem 2.5rem;
+}
+.op-section { margin-bottom: 2.4rem; }
+.op-section-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.5rem; font-weight: 300; color: var(--paper);
+  margin-bottom: 0.9rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--line);
+  display:flex; align-items:baseline; gap:0.6rem;
+}
+.op-section-title small { font-family:'Inter',sans-serif; font-size:0.62rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--dim); }
+.about-text { font-size: 0.88rem; color: var(--dim); line-height: 1.9; margin-bottom: 1.5rem; }
+.about-text p { margin-bottom: 1rem; }
+.facts-grid {
+  display: grid; grid-template-columns: repeat(2,1fr);
+  gap: 1px; background: var(--line); border: 1px solid var(--line);
+  margin-bottom: 2rem;
+}
+.fact { background: var(--ink); padding: 1rem 1.2rem; }
+.fact-label { font-size: 0.6rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--dim); margin-bottom: 0.3rem; }
+.fact-value { font-size: 0.88rem; color: var(--paper); }
+
+/* Fair rows — the shell metrics of the wine cards, their own name */
+.op-fairs { display: flex; flex-direction: column; gap: 1px; background: var(--line); border: 1px solid var(--line); margin-bottom: 1rem; }
+.op-fair {
+  background: var(--ink); padding: 1.3rem 1.6rem;
+  display: grid; grid-template-columns: 1fr auto; gap: 1.1rem; align-items: start;
+}
+.op-fair:hover { background: #140f0f; }
+.op-fair-kind { font-size:0.6rem; letter-spacing:0.14em; text-transform:uppercase; color:var(--gold); margin-bottom:0.3rem; }
+.op-fair-name { font-family: 'Cormorant Garamond', serif; font-size: 1.2rem; font-weight: 400; color: var(--paper); margin-bottom: 0.2rem; }
+.op-fair-meta { font-size: 0.75rem; color: var(--dim); line-height:1.7; }
+.op-fair-desc { font-size: 0.78rem; color: var(--dim); line-height: 1.7; margin-top:0.4rem; }
+.op-fair-links { display:flex; flex-direction:column; gap:0.4rem; align-items:flex-end; text-align:right; }
+.op-fair-tag { font-size:0.56rem; letter-spacing:0.1em; text-transform:uppercase; padding:0.18rem 0.5rem; border-radius:2px; background:rgba(184,151,90,0.1); color:var(--gold); }
+.op-fair-tag.call { background: rgba(45,106,79,0.15); color: #4caf7d; }
+.op-link { color: var(--gold); text-decoration: none; font-size: 0.74rem; border-bottom: 1px solid transparent; transition: border-color .2s; }
+.op-link:hover { border-color: var(--gold); }
+.op-empty { font-size:0.82rem; color:var(--dim); padding:1.2rem 1.4rem; border:1px dashed rgba(247,243,238,0.12); line-height:1.8; }
+.op-note { font-size:0.72rem; color:var(--dim); line-height:1.75; }
+
+/* Series */
+.op-series { border:1px solid var(--line); background:#110d0d; padding:1.2rem 1.4rem; margin-bottom:1px; display:flex; gap:1rem; align-items:flex-start; flex-wrap:wrap; }
+.op-series-name { font-family:'Cormorant Garamond',serif; font-size:1.15rem; color:var(--paper); }
+.op-series-about { font-size:0.78rem; color:var(--dim); line-height:1.7; margin-top:0.25rem; }
+
+/* Sidebar */
+.profile-sidebar { display: flex; flex-direction: column; gap: 1.5rem; }
+.sidebar-widget { background: #110d0d; border: 1px solid var(--line); }
+.sidebar-widget-header {
+  padding: 0.9rem 1.2rem;
+  border-bottom: 1px solid var(--line);
+  font-size: 0.62rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--dim);
+}
+.sidebar-widget-body { padding: 1.2rem; }
+.stat-row { display: flex; justify-content: space-between; align-items: center; padding: 0.6rem 0; border-bottom: 1px solid rgba(247,243,238,0.04); }
+.stat-row:last-child { border-bottom: none; }
+.stat-row-label { font-size: 0.75rem; color: var(--dim); }
+.stat-row-value { font-family: 'Cormorant Garamond', serif; font-size: 1.2rem; color: var(--paper); }
+.op-disclaim { font-size:0.7rem; color:var(--dim); line-height:1.7; margin-top:0.7rem; padding-top:0.7rem; border-top:1px solid rgba(247,243,238,0.05); }
+.op-inline-note { display:none; margin: 0.9rem 3rem 0; max-width:1100px; font-size:0.78rem; color:var(--gold); background:rgba(184,151,90,0.07); border:1px solid rgba(184,151,90,0.25); padding:0.8rem 1.1rem; line-height:1.7; }
+.op-inline-note.show { display:block; }
+.op-inline-note button { float:right; background:none; border:none; color:var(--dim); cursor:pointer; font-size:0.9rem; }
+
+/* Preview banner (embed mode from the organizer cockpit, B6) */
+.preview-banner {
+  background: rgba(184,151,90,0.08);
+  border-bottom: 1px solid rgba(184,151,90,0.2);
+  padding: 0.7rem 2.5rem;
+  display: none; align-items: center; justify-content: space-between;
+  font-size: 0.72rem; color: var(--gold);
+}
+html.embed-preview nav { display:none !important; }
+html.embed-preview .preview-banner { display:flex !important; }
+html.embed-preview .floating-cta { display:none !important; }
+
+/* scrollbar */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(247,243,238,0.08); border-radius: 2px; }
+
+@media (max-width:860px) {
+  .profile-layout { grid-template-columns: 1fr; }
+  .profile-hero-content { flex-direction: column; align-items: flex-start; }
+  .profile-hero-actions { justify-content: flex-start; }
+  .op-inline-note { margin: 0.9rem 1.2rem 0; }
+}
+
+/* ── FOOTER (canonical, B2) ── */
+footer {
+  background: #070404;
+  padding: 3rem 3rem 2.2rem;
+  border-top: 1px solid rgba(247,243,238,0.05);
+}
+.footer-top {
+  display: flex; justify-content: flex-start; align-items: flex-start;
+  max-width: 1400px; margin: 0 auto; gap: 2.5rem; flex-wrap: wrap;
+}
+.footer-divider { width: 1px; align-self: stretch; background: var(--gold); opacity: 0.4; }
+.footer-logo {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.1rem;
+  font-weight: 300;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(247,243,238,0.3);
+}
+.footer-logo span { color: var(--gold); }
+.footer-brand { display:flex; flex-direction:column; gap:0.5px; }
+.footer-copy {
+  font-size: 0.6336rem;
+  color: rgba(247,243,238,0.2);
+  letter-spacing: 0.05em;
+}
+.footer-tagline {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 0.85rem;
+  font-weight: 300;
+  color: rgba(247,243,238,0.35);
+  margin-top: 0.6rem;
+}
+.footer-tagline em { color: var(--gold); font-style: italic; }
+.footer-mission {
+  font-size: 0.66rem;
+  color: rgba(247,243,238,0.25);
+  line-height: 1.6;
+  max-width: 340px;
+  margin-top: 0.5rem;
+}
+.footer-sitemap { display: flex; gap: 3.2rem; flex-wrap: wrap; }
+.footer-col { display: flex; flex-direction: column; gap: 0.55rem; min-width: 110px; }
+.footer-col-title { font-size: 0.6rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold); opacity: 0.75; margin-bottom: 0.2rem; }
+.footer-col a {
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+  color: rgba(247,243,238,0.35);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.footer-col a:hover { color: rgba(247,243,238,0.7); }
+@media (max-width: 900px) {
+  .footer-top { flex-direction: column; gap: 2rem; text-align: center; }
+  .footer-divider { display: none; }
+  .footer-brand { align-items: center; }
+  .footer-sitemap { justify-content: center; gap: 2rem; width: 100%; }
+  .footer-col { align-items: center; }
+}
+/* ── FLOATING CTA (canonical, B2) ── */
+.floating-cta {
+  position: fixed;
+  bottom: 2rem;
+  right: 3rem;
+  z-index: 150;
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  background: rgba(14,11,11,0.97);
+  backdrop-filter: blur(4px);
+  padding: 0.6rem;
+  border-radius: 8px;
+  border: 1px solid rgba(247,243,238,0.1);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.4);
+}
+@media (max-width: 640px) {
+  .floating-cta { right: 1.2rem; bottom: 1.2rem; padding: 0.45rem; gap: 0.5rem; }
+  .floating-cta .btn { padding: 0.5rem 1rem; font-size: 0.65rem; }
+}
+</style>
+</head>
+<body>
+<script>if(new URLSearchParams(location.search).get('preview')==='embed'){document.documentElement.classList.add('embed-preview');}</script>
+
+<nav>
+  <a href="bottle-lobby.html" class="nav-logo">Bottle<span>&nbsp;Lobby</span></a>
+  <ul class="nav-links">
+    <li><a href="bottle-lobby-market.html">Market</a></li>
+    <li><a href="bottle-lobby.html#solution">The Lobby</a></li>
+    <li><a href="bottle-lobby.html#stakeholders">Why Lobbying</a></li>
+    <li><a href="bottle-lobby.html#how">How it Works</a></li>
+    <li><a href="bottle-lobby-wine-guide.html">Wine Guide</a></li>
+    <li><a href="bottle-lobby.html#shows">Wine Shows</a></li>
+    <li><a href="bottle-lobby.html#wines">Own Label</a></li>
+    <li><a href="bottle-lobby.html#app">The App</a></li>
+    <li><a href="bottle-lobby.html#about">About</a></li>
+    <li><a href="bottle-lobby.html#membership">Membership</a></li>
+    <li><a href="bottle-lobby.html#investors">Partners</a></li>
+  </ul>
+  <div class="nav-right">
+    <a href="bottle-lobby-wine-guide.html#events" class="btn btn-outline">← Wine Guide</a>
+    <a href="bottle-lobby-dashboard.html#messages" class="btn btn-gold">Send Message</a>
+  </div>
+</nav>
+
+<div class="preview-banner">
+  <span>✦ This is how trade members see your organizer profile</span>
+</div>
+
+<!-- Everything below the header renders from the shared records:
+     partner record, fair series, editions and the store's public
+     verdict — nothing about the organizer is typed into this markup. -->
+<div id="op-root"></div>
+
+<footer>
+  <div class="footer-top">
+    <div class="footer-brand">
+      <div class="footer-logo">Bottle<span>&nbsp;Lobby</span></div>
+      <p class="footer-copy">© 2026 Caracter Media GmbH</p>
+      <p class="footer-tagline">Where great wines find their <em>market.</em></p>
+      <p class="footer-mission">We are redefining how wine crosses borders<br>bringing efficiency, exclusivity, and profitability<br>to every glass poured.</p>
+    </div>
+    <div class="footer-divider"></div>
+    <div class="footer-sitemap">
+      <div class="footer-col">
+        <div class="footer-col-title">Platform</div>
+        <a href="bottle-lobby-wine-guide.html">Wine Guide</a>
+        <a href="bottle-lobby-wine-shows.html">Wine Shows</a>
+        <a href="bottle-lobby-own-label.html">Own Label</a>
+        <a href="bottle-lobby-app.html">The App</a>
+      </div>
+      <div class="footer-col">
+        <div class="footer-col-title">Company</div>
+        <a href="bottle-lobby-market.html">Market</a>
+        <a href="bottle-lobby-platform.html">The Lobby</a>
+        <a href="bottle-lobby-about.html">About</a>
+        <a href="bottle-lobby-why-join.html">Why Join</a>
+      </div>
+      <div class="footer-col">
+        <div class="footer-col-title">Account</div>
+        <a href="bottle-lobby-dashboard.html">Dashboard</a>
+        <a href="bottle-lobby-profile-demo.html">Public Profile</a>
+        <a href="bottle-lobby-contact.html">Apply</a>
+      </div>
+      <div class="footer-col">
+        <div class="footer-col-title">Contact</div>
+        <a href="bottle-lobby-contact-us.html">Contact Us</a>
+        <a href="bottle-lobby-investor.html">Partners</a>
+        <a href="bottle-lobby-contact-us.html">Imprint</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<!-- FLOATING CTA -->
+<div class="floating-cta">
+  <a href="bottle-lobby-dashboard.html" class="btn btn-outline">Member Login</a>
+  <a href="bottle-lobby-contact.html" class="btn btn-gold">Join Now</a>
+</div>
+
+<!-- ══ SHARED ASSETS — the same files the dashboard loads, in the same
+     order: the store first for the read-only hydration and the public
+     verdict, then data, then the public derivations. -->
+<script src="assets/bottle-lobby-store.js?v=3656e619"></script>
+<script src="assets/bottle-lobby-data.js?v=f3d32614"></script>
+<script src="assets/bottle-lobby-public-shows.js?v=675b3c81"></script>
+<script>
+(function () {
+  /* This page declares WHO it is, like a trade profile declares its
+     entity — and nothing else about the organizer: every fact below
+     is read from the record. */
+  const PARTNER_ID = 'PP-9001';
+
+  /* HYDRATION, read-only (A21.8/DIR-4): register exactly the public
+     collections — hydrate() refuses anything outside its fixed
+     allowlist — and never call start(). platformPartners is not
+     registered here: nothing writes a partner row today, so the page
+     reads the canonical fixture record (A23.5). */
+  BLStore.register({
+    fairSeries:         [function () { return fairSeries; },         function (v) { fairSeries = v; }],
+    fairEditions:       [function () { return fairEditions; },       function (v) { fairEditions = v; }],
+    fairHalls:          [function () { return fairHalls; },          function (v) { fairHalls = v; }],
+    fairStands:         [function () { return fairStands; },         function (v) { fairStands = v; }],
+    fairParticipations: [function () { return fairParticipations; }, function (v) { fairParticipations = v; }]
+  });
+  BLStore.hydrate();
+
+  const root = document.getElementById('op-root');
+  const p = platformPartner(PARTNER_ID);
+  if (!p || (p.capabilities || []).indexOf('organizer') === -1) {
+    root.innerHTML = '<div class="profile-layout"><p class="op-empty">There is no public organizer profile at this address.</p></div>';
+    return;
+  }
+
+  /* ── The verdicts — derived inside the store, rows never leave it
+     (A23.4). true → the badge stands; false or null → it does not, and
+     the page says nothing either way. */
+  const verified   = BLStore.publicVerdict('partner_verification', p.id);
+  const series     = fairSeriesOf(p.id);
+  const brandOk    = {};
+  series.forEach(function (s) { brandOk[s.id] = BLStore.publicVerdict('series_brand_review', s.id); });
+  document.documentElement.setAttribute('data-verdict',
+    verified === true ? 'approved' : verified === false ? 'refused' : 'none');
+
+  const upcoming = organizerUpcomingEditions(p.id);
+  const calls    = organizerOpenCalls(p.id);
+  const callCap  = organizerCallCaption(calls);
+  const caps     = (p.capabilities || []).map(function (c) { return PARTNER_CAPABILITY_LABEL[c] || c; });
+  const initials = p.name.split(/\s+/).map(function (w) { return w[0]; }).join('').slice(0, 2).toUpperCase();
+  const esc = notifEsc;
+
+  /* ── HERO ACTIONS, in the fixed order (A23.5), styles derived from
+     B4: no solid tier (that is the A6 entry, absent on purpose), the
+     two fair actions in the role-specific tier, Send Inquiry plain,
+     Save & Follow last with .follow-btn. Save & Follow is a LINK into
+     the private area — no write path here, no success claimed. */
+  const actions =
+    '<a class="btn-sm btn-gold-outline" href="#op-upcoming">View Upcoming Fairs</a>' +
+    (callCap
+      ? '<a class="btn-sm btn-gold-outline op-call-action" href="bottle-lobby-dashboard.html?calls=' + encodeURIComponent(p.id) + '" ' +
+          'title="Opens your member dashboard — wineries and distributors apply under Events → Wine Shows; nothing is applied for on this page">' +
+          esc(callCap) + '</a>'
+      : '') +
+    '<button type="button" class="btn-sm btn-outline op-inquiry" onclick="opInquiry()">✉ Send Inquiry</button>' +
+    '<a class="btn-sm btn-outline follow-btn" href="bottle-lobby-dashboard.html?follow=' + encodeURIComponent(p.id) + '" ' +
+      'title="Saved in your member dashboard under My Stars — nothing is recorded on this page">🔖 Save &amp; Follow</a>';
+
+  const badges =
+    (verified === true ? '<span class="profile-badge badge-verified">✓ Verified Platform Partner</span>' : '') +
+    '<span class="profile-badge badge-partner">' + esc(caps.join(' · ')) + '</span>';
+
+  /* ── UPCOMING FAIRS: discoverable, not past, own series — derived
+     (A19.3), linking at the existing public surfaces only (DIR-1). */
+  const fairRows = upcoming.map(function (ed) {
+    const s  = fairSeriesById(ed.seriesId);
+    const ex = fairEditionExhibitors(ed);
+    const dates = blDate(ed.startDate) + (ed.endDate ? ' – ' + blDate(ed.endDate) : ' (one day)');
+    const stands = ex.length
+      ? ex.map(function (fp) {
+          return '<a class="op-link" href="bottle-lobby-fair-participation.html?id=' + encodeURIComponent(fp.id) + '">' + esc(fp.org) + ' →</a>';
+        }).join('')
+      : '';
+    return '<div class="op-fair" data-edition-id="' + esc(ed.id) + '">' +
+      '<div>' +
+        '<div class="op-fair-kind">Fair · ' + esc(FAIR_TYPE_LABEL[ed.fairType] || '') + '</div>' +
+        '<div class="op-fair-name">' + esc(s ? s.name : '') + ' ' + esc((ed.startDate || '').slice(0, 4)) + '</div>' +
+        '<div class="op-fair-meta">' + dates + ' · ' + esc(ed.venue || ed.city) + '</div>' +
+        (ed.description ? '<div class="op-fair-desc">' + esc(ed.description) + '</div>' : '') +
+        '<div class="op-fair-meta" style="margin-top:0.5rem">' +
+          (ex.length ? ex.length + ' exhibitor presence(s) published' : 'No exhibitor has published a stand here yet.') +
+        '</div>' +
+      '</div>' +
+      '<div class="op-fair-links">' +
+        (ed.exhibitorCallOpen ? '<span class="op-fair-tag call">Exhibitor call open</span>' : '<span class="op-fair-tag">' + esc(FAIR_TYPE_LABEL[ed.fairType] || 'Fair') + '</span>') +
+        '<a class="op-link" href="bottle-lobby-wine-guide.html#events">Full listing in the Wine Guide →</a>' +
+        stands +
+      '</div>' +
+    '</div>';
+  }).join('');
+
+  const seriesRows = series.map(function (s) {
+    const n = organizerUpcomingEditions(p.id).filter(function (ed) { return ed.seriesId === s.id; }).length;
+    return '<div class="op-series" data-series-id="' + esc(s.id) + '">' +
+      '<div style="flex:1;min-width:220px">' +
+        '<div class="op-series-name">' + esc(s.name) + '</div>' +
+        (s.about ? '<div class="op-series-about">' + esc(s.about) + '</div>' : '') +
+        '<div class="op-note" style="margin-top:0.4rem">' + n + ' upcoming published edition(s)</div>' +
+      '</div>' +
+      (brandOk[s.id] === true ? '<span class="profile-badge badge-brand op-brand-badge">✓ Fair brand verified</span>' : '') +
+    '</div>';
+  }).join('');
+
+  root.innerHTML =
+    '<div class="profile-hero">' +
+      '<div class="hero-vineyard-text">' + esc(p.city.toUpperCase()) + '</div>' +
+      '<div class="profile-hero-overlay"></div>' +
+      '<div class="profile-hero-content">' +
+        '<div class="profile-avatar-large">' + esc(initials) + '</div>' +
+        '<div class="profile-hero-info">' +
+          '<div class="profile-hero-name">' + esc(p.name) + '</div>' +
+          '<div class="profile-hero-meta">' +
+            '<span class="profile-hero-location">📍 ' + esc(p.city) + ', ' + esc(p.country) + ' · Platform Partner</span>' +
+            badges +
+          '</div>' +
+        '</div>' +
+        '<div class="profile-hero-actions">' + actions + '</div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="op-inline-note" id="op-note" role="status"></div>' +
+    '<div class="profile-layout">' +
+      '<div>' +
+        '<div class="op-section" id="op-about">' +
+          '<div class="op-section-title">About <small>Platform Partner · ' + esc(caps.join(' · ')) + '</small></div>' +
+          '<div class="about-text"><p>' + esc(p.about) + '</p></div>' +
+          '<div class="facts-grid">' +
+            '<div class="fact"><div class="fact-label">Category</div><div class="fact-value">Platform Partner</div></div>' +
+            '<div class="fact"><div class="fact-label">Capability</div><div class="fact-value">' + esc(caps.join(' · ')) + '</div></div>' +
+            '<div class="fact"><div class="fact-label">Based in</div><div class="fact-value">' + esc(p.city) + ', ' + esc(p.country) + '</div></div>' +
+            '<div class="fact"><div class="fact-label">Fair series on Bottle Lobby</div><div class="fact-value">' + series.length + '</div></div>' +
+            '<div class="fact"><div class="fact-label">Upcoming published editions</div><div class="fact-value">' + upcoming.length + '</div></div>' +
+            '<div class="fact"><div class="fact-label">Open exhibitor calls</div><div class="fact-value">' + calls.length + '</div></div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="op-section" id="op-upcoming">' +
+          '<div class="op-section-title">Upcoming Fairs <small>' + upcoming.length + ' published</small></div>' +
+          (fairRows
+            ? '<div class="op-fairs">' + fairRows + '</div>'
+            : '<div class="op-empty">No upcoming published edition at the moment — this organizer\'s next fair appears here the day it is published.</div>') +
+          '<p class="op-note">Editions are published by the organizer who runs them. Bottle Lobby verifies the organizer and the fair brand — it does not review or release an edition. Full listings and filters live in the Wine Guide → Events.</p>' +
+        '</div>' +
+        '<div class="op-section" id="op-series">' +
+          '<div class="op-section-title">Fair Series <small>' + series.length + ' brand(s)</small></div>' +
+          (seriesRows || '<div class="op-empty">No fair series yet.</div>') +
+        '</div>' +
+      '</div>' +
+      '<div class="profile-sidebar">' +
+        '<div class="sidebar-widget" id="op-verification">' +
+          '<div class="sidebar-widget-header">Verification</div>' +
+          '<div class="sidebar-widget-body">' +
+            (verified === true
+              ? '<span class="profile-badge badge-verified">✓ Verified Platform Partner</span>' +
+                '<div class="op-disclaim">' + esc(PARTNER_VERIFIED_DISCLAIMER) + '</div>'
+              : '<div class="op-note">A Verified badge appears here only while Bottle Lobby\'s verification of this organisation stands.</div>') +
+          '</div>' +
+        '</div>' +
+        '<div class="sidebar-widget">' +
+          '<div class="sidebar-widget-header">At a glance</div>' +
+          '<div class="sidebar-widget-body">' +
+            '<div class="stat-row"><span class="stat-row-label">Fair series</span><span class="stat-row-value">' + series.length + '</span></div>' +
+            '<div class="stat-row"><span class="stat-row-label">Upcoming editions</span><span class="stat-row-value">' + upcoming.length + '</span></div>' +
+            '<div class="stat-row"><span class="stat-row-label">Open exhibitor calls</span><span class="stat-row-value">' + calls.length + '</span></div>' +
+            '<div class="stat-row"><span class="stat-row-label">Fair types</span><span class="stat-row-value" style="font-size:0.8rem;font-family:Inter,sans-serif">' +
+              esc([...new Set(upcoming.map(function (e) { return FAIR_TYPE_LABEL[e.fairType] || e.fairType; }))].join(' · ') || '—') + '</span></div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="sidebar-widget">' +
+          '<div class="sidebar-widget-header">Following this organizer</div>' +
+          '<div class="sidebar-widget-body">' +
+            '<div class="op-note">Save &amp; Follow bookmarks this organizer under My Stars in your member dashboard. ' +
+              'A follow is a signal, not a partnership: it creates no trade relation, obliges nobody and is no consent to be addressed. ' +
+              'Trade partnerships stay between the four trade roles.</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+})();
+
+/* Send Inquiry — the trade profiles' button, mirrored (M3b measured: on
+   every trade profile it is inert markup with no handler behind it).
+   Here it says what the original does not (B12): an inquiry that
+   reaches an organizer is O11's, and nothing was sent. No messaging
+   system, no message table. */
+function opInquiry() {
+  const n = document.getElementById('op-note');
+  if (!n) return;
+  n.innerHTML = '<button type="button" onclick="this.parentNode.classList.remove(\'show\')" aria-label="Close">✕</button>' +
+    'Nothing was sent. Inquiries that reach an organizer arrive with the organizer-communication pass (O11) — until then, ' +
+    'this button records nothing and promises nothing.';
+  n.classList.add('show');
+  n.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+</script>
+
+</body>
+</html>
