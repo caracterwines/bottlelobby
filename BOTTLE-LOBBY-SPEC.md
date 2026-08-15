@@ -3357,7 +3357,9 @@ audience, reminder resolution, stages, the suppression resolver and the volume
 limit, for both carrier kinds.
 
 **DIR-1..DIR-3 and DIR-5..DIR-7 live in `tests/wine-guide-page.js`** — the
-directory's own harness since O9's Events tab, extended rather than doubled:
+directory's own harness since the Events tab of Durchgang 9 (the pass
+numbering before the fair track, 9 Aug 2026 — not fair-track O9), extended
+rather than doubled:
 A16.14d is one rule and a second file over the same surface would be two places
 to keep it. **The persistence half of DIR-4** — a change saved in the dashboard
 reaching the Guide, and the Guide never writing — lives as its own section in
@@ -4435,7 +4437,8 @@ trades here, and nothing about them changes. A platform partner:
   campaign audience resolver (A16.14e) neither count nor address a partner
   workspace. This states the situation as of the foundation pass; a later
   pass may open a **named, measured** read path (A18.5 names the first
-  candidate), but nothing opens by accident.
+  candidate), but nothing opens by accident — **O9 opened exactly that
+  one: My Stars renders a house's own partner follows (A23.6, PP-3).**
 
 The first active capability is **Organizer** (written out: *Fair & Event
 Organizer*) — the party that owns and runs a canonical fair (A16.8). What an
@@ -4519,12 +4522,17 @@ word). It is **not a trade partnership and creates no partnership request** —
 *Request Partnership* remains reserved for trade relations between trade
 roles.
 
-**A7 stays technically unchanged and trade-related in this pass.** Whether
-the existing follow store can safely generalise to partner targets, or
-whether a separately bounded storage path is needed, is the subject of its
-own later **measured** follow pass. Until that measurement exists, no
-parallel workflow is built — and this chapter deliberately fixes **no field
-name and no storage form** for the partner follow.
+**A7 stays technically unchanged and trade-related.** Whether the existing
+follow store could safely generalise to partner targets, or whether a
+separately bounded storage path was needed, was the subject of its own
+later **measured** follow pass — **that pass is O9 (A23), and the
+measurement is done:** every A7 reader resolves both endpoints through
+`stakeholder()`, and a partner target would surface as a trade opportunity
+and in the reach community (A23.2). The decision is a **separately bounded
+store, `partner_follows`**, with a target-sort discriminator that names the
+leading register (D47); the field names and the storage form live in A23,
+not here. Until O9 no parallel workflow was built, as this sentence
+demanded.
 
 ### A18.6 Public wording — fixed formulas, no rollout now
 
@@ -4553,14 +4561,23 @@ pass.
   holds two separately verified workspaces.
 - **PP-3 — no trade enumeration counts a partner workspace.** Asserted as
   the state of the foundation pass — a later measured pass may open a named
-  read path; none opens by accident.
+  read path; none opens by accident. **Since O9 exactly ONE named, measured
+  read path is open (A23.6): the My Stars section of the four trade
+  cockpits renders the house's own `partner_follows`, resolved through the
+  partner register.** Everything else stays shut: the order registry, the
+  show and event registries, the reach taxonomy, the partner counters and
+  the campaign audience resolver neither count nor address a partner
+  workspace.
 - **PP-4 — verification is the register's last word.** No stored flag; the
   badge derives from the approved `partner_verification` row and falls
   without it.
 - **PP-5 — `media_partner` is a value, not a feature.** Permitted in the
   capability model, instantiated nowhere, rendered nowhere.
 - **PP-6 — a follow toward a partner is directed and non-commercial** and
-  creates no partnership request. (Semantics only in this pass — no build.)
+  creates no partnership request. Semantics only in the foundation pass;
+  **built and measured since O9 (A23, OP-1/OP-5)**: the act writes an
+  edge and nothing else, and no partner surface or partner entry offers
+  *Request Partnership*.
 
 **Prototype blueprint:** `platformPartners` array and
 `PARTNER_CAPABILITIES` in `bottle-lobby-dashboard.html`, verification derived
@@ -4577,9 +4594,11 @@ counter-mutations: the structural workspace separation on the rendered
 surface, absence from every trade enumeration (securing the as-is state of
 the foundation pass, not forbidding a later measured organizer follow),
 `media_partner` permitted-but-never-instantiated, the badge falling with the
-review row, and unchanged samples of the four trade dashboards. PP-6 is
-business semantics without a build and is asserted as absence: no partner
-surface offers *Request Partnership*.
+review row, and unchanged samples of the four trade dashboards. PP-6 was
+asserted as absence until O9; since O9 the follow act exists and PP-6 is a
+real assertion — the trade-graph half here (no partner edge ever enters
+`wineFollowGraph`), the act and the surfaces in `tests/organizer-profile.js`
+(A23). PP-3's one opened path is measured there too.
 
 ---
 
@@ -6025,6 +6044,418 @@ counter-mutations, including the two-part actor-derivation counter-mutation
 (surplus argument refused unread; the same call without it judged on
 `activeShowRole` alone), the signature scan over the ten function heads, and
 unchanged samples of the four trade dashboards and the directory count.
+
+---
+
+## A23. The Public Organizer Profile and the Partner Follow
+
+> Serge's decision of 15 Aug 2026 — fair-track anchor **O9**. The pass A18.5
+> announced: the **measurement** of the existing A7 follow path before any
+> storage decision, the storage decision that follows from it (D47), the
+> public organizer profile in the design quality of the trade profiles, a
+> **real, persisting** follow act over the existing authenticated path, and
+> the one **named, measured** read path (PP-3) through which a trade member
+> sees its own organizer follows in My Stars. Nothing here is a trade
+> feature: no partnership, no order, no listing, no *Request Partnership*
+> anywhere near an organizer (PP-1, PP-6). Organizer-side communication —
+> a follower view, a "started following you" notification into the partner
+> workspace, an inquiry that reaches the organizer — is **O11** and is named
+> as such below, not built here.
+
+### A23.1 Business semantics — decided, anchored word for word
+
+1. **Organizer, fair-series and fair-edition follows are DIRECTED** — the
+   follower chooses, the followed side consents to nothing (A18.5, A7 word
+   for word).
+2. **A follow is not a trade partnership and creates no partnership
+   request.** *Request Partnership* stays reserved for trade relations
+   between trade roles.
+3. **A follow is neither marketing consent nor an automatic right to
+   address anybody.** D43 holds exactly as written: announcement recipients
+   are the host's OWN INCOMING A7 follow edges, optionally plus his OWN
+   ACTIVE A6 partners — and nobody else. Organizer, fair-series and
+   fair-edition follows **never enter that resolver**; no such follow
+   creates a new audience or a communication right for anyone.
+4. **Foreign follow graphs and private single follow relations are not
+   disclosed** — neither publicly nor to third parties.
+5. **Fixed for O9, not measurable:** NO follower names on any surface of
+   this pass, NO public follower figure, NO organizer-side follower view,
+   and NO follow notification into the organizer workspace — organizer-side
+   communication is **O11**.
+6. **Organizer, Fair Series and Fair Edition are THREE SEMANTICALLY
+   DIFFERENT follow targets.** Profile, series and edition identity are
+   neither copied nor mixed; a follow target is never resolved through the
+   identity of another record.
+
+### A23.2 The A7 follow path, measured — and the storage decision (D47)
+
+Measured before anything was built, as A18.5 demanded:
+
+- **Shape and place.** `wineFollowGraph` lives in
+  `bottle-lobby-dashboard.html`, three fields per row — `follower` /
+  `winery` / `at` — both endpoints held as **stakeholder names**. It is
+  registered with the store, so a snapshot restores it.
+- **Every reader resolves an endpoint through `stakeholder(name)`.**
+  `renderWineStarsFor()` resolves the followed side (`f.winery`) for avatar,
+  role tag and label; `renderFansFor()` and the C9 "started following you"
+  notification resolve the follower; `notifWineryEdge()` (the two A8 signals)
+  asks `stakeholder(winery).type === 'winery'`; `renderDistributorOpportunities()`
+  groups by `f.winery` and offers **"Consider onboarding →"** on every group;
+  `hostCommunity()` (the reach level `community`, A16.14b) pushes both
+  endpoints; `fansOf()` — the **D43 audience resolver** — reads the incoming
+  half by `f.winery === host`. `tests/stakeholders.js` fails the build the
+  moment a name outside the `stakeholders` table reaches `stakeholder()`.
+- **The resolution premise does not hold for the new targets.** A partner
+  workspace has no `stakeholders` row and must never gain one (PP-2,
+  asserted in `tests/platform-partners.js`); a fair series and a fair edition
+  are not accounts at all — their identity is a record key (`FS-…`,
+  `FE-…`), never a name.
+- **Collision, concretely.** A row with a partner target in the graph today
+  would (i) render in My Stars as a card without avatar or role while
+  `tests/stakeholders.js` goes red; (ii) surface in the distributor's
+  Opportunities as *"New winery for you — Consider onboarding →"* — a
+  **trade action offered on a platform partner**, PP-1 broken on a rendered
+  surface; (iii) count in `hostCommunity()`, so a trade host's *"your
+  community of N account(s)"* would count a partner workspace and the reach
+  taxonomy would name one (PP-3 broken); (iv) reach the D43 resolver only
+  by the accident that no partner or series is named like a trade host —
+  a guarantee by string coincidence, not by structure. Neither the graph
+  nor its readers carry a target-type discriminator, and A7 removed
+  `followedType` on purpose: *what a trade account is* was never the
+  edge's fact.
+- **The A7 write act does not exist.** The dashboard's declaration says
+  so in words ("following is not yet a clickable action"); the *Unfollow*
+  button in My Stars removes a DOM card and touches no row; the public
+  profiles' *Save & Follow* toggles a class and shows a toast. There is no
+  Bestand pattern for "second call on the same target" to copy — the
+  behaviour is decided here (A23.3).
+- **C8.** Generalising the graph would change no shape (a string is a
+  string) — the collision above would be invisible to guard 2 by
+  construction. A separate collection is a NEW registration and moves
+  `SCHEMA_HASH` alone.
+
+**Decision — D47: a separately bounded store, `partner_follows`.** The
+existing A7 path is NOT generalised: every one of its readers, its test
+and its D43 guarantee rests on the premise that both endpoints are trade
+houses, and the measurement shows the premise failing at four surfaces the
+moment a partner target enters. A7 stays technically unchanged for trade
+targets. The new store carries the **three target sorts** from day one —
+`organizer · fair_series · fair_edition` — as a **target-type
+discriminator that names the leading register**, the
+`reviews.subjectType` precedent (A17.8/A18.4): the discriminator is not a
+copied fact about the target, it is the **address of the owner** whose
+key follows it. Which registers those are is a platform-fixed, frozen
+resolver map (`organizer → platform_partners`, `fair_series → fair_series`,
+`fair_edition → fair_editions`) — a write against a type outside it, or a
+key the named register does not resolve, is refused whole (B12).
+
+    partner_follows ( follower_id FK → stakeholders,   -- the trade house that follows
+                      target_type enum('organizer','fair_series','fair_edition'),
+                      target_id,                        -- key in the register target_type names
+                      at )                              -- since when
+    UNIQUE (follower_id, target_type, target_id)
+
+**The edge is only the edge** (A7's lesson, word for word): follower,
+target sort, target key, moment — nothing about either side is copied onto
+the row. Follower identity is the trade organisation's key exactly as the
+participation row holds it (FP-14); the target's name, badge, city and
+page come from the register the discriminator names, at read time.
+**The row never leaves the private area:** the store is a dashboard
+collection like `wineFollowGraph`, it is not in the public hydration
+allowlist, and no public page reads it — which is what keeps A23.1 (4)
+and (5) structural rather than promised.
+
+### A23.3 The follow act — real, persisting, under a DERIVED identity
+
+**The public organizer profile has NO write path** (DIR-4 discipline,
+absolute). Its *Save & Follow* is neither a demo toggle nor a claim of
+success: it is a **link into the private area** — the A22.10 booking-entry
+pattern, measured and reused — carrying the partner id as a query
+parameter (`bottle-lobby-dashboard.html?follow=<partnerId>`). A visitor
+without a role in the address meets the existing role picker where a login
+would stand; after the choice the SAME parameter leads to the SAME entry;
+a hash role already set lands in one step. The parameter is consumed
+exactly once and cleared through the existing `history.replaceState`
+path. No new sign-in, no session, no second router.
+
+**Where the act happens, and as whom.** The entry opens the chosen
+cockpit's **My Stars** (Community) and executes the act **there**, under
+the acting identity **derived from the cockpit switch and from nothing
+else** — the A22.12 principle: no role parameter, no actor parameter, the
+surplus-argument check as the first statement. Measured against A22.12's
+own source: `activeShowRole` is written only at the head of
+`showWineShows()` and starts as `distributor` while the winery cockpit is
+what loads — it answers "who is acting" **on the Wine Shows surface**, and
+would attribute a follow made from the winery's My Stars to Hawesko GmbH.
+So O9 adds **exactly one** further single-write source, `activeCockpit`,
+written **only** by `switchDashboard()` — the cockpit switch itself, the
+very thing A22.12 names as the prototype's stand-in for a session — and
+**one** derivation over it, `followActingContext()` → `{ role, entity }`
+or `null` for the partner workspace (an organizer follows nobody in this
+pass; an act with no derivable trade actor is refused). The real build
+replaces both derivations 1:1 with the session, as A22.12 already says.
+
+**Two acts, both idempotent in the honest direction, both reporting
+(B12).** `followPartnerTarget(targetType, targetId)` writes one row and
+says so; a second call of the same identity on the same target writes
+nothing and says *already following — nothing changed*; the target sort
+and key are validated against the resolver map **before** anything is
+written. `unfollowPartnerTarget(targetType, targetId)` removes the one row
+and says so, or says there was none. Both persist through the store like
+every other dashboard act; a reload keeps the edge, and My Stars shows it.
+**Only the organizer entry is wired to a surface in O9**; the store and
+the acts carry all three sorts, and the surfaces that own a series or an
+edition bring their own entry when their pass comes.
+
+**Demo rows, minimal, by A7's fixture precedent:** two trade members
+follow the demo organizer (a restaurant and a distributor), so the read
+path is visible without explanation — no figure is derived from them, no
+gap is filled.
+
+### A23.4 The public verification verdict — one register, no rows leave it
+
+**Measured (M2b):** the `reviews` register — with `reviewNotes` that reach
+neither party (A17.13) and rows about memberships, contracts, projects and
+show releases — lives ONLY in the dashboard, is NOT in the public
+hydration allowlist and must not enter it; `partnerVerificationLatest()` /
+`seriesBrandLatest()` live only there too; `fairEditionDiscoverable()`
+reads the edition status and nothing else. **No public last-word
+mechanism existed.** The public organizer page nevertheless has to render
+the Verified badge (A18.4) and the series brand badge (A19.4) — each
+derived from the register's last word, no stored flag, no copied fact, no
+second authority.
+
+**Built from the measurement — the encapsulated public verdict.** The
+store — already the platform's public read boundary (`PUBLIC_COLLECTIONS`,
+FP-13; the FR-9 pattern of a platform-fixed allowlist in platform code) —
+gains **one** narrow, read-only entry, `BLStore.publicVerdict(approvalType,
+subjectId)`:
+
+- **A fixed allowlist of derivable verdicts, `PUBLIC_VERDICTS`** —
+  `partner_verification → subjectType 'partner'`,
+  `series_brand_review → subjectType 'fair_series'` — frozen in platform
+  code. Any other approval type is refused; the entry cannot be widened
+  by a page, a parameter or a stored value.
+- **ONE last-word derivation, `BLStore.lastWord(rows, subjectType,
+  subjectId, approvalType)`** — the last row about the subject with that
+  approval type. The dashboard's `partnerVerificationLatest()` and
+  `seriesBrandLatest()` now call this same function over the live
+  register; the public entry calls it over the register **inside the
+  store's closure**, read from the **validated** snapshot (the one
+  validity contract, `snapshotInvalidWhy`) — and hands out **only the
+  verdict**: `true` (last word approved), `false` (last word not
+  approved, or no row), or `null` (no readable word: no valid snapshot on
+  this device). Register rows never leave the closure; `reviews` is
+  neither registered on nor applied to any public page.
+- **The real build:** a server-side function over `reviews` behind RLS,
+  returning the boolean; the client never holds a row. The store closure
+  is that function's prototype stand-in.
+
+**The one honest limit, named:** a public page renders "the fixtures"
+without a snapshot — but the register's fixture ground lives in the
+dashboard document by design, so a device that has never opened the
+dashboard has **no word to derive from**. The page then renders **no
+badge and claims nothing** — the badge falls exactly as PP-4 says it does
+without an approved word, and it stands the moment the demo state exists
+(the dashboard's first heartbeat writes it). Deliberately NOT done: a
+build-time verdict constant (a stored derivative), the register or a
+notes-stripped copy of it in a public asset (a register on the public
+path), a stored `verified` flag (PP-4). What the badge says when it stands
+is the fixed A18.4 sentence, from `PARTNER_VERIFIED_DISCLAIMER` — the ONE
+source, moved to the shared asset with the partner record — and the
+series brand badge is a second, distinguishable statement (FS-4).
+
+### A23.5 The public organizer profile page
+
+**One static page per partner, the trade profiles' slug pattern:**
+`bottle-lobby-organizer-<slug>.html` — first `bottle-lobby-organizer-atrium-fairs-gmbh.html`
+for PP-9001; the partner row carries its canonical `url` like every
+`stakeholders` row does (FP-14: links point only at targets that exist).
+B1's full 11-item header with its exact values, B2's footer and floating
+CTA (footer discipline: no pre-existing footer rule left behind), the
+`?preview=embed` mode of the profiles. **The design quality of the B3
+templates — hero, badges, facts grid, sidebar widgets — and none of their
+trade semantics:** no Wines/Portfolio tab, no Profile Completion, no
+Profile Stats, no Target Distribution, no Contact widget (A22.11 word for
+word: no e-mail, telephone or address is read out of static HTML, copied
+or invented). The vocabulary is A18.6's: this is a **Platform Partner**,
+never a fifth trade role.
+
+**Data: read-only, one hydration path.** The page loads the shared assets
+and hydrates through `BLStore.hydrate()` over the fixed public allowlist —
+the fair collections it lists — never `start()`. **Moved to the shared
+asset (A21.8 precedent, never copied):** `platformPartners`,
+`platformPartner()`, `PARTNER_CAPABILITIES`, `PARTNER_CAPABILITY_LABEL`,
+`PARTNER_VERIFIED_DISCLAIMER`. Measured: nothing in the dashboard writes a
+partner row, so `platformPartners` is NOT added to the hydration allowlist
+— the page reads the canonical fixture record; the day a writer exists,
+the allowlist gains the name (nothing opens by accident). `fairAdmissions`,
+`partnerFollows`, `reviews` and every private collection stay off the page.
+
+**Hero actions, left to right, styles derived from B4 (M4):** B4 opens
+with *Request Partnership* in solid gold — the mark of the A6 entry — which
+this page must not have (PP-6). So the **solid tier is absent by
+derivation**; the two fair-specific actions take B4's role-specific tier
+(`.btn-gold-outline`); *Send Inquiry* keeps its plain outline; *Save &
+Follow* keeps outline + `.follow-btn` and stands **last, always** (B4).
+The order itself is fixed here and nowhere else: **View Upcoming Fairs ·
+Apply to Exhibit / View Exhibitor Calls · Send Inquiry · Save & Follow.**
+No button says *Request Partnership*, and no style suggests a trade
+relation.
+
+- **View Upcoming Fairs** — scrolls to the page's *Upcoming Fairs* list:
+  the **discoverable published, not-yet-past editions of the organizer's
+  own series**, derived live through `fairEditionDiscoverable()` and
+  `fairEditionPast()` (`organizerUpcomingEditions()`), each linking at
+  the existing public surfaces (the directory's fair card; the canonical
+  Participation Page where a stand is public) — no second fair card, no
+  directory duplicate (DIR-1), no invented figure (DIR-7). Empty state
+  visible in words.
+- **Apply to Exhibit / View Exhibitor Calls** — renders **only** when at
+  least one discoverable, upcoming edition carries `exhibitor_call_open`
+  (`organizerOpenCalls()`); otherwise **no button and no reserved space**.
+  The caption is **ONE derivation over the number of open calls**: exactly
+  one → *Apply to Exhibit*, several → *View Exhibitor Calls*
+  (`organizerCallCaption()`), because the public page cannot know the
+  visitor's role and must not promise more than the entry keeps. The
+  action is a link into the **existing authenticated A20 way** —
+  `bottle-lobby-dashboard.html?calls=<partnerId>` opens Events → Wine
+  Shows and its fair-recruiting block (A20.6) for winery and distributor;
+  restaurant, retail and the partner workspace get the reason (FR-2). The
+  public page takes no application, ever.
+- **Send Inquiry** — measured (M3b): on every trade profile this button
+  is inert markup with no handler and no inquiry mechanism behind it. O9
+  mirrors the button and gives it the B12 answer the original lacks: an
+  inline note that an inquiry to an organizer is O11's, that nothing was
+  sent — no messaging system, no message table.
+- **Save & Follow** — A23.3: a link, no write path, no success claim; the
+  entry says what happens next.
+
+**Badges (A18.4/A19.4/FS-4):** *✓ Verified Platform Partner* only when
+`publicVerdict('partner_verification', partnerId) === true`, with the one
+disclaimer sentence beside it; per series, *Fair brand verified* only when
+`publicVerdict('series_brand_review', seriesId) === true`, worded and
+placed apart. Neither says anything when the verdict is false or null.
+
+**Nothing about followers:** no names, no count, no "N members follow
+this organizer" — fixed by A23.1 (5), not derived.
+
+**Entry points (M5).** The directory's fair-edition listing (the expanded
+half of the fair card, its own composition, DIR-3) gains one fact line,
+*Organizer · <name>*, linking at the organizer page — resolved through
+`platformPartner(series.organizerId)` at render time, never copied onto
+the edition; the teaser composition, the four cards and the one expand
+interaction stay as O5 and O7 left them. **B6:** the organizer cockpit's
+*Organization Profile* gains *View Public Profile*, the trade cockpits'
+embed-preview pattern (`openEmbedPreview`), and the former locked row
+*Organizer Profile & Follow* leaves the locked target navigation
+(`tests/fairs.js` §9 follows the activated row); the *Communications* row
+names what O11 brings.
+
+### A23.6 The named read path — My Stars shows own partner follows
+
+PP-3 opens by exactly one measured path and stays shut everywhere else:
+the **My Stars section of the four trade cockpits** renders the house's
+OWN `partner_follows` as **visibly separate entries** under their own
+*Platform Partners* heading — resolved through the register the
+discriminator names (`platformPartner()`), **never through
+`stakeholder()`**; each entry carries the *Platform Partner ·
+Fair & Event Organizer* mark, the link to the public profile, the
+following-since date and a real *Unfollow*. **A partner entry never offers
+Request Partnership or any trade action.** The order registry, the show
+and event registries, the reach taxonomy, the partner counters and the
+campaign audience resolver still count and address no partner workspace;
+the organizer view gets no follower surface and no follow notification
+(O11).
+
+### A23.7 Named deferrals and open questions
+
+- **O11 — organizer-side communication:** the follower view in the partner
+  workspace, the "started following you" notification into it, and an
+  inquiry route that reaches the organizer.
+- **Series and edition follow acts** on the surfaces that own those records
+  (their own passes) — the store carries the sorts today.
+- **Open question, not decided here:** whether the public organizer page
+  itself falls with the verification verdict (the participation page's
+  triple-gate shape) or renders without the badge as O9 builds it. O9
+  builds the badge as A18.4 says; the page's own gate is a business
+  decision to be taken, not inferred.
+- **`platformPartners` in the hydration allowlist** — the day a partner
+  row gains a writer.
+
+### A23.8 Invariants
+
+- **OP-1 — a partner follow is directed and non-commercial.** It creates
+  no partnership row, no request, no order, no listing; PP-6 is now
+  measured, not asserted as absence.
+- **OP-2 — the D43 resolver never reads a partner follow.** The
+  announcement audience is the host's own incoming A7 edges plus
+  optionally his active A6 partners; a `partner_follows` row — even one
+  smuggled with a trade name as key — reaches neither it nor the reach
+  level `community`.
+- **OP-3 — three target sorts, one register each.** `organizer`,
+  `fair_series`, `fair_edition` are not interchangeable; the key must
+  resolve in the register the sort names; a copied name instead of a key
+  is refused; nothing about either side is stored on the row.
+- **OP-4 — the act is honest.** It writes one edge under the derived
+  identity or writes nothing and says why; a second call of the same
+  identity on the same target duplicates nothing; the public page owns no
+  write path and claims no success without a stored edge.
+- **OP-5 — no Request Partnership** on the organizer page or on a
+  My-Stars partner entry, and no style that suggests a trade relation.
+- **OP-6 — the public verdict is derived, allowlisted and row-free.** The
+  badge falls with a later non-approving last word; the public entry
+  serves only the verdict for the two allowlisted approval types; `reviews`
+  and every private approval row are neither registered nor hydrated on a
+  public page.
+- **OP-7 — the exhibitor-call action falls** without an open call on a
+  discoverable, upcoming edition, and its caption is one derivation over
+  the count.
+- **OP-8 — no follower names and no follower figure** on the public page,
+  and no follower surface in the organizer view (O11).
+- **OP-9 — one hydration path, fixed allowlist, read-only** on the
+  organizer page (DIR-4/FP-13 carried forward); the fixtures render
+  without a valid snapshot — the verdict alone has no public fixture
+  ground and renders no badge then.
+- **OP-10 — the four trade cockpits are unchanged** beyond the measured
+  O9 dependencies named in the prototype blueprint.
+
+**Prototype blueprint:** `partnerFollows` (dashboard, registered with the
+store, `PARTNER_FOLLOW_TARGETS` as the frozen resolver map),
+`activeCockpit` (written only in `switchDashboard()`),
+`followActingContext()`, `followPartnerTarget()` /
+`unfollowPartnerTarget()` (both behind `fairArgGuard`),
+`renderPartnerStarsFor()` called beside each role's
+`renderWineStarsFor()`, the two public entries `?follow=` and `?calls=`
+consumed once through `openOrganizerEntries()` from `pickRole()` and the
+direct half; `BLStore.PUBLIC_VERDICTS`, `BLStore.lastWord()`,
+`BLStore.publicVerdict()`; `platformPartners` and its constants in
+`assets/bottle-lobby-data.js`; `organizerUpcomingEditions()`,
+`organizerOpenCalls()`, `organizerCallCaption()` in
+`assets/bottle-lobby-public-shows.js`; the page
+`bottle-lobby-organizer-atrium-fairs-gmbh.html`. **Measured O9
+dependencies on stock surfaces:** the fair-edition listing's organizer
+line, the four My Stars sections' partner block, `switchDashboard()`'s
+one assignment, the organizer cockpit's profile button and locked rows,
+the two dashboard verdict readers delegating to the shared derivation.
+`SCHEMA_HASH` follows the new registration and the partner row's `url`
+field in the same commit; VERSION stays — measured, both changes are
+seen by guard 2 (the O7 reasoning).
+
+**Harness home:** `tests/organizer-profile.js` — its own file, as A18–A22
+each got one: OP-1..OP-10 with effective counter-mutations (a smuggled
+partner-follow row against the D43 resolver and `hostCommunity()`; a
+copied name instead of a key; the double follow; the public page's write
+path and its no-write assertion; the exhibitor-call action with the call
+closed; follower names and figures; the verdict falling with a later
+rejecting row through `lastWord`; the allowlist scan over the public
+documents for `reviews` / `partnerFollows` / `fairAdmissions`) plus
+unchanged samples of the four trade cockpits. The **live-store half** of
+OP-6/OP-9 — a rejecting row written in the dashboard reaching the public
+page's badge through the snapshot, the page never writing — lives in
+`tests/persistence.js`, for the FP-13/DIR-4 reason. `tests/platform-partners.js`
+carries PP-3's opened path and PP-6 as a real assertion; `tests/fairs.js`
+§9 follows the activated locked row.
 
 ---
 
@@ -7621,6 +8052,7 @@ mechanism itself stores.
 | D44 | **A16.8's external-fair host rule as first written: "no member is its host"** — the canonical fair (`events.event_kind = 'external_fair'`) simply had no host, and nothing in the model could own or manage it | **A16.8 / A18** — precise instead of blank: **none of the four trade roles is the host** of a canonical fair; its **owner and manager is a verified organizer workspace (A18)**, a platform partner outside the trade enumeration. The ProWein rule — a fair participation is never modelled as a member event — stands word for word | Serge's V4 architecture decision, 10 Aug 2026. The first wording was written (Durchgang 9) when nobody *could* be the host: its job was to block the stand-in — a fair modelled as some member's event — and it did that by leaving the fair ownerless. With A18 the owner exists as a category, and the blank wording would have blocked the wrong party: an organizer is a platform member in the ordinary sense of the word, so *"no member"* read literally would exclude exactly the workspace the fair model is being built for. The precision keeps the protective half (no trade role ever hosts a canonical fair) and adds the ownership half instead of leaving it to inference. Nothing else in the block moved — participation rows, booth appointments and the out-of-scope list are untouched. |
 | D45 | **The external-fair sketch's storage and scope as first written** — the canonical fair parked as an `events` row via `events.event_kind = 'external_fair'` (A16.8's first bullet and A16.9's `events` DDL), and A16.8's blanket sentence *"Explicitly out of scope: running a fair, ticketing, organiser management"* | **A19 / A16.8 / A16.9** — the canonical fair is its own record pair, **`fair_series` + `fair_editions`**, owned and managed by the verified organizer workspace (A18, D44); `events` carries member events only and `event_kind` is gone. The out-of-scope sentence is **narrowed, not deleted**: managing a series, its edition basics and its edition lifecycle is in scope (A19, pass O2); exhibitor recruiting, admission, participations, halls and stands, appointments, agenda and ticket checkout stay out until their own passes. Participation rows, the appointment separation, the provenance rule and the ProWein ban stand word for word | Serge's O2 decision, 10 Aug 2026 — one coherent replacement with two halves. The `event_kind` sketch predates A18: with no owner category in the model, an `events` row was the only place a fair could live, and its job was to block the stand-in. With an owning organizer workspace the fair is not anybody's event — a durable brand (series) with concrete runs (editions) is a two-level shape one `events` row cannot carry, and leaving the enum standing would have invited exactly the substitute construction the block exists to forbid. The blanket out-of-scope sentence, written to stop premature fair features, had started to forbid the pass that builds the real thing; the narrowing keeps its protective half — everything beyond series/edition management stays out — while admitting the canonical core it was guarding the door for. |
 | D46 | **FS-6 as first written, absolute: "drafts are invisible outside the owning workspace"** — no exception of any kind; before publication, no workspace but the owner could see any fact of an edition | **A19.7 FS-6 / A20.8** — one narrow, deliberate exception: the concretely addressed recipient of an **open** recruiting invitation sees the decision-minimum edition facts (series name, dates, city and venue, fair type, description) through an authenticated invitation view. The draft itself stays private and unfindable for everyone else; the view is never the organizer's draft surface, never a publication, never a directory entry; and it falls the moment the invitation stops being open — decline, revocation, or a later-pass expiry | Serge's O3 decision, 13 Aug 2026. FS-6 was written in O2, when no act existed that could address anybody before publication — its job was to keep an unfinished edition out of every foreign view, and absolute was the cheapest correct form. O3 introduces the targeted invitation (A20.2), and recruiting happens precisely while an edition is being planned: an invitation whose recipient cannot see date, place and type is not decidable, and the two ways around that would both be worse — publishing early makes a public act out of a recruiting need and drags the publication preconditions (FS-3) into it, and inviting blind pushes the edition facts into the invitation text as a copy (invariant 1). The exception is deliberately narrower than publication on every axis: one addressed recipient instead of the public, decision-minimum facts instead of the record, entitlement-bound instead of durable. The protective half of the old rule — non-addressed members and the public see nothing — stands word for word. |
+| D47 | **A18.5's open storage question for the partner follow — "whether the existing follow store can safely generalise to partner targets, or whether a separately bounded storage path is needed"** — left open on purpose in the foundation pass, with no field name and no storage form fixed | **A23.2** — a **separately bounded store, `partner_follows`**, with a target-sort discriminator (`organizer · fair_series · fair_edition`) that names the leading register and a key that must resolve there; the A7 graph `wineFollowGraph` stays technically unchanged for trade targets | Serge's decision of 15 Aug 2026, taken on the measurement A18.5 demanded (O9). Every A7 reader resolves both endpoints through `stakeholder(name)` and `tests/stakeholders.js` fails on any name outside the trade table; a partner workspace has no such row (PP-2) and a series or edition is a record key, not an account. A partner target inside the graph would have surfaced as a distributor *opportunity* with a trade action on it (PP-1), counted in the reach level `community` (PP-3), rendered avatar-less in My Stars, and stayed out of the D43 resolver only by the coincidence that no partner is named like a trade host. The discriminator is not the `followedType` A7 removed — that field described what a trade account *is*, a fact the account owns; this one is the **address of the owning register**, the `reviews.subjectType` precedent (A18.4). Generalising would also have been invisible to guard 2 (a string is a string), whereas a new registration moves the schema record by itself. |
 ---
 
 # APPENDIX E — HOW THIS DOCUMENTATION IS ORGANISED
