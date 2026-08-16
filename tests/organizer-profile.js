@@ -5,9 +5,16 @@
    The measured storage decision (D47: a bounded second store, three
    target sorts, keys not names), the follow act under the DERIVED
    cockpit identity, the D43 guard, the public page without a write
-   path, the row-free public verdict, the exhibitor-call action, the
-   one opened My Stars read path (PP-3), and — fixed, not measurable —
-   no follower names and no follower figure anywhere.
+   path, the exhibitor-call action, the one opened My Stars read path
+   (PP-3), and — fixed, not measurable — no follower names and no
+   follower figure anywhere.
+
+   §6 IS A NEGATIVE SECTION (OP-6). O9 first shipped a public
+   verification verdict; it was withdrawn because it held the full
+   validated snapshot after hydration and read the private `reviews`
+   rows out of it. §6 now proves the withdrawal holds: the store exports
+   no verdict entry, the page makes no verification statement of any
+   kind, and the private dashboard derivation is untouched.
 
    As in tests/fairs.js and its successors every invariant is measured
    TWICE — the CLAIM, and the COUNTER-MUTATION that breaks the rule and
@@ -21,10 +28,11 @@
    ever hands an identity to a mutating function; §4 proves that
    impossible.
 
-   ONE measured absence: the LIVE-STORE half of OP-6/OP-9 — a rejecting
-   review row written in the dashboard reaching the public page's badge
-   through the snapshot, and the page never writing — lives in
-   tests/persistence.js, the one harness allowed to run a live store.
+   ONE measured absence: the LIVE-STORE half of OP-6/OP-9 — a real
+   snapshot written by the dashboard, the page reading only its
+   allowlisted collections out of it, holding nothing afterwards and
+   never writing — lives in tests/persistence.js, the one harness
+   allowed to run a live store.
 ═══════════════════════════════════════════════════════════════════ */
 const { loadDashboard } = require('./load-dashboard');
 const { JSDOM, VirtualConsole } = require('jsdom');
@@ -470,48 +478,77 @@ console.log('\n§5 the public organizer profile: read-only, honest, follower-fre
   });
 }
 
-/* ══ §6 The public verdict — one derivation, no rows leave (OP-6) ══ */
-console.log('\n§6 the public verdict: last word, allowlisted, row-free (OP-6, A23.4)');
+/* ══ §6 NO public verification verdict — the negative invariant (OP-6) ══
+   The withdrawn path, proved gone from three sides: the store's public
+   surface, the public page's markup, and the store's own source. The
+   fourth side — the execution context AFTER hydration over a REAL
+   snapshot, which is where the violation actually lived and where a
+   surface-only check let it run green — is in tests/persistence.js,
+   which is the one harness allowed a live store. */
+console.log('\n§6 there is NO public verification verdict — the negative invariant (OP-6, A23.4)');
 {
-  const rows = [
-    { subjectType:'partner', subjectId:'PP-9001', approvalType:'partner_verification', reviewStatus:'approved', reviewedAt:'2026-07-15' },
-    { subjectType:'partner', subjectId:'PP-9001', approvalType:'partner_verification', reviewStatus:'rejected', reviewedAt:'2026-07-29' }
-  ];
-  const last = w.eval('BLStore.lastWord(' + JSON.stringify(rows) + ", 'partner', 'PP-9001', 'partner_verification')");
-  if (last && last.reviewStatus === 'rejected')
-    ok('lastWord(): the later rejecting row is the last word — an earlier approval does not survive it');
-  else bad('lastWord() did not return the last row about the subject');
-  if (w.eval('BLStore.lastWord(' + JSON.stringify(rows) + ", 'partner', 'PP-9001', 'series_brand_review')") === null &&
-      w.eval('BLStore.lastWord(' + JSON.stringify(rows) + ", 'fair_series', 'PP-9001', 'partner_verification')") === null)
-    ok('and it answers per (subjectType, subjectId, approvalType) — the wrong type or subject finds nothing');
-  else bad('lastWord() mixed subjects or approval types');
-  /* The dashboard readers delegate — one implementation. */
-  const dsrc = w.eval('partnerVerificationLatest.toString() + seriesBrandLatest.toString()');
-  if ((dsrc.match(/BLStore\.lastWord/g) || []).length === 2)
-    ok('partnerVerificationLatest() and seriesBrandLatest() both read BLStore.lastWord — one derivation, two callers');
-  else bad('a dashboard verdict reader re-implements the last word');
-  /* The public entry: allowlist and row-free. */
-  const pv = w.eval('BLStore.PUBLIC_VERDICTS');
-  if (Object.keys(pv).sort().join(',') === 'partner_verification,series_brand_review' &&
-      pv.partner_verification === 'partner' && pv.series_brand_review === 'fair_series' && w.eval('Object.isFrozen(BLStore.PUBLIC_VERDICTS)'))
-    ok('PUBLIC_VERDICTS names exactly the two approval types with their subject types, frozen');
-  else bad('the verdict allowlist is not the frozen pair');
-  const pw = bootPage(PAGE), pd = pw.document;
-  if (pw.eval("BLStore.publicVerdict('show_release','WS-2603')") === null &&
-      pw.eval("BLStore.publicVerdict('partner_verification','PP-9001')") === null &&
-      pd.documentElement.getAttribute('data-verdict') === 'none' && !pd.querySelector('.badge-verified'))
-    ok('without a snapshot the page has no word — publicVerdict() answers null, no badge stands, nothing is claimed');
-  else bad('the page claimed a verdict without any register word to derive it from');
-  if (pw.eval('typeof reviews') === 'undefined' && pw.eval('typeof partnerVerificationApproved') === 'undefined' &&
-      pw.eval('BLStore.PUBLIC_COLLECTIONS').indexOf('reviews') === -1)
-    ok('the register is neither loaded, registered nor allowlisted on the page — only the verdict could ever cross');
-  else bad('reviews reached the public page');
+  /* (a) The store's public surface carries no verdict entry any more. */
+  const gone = ['publicVerdict', 'PUBLIC_VERDICTS', 'lastWord']
+    .filter(k => w.eval('typeof BLStore.' + k) !== 'undefined');
+  if (!gone.length)
+    ok('the public store surface exports neither publicVerdict nor PUBLIC_VERDICTS — nor a last-word helper the public path could use');
+  else bad('the withdrawn verdict path is still exported: ' + gone.join(', '));
   const ssrc = fs.readFileSync(path.join(ROOT, 'assets', 'bottle-lobby-store.js'), 'utf8');
-  const fn = ssrc.slice(ssrc.indexOf('function publicVerdict('), ssrc.indexOf('}', ssrc.indexOf('return !!last && last.reviewStatus')));
-  if (/return !!last && last\.reviewStatus === 'approved'/.test(fn) && !/return last\b|return hydrated|return rows/.test(fn))
-    ok('by source, publicVerdict() returns a boolean or null and never a row');
-  else bad('publicVerdict() could hand out a row');
-  /* Every public document keeps the private collections off its path. */
+  const hyd = ssrc.slice(ssrc.indexOf('  function hydrate() {'), ssrc.indexOf("    return 'hydrated';"));
+  if (!/publicVerdict|PUBLIC_VERDICTS/.test(ssrc.replace(/\/\*[\s\S]*?\*\//g, '')) &&
+      !/=\s*p\s*;/.test(hyd.replace(/\/\*[\s\S]*?\*\//g, '')))
+    ok('and by source neither name survives in code, and hydrate() assigns the parsed snapshot to nothing that outlives the call');
+  else bad('the store source still holds the verdict path or retains the parsed snapshot');
+  /* The transient parse itself is the ACCEPTED prototype limit and must
+     stay exactly as it is — this section does not object to it. */
+  if (/JSON\.parse\(raw\)/.test(hyd) && /entries\.forEach/.test(hyd))
+    ok('the transient parse that applies the allowlisted collections is unchanged — the accepted prototype limit, not a read path (A23.4)');
+  else bad('hydrate() no longer parses transiently and applies the allowlist — the accepted limit was altered');
+
+  /* (b) The last-word derivation lives in the private document, once. */
+  const dsrc = w.eval('partnerVerificationLatest.toString() + seriesBrandLatest.toString()');
+  if (w.eval('typeof lastWord') === 'function' && (dsrc.match(/[^.]\blastWord\(/g) || []).length === 2 &&
+      !/BLStore\.lastWord/.test(dsrc))
+    ok('lastWord() lives in the dashboard document, its one caller — both private readers delegate to it, one derivation');
+  else bad('the private readers no longer share one local last-word derivation');
+
+  /* (c) The public page makes NO verification statement of any kind. */
+  const pw = bootPage(PAGE), pd = pw.document;
+  const text = pageText(pw);
+  if (!/verif/i.test(text))
+    ok('not one occurrence of "verif" in the rendered page — no badge, no disclaimer, no explanation, no placeholder');
+  else bad('the page says something about verification: ' + (text.match(/.{0,50}verif.{0,50}/i) || [])[0]);
+  const marks = ['.badge-verified', '.badge-brand', '.op-brand-badge', '.op-disclaim', '#op-verification', '[data-verdict]']
+    .filter(sel => pd.querySelector(sel) || pd.documentElement.matches(sel));
+  if (!marks.length && !pd.documentElement.hasAttribute('data-verdict'))
+    ok('no verification badge, brand badge, disclaimer block, Verification widget or data-verdict attribute in the markup');
+  else bad('a verification surface is still rendered: ' + marks.join(', '));
+  const substitutes = ['unverified', 'verification pending', 'status unavailable', 'not verified', 'pending review']
+    .filter(s => text.toLowerCase().indexOf(s) !== -1);
+  if (!substitutes.length)
+    ok('and no SUBSTITUTE status either — a placeholder would be a verification statement too');
+  else bad('a substitute status is printed: ' + substitutes.join(', '));
+  if (pageText(pw).indexOf(w.eval('PARTNER_VERIFIED_DISCLAIMER')) === -1)
+    ok('the A18.4 disclaimer sentence appears nowhere on the public page — it belongs to the badge, and the badge is deferred');
+  else bad('the disclaimer is rendered publicly without its badge');
+  /* What DOES stand: the role, and the page itself. The page is not
+     gated on a verification word (A23.7, Serge's decision). */
+  const roleBadge = pd.querySelector('.profile-hero .badge-partner');
+  if (roleBadge && /Fair & Event Organizer/.test(roleBadge.textContent) &&
+      /Platform Partner/.test(pd.querySelector('.profile-hero-location').textContent) &&
+      pd.querySelectorAll('.op-fair').length === 5 && pd.querySelectorAll('.op-series').length === 2 &&
+      pd.querySelector('#op-about') && pd.querySelector('.profile-hero-actions'))
+    ok('the profile itself stands: role line, Platform Partner · Fair & Event Organizer, 5 upcoming fairs, 2 series, about and actions');
+  else bad('the public profile no longer renders — the badges were deferred, the page was not');
+
+  /* (d) The register is not on the page, in any shape. */
+  if (pw.eval('typeof reviews') === 'undefined' && pw.eval('typeof partnerFollows') === 'undefined' &&
+      pw.eval('typeof fairAdmissions') === 'undefined' &&
+      pw.eval('typeof partnerVerificationApproved') === 'undefined' &&
+      pw.eval('BLStore.PUBLIC_COLLECTIONS').indexOf('reviews') === -1 &&
+      pw.eval("BLStore.names().sort().join(',')") === 'fairEditions,fairHalls,fairParticipations,fairSeries,fairStands')
+    ok('reviews, partnerFollows and fairAdmissions are neither loaded, registered, bound nor allowlisted on the page');
+  else bad('a private collection reached the public organizer page');
   ['bottle-lobby-organizer-atrium-fairs-gmbh.html', 'bottle-lobby-fair-participation.html', 'bottle-lobby-wine-guide.html'].forEach(f => {
     const html = fs.readFileSync(path.join(ROOT, f), 'utf8').replace(/<!--[\s\S]*?-->/g, '').replace(/\/\*[\s\S]*?\*\//g, '');
     const reg = html.slice(html.indexOf('BLStore.register('), html.indexOf('BLStore.hydrate()'));
@@ -521,30 +558,56 @@ console.log('\n§6 the public verdict: last word, allowlisted, row-free (OP-6, A
   });
   const allow = w.eval('BLStore.PUBLIC_COLLECTIONS').sort().join(',');
   if (allow === 'fairEditions,fairHalls,fairParticipations,fairSeries,fairStands')
-    ok('PUBLIC_COLLECTIONS is still the five fair collections — O9 widened nothing');
+    ok('PUBLIC_COLLECTIONS is still the five fair collections — the withdrawal widened nothing and narrowed nothing');
   else bad('the hydration allowlist moved: ' + allow);
-  /* The badge follows the verdict — counter-mutation on the page:
-     force the entry to say approved and the badge must appear (so the
-     absence above is the verdict\'s doing, not a missing renderer). */
-  const forced = bootPage(PAGE, '', { from: 'BLStore.hydrate();\n\n  const root', to: "BLStore.hydrate(); BLStore.publicVerdict = function () { return true; };\n\n  const root" });
-  const fb = forced.document.querySelector('.profile-hero .badge-verified');
-  const disclaimer = w.eval('PARTNER_VERIFIED_DISCLAIMER');
-  if (fb && /Verified Platform Partner/.test(fb.textContent) && pageText(forced).indexOf(disclaimer) !== -1 &&
-      forced.document.querySelectorAll('.op-brand-badge').length === 2 &&
-      forced.document.documentElement.getAttribute('data-verdict') === 'approved')
-    ok('with the verdict true the Verified badge stands with the ONE disclaimer sentence, and both brand badges render apart (FS-4)');
-  else bad('the page does not render the badges from the verdict');
-  const brand = forced.document.querySelector('.op-brand-badge');
-  if (brand && !/Verified Platform Partner/.test(brand.textContent) && /Fair brand/.test(brand.textContent))
-    ok('the series brand badge is worded distinguishably from the workspace badge (FS-4)');
-  else bad('the two badges read alike');
-  expectRed('an any-row derivation under lastWord', () => {
-    const any = rows.some(r => r.reviewStatus === 'approved');
-    if (any) bad('any-row says approved despite the later rejection');
+
+  /* (e) The PRIVATE derivation is untouched — and still moves with a
+     later rejecting row. Restored afterwards. */
+  const before = w.eval('partnerVerificationApproved(platformPartners[0]) && seriesBrandApproved(fairSeries[0])');
+  w.eval("reviews.push({ id:'RVW-OP6-REJ', subjectType:'partner', subjectId:'PP-9001', gateNumber:null, reviewStatus:'rejected', reviewedBy:'Bottle Lobby', reviewedAt:'2026-07-31', reviewNotes:null, approvalType:'partner_verification' })");
+  const after = w.eval('partnerVerificationApproved(platformPartners[0])');
+  const brandStill = w.eval('seriesBrandApproved(fairSeries[0])');
+  w.eval("reviews.splice(reviews.findIndex(r => r.id === 'RVW-OP6-REJ'), 1)");
+  if (before === true && after === false && brandStill === true &&
+      w.eval('partnerVerificationApproved(platformPartners[0])') === true)
+    ok('the dashboard still derives from the register: approved by fixture, felled by a later rejecting row, the series brand untouched — and restored');
+  else bad('the private derivation broke with the public withdrawal (' + before + ' → ' + after + ')');
+
+  /* (f) The counter-mutations. Each reintroduces exactly one forbidden
+     shape and must turn its own check red for that shape's reason. */
+  expectRed('the verdict entry re-exported on the public store surface', () => {
+    w.eval('BLStore.publicVerdict = function () { return true; }');
+    try {
+      if (['publicVerdict', 'PUBLIC_VERDICTS', 'lastWord'].some(k => w.eval('typeof BLStore.' + k) !== 'undefined'))
+        bad('exported');
+    } finally { w.eval('delete BLStore.publicVerdict'); }
+  });
+  expectRed('a Verified Platform Partner badge planted in the hero', () => {
+    const b = pd.createElement('span'); b.className = 'profile-badge badge-verified';
+    b.textContent = '✓ Verified Platform Partner';
+    pd.querySelector('.profile-hero-meta').appendChild(b);
+    try {
+      if (/verif/i.test(pageText(pw)) || pd.querySelector('.badge-verified')) bad('found');
+    } finally { b.remove(); }
+  });
+  expectRed('a substitute status ("Verification pending") in the sidebar', () => {
+    const el = pd.createElement('div'); el.textContent = 'Verification pending';
+    pd.querySelector('.profile-sidebar').appendChild(el);
+    try {
+      const t = pageText(pw).toLowerCase();
+      if (['unverified', 'verification pending', 'status unavailable'].some(s => t.indexOf(s) !== -1)) bad('found');
+    } finally { el.remove(); }
+  });
+  expectRed('the disclaimer rendered publicly without its badge', () => {
+    const el = pd.createElement('div'); el.textContent = w.eval('PARTNER_VERIFIED_DISCLAIMER');
+    pd.body.appendChild(el);
+    try { if (pageText(pw).indexOf(w.eval('PARTNER_VERIFIED_DISCLAIMER')) !== -1) bad('found'); }
+    finally { el.remove(); }
   });
   expectRed('reviews registered on the public page', () => {
-    const reg = 'BLStore.register({ reviews: [function () { return []; }, function () {}] })';
-    if (/reviews/.test(reg)) bad('registered');
+    const rogue = bootPage(PAGE, '', { from: 'BLStore.register({\n    fairSeries:',
+                                        to: 'BLStore.register({\n    reviews: [function () { return []; }, function (v) { window.__rv = v; }],\n    fairSeries:' });
+    if (rogue.eval("BLStore.names().indexOf('reviews')") !== -1) bad('registered');
   });
 }
 

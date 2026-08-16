@@ -1499,19 +1499,39 @@ console.log('\n── booth appointments persist privately, and no public page c
   else bad('PUBLIC_COLLECTIONS moved: ' + pw.eval("BLStore.PUBLIC_COLLECTIONS.join(',')"));
 }
 
-/* ── 13. The organizer profile's public verdict and the partner follow
-   (A23, O9) — the LIVE-STORE half of OP-6/OP-9 ─────────────────────
-   The public organizer page derives its Verified badge from the
-   register's last word WITHOUT ever loading the register: the store
-   reads the validated snapshot inside its closure and hands out the
-   verdict alone. So the proof needs a real snapshot: the fixture state
-   (approved) must stand the badge; a rejecting row written by an
-   ordinary dashboard act must fell it after an ordinary reload; the
-   page never writes; and the partner follow persists privately —
-   present in the snapshot, absent from every public page. */
-console.log('\n── the organizer profile reads the verdict from the snapshot, rows never crossing');
+/* ── 13. NO public verification verdict after hydration, and the
+   partner follow (A23, O9 as corrected) — the LIVE-STORE half of
+   OP-6/OP-9 ────────────────────────────────────────────────────────
+   This is where the withdrawn violation actually lived, and where a
+   surface-only check let it run green: O9 KEPT the full validated
+   snapshot after hydrate() returned and read the private `reviews`
+   rows out of it. Bindings, allowlists and source return values all
+   looked fine. So the proof has to be made in the EXECUTION CONTEXT
+   AFTER the hydration call, over a REAL snapshot written by the
+   dashboard, with two independent instruments:
+
+     · a READ TRAP on the parsed snapshot. Every NON-allowlisted
+       collection in `data` becomes an accessor that records each read
+       of its VALUE. The accepted transient parse never touches those
+       values — hydrate() reads `p.data[name]` only for the registered,
+       allowlisted names, and the validity contract reads key NAMES
+       (Object.keys) and the fingerprint map, never a private value. So
+       on a correct build the trap fires ZERO times while the parse
+       itself demonstrably happens: the trap CANNOT go red for the
+       accepted transient parse.
+     · a REACHABILITY SCAN for a marker string planted in a private
+       collection by an ordinary dashboard act. After the page is
+       built, nothing in the page context and nothing on the store's
+       public surface may still hold it.
+
+   The two forbidden shapes fall to different instruments: retention
+   that is READ falls to the trap, retention that is merely HELD falls
+   to the scan. Both counter-mutations are below. */
+console.log('\n── after hydration the organizer page holds no snapshot and no private collection');
 {
   const OPAGE = path.join(__dirname, '..', 'bottle-lobby-organizer-atrium-fairs-gmbh.html');
+  const PUBLIC = ['fairSeries', 'fairEditions', 'fairHalls', 'fairStands', 'fairParticipations'];
+  const KEPT = "    entries.forEach(function (e) { e.set(p.data[e.name]); });\n    /* NOTHING IS KEPT";
   function openOrganizer(area, opts) {
     opts = opts || {};
     const errs = [];
@@ -1529,6 +1549,29 @@ console.log('\n── the organizer profile reads the verdict from the snapshot,
           const self = () => w;
           Object.defineProperty(w, 'localStorage', { value: area.api(self), configurable: true });
         }
+        if (opts.probe) {
+          w.__privateReads = [];
+          w.__parsedSnapshot = false;
+          const realParse = w.JSON.parse;
+          w.JSON.parse = function (txt, reviver) {
+            const out = realParse.call(w.JSON, txt, reviver);
+            if (out && typeof out === 'object' && out.data && typeof out.data === 'object' &&
+                typeof out.sh === 'string' && !out.__trapped) {
+              Object.defineProperty(out, '__trapped', { value: true });
+              w.__parsedSnapshot = true;
+              Object.keys(out.data).forEach(function (name) {
+                if (PUBLIC.indexOf(name) !== -1) return;   /* allowlisted: read normally */
+                let held = out.data[name];
+                Object.defineProperty(out.data, name, {
+                  enumerable: true, configurable: true,
+                  get: function () { w.__privateReads.push(name); return held; },
+                  set: function (v) { held = v; }
+                });
+              });
+            }
+            return out;
+          };
+        }
         w.scrollTo = () => {};
       },
       virtualConsole: new VirtualConsole().on('jsdomError', e => {
@@ -1541,53 +1584,115 @@ console.log('\n── the organizer profile reads the verdict from the snapshot,
     if (errs.length) { console.log('SCRIPT ERRORS:\n' + errs.join('\n')); process.exit(1); }
     return { w, d: w.document };
   }
-  const verdictOf = tab => tab.d.documentElement.getAttribute('data-verdict');
-  const badgeOf   = tab => !!tab.d.querySelector('.profile-hero .badge-verified');
-  const textOf    = tab => { const c = tab.d.body.cloneNode(true); [...c.querySelectorAll('script,style')].forEach(n => n.remove()); return c.textContent; };
+  const textOf = tab => { const c = tab.d.body.cloneNode(true); [...c.querySelectorAll('script,style')].forEach(n => n.remove()); return c.textContent; };
 
-  /* (a) fixture state, ordinarily saved by the dashboard: the badge
-     stands, with the ONE disclaimer sentence. */
+  /* The reachability scan. Roots are the page context (window's own
+     properties) and everything the store hands out, including what its
+     zero-argument entries answer. DOM nodes and the window itself are
+     skipped; a budget keeps a pathological graph from hanging the run. */
+  function reachable(w, marker) {
+    const seen = new Set(); const hits = []; let budget = 400000;
+    function walk(v, where) {
+      if (hits.length || budget-- <= 0) return;
+      if (typeof v === 'string') { if (v.indexOf(marker) !== -1) hits.push(where); return; }
+      if (!v || typeof v !== 'object') return;
+      if (seen.has(v) || v === w) return;
+      seen.add(v);
+      try { if (typeof w.Node === 'function' && v instanceof w.Node) return; } catch (e) { return; }
+      let keys; try { keys = Object.keys(v); } catch (e) { return; }
+      for (const k of keys) {
+        let child; try { child = v[k]; } catch (e) { continue; }
+        walk(child, where + '.' + k);
+      }
+    }
+    let names; try { names = Object.keys(w); } catch (e) { names = []; }
+    names.forEach(n => { let v; try { v = w[n]; } catch (e) { return; } walk(v, 'window.' + n); });
+    const S = w.BLStore;
+    walk(S, 'BLStore');
+    ['names', 'fingerprints', 'isReadOnly', 'isActive', 'liveSchemaHash'].forEach(fn => {
+      try { walk(S[fn](), 'BLStore.' + fn + '()'); } catch (e) {}
+    });
+    return hits;
+  }
+
+  /* (a) A real snapshot, written by an ordinary dashboard act, carrying
+     a MARKER inside a private collection. */
+  const MARKER = 'OP6-PROBE-MARKER-a7f3';
   const area = makeStorageArea();
   const dash = enter(openTab(area, { persist: true }));
-  if (dash.w.eval('BLStore.save()') !== true) bad('the persisting tab refused to save');
-  const disclaimer = dash.w.eval('PARTNER_VERIFIED_DISCLAIMER');
-  const p1 = openOrganizer(area);
-  if (verdictOf(p1) === 'approved' && badgeOf(p1) && textOf(p1).indexOf(disclaimer) !== -1 &&
-      p1.d.querySelectorAll('.op-brand-badge').length === 2)
-    ok('with the dashboard\'s snapshot present, the page derives approved: Verified badge + disclaimer, both brand badges');
-  else bad('the page did not derive the approved verdict from the snapshot (' + verdictOf(p1) + ')');
-  if (p1.w.eval('typeof reviews') === 'undefined' && p1.w.eval('typeof partnerFollows') === 'undefined' &&
+  act(dash.w, "writeReview('partner','PP-9001','approved','Bottle Lobby'," + JSON.stringify(MARKER) + ",'partner_verification')");
+  await settle(dash.w);
+  const stored = read(area);
+  if (stored && stored.data.reviews.some(r => r.reviewNotes === MARKER))
+    ok('the marker sits in the ordinarily saved snapshot inside a PRIVATE collection (reviews.reviewNotes) — the probe has something to find');
+  else bad('the marker never reached the snapshot — the rest of this section would be meaningless');
+  if (stored && stored.data.reviews && stored.data.partnerFollows && stored.data.fairAdmissions)
+    ok('and the shared snapshot really does carry reviews, partnerFollows and fairAdmissions — the accepted prototype limit is real, not hypothetical');
+  else bad('the snapshot carries no private collection — the probe would prove nothing');
+
+  const p1 = openOrganizer(area, { probe: true });
+
+  /* (b) The accepted transient parse HAPPENED, and applied the
+     allowlisted collections — this section does not object to it. */
+  if (p1.w.__parsedSnapshot === true &&
       p1.w.eval("BLStore.names().sort().join(',')") === 'fairEditions,fairHalls,fairParticipations,fairSeries,fairStands' &&
-      JSON.parse(area._data[KEY]).data.reviews && JSON.parse(area._data[KEY]).data.partnerFollows)
-    ok('reviews and partnerFollows sit in the snapshot and reach no binding on the page — only the verdict crossed');
-  else bad('a private collection crossed onto the public organizer page');
+      p1.d.querySelectorAll('.op-fair').length > 0)
+    ok('the shared snapshot WAS parsed transiently and its allowlisted collections applied — the accepted prototype limit, unchanged and not objected to');
+  else bad('the page did not hydrate from the snapshot at all — the probes below would pass for the wrong reason');
+
+  /* (c) THE INVARIANT. Not one private VALUE was ever read — not during
+     the hydration call, not after it. */
+  const readsBefore = p1.w.__privateReads.slice();
+  if (readsBefore.length === 0)
+    ok('no non-allowlisted collection VALUE was read at any point — the transient parse touches only the allowlisted names (OP-6)');
+  else bad('a private collection was read out of the parsed snapshot: ' + readsBefore.join(', '));
+
+  /* (d) And nothing still HOLDS it: neither the page context nor the
+     store's public surface can reach the marker after hydration. */
+  const hits = reachable(p1.w, MARKER);
+  if (!hits.length && p1.w.__privateReads.length === 0)
+    ok('after return from hydrate() the marker is unreachable from the page context and from the whole public store surface — no snapshot is held, and the scan found no private accessor to trip');
+  else bad('a held snapshot or private collection is reachable after hydration: ' + hits.join(', ') + ' / ' + p1.w.__privateReads.join(', '));
+
+  /* (e) No verdict entry, and no private register access reachable from
+     the page's own execution context after hydration. */
+  const surface = p1.w.eval("[typeof BLStore.publicVerdict, typeof BLStore.PUBLIC_VERDICTS, typeof BLStore.lastWord, typeof reviews, typeof partnerFollows, typeof fairAdmissions].join(',')");
+  if (surface === 'undefined,undefined,undefined,undefined,undefined,undefined')
+    ok('publicVerdict, PUBLIC_VERDICTS and lastWord are gone from the store, and no private collection is bound on the page — no register access for a public verdict is possible');
+  else bad('a verdict entry or a private binding survives on the public page: ' + surface);
+  if (!/verif/i.test(textOf(p1)) && !p1.d.documentElement.hasAttribute('data-verdict') &&
+      !p1.d.querySelector('.badge-verified, .badge-brand, .op-brand-badge, .op-disclaim, #op-verification'))
+    ok('and with the full snapshot present the page STILL renders no badge, no disclaimer and no substitute status');
+  else bad('a verification statement appeared once a snapshot existed');
+
+  /* (f) Still read-only (OP-9). */
   const frozen = area._data[KEY];
   if (p1.w.eval('BLStore.isReadOnly()') === true && p1.w.eval('BLStore.save()') === false &&
       p1.w.eval('BLStore.start({})') === 'refused' && area._data[KEY] === frozen)
     ok('the page is read-only: save() and start() are dead, storage byte-identical');
   else bad('the organizer page wrote or wired autosave (OP-9)');
 
-  /* (b) a LATER rejecting row written by an ordinary dashboard act —
-     the register's last word moves, and the badge falls on reload. */
+  /* (g) FRESH vs AFTER-DASHBOARD: no state-dependent surface is left. A
+     later REJECTING row changes the private dashboard answer and must
+     change nothing at all on the public page. */
+  const fresh = openOrganizer(null);
   act(dash.w, "writeReview('partner','PP-9001','rejected','Bottle Lobby','probe: authority withdrawn','partner_verification')");
   await settle(dash.w);
-  const stored = read(area);
-  const lastRow = stored.data.reviews.filter(r => r.subjectType === 'partner' && r.approvalType === 'partner_verification').pop();
+  const rejected = read(area);
+  const lastRow = rejected.data.reviews.filter(r => r.subjectType === 'partner' && r.approvalType === 'partner_verification').pop();
   if (lastRow && lastRow.reviewStatus === 'rejected') ok('the rejecting row sits in the ordinarily saved snapshot as the register\'s last word');
-  else bad('the rejecting row never reached the snapshot — the rest of this section is meaningless');
+  else bad('the rejecting row never reached the snapshot');
+  if (dash.w.eval('partnerVerificationApproved(platformPartners[0])') === false &&
+      dash.w.eval('seriesBrandApproved(fairSeries[0])') === true)
+    ok('the PRIVATE dashboard derivation moved with it — the partner badge falls, the series brand is a different subject (PP-4, FS-3)');
+  else bad('the private derivation did not follow the register\'s last word');
   const p2 = openOrganizer(area);
-  if (verdictOf(p2) === 'refused' && !badgeOf(p2) && textOf(p2).indexOf(disclaimer) === -1)
-    ok('after an ordinary reload the badge has fallen and the disclaimer with it — the last word rules, no stored flag survived (PP-4/OP-6)');
-  else bad('the badge survived a later rejection (' + verdictOf(p2) + ')');
-  if (p2.d.querySelectorAll('.op-brand-badge').length === 2)
-    ok('the two series brand badges still stand — a different subject, a different last word (FS-4)');
-  else bad('the brand badges fell with the workspace verdict — the two badges merged');
-  /* The dashboard says the same about the same bytes. */
-  if (dash.w.eval('partnerVerificationApproved(platformPartners[0])') === false)
-    ok('and the dashboard reads the same last word from the live register — one derivation, two documents');
-  else bad('dashboard and page disagree about the verdict');
+  const norm = t => t.replace(/\s+/g, ' ').trim();
+  if (norm(textOf(fresh)) === norm(textOf(p2)) && !/verif/i.test(textOf(p2)))
+    ok('the public page reads IDENTICALLY with no snapshot, with an approved one and with a rejected one — nothing on it depends on a verification state');
+  else bad('the public page changed with the register state — a state-dependent verification surface survives');
 
-  /* (c) the follow persists privately: a real act, a real reload. */
+  /* (h) the follow persists privately: a real act, a real reload. */
   const area2 = makeStorageArea();
   const dash2 = enter(openTab(area2, { persist: true }));
   dash2.w.eval("switchDashboard('winery', document.querySelectorAll('.demo-btn')[rolesByHash.winery])");
@@ -1612,20 +1717,43 @@ console.log('\n── the organizer profile reads the verdict from the snapshot,
     else bad('a follower name reached the public organizer page (A23.1)');
   }
 
-  /* (d) the counter-proofs. */
-  const areaR = makeStorageArea();
-  areaR._data[KEY] = JSON.stringify(stored);          /* the rejected state */
-  const rogue = openOrganizer(areaR, { patch: {
-    from: "var last = lastWord(hydrated.data.reviews, PUBLIC_VERDICTS[approvalType], subjectId, approvalType);\n    return !!last && last.reviewStatus === 'approved';",
-    to:   "return hydrated.data.reviews.some(function (r) { return r.subjectId === subjectId && r.approvalType === approvalType && r.reviewStatus === 'approved'; });" } });
-  if (verdictOf(rogue) === 'approved' && badgeOf(rogue))
-    ok('caught: an any-row derivation in the store lets the badge survive the rejection — lastWord() is what fells it, and nothing else could have');
-  else bad('the any-row rogue did not stand the badge — the check above may pass for another reason');
-  const rogue2 = openOrganizer(areaR, { patch: {
+  /* (i) THE COUNTER-MUTATIONS. Each reintroduces exactly one forbidden
+     shape, and each must fall to the instrument built for that shape —
+     never to the accepted transient parse, which happens in all three. */
+  const areaM = makeStorageArea();
+  areaM._data[KEY] = JSON.stringify(stored);   /* the approved state, marker inside */
+
+  /* CM-1: the withdrawn violation restored — the snapshot's private
+     `reviews` rows read after hydration for a public verdict. Must fall
+     to the READ TRAP, naming the collection that was read. */
+  const cm1 = openOrganizer(areaM, { probe: true, patch: { from: KEPT, to:
+    "    entries.forEach(function (e) { e.set(p.data[e.name]); });\n" +
+    "    window.__verdict = (function () { var rows = p.data.reviews || [], last = null;\n" +
+    "      rows.forEach(function (r) { if (r.subjectType === 'partner' && r.approvalType === 'partner_verification') last = r; });\n" +
+    "      return !!last && last.reviewStatus === 'approved'; })();\n" +
+    "    /* NOTHING IS KEPT" } });
+  if (cm1.w.__privateReads.indexOf('reviews') !== -1 && cm1.w.__verdict === true)
+    ok('counter-mutation CM-1: a public verdict derived from the snapshot\'s private rows — the READ TRAP goes red naming `reviews` (the rogue verdict answered ' + cm1.w.__verdict + ')');
+  else bad('CM-1 STAYED GREEN: reading the register out of the snapshot did not trip the read trap — the trap proves nothing (' + cm1.w.__privateReads.join(',') + ')');
+
+  /* CM-2: the snapshot merely HELD after hydration, nothing reading it.
+     Must fall to the REACHABILITY SCAN — and NOT to the read trap,
+     since holding is not reading. */
+  const cm2 = openOrganizer(areaM, { probe: true, patch: { from: KEPT, to:
+    "    entries.forEach(function (e) { e.set(p.data[e.name]); });\n    window.__heldSnapshot = p;\n    /* NOTHING IS KEPT" } });
+  const heldReadsBefore = cm2.w.__privateReads.length;
+  const cm2hits = reachable(cm2.w, MARKER);
+  if (heldReadsBefore === 0 && cm2hits.length && /__heldSnapshot/.test(cm2hits.join(',')))
+    ok('counter-mutation CM-2: the snapshot held after hydrate() with nothing reading it — the READ trap stayed silent (holding is not reading) and the REACHABILITY SCAN goes red at ' + cm2hits[0]);
+  else bad('CM-2 STAYED GREEN: a snapshot retained after hydration was not found (reads ' + heldReadsBefore + ', hits ' + cm2hits.join(', ') + ')');
+
+  /* CM-3: a page that registers the register is refused WHOLE. */
+  const cm3 = openOrganizer(areaM, { patch: {
     from: 'BLStore.register({\n    fairSeries:',
     to:   'BLStore.register({\n    reviews: [function () { return window.__rv || []; }, function (v) { window.__rv = v; }],\n    fairSeries:' } });
-  if (rogue2.w.eval('typeof window.__rv') === 'undefined' && verdictOf(rogue2) === 'none' && areaR._data[KEY] === JSON.stringify(stored))
-    ok('a page that registers reviews is refused WHOLE — nothing hydrated, no verdict, storage untouched (OP-6/FP-13)');
+  if (cm3.w.eval('typeof window.__rv') === 'undefined' && !/verif/i.test(textOf(cm3)) &&
+      areaM._data[KEY] === JSON.stringify(stored))
+    ok('a page that registers reviews is refused WHOLE — nothing hydrated, nothing claimed, storage untouched (OP-6/FP-13)');
   else bad('the read-only entry hydrated the register onto a public page');
 }
 
