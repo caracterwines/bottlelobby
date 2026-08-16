@@ -4510,8 +4510,13 @@ show`, with `approvalType: 'partner_verification'`. A partner verification is
 the same act as a programme admission or a show release: a person at Bottle
 Lobby decided, on a date, about a subject — same table, same shape, same
 authority (invariant 6). A second register would be a second place the
-platform's authority lives. Every surface derives the badge from the
-register's last word; without an approved row the badge falls.
+platform's authority lives. Every surface that renders the badge derives
+it from the register's last word; without an approved row the badge falls.
+**This is not weakened by A23.4 and admits no second source:** where a
+surface cannot reach the register's last word safely — the public
+organizer profile in the static prototype, which must never hold the
+register or a derivative of it — it renders **no badge at all** and makes
+no verification statement, rather than deriving one from anywhere else.
 
 ### A18.5 Follow — business semantics now, storage measured later
 
@@ -4570,7 +4575,9 @@ pass.
   workspace.
 - **PP-4 — verification is the register's last word.** No stored flag; the
   badge derives from the approved `partner_verification` row and falls
-  without it.
+  without it. A surface that cannot reach that last word safely renders no
+  badge and says nothing about verification, never a badge from a second
+  source (A23.4, OP-6).
 - **PP-5 — `media_partner` is a value, not a feature.** Permitted in the
   capability model, instantiated nowhere, rendered nowhere.
 - **PP-6 — a follow toward a partner is directed and non-commercial** and
@@ -6061,6 +6068,25 @@ unchanged samples of the four trade dashboards and the directory count.
 > a follower view, a "started following you" notification into the partner
 > workspace, an inquiry that reaches the organizer — is **O11** and is named
 > as such below, not built here.
+>
+> **Corrected on 16 Aug 2026 (Serge's decision (b)).** O9 as first built
+> carried a public verification verdict derived on the client. It was
+> withdrawn whole after the correction measured that it worked only by
+> retaining the full validated snapshot after hydration and reading private
+> `reviews` rows out of it. A23 therefore distinguishes **three states**,
+> and every sentence below belongs to exactly one of them:
+>
+> 1. **Permanent product feature** — the public organizer profile itself,
+>    with role, profile data, upcoming fairs, fair series and its entry
+>    points, plus the bounded partner follow (D47) and the My Stars read
+>    path (PP-3). Built, kept, unaffected.
+> 2. **Temporarily deferred** — the public partner verification and series
+>    brand badges, until the named server-side / RLS **backend boundary**
+>    of A23.4. Until then the public page makes no verification statement
+>    at all (OP-6).
+> 3. **Still private and fully working** — the dashboard's verification and
+>    series brand derivation from the last word of the `reviews` register
+>    (A18.4/PP-4, A19.4/FS-3). Untouched by the correction.
 
 ### A23.1 Business semantics — decided, anchored word for word
 
@@ -6212,7 +6238,7 @@ follow the demo organizer (a restaurant and a distributor), so the read
 path is visible without explanation — no figure is derived from them, no
 gap is filled.
 
-### A23.4 The public verification verdict — one register, no rows leave it
+### A23.4 The public verification verdict — measured impossible in the static prototype, deferred to a named backend boundary
 
 **Measured (M2b):** the `reviews` register — with `reviewNotes` that reach
 neither party (A17.13) and rows about memberships, contracts, projects and
@@ -6220,50 +6246,67 @@ show releases — lives ONLY in the dashboard, is NOT in the public
 hydration allowlist and must not enter it; `partnerVerificationLatest()` /
 `seriesBrandLatest()` live only there too; `fairEditionDiscoverable()`
 reads the edition status and nothing else. **No public last-word
-mechanism existed.** The public organizer page nevertheless has to render
-the Verified badge (A18.4) and the series brand badge (A19.4) — each
-derived from the register's last word, no stored flag, no copied fact, no
-second authority.
+mechanism existed** — and the correction pass measured that in a static
+prototype **none can be built safely**.
 
-**Built from the measurement — the encapsulated public verdict.** The
-store — already the platform's public read boundary (`PUBLIC_COLLECTIONS`,
-FP-13; the FR-9 pattern of a platform-fixed allowlist in platform code) —
-gains **one** narrow, read-only entry, `BLStore.publicVerdict(approvalType,
-subjectId)`:
+**The withdrawn attempt, and the exact reason.** O9 first built an
+encapsulated `BLStore.publicVerdict(approvalType, subjectId)` deriving the
+last word inside the store's closure. The correction measured what that
+actually required: the **full validated snapshot had to be RETAINED in
+the store closure after `hydrate()` returned** (`hydrated = p`), and its
+private `reviews` rows read out of that retained structure on every public
+page load. The retention is the violation. It is removed; nothing replaces
+it on the public path.
 
-- **A fixed allowlist of derivable verdicts, `PUBLIC_VERDICTS`** —
-  `partner_verification → subjectType 'partner'`,
-  `series_brand_review → subjectType 'fair_series'` — frozen in platform
-  code. Any other approval type is refused; the entry cannot be widened
-  by a page, a parameter or a stored value.
-- **ONE last-word derivation, `BLStore.lastWord(rows, subjectType,
-  subjectId, approvalType)`** — the last row about the subject with that
-  approval type. The dashboard's `partnerVerificationLatest()` and
-  `seriesBrandLatest()` now call this same function over the live
-  register; the public entry calls it over the register **inside the
-  store's closure**, read from the **validated** snapshot (the one
-  validity contract, `snapshotInvalidWhy`) — and hands out **only the
-  verdict**: `true` (last word approved), `false` (last word not
-  approved, or no row), or `null` (no readable word: no valid snapshot on
-  this device). Register rows never leave the closure; `reviews` is
-  neither registered on nor applied to any public page.
-- **The real build:** a server-side function over `reviews` behind RLS,
-  returning the boolean; the client never holds a row. The store closure
-  is that function's prototype stand-in.
+**What is forbidden on the public path, stated precisely:**
 
-**The one honest limit, named:** a public page renders "the fixtures"
-without a snapshot — but the register's fixture ground lives in the
-dashboard document by design, so a device that has never opened the
-dashboard has **no word to derive from**. The page then renders **no
-badge and claims nothing** — the badge falls exactly as PP-4 says it does
-without an approved word, and it stands the moment the demo state exists
-(the dashboard's first heartbeat writes it). Deliberately NOT done: a
-build-time verdict constant (a stored derivative), the register or a
-notes-stripped copy of it in a public asset (a register on the public
-path), a stored `verified` flag (PP-4). What the badge says when it stands
-is the fixed A18.4 sentence, from `PARTNER_VERIFIED_DISCLAIMER` — the ONE
-source, moved to the shared asset with the partner record — and the
-series brand badge is a second, distinguishable statement (FS-4).
+1. **the register, or a filtered / notes-stripped copy of it** — a
+   register on the public path is a register on the public path;
+2. **a stored derivative** — a `verified` flag (PP-4), a build-time
+   verdict constant, a second authority of any shape;
+3. **HOLDING the full snapshot, or any non-allowlisted collection, AFTER
+   RETURN FROM `hydrate()`**, and every later read out of such a held
+   structure. This is the specific clause the withdrawn attempt broke.
+
+**What is expressly NOT forbidden, and continues unchanged — the named,
+accepted prototype limit.** `hydrate()` parses the shared snapshot
+**transiently** in order to apply the allowlisted public collections and
+nothing else. The shared snapshot technically also contains private
+collections, and they are technically inside that parsed structure for the
+duration of the call. That is the known limit of a static prototype whose
+whole demo state is one shared `localStorage` document; it was accepted
+with O7, it is **not denied, not removed and not widened here** — and it
+is **never** used as a justification for a new public read path. The
+guarantee this specification gives is therefore stated in exactly this
+form, and never as a claim that private data is never parsed at all:
+**after return from `hydrate()` no full snapshot and no non-allowlisted
+collection is held in the store context or the page context, reachable
+through the public surface, or readable for a public verdict.**
+
+**Consequence — the public badges are DEFERRED, the page is not.** Serge's
+decision of 16 Aug 2026: the public organizer profile stays a real
+platform feature and is published, up to the backend boundary, **without
+any verification statement whatsoever**. The productive solution is a
+**server-side derivation over `reviews` behind RLS** which hands the
+public page the current result alone — no row, no register, no client-held
+snapshot. That is the **named backend boundary**; it is not this pass's
+subject and the badges return only with it.
+
+Until then the public organizer page renders **no verification badge, no
+disclaimer, no substitute status and no placeholder wording** — not
+"unverified", not "verification pending", not "status unavailable". It
+says nothing about verification in either direction (OP-6). The page is
+not gated on verification either: it renders its role, its profile data,
+its fairs and its series regardless.
+
+**Unchanged, private, still derived:** the dashboard reads partner
+verification (A18.4) and the series brand review (A19.4) from the **last
+word of the live `reviews` register** exactly as PP-4 and FS-3 require —
+one derivation per subject, held in the dashboard document, no stored
+flag, and a later rejecting row still fells the private badge. What that
+badge says when it stands is the fixed A18.4 sentence, from
+`PARTNER_VERIFIED_DISCLAIMER` — the ONE source, in the shared asset with
+the partner record, rendered by the dashboard alone.
 
 ### A23.5 The public organizer profile page
 
@@ -6331,11 +6374,14 @@ relation.
 - **Save & Follow** — A23.3: a link, no write path, no success claim; the
   entry says what happens next.
 
-**Badges (A18.4/A19.4/FS-4):** *✓ Verified Platform Partner* only when
-`publicVerdict('partner_verification', partnerId) === true`, with the one
-disclaimer sentence beside it; per series, *Fair brand verified* only when
-`publicVerdict('series_brand_review', seriesId) === true`, worded and
-placed apart. Neither says anything when the verdict is false or null.
+**Nothing about verification (A23.4):** the page carries **no** *Verified
+Platform Partner* badge, **no** *Fair brand verified* badge per series,
+**no** disclaimer sentence, **no** Verification widget and **no**
+substitute status or placeholder text — the public verdict is deferred to
+the named backend boundary and the page makes no verification statement in
+either direction. The role line is A18.6's vocabulary alone: *Platform
+Partner · Fair & Event Organizer*, which says who the organisation is on
+the platform and nothing about whether Bottle Lobby has verified it.
 
 **Nothing about followers:** no names, no count, no "N members follow
 this organizer" — fixed by A23.1 (5), not derived.
@@ -6375,11 +6421,16 @@ the organizer view gets no follower surface and no follow notification
   inquiry route that reaches the organizer.
 - **Series and edition follow acts** on the surfaces that own those records
   (their own passes) — the store carries the sorts today.
-- **Open question, not decided here:** whether the public organizer page
-  itself falls with the verification verdict (the participation page's
-  triple-gate shape) or renders without the badge as O9 builds it. O9
-  builds the badge as A18.4 says; the page's own gate is a business
-  decision to be taken, not inferred.
+- **The public verification badges** — partner verification and series
+  brand review — until the **named backend boundary** of A23.4 exists: a
+  server-side derivation over `reviews` behind RLS that hands the public
+  page the current result alone. Deferred, not dropped.
+- **Decided, no longer open:** the earlier open question — whether the
+  public organizer page itself falls with the verification word (the
+  participation page's triple-gate shape) or renders without the badge —
+  is answered by Serge's decision of 16 Aug 2026: **the page stands.** It
+  is a real platform feature and is published without any verification
+  statement until the backend boundary; only the badges wait (A23.4).
 - **`platformPartners` in the hydration allowlist** — the day a partner
   row gains a writer.
 
@@ -6403,11 +6454,28 @@ the organizer view gets no follower surface and no follow notification
   write path and claims no success without a stored edge.
 - **OP-5 — no Request Partnership** on the organizer page or on a
   My-Stars partner entry, and no style that suggests a trade relation.
-- **OP-6 — the public verdict is derived, allowlisted and row-free.** The
-  badge falls with a later non-approving last word; the public entry
-  serves only the verdict for the two allowlisted approval types; `reviews`
-  and every private approval row are neither registered nor hydrated on a
-  public page.
+- **OP-6 — there IS no public verification verdict (negative safety
+  invariant, A23.4).** Until the named backend boundary:
+  - the static prototype has **no public verification verdict at all**;
+  - the public organizer profile renders **no partner verification badge,
+    no series brand badge, no disclaimer, no substitute status and no
+    other verification statement** — not even a placeholder;
+  - the public store surface exports **neither `publicVerdict` nor
+    `PUBLIC_VERDICTS`**;
+  - **after return from `hydrate()`** no full snapshot and no
+    non-allowlisted collection is held in the store context or the page
+    context, reachable through the public surface, or readable for a
+    public verdict. The **transient parse** inside the call, which applies
+    the allowlisted collections and nothing else, remains the existing,
+    accepted prototype limit (A23.4) and is expressly not what this
+    invariant forbids;
+  - `reviews` and every private approval row are neither registered nor
+    hydrated nor applied on a public page;
+  - the **private dashboard derivation from the last word of the `reviews`
+    register stays unchanged and effective** — a later rejecting row still
+    fells the private badge (PP-4, FS-3);
+  - public badges may return **only** with the named server-side / RLS
+    backend boundary, never through a client-side path.
 - **OP-7 — the exhibitor-call action falls** without an open call on a
   discoverable, upcoming edition, and its caption is one derivation over
   the count.
@@ -6415,8 +6483,7 @@ the organizer view gets no follower surface and no follow notification
   and no follower surface in the organizer view (O11).
 - **OP-9 — one hydration path, fixed allowlist, read-only** on the
   organizer page (DIR-4/FP-13 carried forward); the fixtures render
-  without a valid snapshot — the verdict alone has no public fixture
-  ground and renders no badge then.
+  without a valid snapshot.
 - **OP-10 — the four trade cockpits are unchanged** beyond the measured
   O9 dependencies named in the prototype blueprint.
 
@@ -6428,8 +6495,7 @@ store, `PARTNER_FOLLOW_TARGETS` as the frozen resolver map),
 `renderPartnerStarsFor()` called beside each role's
 `renderWineStarsFor()`, the two public entries `?follow=` and `?calls=`
 consumed once through `openOrganizerEntries()` from `pickRole()` and the
-direct half; `BLStore.PUBLIC_VERDICTS`, `BLStore.lastWord()`,
-`BLStore.publicVerdict()`; `platformPartners` and its constants in
+direct half; `platformPartners` and its constants in
 `assets/bottle-lobby-data.js`; `organizerUpcomingEditions()`,
 `organizerOpenCalls()`, `organizerCallCaption()` in
 `assets/bottle-lobby-public-shows.js`; the page
@@ -6437,24 +6503,46 @@ direct half; `BLStore.PUBLIC_VERDICTS`, `BLStore.lastWord()`,
 dependencies on stock surfaces:** the fair-edition listing's organizer
 line, the four My Stars sections' partner block, `switchDashboard()`'s
 one assignment, the organizer cockpit's profile button and locked rows,
-the two dashboard verdict readers delegating to the shared derivation.
-`SCHEMA_HASH` follows the new registration and the partner row's `url`
-field in the same commit; VERSION stays — measured, both changes are
-seen by guard 2 (the O7 reasoning).
+and — in the dashboard document alone — `partnerVerificationLatest()` /
+`seriesBrandLatest()` delegating to one local `lastWord(rows, subjectType,
+subjectId, approvalType)`. That helper lives in the dashboard because that
+is now its **only** caller: measured after the withdrawal of the public
+verdict, no public page has any use for it, and a last-word helper on the
+platform's public read boundary would be the vestigial half of the path
+A23.4 forbids. `SCHEMA_HASH` follows the new registration and the partner
+row's `url` field in the same commit; VERSION stays — measured, both
+changes are seen by guard 2 (the O7 reasoning). The withdrawal of the
+public verdict changes no fixture shape and therefore moves neither.
 
 **Harness home:** `tests/organizer-profile.js` — its own file, as A18–A22
 each got one: OP-1..OP-10 with effective counter-mutations (a smuggled
 partner-follow row against the D43 resolver and `hostCommunity()`; a
 copied name instead of a key; the double follow; the public page's write
 path and its no-write assertion; the exhibitor-call action with the call
-closed; follower names and figures; the verdict falling with a later
-rejecting row through `lastWord`; the allowlist scan over the public
+closed; follower names and figures; the allowlist scan over the public
 documents for `reviews` / `partnerFollows` / `fairAdmissions`) plus
-unchanged samples of the four trade cockpits. The **live-store half** of
-OP-6/OP-9 — a rejecting row written in the dashboard reaching the public
-page's badge through the snapshot, the page never writing — lives in
-`tests/persistence.js`, for the FP-13/DIR-4 reason. `tests/platform-partners.js`
-carries PP-3's opened path and PP-6 as a real assertion; `tests/fairs.js`
+unchanged samples of the four trade cockpits.
+
+**OP-6 is the home of the NEGATIVE regression tests** that keep the
+withdrawn verdict path withdrawn. Its section proves, at minimum: that
+`BLStore.publicVerdict` and `BLStore.PUBLIC_VERDICTS` no longer exist on
+the public store surface; that **in the execution context AFTER the
+hydration call** — not merely by binding, allowlist or a source-read
+return value, the gap that let the violation run green — no full snapshot
+and no non-allowlisted collection is held or reachable, and no private
+register read for a public verdict is possible; that no public organizer
+markup carries a verification badge, disclaimer or substitute status; and
+that the private dashboard derivation still moves with a later rejecting
+row. Each of those checks carries a counter-mutation that reintroduces
+**exactly** the forbidden retention or a later private read out of it and
+must turn the check red for that reason — a mutation that goes red merely
+because the accepted transient parse happens, or for any incidental
+reason, does not count as a counter-mutation. The **live-store half** of
+OP-6/OP-9 — a real snapshot written by the dashboard, the public page
+reading only its allowlisted collections out of it and never writing —
+lives in `tests/persistence.js`, for the FP-13/DIR-4 reason.
+`tests/platform-partners.js` carries PP-3's opened path and PP-6 as a real
+assertion, and the private A18.4 badge with its disclaimer; `tests/fairs.js`
 §9 follows the activated locked row.
 
 ---
