@@ -4,7 +4,7 @@
 > Dateiliste, Dateianzahl und Aenderungshistorie stehen in der Git-Historie — nicht hier.
 > Dauerhafte Regeln stehen in `BOTTLE-LOBBY-SPEC.md`, kurze Invarianten in `CLAUDE.md` — nicht hier.
 
-**Letzte Aktualisierung:** 15. August 2026
+**Letzte Aktualisierung:** 16. August 2026
 
 ---
 
@@ -21,7 +21,7 @@ Kein Build-Command, Publish-Directory = Repo-Root.
 
 ---
 
-## ▶ EINSTIEG — Stand 15. August 2026
+## ▶ EINSTIEG — Stand 16. August 2026
 
 > **Was Git nicht weiss, steht hier. Alles andere nicht.** Diese Datei fuehrt
 > keine Chronik: was gebaut wurde, wann und von wem, beantwortet `git log`
@@ -1386,9 +1386,10 @@ Funktionen aufrufen, `transferSize` vorher lesen (C7).
 > liest nur (`hydrate()`, feste Allowlist unveraendert fuenf Sammlungen); der
 > Follow-Akt laeuft im Dashboard unter der aus dem Cockpit-Umschalter
 > abgeleiteten Identitaet (`activeCockpit` → `followActingContext()`); My
-> Stars ist der EINE geoeffnete PP-3-Lesepfad; das Verified-Badge kommt aus
-> dem gekapselten Store-Verdict (`BLStore.publicVerdict`) — Registerzeilen
-> verlassen den Store nie.
+> Stars ist der EINE geoeffnete PP-3-Lesepfad. **Der urspruenglich gebaute
+> oeffentliche Verifikations-Verdict ist zurueckgebaut** — siehe den Block
+> „O9-Recovery" weiter unten; die oeffentliche Seite trifft heute KEINE
+> Verifikationsaussage.
 >
 > **Was Git nicht sagt — Messbefunde, die den Zuschnitt bestimmt haben:**
 >
@@ -1405,15 +1406,14 @@ Funktionen aufrufen, `transferSize` vorher lesen (C7).
 >   `platformPartners` ist bewusst NICHT in der Hydration-Allowlist — nichts
 >   schreibt heute eine Partnerzeile; der Tag, an dem ein Schreiber kommt,
 >   erweitert die Allowlist.
-> - **M2b — die EINE benannte Prototyp-Grenze:** das `reviews`-Register lebt
->   nur im Dashboard-Dokument. Der Store leitet das Verdict aus dem
->   VALIDIERTEN Snapshot ab; **ein Geraet, das das Dashboard nie geoeffnet
->   hat, hat kein Registerwort** — die Seite zeigt dann KEIN Badge und
->   behauptet nichts (`data-verdict="none"`). Sobald das Dashboard einmal lief
->   (erster Heartbeat), steht das Badge. Bewusst NICHT gebaut: eine
->   Build-Zeit-Verdict-Konstante (gespeichertes Derivat), das Register oder
->   eine notizenfreie Kopie im oeffentlichen Asset, ein Flag. Im Real-Build
->   beantwortet das eine Server-Funktion ueber `reviews` hinter RLS.
+> - **M2b — der Befund, an dem O9 gescheitert ist:** das `reviews`-Register
+>   lebt nur im Dashboard-Dokument. O9 hat daraus ein gekapseltes
+>   Store-Verdict gebaut — und das ging nur, indem der vollstaendige
+>   validierte Snapshot NACH `hydrate()` im Store gehalten und seine privaten
+>   `reviews`-Zeilen daraus gelesen wurden. Genau das ist der M2b-Verstoss;
+>   der Strang wurde am 16.08. vollstaendig zurueckgebaut (Block
+>   „O9-Recovery"). **Diese Zeile beschreibt Historie, keine gueltige
+>   Loesung.**
 > - **M3:** die Deep-Link-/Rollenwahlmechanik von O7 (`?appt=`) ist 1:1
 >   wiederverwendet — `?follow=<partnerId>` und `?calls=<partnerId>`, einmal
 >   konsumiert, `replaceState`. **`activeShowRole` war NICHT die richtige
@@ -1442,8 +1442,9 @@ Funktionen aufrufen, `transferSize` vorher lesen (C7).
 > **Notwendige Anpassungen an Bestandsflaechen (jede mit Messbefund oben):**
 > `switchDashboard()` eine Zuweisung; die vier My-Stars-Sektionen ein
 > Partner-Block; das Fair-Listing eine Organizer-Zeile;
-> `partnerVerificationLatest()`/`seriesBrandLatest()` delegieren an
-> `BLStore.lastWord` (eine Implementierung); Organizer-Cockpit Button + zwei
+> `partnerVerificationLatest()`/`seriesBrandLatest()` delegieren an EINE
+> `lastWord()`-Implementierung (seit dem Rueckbau im Dashboard-Dokument, nicht
+> mehr im Store); Organizer-Cockpit Button + zwei
 > statt drei Locked-Rows; Rollenwahl-Overlay eine Notizzeile bei anhaengiger
 > Tuer. Wine Shows, Member Events, Termine, Kampagnen, Suppressions und die
 > vier Handelscockpits sonst unveraendert (Stichproben in
@@ -1453,9 +1454,11 @@ Funktionen aufrufen, `transferSize` vorher lesen (C7).
 > Screenshot-/Find-Injection lief in dieser Sitzung durchgehend in den
 > bekannten Timeout; die Abnahme wurde per JavaScript-Auslese und echten
 > DOM-Klicks (`element.click()` auf die realen Links/Buttons) gefahren.
-> Durchgespielt: Organizer-Seite ohne gueltigen Snapshot (kein Badge,
-> `none`) → Dashboard einmal geladen → Seite mit Badge, Disclaimer, beiden
-> Brand-Badges (`approved`); Hero-Reihenfolge und Stile; 5 Upcoming Fairs;
+> Durchgespielt (Stand 15.08., also NOCH mit dem inzwischen zurueckgebauten
+> Badge-Strang — die gueltige Abnahme steht im Block „O9-Recovery"):
+> Organizer-Seite ohne gueltigen Snapshot → Dashboard einmal geladen → Seite
+> mit Badge, Disclaimer, beiden Brand-Badges; Hero-Reihenfolge und Stile;
+> 5 Upcoming Fairs;
 > Klick Save & Follow → Rollenwahl mit ehrlicher Notiz, nichts gespeichert →
 > Winery gewaehlt → `✓ Following Atrium Fairs GmbH — saved to My Stars`, Kante
 > `Cantina Rossi`, My Stars offen, Snapshot traegt sie; zweite Rolle Retail
@@ -1476,20 +1479,173 @@ Funktionen aufrufen, `transferSize` vorher lesen (C7).
 > (**O12**) · Hero-Medien · `platformPartners` in der Allowlist (der Tag des
 > ersten Schreibers).
 >
-> **Offene Geschaeftsfrage (nicht entschieden, nicht geloest):** faellt die
-> oeffentliche Organizer-Seite SELBST mit dem Verifikationswort (Triple-Gate-
-> Form der Participation Page) oder rendert sie ohne Badge weiter, wie O9 sie
-> gebaut hat? O9 baut das Badge nach A18.4; das Seiten-Gate ist eine
-> Entscheidung von Serge.
+> **Diese Geschaeftsfrage ist am 16.08. entschieden** (Serges Variante (b)):
+> die oeffentliche Organizer-Seite BLEIBT und wird ohne jede
+> Verifikationsaussage veroeffentlicht; nur die Badges warten auf die
+> Backend-Grenze. Siehe A23.7 und den Block „O9-Recovery".
 >
-> **`run-all` lief am finalen Produktstand genau EIN Mal vollstaendig: 33/33
-> gruen** (`organizer-profile.js` wird von `run-all.js` per Verzeichnisscan
-> aufgenommen — keine Registrierungszeile noetig).
+> **`run-all` lief am damaligen Produktstand genau EIN Mal vollstaendig:
+> 33/33 gruen** (`organizer-profile.js` wird von `run-all.js` per
+> Verzeichnisscan aufgenommen — keine Registrierungszeile noetig).
 >
-> **Spec-Austausch:** `BOTTLE-LOBBY-SPEC.md` (525.475 Bytes, Git-Blob
-> `3cdc4c335bfc66361cfdd723eecd44dab3d958fe`) enthaelt A23 und D47 und ist
-> die O9-Spec; Austausch im Projektwissen NACH unabhaengiger Abnahme des
-> finalen HEAD.
+> **DIESER STAND (`b52043c92f5eab058ca6c5c63c2d3660daf26eed`) IST NICHT
+> ABGENOMMEN**, und die daraus stammende O9-Spec (525.475 Bytes, Git-Blob
+> `3cdc4c335bfc66361cfdd723eecd44dab3d958fe`) darf nicht als abgenommen
+> dargestellt und nicht ins Projektwissen uebernommen werden. Der gueltige
+> Stand steht im naechsten Block.
+
+---
+
+### Durchgang O9-Recovery — Rueckbau des unsicheren oeffentlichen Verdict-Strangs (16.08.)
+
+> **Die Regeln stehen in der Spec: A23.4 (neu gefasst), A23.5, A23.7, OP-6
+> (negative Sicherheitsinvariante), A18.4/PP-4.** Hier steht nur, was Git und
+> Spec nicht wissen.
+>
+> **Ausgangslage.** `b52043c92f5eab058ca6c5c63c2d3660daf26eed` (O9) wurde
+> gebaut und gepusht, ist aber **NICHT abgenommen**. Eine Korrekturpruefung
+> hat einen Verstoss gegen die M2b-Hard-Stop-Regel bestaetigt: der
+> oeffentliche Verifikationspfad hielt den vollstaendigen validierten
+> Snapshot NACH `hydrate()` im Store (`hydrated = p`) und wertete darin die
+> privaten `reviews`-Zeilen aus. Dieser Durchgang ist eine **vorwaerts
+> gerichtete Korrektur** auf b52043c — keine Historienumschreibung, kein
+> `reset`, kein `force-push`, kein Rueckgriff auf e0ffd0b.
+>
+> **Serges Entscheidung, Variante (b):** das oeffentliche Organizer-Profil
+> BLEIBT als echte Plattformfunktion und wird bis zur sicheren
+> Backend-Grenze **ohne jede Verifikationsaussage** veroeffentlicht; die
+> oeffentlichen Badges sind nur vertagt.
+>
+> **Die Trennlinie, die ueberall gilt — und die nirgends verwischt werden
+> darf:**
+>
+> - **Bestehende, abgenommene Prototyp-Grenze (bleibt):** `hydrate()` parst
+>   den gemeinsamen Snapshot TRANSIENT, um daraus ausschliesslich die
+>   allowlisteten oeffentlichen Sammlungen anzuwenden. Dass der geteilte
+>   Snapshot dabei technisch auch private Sammlungen enthaelt, ist die
+>   bekannte Grenze eines statischen Prototyps mit EINEM gemeinsamen
+>   `localStorage`-Dokument. Sie wurde mit O7 abgenommen, wird hier nicht
+>   geleugnet, nicht beseitigt, nicht erweitert — und nie als Rechtfertigung
+>   fuer einen neuen oeffentlichen Lesepfad benutzt. **Formuliere nirgends,
+>   private Daten wuerden beim gemeinsamen Snapshot niemals transient
+>   geparst — das waere falsch.**
+> - **Der behobene Verstoss:** der vollstaendige Snapshot beziehungsweise
+>   nicht allowlistete Sammlungen NACH RUECKKEHR AUS `hydrate()` dauerhaft
+>   halten, spaeter lesen oder daraus ein oeffentliches Verdict ableiten.
+>
+> **Der ueberall zu fuehrende Beleg lautet deshalb:** nach Rueckkehr aus
+> `hydrate()` wird kein vollstaendiger Snapshot und keine nicht allowlistete
+> Sammlung im Store- oder Seitenkontext gehalten oder ueber die oeffentliche
+> Oberflaeche erreichbar gemacht, und es ist kein privater Registerzugriff
+> fuer ein oeffentliches Verdict moeglich.
+>
+> **Messbefunde, die den Zuschnitt bestimmt haben:**
+>
+> - **R2 — keine Kopplung.** Keine der zu erhaltenden O9-Funktionen beruehrt
+>   den Verdict-Strang: `partnerFollows`/`PARTNER_FOLLOW_TARGETS`,
+>   `followActingContext()`, `followPartnerTarget()`/`unfollowPartnerTarget()`,
+>   `renderPartnerStarsFor()`, `openOrganizerEntries()` mit `?follow=`/`?calls=`,
+>   `organizerUpcomingEditions()`/`organizerOpenCalls()`/`organizerCallCaption()`,
+>   der Wine-Guide-Einstieg und View Public Profile sind alle unberuehrt.
+> - **R3 — `lastWord()` ist ins Dashboard gewandert.** Nach Entfernen von
+>   `publicVerdict()` hat sie **null** oeffentliche Konsumenten und genau
+>   einen privaten (die zwei Dashboard-Leser im selben Dokument). Der Store
+>   ist damit nicht mehr der kleinste kohaerente Ort: er ist die
+>   OEFFENTLICHE Lesegrenze und wird von rund 30 statischen Seiten geladen,
+>   die diese Hilfsfunktion nie brauchen — und eine Last-Word-Hilfe auf der
+>   oeffentlichen Grenze waere die uebriggebliebene Haelfte genau des Pfads,
+>   den A23.4 verbietet. Sie liegt jetzt im Dashboard-Dokument, beide privaten
+>   Leser delegieren weiterhin an EINE Implementierung.
+> - **R4 — `PARTNER_VERIFIED_DISCLAIMER` bleibt im geteilten Asset.** Das
+>   private Dashboard rendert ihn weiterhin als die EINE Quelle (zwei
+>   Stellen, gemessen). Nur die oeffentliche Renderstelle ist entfallen.
+> - **R5 — der Rueckbau ist exakt der O7-Zustand derselben Funktion.**
+>   `hydrate()` unterscheidet sich von e0ffd0b jetzt in nichts ausser dem
+>   erklaerenden Kommentar; der transiente Parse ist unangetastet. Die
+>   uebrigen O9-Aenderungen am Store (VERSION-Begruendung, `SCHEMA_HASH`)
+>   sind legitim und bleiben.
+> - **R6 / C8 gemessen, nicht vorhergesagt:** hoechste D-Nummer bleibt
+>   **D47** — der Rueckbau brauchte KEINE neue D-Entscheidung, weil die
+>   Geschaeftsentscheidung Serges Variante (b) ist und in A23 dokumentiert
+>   wird. **`VERSION` bleibt 12, `SCHEMA_HASH` bleibt `b33a99e8`** (Live-Hash
+>   gegengeprueft): der Rueckbau aendert keine Fixture-FORM. Harness-Anzahl
+>   bleibt **33** (Verzeichnisscan, keine Registrierungszeile).
+> - **Korrektur einer Auftragsannahme:** `tests/fairs.js` und
+>   `tests/platform-partners.js` enthielten **keine** Verdict-Bezuege — ihre
+>   Verifikationspruefungen laufen ausschliesslich ueber das PRIVATE
+>   Dashboard (`partnerVerificationApproved`, `seriesBrandApproved`) und
+>   blieben deshalb unveraendert.
+>
+> **Wie der Verstoss gruen durchlaufen konnte — und was jetzt dagegen steht.**
+> Die alten Tests prueften Bindungen, Allowlist und Quelltext-Rueckgabewerte.
+> Genau daran war nichts falsch. Die neuen Negativtests pruefen im
+> **Ausfuehrungskontext NACH dem Hydrationsaufruf**, ueber einen ECHTEN vom
+> Dashboard geschriebenen Snapshot, mit zwei unabhaengigen Instrumenten in
+> `tests/persistence.js`:
+>
+> 1. **READ TRAP** — jede nicht allowlistete Sammlung im geparsten Snapshot
+>    wird zu einem aufzeichnenden Accessor. Der akzeptierte transiente Parse
+>    liest nur allowlistete Namen und (fuer den Gueltigkeitsvertrag)
+>    Schluessel*namen*, nie einen privaten Wert. Auf korrektem Stand feuert
+>    die Falle also NULL Mal, waehrend der Parse nachweislich stattfindet —
+>    **sie kann nicht wegen der akzeptierten Grenze rot werden.**
+> 2. **REACHABILITY SCAN** — ein Marker, den ein gewoehnlicher
+>    Dashboard-Akt in `reviews.reviewNotes` schreibt, darf nach dem Aufbau
+>    der Seite weder im Seitenkontext noch auf der gesamten oeffentlichen
+>    Store-Oberflaeche erreichbar sein.
+>
+> Die zwei verbotenen Formen fallen unterschiedlichen Instrumenten zu:
+> **CM-1** (Snapshot nach `hydrate()` gehalten UND fuer ein Verdict gelesen)
+> faellt der Read Trap zu, die `reviews` namentlich meldet; **CM-2**
+> (Snapshot nur GEHALTEN, nichts liest ihn) laesst die Read Trap
+> erwartungsgemaess stumm und faellt dem Scan zu, der ihn unter
+> `window…__heldSnapshot.data.reviews[…].reviewNotes` findet. **CM-3**: eine
+> Seite, die `reviews` registriert, wird GANZ abgewiesen.
+>
+> **Browser-Abnahme (Chrome ueber die Extension, `tests/serve.js`, am finalen
+> Stand).** Diesmal ohne Timeouts; JavaScript-Auslese vor jedem Screenshot,
+> Rollenwechsel asynchron. Durchgespielt: Organizer-Seite **frisch, ohne
+> Snapshot** — 0 Treffer fuer /verif/i, kein `data-verdict`, kein
+> Verification-Widget, Rolle „Fair & Event Organizer", 4 Hero-Aktionen,
+> 5 Upcoming Fairs, 2 Serien, Sidebar nur „At a glance" + „Following this
+> organizer". Dann Save & Follow geklickt → Rollenwahl mit ehrlicher Notiz
+> („Nothing has been saved yet") → Winery → Toast
+> `✓ Following Atrium Fairs GmbH — saved to My Stars`, Kante `Cantina Rossi`,
+> My-Stars-Karte da. Partner-Cockpit: Verified-Badge in ID-Karte UND Profil
+> vorhanden, 2 Disclaimer, `partnerVerificationApproved` true,
+> Serienbrand true — **die private Ableitung lebt.** Zurueck auf die
+> Organizer-Seite **nach dem Dashboard-Lauf**: Snapshot vorhanden (mit
+> `reviews` und 3 `partnerFollows`), Seitentext **byte-identisch mit dem
+> frischen Lauf**, weiterhin 0 Treffer fuer /verif/i, `publicVerdict`,
+> `PUBLIC_VERDICTS`, `lastWord`, `reviews` und `partnerFollows` alle
+> `undefined`, registriert nur die fuenf Fair-Sammlungen, `isReadOnly()`
+> true, `save()` false. Unfollow ueber die echte My-Stars-Schaltflaeche:
+> 3 → 2 Kanten, Karte weg, ehrlicher Leerzustand „Platform Partners (0)".
+> Wine Guide → aufgeklapptes Fair-Listing → Zeile „Atrium Fairs GmbH" →
+> Organizer-Profil. Organizer-Cockpit → View Public Profile → Iframe mit
+> `?preview=embed`, ebenfalls 0 Verifikationsmarkup, keine Follower-Flaeche.
+> Stichprobe Cantina-Rossi-Handelsprofil: unveraendert (Request Partnership ·
+> Request Tasting · Send Inquiry · Save & Follow, Tabs About/Wines/Reviews/
+> Wine Shows).
+>
+> **`run-all` lief am finalen Produktstand genau EIN Mal vollstaendig:
+> 33/33 gruen.**
+>
+> **Weiterhin vertagt (mit Ziel):** die **oeffentlichen
+> Verifikationsbadges** bis zur benannten Backend-Grenze (serverseitige
+> Ableitung ueber `reviews` hinter RLS — kein Client-Pfad, in keiner Form) ·
+> organizer-seitige Kommunikation **O11** · Follow-Akte fuer Fair Series und
+> Fair Editions auf deren spaeteren Oberflaechen · Opportunities **O10** ·
+> Agenda **O12** · Hero-Medien · `platformPartners` in der Allowlist (der Tag
+> des ersten Schreibers).
+>
+> **Spec-Austausch, ausdruecklich offen:** `BOTTLE-LOBBY-SPEC.md`
+> (531.187 Bytes, Git-Blob
+> `568b4c1427286bf733be8b94c5ffd4e104926a70`) enthaelt die korrigierte A23.4
+> und die neu gefasste OP-6. **Weder `b52043c92f5eab058ca6c5c63c2d3660daf26eed`
+> noch die daraus stammende O9-Spec duerfen nachtraeglich als abgenommen
+> dargestellt werden. Die korrigierte Spec wird erst NACH der unabhaengigen
+> Abnahme des NEUEN finalen HEAD ins Projektwissen uebernommen.**
 
 ---
 
