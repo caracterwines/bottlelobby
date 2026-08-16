@@ -17,11 +17,16 @@
      BLStore.hydrate() over the fixed public allowlist — the fair
      collections — and the partner record is the canonical fixture in
      the shared data asset (nothing writes a partner row today, A23.5).
-     The Verified badge and the fair-brand badges come from the store's
-     encapsulated PUBLIC VERDICT (A23.4): the register's last word,
-     derived inside the store over the validated snapshot, rows never
-     leaving it; without a valid snapshot there is no word and the badge
-     simply does not stand — the page then claims nothing.
+
+     IT MAKES NO VERIFICATION STATEMENT (A23.4, OP-6). No Verified
+     Platform Partner badge, no fair-brand badge, no disclaimer, no
+     Verification widget, no substitute status and no placeholder — not
+     "unverified", not "pending". A public verdict would need the
+     `reviews` register, a copy of it, or a snapshot held after
+     hydration to read it out of, and none of those may exist here. The
+     badges return with the named backend boundary: a server-side
+     derivation over `reviews` behind RLS. The DASHBOARD's own
+     verification badge is unaffected and stays where the register is.
 
      Save & Follow is a LINK into the private area (?follow=): the act
      is executed in the member's own dashboard under the identity
@@ -138,9 +143,7 @@ nav {
   font-size: 0.58rem; letter-spacing: 0.12em; text-transform: uppercase;
   padding: 0.2rem 0.6rem; border-radius: 2px; font-weight: 500;
 }
-.badge-verified { background: rgba(45,106,79,0.2); color: #4caf7d; }
 .badge-partner  { background: rgba(184,151,90,0.12); color: var(--gold); }
-.badge-brand    { background: rgba(30,60,120,0.3); color: #7faaf0; }
 .profile-hero-actions { display: flex; gap: 0.6rem; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
 
 /* ── LAYOUT ── */
@@ -205,7 +208,6 @@ nav {
 .stat-row:last-child { border-bottom: none; }
 .stat-row-label { font-size: 0.75rem; color: var(--dim); }
 .stat-row-value { font-family: 'Cormorant Garamond', serif; font-size: 1.2rem; color: var(--paper); }
-.op-disclaim { font-size:0.7rem; color:var(--dim); line-height:1.7; margin-top:0.7rem; padding-top:0.7rem; border-top:1px solid rgba(247,243,238,0.05); }
 .op-inline-note { display:none; margin: 0.9rem 3rem 0; max-width:1100px; font-size:0.78rem; color:var(--gold); background:rgba(184,151,90,0.07); border:1px solid rgba(184,151,90,0.25); padding:0.8rem 1.1rem; line-height:1.7; }
 .op-inline-note.show { display:block; }
 .op-inline-note button { float:right; background:none; border:none; color:var(--dim); cursor:pointer; font-size:0.9rem; }
@@ -344,8 +346,8 @@ footer {
 </div>
 
 <!-- Everything below the header renders from the shared records:
-     partner record, fair series, editions and the store's public
-     verdict — nothing about the organizer is typed into this markup. -->
+     partner record, fair series and editions — nothing about the
+     organizer is typed into this markup. -->
 <div id="op-root"></div>
 
 <footer>
@@ -395,9 +397,9 @@ footer {
 </div>
 
 <!-- ══ SHARED ASSETS — the same files the dashboard loads, in the same
-     order: the store first for the read-only hydration and the public
-     verdict, then data, then the public derivations. -->
-<script src="assets/bottle-lobby-store.js?v=3656e619"></script>
+     order: the store first for the read-only hydration, then data, then
+     the public derivations. -->
+<script src="assets/bottle-lobby-store.js?v=ace3560b"></script>
 <script src="assets/bottle-lobby-data.js?v=f3d32614"></script>
 <script src="assets/bottle-lobby-public-shows.js?v=675b3c81"></script>
 <script>
@@ -428,16 +430,10 @@ footer {
     return;
   }
 
-  /* ── The verdicts — derived inside the store, rows never leave it
-     (A23.4). true → the badge stands; false or null → it does not, and
-     the page says nothing either way. */
-  const verified   = BLStore.publicVerdict('partner_verification', p.id);
+  /* No verdict is derived, held or rendered here (A23.4/OP-6) — see the
+     document header. The page reads the records it is allowed to read
+     and says nothing about verification. */
   const series     = fairSeriesOf(p.id);
-  const brandOk    = {};
-  series.forEach(function (s) { brandOk[s.id] = BLStore.publicVerdict('series_brand_review', s.id); });
-  document.documentElement.setAttribute('data-verdict',
-    verified === true ? 'approved' : verified === false ? 'refused' : 'none');
-
   const upcoming = organizerUpcomingEditions(p.id);
   const calls    = organizerOpenCalls(p.id);
   const callCap  = organizerCallCaption(calls);
@@ -461,8 +457,9 @@ footer {
     '<a class="btn-sm btn-outline follow-btn" href="bottle-lobby-dashboard.html?follow=' + encodeURIComponent(p.id) + '" ' +
       'title="Saved in your member dashboard under My Stars — nothing is recorded on this page">🔖 Save &amp; Follow</a>';
 
+  /* The ONE badge is the role, not a status: who this organisation is on
+     the platform, with no claim about verification (A18.6, OP-6). */
   const badges =
-    (verified === true ? '<span class="profile-badge badge-verified">✓ Verified Platform Partner</span>' : '') +
     '<span class="profile-badge badge-partner">' + esc(caps.join(' · ')) + '</span>';
 
   /* ── UPCOMING FAIRS: discoverable, not past, own series — derived
@@ -502,7 +499,6 @@ footer {
         (s.about ? '<div class="op-series-about">' + esc(s.about) + '</div>' : '') +
         '<div class="op-note" style="margin-top:0.4rem">' + n + ' upcoming published edition(s)</div>' +
       '</div>' +
-      (brandOk[s.id] === true ? '<span class="profile-badge badge-brand op-brand-badge">✓ Fair brand verified</span>' : '') +
     '</div>';
   }).join('');
 
@@ -542,7 +538,7 @@ footer {
           (fairRows
             ? '<div class="op-fairs">' + fairRows + '</div>'
             : '<div class="op-empty">No upcoming published edition at the moment — this organizer\'s next fair appears here the day it is published.</div>') +
-          '<p class="op-note">Editions are published by the organizer who runs them. Bottle Lobby verifies the organizer and the fair brand — it does not review or release an edition. Full listings and filters live in the Wine Guide → Events.</p>' +
+          '<p class="op-note">Editions are published by the organizer who runs them — Bottle Lobby does not review or release an edition. Full listings and filters live in the Wine Guide → Events.</p>' +
         '</div>' +
         '<div class="op-section" id="op-series">' +
           '<div class="op-section-title">Fair Series <small>' + series.length + ' brand(s)</small></div>' +
@@ -550,15 +546,8 @@ footer {
         '</div>' +
       '</div>' +
       '<div class="profile-sidebar">' +
-        '<div class="sidebar-widget" id="op-verification">' +
-          '<div class="sidebar-widget-header">Verification</div>' +
-          '<div class="sidebar-widget-body">' +
-            (verified === true
-              ? '<span class="profile-badge badge-verified">✓ Verified Platform Partner</span>' +
-                '<div class="op-disclaim">' + esc(PARTNER_VERIFIED_DISCLAIMER) + '</div>'
-              : '<div class="op-note">A Verified badge appears here only while Bottle Lobby\'s verification of this organisation stands.</div>') +
-          '</div>' +
-        '</div>' +
+        /* No Verification widget (A23.4/OP-6): an empty one, or one with
+           a placeholder in it, would be a verification statement too. */
         '<div class="sidebar-widget">' +
           '<div class="sidebar-widget-header">At a glance</div>' +
           '<div class="sidebar-widget-body">' +

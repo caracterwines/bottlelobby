@@ -4155,7 +4155,7 @@ With an annual production capacity of over 1.2 million bottles, Cantina Rossi is
      fails the run if any asset is missing or empty. That same file
      also switches persistence off for every harness. See tests/README.
 -->
-<script src="assets/bottle-lobby-store.js?v=3656e619"></script>
+<script src="assets/bottle-lobby-store.js?v=ace3560b"></script>
 <script src="assets/bottle-lobby-data.js?v=f3d32614"></script>
 <script src="assets/bottle-lobby-public-shows.js?v=675b3c81"></script>
 
@@ -5889,12 +5889,22 @@ function showReleaseApproved(show) {
    approved row ever". An any-row reading would survive a later
    rejection — exactly the stale answer the register's own comment
    forbids. Asked of the register, never of a flag. */
-/* Since O9 the last-word derivation itself lives ONCE in the store
-   (BLStore.lastWord, A23.4): this cockpit reads it over the live
-   register, the public organizer page reads the same function over the
-   snapshot inside the store's closure — two callers, one answer. */
+/* The last-word derivation itself lives ONCE, HERE, in the private
+   document that owns the register — the only caller there is. O9 put it
+   in the store so a public verdict could share it; that verdict is
+   withdrawn (A23.4/OP-6) and a last-word helper on the platform's public
+   read boundary would be the vestigial half of a forbidden path. Two
+   callers in this document, one answer. */
+function lastWord(rows, subjectType, subjectId, approvalType) {
+  let last = null;
+  (rows || []).forEach(function (r) {
+    if (r && r.subjectType === subjectType && r.subjectId === subjectId &&
+        r.approvalType === approvalType) last = r;
+  });
+  return last;
+}
 function partnerVerificationLatest(partner) {
-  return BLStore.lastWord(reviews, 'partner', partner.id, 'partner_verification');
+  return lastWord(reviews, 'partner', partner.id, 'partner_verification');
 }
 function partnerVerificationApproved(partner) {
   const last = partnerVerificationLatest(partner);
@@ -5968,7 +5978,7 @@ function fairSeriesManagedHere(series) {
    rejection pulls the approval (FS-3), which an any-row reading would
    survive. */
 function seriesBrandLatest(series) {
-  return BLStore.lastWord(reviews, 'fair_series', series.id, 'series_brand_review');
+  return lastWord(reviews, 'fair_series', series.id, 'series_brand_review');
 }
 function seriesBrandApproved(series) {
   const last = seriesBrandLatest(series);

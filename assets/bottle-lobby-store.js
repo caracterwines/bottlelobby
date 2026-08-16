@@ -621,7 +621,14 @@ window.BLStore = (function () {
     var invalid = snapshotInvalidWhy(p);   /* the one shared contract */
     if (invalid) return ignore(invalid);
     entries.forEach(function (e) { e.set(p.data[e.name]); });
-    hydrated = p;   /* the validated snapshot, kept for the public verdicts below */
+    /* NOTHING IS KEPT (A23.4/OP-6). `p` is a local: the moment this
+       function returns, the parsed structure — private collections and
+       all — is unreachable from the store, from the page and from the
+       public surface. O9 first retained it here for a public verification
+       verdict; the retention was the violation and is gone. The parse
+       itself stays transient and applies the allowlisted collections
+       only: that is the accepted static-prototype limit, not a read
+       path, and nothing may be built on it. */
     return 'hydrated';
   }
   function ignore(why) {
@@ -630,59 +637,22 @@ window.BLStore = (function () {
     return 'ignored';
   }
 
-  /* ── The PUBLIC VERDICT — one register, no row leaves it (A23.4) ──
-     A public page has to say whether a platform partner is verified
-     (A18.4) and whether a fair brand is approved (A19.4) — each the
-     LAST WORD of the `reviews` register (PP-4, FS-3), which is private:
-     it carries Bottle Lobby's own notes and rows about memberships,
-     contracts, projects and show releases, is not in the hydration
-     allowlist and never will be. So the store — already the platform's
-     public read boundary — derives the verdict INSIDE this closure over
-     the validated snapshot and hands out the verdict alone: never a
-     row, never a note, never a date. The real build does this as a
-     server function over `reviews` behind RLS; this is its stand-in.
+  /* ── NO PUBLIC VERIFICATION VERDICT LIVES HERE (A23.4, OP-6) ──────
+     O9 built one — PUBLIC_VERDICTS, publicVerdict(), and a retained
+     `hydrated` snapshot to read the private `reviews` rows from. All
+     three are removed. A verdict derived on the client needs the
+     register, a copy of it, or a held snapshot to read it out of, and
+     none of those may exist on the public path: the register carries
+     Bottle Lobby's own notes and its rows about memberships, contracts,
+     projects and show releases (A17.13).
 
-     THE ALLOWLIST IS FIXED HERE, in platform code, exactly like
-     PUBLIC_COLLECTIONS: only these approval types have a public verdict,
-     each about the one subject type it belongs to. Nothing widens it —
-     not a page, not a parameter, not a stored value.
-
-     ONE derivation for both documents: lastWord() is the last row about
-     (subjectType, subjectId) with that approvalType — the dashboard's
-     partnerVerificationLatest() / seriesBrandLatest() call it over the
-     live register, publicVerdict() calls it over the snapshot's. Two
-     callers, one answer.
-
-     Returns true (last word approved), false (last word not approved,
-     or no row about the subject), or null (no readable word: no valid
-     snapshot on this device — the register's fixture ground lives in
-     the dashboard document by design, so a page opened before the demo
-     state exists has nothing to derive from and renders no badge;
-     A23.4 names this limit). A type outside the allowlist is refused
-     with a warning and answers null. */
-  var PUBLIC_VERDICTS = Object.freeze({
-    partner_verification: 'partner',
-    series_brand_review:  'fair_series'
-  });
-  var hydrated = null;   /* set by hydrate() on a valid snapshot only */
-  function lastWord(rows, subjectType, subjectId, approvalType) {
-    var last = null;
-    (rows || []).forEach(function (r) {
-      if (r && r.subjectType === subjectType && r.subjectId === subjectId &&
-          r.approvalType === approvalType) last = r;
-    });
-    return last;
-  }
-  function publicVerdict(approvalType, subjectId) {
-    if (!PUBLIC_VERDICTS.hasOwnProperty(approvalType)) {
-      if (window.console && console.warn)
-        console.warn('[BLStore] publicVerdict refused — "' + approvalType + '" has no public verdict');
-      return null;
-    }
-    if (!hydrated || !hydrated.data || !Array.isArray(hydrated.data.reviews)) return null;
-    var last = lastWord(hydrated.data.reviews, PUBLIC_VERDICTS[approvalType], subjectId, approvalType);
-    return !!last && last.reviewStatus === 'approved';
-  }
+     The public organizer profile therefore makes NO verification
+     statement at all until the named backend boundary — a server-side
+     derivation over `reviews` behind RLS handing the page the current
+     result alone. The DASHBOARD's derivation from the register's last
+     word is untouched and lives in the dashboard document, its one
+     caller. Nothing here is a stub for the public path; there is
+     deliberately nothing to widen. */
 
   /* ── Writing ─────────────────────────────────────────────────────
      The comparison is against what is IN STORAGE, so the answer stays
@@ -885,11 +855,6 @@ window.BLStore = (function () {
     restore:  restore,
     reset:    reset,
     hydrate:  hydrate,
-    /* The public verdict path (A23.4): the ONE last-word derivation and
-       the row-free public entry over the validated snapshot. */
-    lastWord:      lastWord,
-    publicVerdict: publicVerdict,
-    PUBLIC_VERDICTS: PUBLIC_VERDICTS,
     /* Read-only surface for the harnesses and for the console. */
     PUBLIC_COLLECTIONS: PUBLIC_COLLECTIONS.slice(),
     SCHEMA_HASH:  SCHEMA_HASH,
