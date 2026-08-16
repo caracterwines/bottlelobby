@@ -572,6 +572,17 @@ Each entry carries criteria: category · tags · geography · channel · validit
 
 > **A known defect, recorded rather than patched.** "My Opportunities" on the distributor dashboard offers **Hawesko GmbH to Hawesko GmbH** as *"New winery for you"* — a role and self-reference error at once: the suggested house is neither a winery nor a different house. It is hardcoded, and it dies with the widget when this section is built. Recorded so the finding is not measured a third time.
 
+**A24 is the first bounded application of this section's opportunity
+principle, and it is not this section.** Organizer Opportunities (O10)
+derive suggestions for one workspace sort — the verified organizer — out of
+its own fair registers alone, with two named reason codes, each card
+explained with provenance and creating nothing. What stays assigned to the
+**full A8 pass**: matchmaking proper, the seek/offer cockpit, opportunities
+for the four trade roles, and **the existing distributor opportunities
+renderer together with the self-suggestion defect recorded above** — A24
+neither repairs it, nor extends it, nor copies it as a template, and the
+note above stands unchanged until this section is built.
+
 **The matchmaking cockpit is not part of the A16/A17 work.** It gets its own measured pass after the shows, own-label and member-event passes have landed, for the reason C2 gives: this section is the query layer over four relations, and the relations are still moving. Until that pass runs, `matchmaking` is deliberately **not** a value in the reach taxonomy (A16.14b) — it is shown in the interface, locked, with its reason on screen, so a reader sees why the feature is worth building rather than finding an option that quietly does nothing.
 
 **Where the real matching data comes from:** the follow/fan graph (A7), the wine portfolio relations (A3), the master-data fields (A4) and stated seek/offer preferences. All four already exist as tables; Matchmaking is a query layer over them, not a new data silo.
@@ -6396,7 +6407,9 @@ interaction stay as O5 and O7 left them. **B6:** the organizer cockpit's
 embed-preview pattern (`openEmbedPreview`), and the former locked row
 *Organizer Profile & Follow* leaves the locked target navigation
 (`tests/fairs.js` §9 follows the activated row); the *Communications* row
-names what O11 brings.
+names what O11 brings. **The remaining Community row, *Opportunities*,
+leaves the locked target navigation with O10** and becomes the live
+organizer view of A24; *Communications* stays locked with its O11 reason.
 
 ### A23.6 The named read path — My Stars shows own partner follows
 
@@ -6421,6 +6434,13 @@ the organizer view gets no follower surface and no follow notification
   inquiry route that reaches the organizer.
 - **Series and edition follow acts** on the surfaces that own those records
   (their own passes) — the store carries the sorts today.
+- **Follow-based organizer opportunities — after O11.** A24's derivation
+  reads no follow register at all (OO-7); a reason of the shape *"a house
+  that follows you"* needs the organizer-side communication pass first, and
+  is deferred until then.
+- **Cross-series organizer opportunities** — only under their own
+  defensible criteria. A24 requires the same `seriesId`; shared ownership of
+  two series is expressly not a criterion.
 - **The public verification badges** — partner verification and series
   brand review — until the **named backend boundary** of A23.4 exists: a
   server-side derivation over `reviews` behind RLS that hands the public
@@ -6544,6 +6564,277 @@ lives in `tests/persistence.js`, for the FP-13/DIR-4 reason.
 `tests/platform-partners.js` carries PP-3's opened path and PP-6 as a real
 assertion, and the private A18.4 badge with its disclaimer; `tests/fairs.js`
 §9 follows the activated locked row.
+
+---
+
+## A24. Organizer Opportunities
+
+The organizer workspace holds fair registers nobody else can read, and those
+registers already answer a question the organizer asks by hand today:
+**which house that I can see at one of my own editions has no procedure at
+all on another one?** A24 turns the locked *Opportunities* row of the
+partner sidebar into that answer — derived from the organizer's own fair
+records, explained by name, and acted on through the recruiting act that
+already exists.
+
+**This is the first bounded application of A8's opportunity principle, not
+A8 itself** (A24.6). What it inherits from A8 is one sentence: *an
+opportunity is explained, or it is noise* — and its companion, *an
+opportunity creates nothing*.
+
+### A24.1 The cut — what O10 builds, and what it deliberately does not
+
+Six product decisions, each one a rule rather than a preference:
+
+1. **Scope.** O10 is an organizer-only, fair-only opportunities pass. It
+   does **not** build the full A8 matchmaking, opportunities for trade
+   roles, public opportunities, a general matchmaking system, or any change
+   to the existing distributor opportunities renderer or to the winery,
+   distributor, restaurant and retail cockpits.
+2. **No follow-based and no communication-based reasons.** The derivation
+   reads **neither `partner_follows` nor the A7 follow graph**. Follower
+   names, follower figures, *"X follows you"* as a reason, follow
+   notifications, inquiry delivery, messages, fair notifications to trade
+   roles and reminders are all O11 and are not part of this pass. A
+   follow-based reason waits until after O11 (A24.10).
+3. **Trade opportunities stay untouched.** The distributor renderer is
+   neither repaired, nor extended, nor copied as a template — the known
+   self-suggestion defect recorded in A8 stays exactly where A8 assigned
+   it, to the later full A8 pass.
+4. **The same fair series only.** An opportunity arises only between two
+   **different editions of the SAME series** — source and target carry the
+   same `seriesId`. Sharing an owning organizer is **not** enough.
+   Cross-series opportunities are deferred (A24.10).
+5. **Fresh target procedures only.** An opportunity exists only where the
+   target edition carries **no admission row at all** for that house — the
+   `fresh` answer of the shared entrance arithmetic (A20.1). `applied`,
+   `invited`, `admitted`, `rejected`, `declined`, `withdrawn` and `revoked`
+   each prevent the suggestion. The reopening mechanic for `withdrawn` /
+   `revoked` stays unchanged for the direct recruiting acts; O10 does not
+   use it as a reason.
+6. **Never the same edition.** Source and target edition are always
+   different. O10 suggests no own stand to a represented winery on the
+   edition it is already represented at — see A24.8, which states exactly
+   what that does and does not decide.
+
+### A24.2 The contract — exactly two reason codes
+
+**`exhibits_at_other_edition`** — an eligible trade house holds an
+`active` participation of its own (A21) on source edition **A**, and holds
+no admission row whatsoever on another, upcoming, non-cancelled target
+edition **B** of the same series.
+
+**`represented_not_exhibiting`** — an eligible winery is carried in the
+`representing` list of an `active` distributor participation on source
+edition **A** with **`represented at booth` true**, and holds no admission
+row whatsoever on another target edition **B** of the same series.
+**`personally attending` does not count**: A21.3 keeps the two as separate,
+explicitly set facts (FP-7), and reading one as evidence of the other here
+would undo that separation on a new surface.
+
+For both, all of the following hold:
+
+- A ≠ B, and both carry the same `seriesId`;
+- the source participation's `status` is `active`;
+- B is **upcoming** (`start date` ≥ the platform's today) and **not
+  cancelled** — `draft` and `published` both qualify, because inviting on a
+  draft is the narrow, deliberate D46 route (A20.8);
+- the target series is managed by the acting organizer workspace;
+- **nothing is stored.** Rendering the view mutates no register;
+- every card carries **at least one concrete reason with its provenance** —
+  the organizer's own source edition and participation, named by key;
+- **percentages, scores and "fit" statements are forbidden** (the A8 line,
+  and FR-9's *no score* on the neighbouring read path);
+- an opportunity creates **no admission, no participation, no partnership,
+  no message and no notification**. Only the deliberate click on the real
+  action invites (A24.5).
+
+### A24.3 The identity and role guard — two stages, and both are necessary
+
+**Stage one, the eligibility question, is not sufficient on its own.** The
+exhibitor role test answers a *type* handed in on the row, and a
+manipulated participation row carrying an organizer's name with
+`orgType: 'winery'` passes it while naming a platform partner.
+
+**Stage two is therefore the canonical identity.** The source house must
+resolve in the canonical trade stakeholder register to a **real, non-unknown
+trade stakeholder**; that record's canonical type must **match** the
+`orgType` the source participation claims (for a represented entry:
+`winery`); and that **canonical** type must satisfy the exhibitor
+eligibility test. A house that fails any of the three produces no
+opportunity.
+
+**Platform partners fall out structurally.** A partner workspace
+deliberately has no stakeholder record (PP-2) and therefore cannot pass
+stage two — the guard needs no partner-specific rule, and must not grow one.
+
+**The stakeholder register is read for the negative judgment only.** It is
+never a reason, never a score and never a match source. No A6 partnership,
+no A7 follow, no order and no other private trade relation is read by this
+derivation. **Stated as a rule: the reasons come exclusively from the named
+fair registers; the canonical stakeholder table may be read only as a
+negative guard.**
+
+### A24.4 Derivation and identity
+
+**Fully derived, recomputed on every render** (invariant 7). There is no
+opportunity record, no parallel collection, no seen/dismissed field and no
+new register.
+
+**The key of an opportunity is the pair (organisation, target edition id).**
+Target edition ids are already stable repository-wide; nothing new is
+minted. Where the same pair arises from several sources — a house that both
+exhibits itself and is represented, or two source participations pointing at
+the same target — it renders as **exactly one card** with a **deduplicated**
+`reasons` list, each reason carrying its own provenance, and no identical
+reason twice.
+
+**Sorting** is by target edition start date ascending, then organisation
+name alphabetically — a derivation over the records, like every other
+order on this track.
+
+### A24.5 The action, and where its authority lives
+
+Each card offers **exactly one** action: *Invite to exhibit*, which calls
+the existing organizer invitation act (A20.1). After it, the view
+re-derives and re-renders immediately, and reports what the act did or why
+it refused (B12).
+
+**The opportunity adds no authority of its own.** The invitation act itself
+already checks that the edition exists, that the series is managed by the
+acting workspace, that the edition is not cancelled, that the role is
+eligible, and that the entrance is free — and it writes the row and its
+history line together. The card is a shortcut into that act, never a second
+gate and never a bypass. **Measured:** the "upcoming" condition is a
+*derivation filter* of A24.2, not an authority the button claims — a card
+for a past edition never renders, and the recruiting block on the edition
+itself keeps the behaviour it has.
+
+**No fake success.** No toast without a mutation, no *"Consider …"*, no
+suggestion that stands in for an act.
+
+### A24.6 What an opportunity is not — the exclusions, with their references
+
+- **Not a candidate read path.** The organizer candidate search serves the
+  platform-fixed allowlist and explicitly no opportunity, no score and no
+  matchmaking (**FR-9**). A24 changes nothing there: it reads the
+  organizer's own fair registers, not the allowlist, and the allowlist
+  gains no opportunity output.
+- **Not a follower surface.** The organizer view gets no follower names and
+  no follower figure — that is **OP-8**, and the organizer-side view of its
+  own followers is **O11** (A23.7).
+- **Not an appointment surface.** Nothing here reads or writes a slot or an
+  appointment; the visibility levels of **A22.10** are untouched.
+- **Not the full A8 pass.** See A8's own paragraph on this section.
+
+### A24.7 The empty state
+
+Honest and short, in the B12 shape: opportunities arise when a house
+exhibits at an edition of the same series, or is demonstrably represented
+at a distributor's booth, and has no admission procedure yet on another
+upcoming edition. It names the condition, promises no arrival date, and
+does not present emptiness as an error.
+
+### A24.8 Same-edition — a self-limitation of O10, not a new platform rule
+
+Exactly three sentences, and A21.3 gains nothing from them:
+
+1. **Representation alone creates no participation of its own** — that is
+   A21.3, unchanged and unextended.
+2. **O10 deliberately produces no opportunity for the same edition**,
+   because no transition, duplication or conflict rule is specified for
+   that case, and a suggestion without such a rule would invite an act the
+   model has not decided.
+3. **Whether a represented winery could, in a later model, hold its own
+   stand at the same time is NOT decided by O10** — this pass neither
+   permits nor forbids it, and A21.3 must not be read or rewritten as a
+   general prohibition on the strength of this section.
+
+### A24.9 The A23.6 read path stays exactly as it is
+
+The **Platform Partners block under My Stars** in the four trade cockpits
+(A23.6, PP-3) is untouched by this pass: its heading, its organizer entry,
+the link to the public organizer profile, the *Following since* date and
+the real *Unfollow* all stay, with no trade action on the entry. **O10
+neither forbids that block nor extends it**, and a check that objects to it
+is a wrongly built check. What O10 does forbid is a partner workspace
+appearing in the **A7 trade block** of My Stars, in the distributor
+opportunities renderer, as the subject of a trade action, or as a trade
+house or exhibitor candidate produced by this derivation.
+
+### A24.10 Named deferrals
+
+- **Follow-based organizer opportunities** — only after O11, and only with
+  the reasons that pass brings.
+- **Cross-series organizer opportunities** — only under their own defensible
+  criteria; shared ownership is not one.
+- **Same-edition suggestions** — only with the transition rule A24.8 names
+  as missing.
+- **Seen / dismissed state** — not built, and not silently substituted by
+  anything that stores an answer.
+
+### A24.11 Invariants
+
+- **OO-1 — an opportunity is derived, never stored.** No record, no
+  collection, no flag, no seen state; a render mutates no register.
+- **OO-2 — same series, two different editions.** Same `seriesId`, source ≠
+  target, target managed by the acting workspace.
+- **OO-3 — a fresh target procedure only.** Any admission row on the target
+  edition — `applied`, `invited`, `admitted`, `rejected`, `declined`,
+  `withdrawn`, `revoked` — prevents the suggestion; the target is upcoming
+  and not cancelled.
+- **OO-4 — explained or it does not exist.** Every card carries at least
+  one concrete reason with named provenance; a percentage, a score or a
+  "fit" statement is forbidden.
+- **OO-5 — two reason codes, and A21.3's two facts stay two.**
+  `represented_not_exhibiting` rests on `represented at booth` alone;
+  `personally attending` never produces an opportunity and is never read as
+  evidence of the other.
+- **OO-6 — the two-stage guard, and the register read negatively.**
+  Eligibility alone never admits a house; the canonical identity must exist,
+  match the claimed role and be eligible itself. The stakeholder table is
+  read only to refuse — never as a reason, a score or a match source; a
+  platform partner falls structurally (PP-2).
+- **OO-7 — no follow register in the derivation.** Neither
+  `partner_follows` nor the A7 graph is read; no follower name, figure or
+  notification appears in the organizer view (OP-8, O11).
+- **OO-8 — an opportunity creates nothing.** No admission, participation,
+  partnership, message or notification arises from one being shown; the
+  single deliberate click calls the existing invitation act, which carries
+  its own authority (A24.5).
+- **OO-9 — one card per (organisation, target edition).** Reasons are
+  deduplicated, each with its own provenance; no identical reason twice.
+- **OO-10 — the trade cockpits are unchanged.** The distributor
+  opportunities renderer and its markup stay byte-identical and their
+  rendered fixture result stays identical; no organizer becomes a trade
+  candidate anywhere; the A23.6 partner block stays live and is not
+  weakened (A24.9).
+
+**Prototype blueprint:** `organizerOpportunities()` (the pure derivation),
+`renderPartnerOpportunities()` and its card renderer, the handler behind
+*Invite to exhibit* delegating to `inviteToFair()`, `'opportunities'` in
+`PARTNER_VIEWS` / `showPartnerView()` and the nav entry
+`pnav-opportunities` — the row having left `PARTNER_LOCKED_NAV.community`.
+Read, never written: `fairSeries`, `fairEditions`, `fairParticipations`
+(with `representing`) and `fairAdmissions` through
+`fairAdmissionEntrance()`, plus `fairSeriesManagedHere()`,
+`fairOrgEligible()`, `SHOW_TODAY` and — as the negative guard only —
+`stakeholder()`. **Measured with this pass:** the fixtures yield exactly
+seven opportunities (Domaine Lefèvre 2, Hawesko GmbH 2, Cantina Rossi 2,
+Weingut Schmitt 1), and neither `VERSION` nor `SCHEMA_HASH` moves, because
+no fixture changes shape.
+
+**Harness home:** `tests/organizer-opportunities.js` — its own file, as
+A18–A23 each got one: OO-1..OO-10 with effective counter-mutations,
+including a participation row carrying a platform partner's name under a
+trade `orgType` (which the canonical guard must fell, not the eligibility
+test), a smuggled read of either follow register, a duplicated pair, each
+of the seven blocking admission statuses, `personally attending` without
+`represented at booth`, and **segment checksums over
+`renderDistributorOpportunities()` and its markup** for OO-10.
+`tests/platform-partners.js` carries PP-1 for the new action — a recruiting
+act, never a trade action — and `tests/organizer-profile.js` §9 carries
+OP-10; its §7 stays valid and is not weakened (A24.9).
 
 ---
 
