@@ -1503,6 +1503,11 @@ body {
     </div>
     <div class="nav-section">
       <div class="nav-section-label">Community</div>
+      <!-- "Opportunities" left the locked list with O10 (A24): it is the
+           live entry below now and REPLACES the locked row — never a
+           second entry beside it, the pattern "My Fairs" set in O2.
+           "Communications" stays locked with its O11 reason. -->
+      <div class="nav-item" id="pnav-opportunities" onclick="showPartnerView('opportunities')" style="cursor:pointer"><span class="nav-icon">◈</span> Opportunities</div>
       <div id="pnav-locked-community"></div>
     </div>
   </aside>
@@ -3436,6 +3441,19 @@ With an annual production capacity of over 1.2 million bottles, Cantina Rossi is
             <div class="profile-section-title">My Fairs</div>
           </div>
           <div id="pfairs-root"></div>
+        </div>
+      </div>
+      <!-- OPPORTUNITIES (A24, O10) — the former locked Community row.
+           Filled by renderPartnerOpportunities() from the derivation
+           organizerOpportunities(), which reads the workspace's OWN fair
+           registers and nothing else. Neither the count nor a single card
+           is stored; both are recomputed on every render (OO-1). -->
+      <div style="padding:2rem;display:none" id="partner-view-opportunities">
+        <div class="profile-section">
+          <div class="profile-section-header">
+            <div class="profile-section-title">Opportunities <span class="profile-section-count" id="popp-count"></span></div>
+          </div>
+          <div id="popp-root"></div>
         </div>
       </div>
     </div>
@@ -6946,17 +6964,22 @@ const PARTNER_LOCKED_NAV = {
      Profile), and following it is a trade member's act stored in its
      own bounded store (D47). What the organizer SEES of its followers
      is communication, and communication is O11 — named on that row. */
+  /* "Opportunities" left this list with O10 (A24): it is the live nav
+     entry "Opportunities" now, derived from this workspace's own fair
+     registers. What is NOT built with it stays named in A24.10 —
+     follow-based and cross-series reasons — and none of it belongs on a
+     locked row here, because the row itself is open. */
   community: [
-    ['Opportunities',              'Organizer opportunities come after profile and follow exist (O10).'],
     ['Communications',             'Fair notifications, the follower view and the "started following you" line into this workspace, and inquiries reaching it extend the derived notification model (C9) in their own pass (O11); no message table is built for them.']
   ]
 };
 
 function showPartnerView(view) {
   const PARTNER_VIEWS = {
-    dashboard: ['partner-view-dashboard', 'Platform Partner · Organizer'],
-    profile:   ['partner-view-profile',   'Organization Profile'],
-    fairs:     ['partner-view-fairs',     'My Fairs']
+    dashboard:     ['partner-view-dashboard',     'Platform Partner · Organizer'],
+    profile:       ['partner-view-profile',       'Organization Profile'],
+    fairs:         ['partner-view-fairs',         'My Fairs'],
+    opportunities: ['partner-view-opportunities', 'Opportunities']
   };
   if (!PARTNER_VIEWS[view]) view = 'dashboard';
   Object.keys(PARTNER_VIEWS).forEach(v => {
@@ -6967,6 +6990,7 @@ function showPartnerView(view) {
   });
   document.getElementById('partner-topbar-title').textContent = PARTNER_VIEWS[view][1];
   if (view === 'fairs') renderPartnerFairs();
+  if (view === 'opportunities') renderPartnerOpportunities();
 }
 
 /* ── MY FAIRS — the organizer's series & edition surface (A19) ─────
@@ -7464,6 +7488,209 @@ function saveFairEdition() {
     renderPartnerFairs();
     showToast('✓ ' + ed.id + ' updated' + (dateMoved ? ' — the date change is on the record' : ''));
   }
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   ORGANIZER OPPORTUNITIES (A24, pass O10) — the former locked
+   Community row, live
+   ------------------------------------------------------------------
+   ONE QUESTION, ASKED OF THIS WORKSPACE'S OWN RECORDS: which house
+   that I can already see at one of my editions has NO admission
+   procedure at all on another edition of the SAME series?
+
+   EVERYTHING IS DERIVED (OO-1). There is no opportunity record, no
+   counter, no seen/dismissed field and no new register — the list is
+   recomputed on every render, and rendering mutates nothing.
+
+   THE REASONS COME FROM THE FAIR REGISTERS ONLY (OO-7): fairSeries,
+   fairEditions, fairParticipations (with `representing`) and
+   fairAdmissions through fairAdmissionEntrance(). NEITHER
+   `partnerFollows` NOR `wineFollowGraph` is read here — a follow-based
+   reason waits for O11 (A24.10). That says nothing against the
+   A23.6 Platform Partners block under My Stars, which is a different
+   path in a different workspace and stays exactly as O9 left it
+   (A24.9).
+
+   THE STAKEHOLDER TABLE IS READ ONLY TO REFUSE (OO-6). It is never a
+   reason, never a score and never a match source; no A6 partnership,
+   no A7 follow and no order is read anywhere below.
+
+   TWO REASON CODES, AND NOTHING ELSE (A24.2). `personallyAttending`
+   is deliberately not one of them: A21.3 keeps it and
+   `representedAtBooth` as two separately set facts (FP-7), and reading
+   one as evidence of the other would undo that separation here.
+
+   NO SCORE, NO PERCENTAGE, NO "FIT" (OO-4) — the A8 line, and FR-9's
+   same sentence on the neighbouring candidate read path.
+══════════════════════════════════════════════════════════════════ */
+const ORGANIZER_OPPORTUNITY_CODES = ['exhibits_at_other_edition',
+                                     'represented_not_exhibiting'];
+
+/* STAGE TWO of the guard (A24.3), and the reason it exists: stage one
+   — fairOrgEligible(orgType) — answers a type the ROW claims, so a row
+   reading org:'Atrium Fairs GmbH', orgType:'winery' passes it while
+   naming a platform partner. The canonical identity is asked as well:
+   the house must exist in the trade register, its CANONICAL type must
+   match what the row claims, and THAT type must be eligible. A partner
+   workspace has no stakeholders row and must never gain one (PP-2), so
+   it falls out structurally — no partner-specific rule is needed here,
+   and none may be added. */
+function organizerOpportunityIdentityOk(org, claimedType) {
+  const st = stakeholder(org);
+  if (!st || st.unknown || !st.type) return false;
+  if (st.type !== claimedType) return false;
+  return fairOrgEligible(st.type);
+}
+
+/* The pure derivation. Returns cards, one per (organisation, target
+   edition) — never a stored row. */
+function organizerOpportunities() {
+  const ws = platformPartners[0];
+  if (!ws) return [];
+  const cards = [], byKey = {};
+
+  /* A ≠ B, same series, upcoming, not cancelled. A DRAFT qualifies:
+     inviting on a draft is the narrow, deliberate D46 route (A20.8).
+     The target's series is the SOURCE's series — same seriesId is the
+     rule (A24.1) — so the one fairSeriesManagedHere() check below
+     covers both sides; a second read would ask the same question
+     twice. */
+  const targetsOf = srcEd => fairEditions.filter(e =>
+    e.seriesId === srcEd.seriesId && e.id !== srcEd.id &&
+    e.status !== 'cancelled' && e.startDate >= SHOW_TODAY);
+
+  /* One card per pair, reasons deduplicated on their full provenance
+     (OO-9): the same pair reached from two sources is ONE card with two
+     reasons, and the identical reason twice is one reason. */
+  const add = (org, orgType, code, srcEd, part, tgt) => {
+    if (!fairAdmissionEntrance(tgt.id, org).fresh) return;
+    const key = org + ' ' + tgt.id;
+    let c = byKey[key];
+    if (!c) {
+      c = byKey[key] = { key: key, org: org, orgType: orgType,
+                         targetEditionId: tgt.id, reasons: [] };
+      cards.push(c);
+    }
+    const dup = c.reasons.some(r => r.code === code &&
+      r.sourceEditionId === srcEd.id && r.participationId === part.id);
+    if (dup) return;
+    c.reasons.push({ code: code, sourceEditionId: srcEd.id,
+                     participationId: part.id, via: part.org });
+  };
+
+  fairParticipations.forEach(p => {
+    if (p.status !== 'active') return;
+    const srcEd = fairEditionById(p.editionId);
+    if (!srcEd) return;
+    if (!fairSeriesManagedHere(fairSeriesById(srcEd.seriesId))) return;
+    const targets = targetsOf(srcEd);
+    /* 1. The house exhibits itself at one of my editions. */
+    if (organizerOpportunityIdentityOk(p.org, p.orgType))
+      targets.forEach(t => add(p.org, p.orgType, 'exhibits_at_other_edition', srcEd, p, t));
+    /* 2. The house is REPRESENTED at a distributor's booth at one of
+       my editions — representedAtBooth alone, never personallyAttending
+       (A21.3, FP-7). A represented entry is always a winery (A21.4),
+       and the canonical guard is asked for exactly that type. */
+    (p.representing || []).forEach(r => {
+      if (r.representedAtBooth !== true) return;
+      if (!organizerOpportunityIdentityOk(r.winery, 'winery')) return;
+      targets.forEach(t => add(r.winery, 'winery', 'represented_not_exhibiting', srcEd, p, t));
+    });
+  });
+
+  /* Derived order too (invariant 7): the nearest target edition first,
+     then the house alphabetically. */
+  cards.sort((a, b) => {
+    const ea = fairEditionById(a.targetEditionId), eb = fairEditionById(b.targetEditionId);
+    const da = ea ? ea.startDate : '', db = eb ? eb.startDate : '';
+    if (da !== db) return da < db ? -1 : 1;
+    return a.org.localeCompare(b.org);
+  });
+  return cards;
+}
+
+/* Provenance is a LINK, not a retyped fact: it opens the organizer's
+   own source edition where the participation really stands. */
+function goToFairEdition(editionId) {
+  fairOpenEditionId = editionId;
+  showPartnerView('fairs');
+}
+
+function organizerOpportunityReasonHtml(c, r) {
+  const srcEd = fairEditionById(r.sourceEditionId);
+  const srcSeries = srcEd && fairSeriesById(srcEd.seriesId);
+  const where = '<button class="pn-link" onclick="goToFairEdition(' +
+    JSON.stringify(r.sourceEditionId).replace(/"/g, '&quot;') + ')">' +
+    notifEsc(srcSeries ? srcSeries.name : '') + ' · ' + r.sourceEditionId +
+    (srcEd ? ' · ' + blDate(srcEd.startDate) : '') + ' →</button>';
+  const what = r.code === 'exhibits_at_other_edition'
+    ? 'exhibits with an active participation of its own at your '
+    : 'is represented at the booth of ' + notifEsc(r.via) + ' at your ';
+  return '<div class="edit-sub" style="margin-top:0.35rem">' +
+    '<b>' + notifEsc(c.org) + '</b> ' + what + where +
+    ' <span style="color:var(--dim)">(participation ' + r.participationId + ')</span>' +
+    ' — and has no admission procedure at all on this edition.</div>';
+}
+
+function renderPartnerOpportunities() {
+  const root = document.getElementById('popp-root');
+  if (!root) return;
+  const opps = organizerOpportunities();
+  const countEl = document.getElementById('popp-count');
+  if (countEl) countEl.textContent = '(' + opps.length + ')';
+
+  const intro =
+    '<div class="edit-sub">Derived live from your own fair records — who exhibits at one of your editions, ' +
+    'and what the admission state is on your other editions of the same series. Nothing here is stored, ' +
+    'no percentage is computed, and showing an opportunity changes nothing: only <b>Invite to exhibit</b> ' +
+    'writes anything, and it writes the same invitation the edition’s recruiting block writes.</div>' +
+    '<div class="edit-sub" style="margin-top:0.35rem">Represented at booth and personally attending are two ' +
+    'separate facts; only the first is read here.</div>';
+
+  if (!opps.length) {
+    root.innerHTML = intro +
+      '<div class="ord-empty" style="margin-top:0.8rem">No opportunities right now. One arises when a house ' +
+      'exhibits at an edition of one of your series — or is represented at a distributor’s booth there — ' +
+      'and has no admission procedure yet on another upcoming edition of the same series.</div>';
+    return;
+  }
+
+  root.innerHTML = intro + opps.map(c => {
+    const ed = fairEditionById(c.targetEditionId);
+    const s = ed && fairSeriesById(ed.seriesId);
+    const dates = ed ? blDate(ed.startDate) + (ed.endDate ? ' – ' + blDate(ed.endDate) : '') : '';
+    const arg = v => JSON.stringify(String(v)).replace(/"/g, '&quot;');
+    return '<div class="pn-card" style="align-items:flex-start;flex-wrap:wrap;gap:1rem 1.2rem;margin-top:0.8rem">' +
+      '<div style="flex:1;min-width:260px">' +
+        '<div class="pn-name">' + notifEsc(c.org) +
+          ' <span style="font-size:0.7rem;color:var(--dim)">' + c.orgType + '</span></div>' +
+        '<div class="pn-meta" style="margin-top:0.35rem">No procedure on ' +
+          '<b>' + notifEsc(s ? s.name : '') + ' · ' + c.targetEditionId + '</b> · ' + dates +
+          ' · ' + (ed ? FAIR_TYPE_LABEL[ed.fairType] : '') +
+          ' <span class="ord-stage me-' + (ed ? ed.status : 'draft') + '">' +
+          (ed ? FAIR_STATUS_LABEL[ed.status] : '') + '</span></div>' +
+        c.reasons.map(r => organizerOpportunityReasonHtml(c, r)).join('') +
+      '</div>' +
+      '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:0.5rem">' +
+        '<button class="btn-sm btn-gold" onclick="doOrganizerOpportunityInvite(' +
+          arg(c.org) + ',' + arg(c.targetEditionId) + ')">Invite to exhibit</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+/* THE ACT ADDS NO AUTHORITY OF ITS OWN (A24.5, OO-8). Series
+   ownership, the cancelled edition, the eligible role and the free
+   entrance are checked by inviteToFair() and only there; a refusal
+   comes back from that function with its own reason (B12). The
+   opportunity is a shortcut into the act, never a second gate. */
+function doOrganizerOpportunityInvite(org, targetEditionId) {
+  const st = stakeholder(org);
+  const row = inviteToFair(targetEditionId, st.type, org);
+  if (!row) return;                     /* inviteToFair already said why */
+  renderPartnerOpportunities();         /* re-derived, so the card goes */
+  showToast('✓ ' + org + ' invited to ' + targetEditionId +
+            ' — the invitation stands on that edition’s recruiting record');
 }
 
 /* Everything the cockpit shows derives from the ONE partner row and

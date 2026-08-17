@@ -760,6 +760,22 @@ console.log('\n§9 trade cockpits untouched — samples (OP-10)');
   const stars = d.querySelectorAll('#dstars-list .pn-card').length;
   if (stars === 3) ok("Hawesko's trade My Stars still renders its 3 A7 entries beside the separate partner block");
   else bad('the trade My Stars list changed: ' + stars);
+  /* O10 (A24) added an organizer view, and OP-10 is the sentence it must
+     not touch: nothing the derivation produces reaches a trade cockpit,
+     and its own action never appears in one. Measured on the four
+     rendered subtrees, not on the source. */
+  const O10_MARKS = ['Invite to exhibit', 'organizerOpportunities', 'doOrganizerOpportunityInvite'];
+  const leaked = TRADE_ROLES.map(r => {
+    const html = d.getElementById('dash-' + r).innerHTML;
+    const hit = O10_MARKS.find(m => html.indexOf(m) !== -1);
+    return hit ? r + ' (' + hit + ')' : null;
+  }).filter(Boolean);
+  if (!leaked.length) ok('no O10 artefact in any of the four trade cockpits (OP-10, A24.9)');
+  else bad('an O10 artefact reached a trade cockpit: ' + leaked.join(', '));
+  if (!w.eval('JSON.stringify(organizerOpportunities().map(function(c){return c.org;}))')
+        .includes('Atrium Fairs GmbH'))
+    ok('the organizer derivation names no platform partner as a trade house');
+  else bad('O10 produced the platform partner as a trade house');
   if (JSON.stringify(FOLLOWS()) === JSON.stringify(FIXTURE_FOLLOWS))
     ok('the partner follow store ends where it started — every section restored what it moved');
   else bad('a section left the follow store changed');

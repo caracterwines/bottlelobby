@@ -111,6 +111,28 @@ assertNoTradeSurface();
   else bad('locked entries rendered: ' + locked + ', PARTNER_LOCKED_NAV names ' + expected);
 }
 
+/* O10 (A24): the Opportunities view is the newest organizer surface, and
+   PP-1 is exactly the question it has to answer — the ONE action on it is
+   a RECRUITING act (inviteToFair, the same act the edition's recruiting
+   block carries), never a trade action. Rendered first, because a view
+   that has never rendered proves nothing about what it renders. */
+{
+  w.eval("showPartnerView('opportunities')");
+  assertNoTradeSurface();
+  const root = d.getElementById('popp-root');
+  const btns = root ? Array.from(root.querySelectorAll('button.btn-gold')) : [];
+  const wrong = btns.filter(b => !/doOrganizerOpportunityInvite\(/.test(b.getAttribute('onclick') || ''));
+  if (btns.length && !wrong.length)
+    ok(btns.length + ' opportunity actions, every one of them the recruiting act (PP-1)');
+  else bad('an opportunity action is not the recruiting act (' + wrong.length + ' of ' + btns.length + ')');
+  const invite = w.eval('doOrganizerOpportunityInvite.toString()');
+  if (/inviteToFair\(/.test(invite) &&
+      !/requestPartnership|placeOrder|addWineToBuyerList|handleOfferRequest/.test(invite))
+    ok('the handler delegates to inviteToFair() and to no trade act');
+  else bad('the opportunity handler reaches a trade act (PP-1)');
+  w.eval("showPartnerView('dashboard')");
+}
+
 expectRed('a Commerce section hung into the organizer sidebar', () => {
   d.getElementById('sidebar-partner').insertAdjacentHTML('beforeend',
     '<div class="nav-section" id="pp-mut-commerce"><div class="nav-section-label">Commerce</div>' +
