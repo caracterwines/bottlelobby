@@ -4,7 +4,7 @@
 > Dateiliste, Dateianzahl und Aenderungshistorie stehen in der Git-Historie — nicht hier.
 > Dauerhafte Regeln stehen in `BOTTLE-LOBBY-SPEC.md`, kurze Invarianten in `CLAUDE.md` — nicht hier.
 
-**Letzte Aktualisierung:** 16. August 2026
+**Letzte Aktualisierung:** 17. August 2026
 
 ---
 
@@ -31,12 +31,12 @@ Kein Build-Command, Publish-Directory = Repo-Root.
 > Dauerhafte Regeln gehoeren in `BOTTLE-LOBBY-SPEC.md`, kurze Invarianten in
 > `CLAUDE.md`. Findet sich hier eine Regel, ist sie am falschen Ort.
 
-**Baum sauber, `main` gepusht, 33 Harnesses gruen** (nachgezaehlt 15.08. nach O9 — O9 brachte `organizer-profile.js` als neues File; davor 32, nachgezaehlt 14.08. nach O7 — O7 brachte `fair-appointments.js` als neues File; davor 31, nachgezaehlt 13.08. nach O5 — O5 brachte KEIN neues File, sondern erweiterte `wine-guide-page.js`, `persistence.js` und `fairs.js`; `fair-participation.js` kam mit Durchgang O4 dazu, davor `fair-recruiting.js` mit O3, `fairs.js` mit 12, `platform-partners.js` mit 11, `campaigns.js` mit 10, `wine-guide-page.js` mit 9, `member-events.js` mit 7). **`BLStore.VERSION` steht auf 12** — O5 hat gemessen einen Bump auf 12 gebraucht (neue Fixture-Zeilen in den bestehenden Sammlungen `fairSeries`/`fairEditions`/`reviews`, D2D-Klasse; `SCHEMA_HASH` blieb `6d204f48`, alle 40 Fingerprints identisch; O7 hat gemessen KEINEN Bump gebraucht und `SCHEMA_HASH` zweimal nachgezogen, `6d204f48` → `9b503d88` → `b29a32a`, jeweils im selben Commit); O4 hat gemessen einen Bump auf 10 gebraucht (Fixture-Zeilen in den BESTEHENDEN Sammlungen `fairHalls`/`fairStands`/`fairAdmissions`, D2D-Klasse), die Codex-Korrektur einen weiteren auf 11 (FORMAT-Klasse: das Schema-Feld `sh` im Snapshot-Blob; Begruendung jeweils am `VERSION` und in den Bloecken unten); Durchgang 12 brauchte einen (RVW-3005), **O3 gemessen keinen**. **Mit `sh` kam eine neue C8-Pflicht: aendern Fixtures ihre FORM, wird `SCHEMA_HASH` in `assets/bottle-lobby-store.js` im selben Commit nachgezogen — `tests/persistence.js` wird sonst rot und nennt den neuen Wert.**
+**Baum sauber, `main` gepusht, 34 Harnesses gruen** (nachgezaehlt 17.08. nach O10 — O10 brachte `tests/organizer-opportunities.js` als neues File und hebt die Zahl von 33 auf 34; davor 33, nachgezaehlt 15.08. nach O9 — O9 brachte `organizer-profile.js` als neues File; davor 32, nachgezaehlt 14.08. nach O7 — O7 brachte `fair-appointments.js` als neues File; davor 31, nachgezaehlt 13.08. nach O5 — O5 brachte KEIN neues File, sondern erweiterte `wine-guide-page.js`, `persistence.js` und `fairs.js`; `fair-participation.js` kam mit Durchgang O4 dazu, davor `fair-recruiting.js` mit O3, `fairs.js` mit 12, `platform-partners.js` mit 11, `campaigns.js` mit 10, `wine-guide-page.js` mit 9, `member-events.js` mit 7). **`BLStore.VERSION` steht auf 12** — O5 hat gemessen einen Bump auf 12 gebraucht (neue Fixture-Zeilen in den bestehenden Sammlungen `fairSeries`/`fairEditions`/`reviews`, D2D-Klasse; `SCHEMA_HASH` blieb `6d204f48`, alle 40 Fingerprints identisch; O7 hat gemessen KEINEN Bump gebraucht und `SCHEMA_HASH` zweimal nachgezogen, `6d204f48` → `9b503d88` → `b29a32a`, jeweils im selben Commit); O4 hat gemessen einen Bump auf 10 gebraucht (Fixture-Zeilen in den BESTEHENDEN Sammlungen `fairHalls`/`fairStands`/`fairAdmissions`, D2D-Klasse), die Codex-Korrektur einen weiteren auf 11 (FORMAT-Klasse: das Schema-Feld `sh` im Snapshot-Blob; Begruendung jeweils am `VERSION` und in den Bloecken unten); Durchgang 12 brauchte einen (RVW-3005), **O3 gemessen keinen**. **Mit `sh` kam eine neue C8-Pflicht: aendern Fixtures ihre FORM, wird `SCHEMA_HASH` in `assets/bottle-lobby-store.js` im selben Commit nachgezogen — `tests/persistence.js` wird sonst rot und nennt den neuen Wert.**
 
 ### Womit eine Sitzung anfaengt
 
 ```
-node tests/run-all.js        →  33 Harnesses, muss gruen sein, bevor irgendetwas beginnt
+node tests/run-all.js        →  34 Harnesses, muss gruen sein, bevor irgendetwas beginnt
 node tests/serve.js          →  http://localhost:8765   (no-store — NIE python http.server)
 node tests/stamp-assets.js   →  nach jeder Aenderung an assets/, sonst wird check-static rot
 ```
@@ -50,7 +50,7 @@ Fehlmessungen an einem Tag kamen genau daher** (Spec C7, „Browser acceptance")
 `BOTTLE-LOBBY-SPEC.md` ist die Autoritaet und waechst. **Niemand liest sie ganz —
 also je Durchgang die geltenden Abschnitte benennen**, sonst wird nach
 Plausibilitaet statt nach Spec gebaut. `CLAUDE.md` hat die acht Invarianten,
-Anhang D die abgeloesten Entscheidungen (**D1–D46** — nie ohne Blick dorthin
+Anhang D die abgeloesten Entscheidungen (**D1–D47** — nie ohne Blick dorthin
 etwas wiedervorschlagen).
 
 Arbeitsregeln, die diesen Tag ueberdauern und in **C3/C7** stehen: jeden Commit
@@ -523,8 +523,9 @@ Funktionen aufrufen, `transferSize` vorher lesen (C7).
 > unten**) · ~~B2B-Termine und Slots~~ (**O7 — gebaut, Block unten**;
 > AUSGEHENDE Termineinladungen und die Terminnachbereitung bleiben je ein
 > eigener spaeterer Durchgang) · Agenda (**O12**) · ~~O9: oeffentliches Organizer-Profil & Follow,
-> einschliesslich vorgelagertem Follow-Messdurchgang~~ (**O9 — gebaut, Block unten**) · **O10:
-> Opportunities** · **O11: Fair-Benachrichtigungen & Organizer-Kommunikation
+> einschliesslich vorgelagertem Follow-Messdurchgang~~ (**O9 — gebaut, Block unten**) · ~~O10:
+> Opportunities~~ (**O10 — gebaut, Block unten**; follow-basierte und
+> serienuebergreifende Gruende bleiben je vertagt) · **O11: Fair-Benachrichtigungen & Organizer-Kommunikation
 > als D10-Erweiterung** · Hero-Medien mit zweigeteilter Abhaengigkeit ·
 > Marketing-/Why-Join-Rollout der in A18.6 festgelegten EN-Formeln. Die
 > exakten Anker-Wortlaute stehen im V4-Dokument ausserhalb des Repos.
@@ -1639,13 +1640,142 @@ Funktionen aufrufen, `transferSize` vorher lesen (C7).
 > Agenda **O12** · Hero-Medien · `platformPartners` in der Allowlist (der Tag
 > des ersten Schreibers).
 >
+> **BERICHTIGT am 17.08.** — die Notiz an dieser Stelle lautete
+> „Spec-Austausch, ausdruecklich offen" und ist ueberholt: die korrigierte
+> Recovery-Spec `BOTTLE-LOBBY-SPEC.md` (531.187 Bytes, Git-Blob
+> `568b4c1427286bf733be8b94c5ffd4e104926a70`, mit der korrigierten A23.4 und
+> der neu gefassten OP-6) wurde am **16.08.2026 nach unabhaengiger Abnahme
+> vollstaendig ins Projektwissen uebernommen**. Der Austausch ist erledigt,
+> nicht offen. **Unveraendert gilt:** weder
+> `b52043c92f5eab058ca6c5c63c2d3660daf26eed` noch die daraus stammende
+> O9-Spec sind abgenommen, und beide duerfen auch nachtraeglich nicht als
+> abgenommen dargestellt werden.
+
+---
+
+### Durchgang O10 — Organizer Opportunities aus den eigenen Fair-Registern (17.08.)
+
+> **Die Regeln stehen in der Spec, Kapitel A24 (OO-1..OO-10), nicht hier.**
+> Hier steht nur, was Git und Spec nicht wissen.
+
+**Ausgangs-HEAD** `7c740b236e7eab3b4bcb06b83a79ca9a50e08924` (abgenommen).
+**Commits, drei, in der vorgegebenen Struktur:**
+`6c15a0c921385253e63a0fd9d3874252e92f8782` (Spec: A24, A8-Absatz, A23.5/A23.7) ·
+`c90de347c2b5460820ad18c44e72f8753cbb6d1b` (Bau **und** die von ihm
+motivierten Zusicherungen in einem Commit) · dieser HANDOFF-Commit.
+
+**Was gebaut wurde, in einem Satz:** die gesperrte Organizer-Zeile
+*Opportunities* ist eine echte Ansicht, die aus den eigenen Fair-Registern
+ableitet, wer an einer Edition einer Serie ausstellt oder nachweislich an
+einem Distributorstand vertreten ist und auf einer **anderen** kommenden
+Edition **derselben** Serie noch gar kein Zulassungsverfahren hat.
+
+#### Messbefunde, gemessen statt behauptet
+
+| | |
+|---|---|
+| M1 | A24 war frei (hoechstes Kapitel A23) · hoechste D-Nummer **D47**, bleibt es · hoechste OP-Invariante OP-10 · 33 Harnesses vor dem Durchgang |
+| M2 | `inviteToFair()` prueft Serie (`fairSeriesManagedHere`), `cancelled`, `fairOrgEligible` und `fairAdmissionEntrance` **selbst** — die Opportunity-Aktion fuegt keine eigene Autoritaet hinzu. **Praezise Grenze:** „upcoming" traegt `inviteToFair()` NICHT; das ist ein Ableitungsfilter von A24.2, keine Autoritaet des Buttons — eine Karte auf eine vergangene Edition entsteht gar nicht erst, und der Recruiting-Block der Edition bleibt unveraendert |
+| M3 | Genau **SIEBEN** Opportunities, mechanisch bestaetigt und Karte fuer Karte zugeordnet: Domaine Lefèvre 2 (FE-7101 → FE-7103, FE-7102) · Hawesko GmbH 2 (FE-7103 → FE-7101, FE-7102) · Cantina Rossi 2 (representedAtBooth auf FE-7103 → FE-7101, FE-7102) · Weingut Schmitt 1 (FE-7103 → FE-7102; FE-7101 faellt wegen FA-9101 `applied`). FS-7002 traegt keine Participation und liefert nichts |
+| M4a | Segmentpruefsummen von `renderDistributorOpportunities()` + `goToWineShowPlanning()` und des `#dopp-list`/`#dopp-count`-Markups **vor und nach** dem Bau identisch: `aeff0827c6c4f1d8…` (2836 B) und `7f6d1d6f199cdd1d…` (655 B). Das **gerenderte** Fixture-Ergebnis ebenfalls identisch: `(5)` / `5aabf92f71676556…`. Der bekannte Hawesko-Selbstvorschlag steht unangetastet (E-3) |
+| M4b | Die Ableitung liest weder `partnerFollows` noch `wineFollowGraph` — **mit einer Lesesonde gemessen**, nicht per Quelltext-Grep: die Bindung wird durch einen Proxy ersetzt, der den ersten Property-Zugriff meldet |
+| M4c | `PUBLIC_COLLECTIONS` unveraendert, keine oeffentliche Seite und kein Handelsprofil geaendert |
+| M4d | `renderPartnerStarsFor()` / `renderAllPartnerStars()` unveraendert und funktionsfaehig — **Erhaltungsmessung**, positiv abgenommen |
+| M6 | **C8: kein Bump.** `liveSchemaHash()` = `SCHEMA_HASH` = `b33a99e8`, `VERSION` bleibt **12** — keine Fixture-FORM hat sich geaendert, O10 legt keine Zeile und kein Feld an |
+
+**Warum KEINE neue D-Zeile entsteht:** geprueft, nicht angenommen. O10 loest
+keine Spec-Entscheidung ab. Die Begruendung der gesperrten Zeile
+(*„Organizer opportunities come after profile and follow exist (O10)"*) stand
+im **Prototyp-Code**, war also Prototyptext und nie eine Entscheidung in der
+Spec — und sie hat sich erfuellt statt sich als falsch erwiesen. **D47 bleibt
+die hoechste D-Nummer.**
+
+#### Zwei Dinge, die man beim naechsten Anfassen leicht falsch macht
+
+1. **`fairOrgEligible()` allein ist KEIN Guard.** Eine Zeile mit
+   `org:'Atrium Fairs GmbH', orgType:'winery'` erfuellt sie. Erst die zweite
+   Stufe — kanonischer `stakeholder()`-Datensatz vorhanden, kanonischer Typ
+   **gleich** dem behaupteten, und dieser kanonische Typ eligible — faellt sie.
+   Platform Partners haben bewusst keinen Stakeholder-Datensatz (PP-2) und
+   fallen dadurch **strukturell** heraus. Die Stakeholder-Tabelle wird
+   ausschliesslich **negativ** gelesen, nie als Grund.
+2. **`withdrawn`/`revoked` verhindern den Vorschlag genauso wie `applied`.**
+   Die Wiedereroeffnungsmechanik (`FAIR_ADMISSION_REOPENABLE`) gilt fuer die
+   direkten Recruiting-Akte weiter — O10 verlangt aber einen **frischen**
+   Eintritt (`{fresh:true}`), und eine wiedereroeffenbare Zeile ist immer noch
+   eine Zeile. Alle sieben Zustaende sind einzeln gemessen.
+
+#### Tests und Browser
+
+`tests/organizer-opportunities.js` ist neu (Verzeichnisscan nimmt es auf) und
+traegt **26 Erkennungen, jede mit Gegenmutation**. Der Kunstgriff, der noetig
+war: der Grossteil des A24-Vertrags ist ein **Filter** — die richtige
+Ableitung laesst sich durch Fixture-Mutation nicht zu einer verbotenen Karte
+ueberreden, eine reine Datenmutation bliebe gruen und bewiese nichts. Deshalb
+gibt es **einen** Verifizierer `contractViolations(list)` ueber eine
+beliebige Kartenliste, und jede Erkennung injiziert die eine Karte, die genau
+ihre Klausel bricht. Wo die Fixtures den Fehler wirklich tragen koennen —
+korrumpierte kanonische Rolle, blockierende Admission, inaktive Participation,
+tatsaechlich gelesenes Follow-Register — ist die Gegenmutation die Daten, und
+dort wird sie benutzt.
+
+Gezielt ergaenzt: `tests/platform-partners.js` (PP-1 fuer die neue Aktion —
+Recruiting-Akt, keine Handelsaktion) · `tests/organizer-profile.js` §9 (OP-10)
+· `tests/fairs.js` (die aktivierte Sperrzeile: jetzt **zwei** statt drei).
+**§7 von `organizer-profile.js` blieb unveraendert und wurde nicht
+abgeschwaecht.** `node tests/run-all.js` lief am finalen Produktstand genau
+EIN Mal vollstaendig: **34/34 gruen.**
+
+**Browser-Abnahme** (Chrome-Extension, `tests/serve.js`, JavaScript-Auslese):
+sieben Karten in der Sortierung Ziel-Datum → Name, je ein Grund mit
+Provenienz-Link (7 Links) · ein echter Klick auf *Invite to exhibit*
+(Domaine Lefèvre → FE-7102) schreibt **genau eine** Zeile `FA-9106`,
+`invited`, `source:'invitation'`, eine History-Zeile; die Karte verschwindet,
+der Zaehler geht 7 → 6, und der Recruiting-Block von FE-7102 zeigt
+*„Domaine Lefèvre · winery · Invited"* · Leerzustand ehrlich und knapp ·
+Distributor-*My Opportunities* unveraendert bei `(5)`, ohne Organizer und ohne
+O10-Artefakt · in Distributor und Restaurant: A7-Handelsblock **ohne**
+Partner, separater **Platform-Partners-Block MIT** dem Organizer-Eintrag,
+Profil-Link auf `bottle-lobby-organizer-atrium-fairs-gmbh.html`,
+*„Following since"* und funktionierendem Unfollow (2 → 1 Kante, Karte weg,
+ehrlicher Leerzustand) — **der erlaubte O9-Pfad, positiv abgenommen** ·
+oeffentliche Organizer-Seite unveraendert (keine Opportunities, kein
+Verifikationsverdikt, keine Followerzahl).
+
+> **Ein Umgebungsbefund, kein Produktbefund:** die Screenshot-Injektion der
+> Chrome-Extension laeuft auf dieser 1,2-MB-Seite reproduzierbar in den
+> 5-s-Timeout. Die Abnahme wurde deshalb **vollstaendig ueber
+> JavaScript-Auslese** gefahren — die genauere Messung ohnehin. Es gibt kein
+> Abnahme-Screenshot dieses Durchgangs, und das ist hier vermerkt statt
+> stillschweigend weggelassen.
+
+#### Was O10 ausdruecklich NICHT gebaut hat
+
+Vollstaendiges **A8-Matchmaking** (und dort der Distributor-Renderer samt
+seinem dokumentierten Selbstvorschlag — nicht repariert, nicht erweitert,
+nicht als Vorlage kopiert) · Opportunities fuer Handelsrollen · oeffentliche
+Opportunities · **follow-basierte** Organizer-Opportunities (erst nach O11) ·
+**serienuebergreifende** Opportunities (erst mit eigenen belastbaren
+Kriterien) · Vorschlaege auf **derselben** Edition (erst mit der
+Uebergangsregel, die A24.8 als fehlend benennt — A21.3 wurde dafuer
+**nicht** erweitert und hat kein neues allgemeines Verbot bekommen) ·
+Seen/Dismissed-Zustand · neuer Store, Hydration-Erweiterung,
+`PUBLIC_COLLECTIONS`-Aenderung, Fixture-Erweiterung allein fuer O10.
+
+**Deferrals unveraendert weiter offen:** O11 (Follower-Sicht im
+Organizer-Workspace, Notifications, Inquiry, Nachrichten, Erinnerungen) ·
+O12 (Agenda) · Hero-Medien · **oeffentliche Verifikationsbadges** bis zur
+benannten Backend-/RLS-Grenze aus A23.4 · vollstaendiges A8-Matchmaking ·
+follow-basierte und serienuebergreifende Organizer-Opportunities · ausgehende
+Termininvitationen · Terminnachbereitung · `platformPartners` in der
+Hydration-Allowlist am Tag des ersten Schreibers.
+
 > **Spec-Austausch, ausdruecklich offen:** `BOTTLE-LOBBY-SPEC.md`
-> (531.187 Bytes, Git-Blob
-> `568b4c1427286bf733be8b94c5ffd4e104926a70`) enthaelt die korrigierte A23.4
-> und die neu gefasste OP-6. **Weder `b52043c92f5eab058ca6c5c63c2d3660daf26eed`
-> noch die daraus stammende O9-Spec duerfen nachtraeglich als abgenommen
-> dargestellt werden. Die korrigierte Spec wird erst NACH der unabhaengigen
-> Abnahme des NEUEN finalen HEAD ins Projektwissen uebernommen.**
+> (547.237 Bytes, Git-Blob `c2fca8faac7296847cbf35a53f6194a8ed970b9b`)
+> enthaelt A24. Die O10-Spec geht **erst NACH unabhaengiger Abnahme des
+> finalen HEAD** ins Projektwissen — nicht vorher.
+> **Unveraendert:** `b52043c92f5eab058ca6c5c63c2d3660daf26eed` und dessen
+> O9-Spec sind **nicht abgenommen**.
 
 ---
 
