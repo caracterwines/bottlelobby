@@ -1664,14 +1664,18 @@ Funktionen aufrufen, `transferSize` vorher lesen (C7).
 `c90de347c2b5460820ad18c44e72f8753cbb6d1b` (Bau **und** die von ihm
 motivierten Zusicherungen in einem Commit) ·
 `ecd02c333771d9bc852a124038ecad0e09b12bb8` (HANDOFF).
-**Danach genau EIN zusaetzlicher atomarer Korrekturcommit** — dieser hier.
+**Danach ZWEI eng begrenzte Korrekturcommits** aus zwei aufeinander
+folgenden unabhaengigen Codex-Pruefungen:
+`58d54f560364d3fc8f0eaa12964732f7ad7c3983` (NUL-Byte und die wirkungslose
+Nebenwirkungspruefung) · und dieser hier (der exakte Zustandsdelta, nur
+`tests/organizer-opportunities.js` und diese Datei).
 
-> **`ecd02c333771d9bc852a124038ecad0e09b12bb8` war der geprueft, aber
-> wegen zweier Punkte NICHT abgenommene Zwischenstand.** Die unabhaengige
-> Codex-Pruefung hat beide gefunden, beide sind berechtigt, und beide sind
-> mit dem Korrekturcommit behoben — siehe „Was die Codex-Pruefung gefunden
-> hat" weiter unten. Historie unveraendert: kein Amend, kein Force, keine
-> Umschreibung.
+> **Zwei geprueft, aber NICHT abgenommene Zwischenstaende, beide ehrlich
+> benannt:** `ecd02c333771d9bc852a124038ecad0e09b12bb8` (Befunde 1 und 2) und
+> `58d54f560364d3fc8f0eaa12964732f7ad7c3983` (der verbliebene Befund am
+> Zustandsdelta). Alle drei Befunde waren berechtigt und sind behoben — siehe
+> „Was die Codex-Pruefungen gefunden haben" weiter unten. Historie
+> unveraendert: kein Amend, kein Force, keine Umschreibung.
 
 **Was gebaut wurde, in einem Satz:** die gesperrte Organizer-Zeile
 *Opportunities* ist eine echte Ansicht, die aus den eigenen Fair-Registern
@@ -1717,7 +1721,7 @@ die hoechste D-Nummer.**
 #### Tests und Browser
 
 `tests/organizer-opportunities.js` ist neu (Verzeichnisscan nimmt es auf) und
-traegt **26 Erkennungen; nach der Korrektur greifen 40 wirksame Gegenmutationen** (mechanisch am finalen Lauf nachgezaehlt, vorher 37). Der Kunstgriff, der noetig
+traegt **26 Erkennungen; nach beiden Korrekturen greifen 41 wirksame Gegenmutationen** (mechanisch am finalen Lauf nachgezaehlt — 37 im ersten Wurf, 40 nach der ersten, 41 nach der zweiten Korrektur). Der Kunstgriff, der noetig
 war: der Grossteil des A24-Vertrags ist ein **Filter** — die richtige
 Ableitung laesst sich durch Fixture-Mutation nicht zu einer verbotenen Karte
 ueberreden, eine reine Datenmutation bliebe gruen und bewiese nichts. Deshalb
@@ -1734,12 +1738,13 @@ Recruiting-Akt, keine Handelsaktion) · `tests/organizer-profile.js` §9 (OP-10)
 **§7 von `organizer-profile.js` blieb unveraendert und wurde nicht
 abgeschwaecht.**
 
-**Zwei vollstaendige `run-all`-Laeufe, und sie werden hier nicht zu einem
-zusammengezogen:** einer am inzwischen ueberholten Zwischenstand
-`ecd02c333771d9bc852a124038ecad0e09b12bb8` (**34/34 gruen**) und genau einer
-am korrigierten finalen Produktstand (**34/34 gruen**). Der erste Lauf war zum
-Zeitpunkt seiner Messung richtig und ist trotzdem nicht der Beleg fuer den
-Stand, der jetzt gilt.
+**Drei vollstaendige `run-all`-Laeufe, und sie werden hier nicht zu einem
+zusammengezogen:** einer am ueberholten `ecd02c333771d9bc852a124038ecad0e09b12bb8`
+(**34/34 gruen**) · einer am ebenfalls noch nicht abgenommenen
+`58d54f560364d3fc8f0eaa12964732f7ad7c3983` (**34/34 gruen**) · und genau ein
+neuer am danach geltenden finalen Stand (**34/34 gruen**). Jeder Lauf war zum
+Zeitpunkt seiner Messung richtig, und keiner davon ist der Beleg fuer einen
+Stand, der erst danach entstand.
 
 **Browser-Abnahme** (Chrome-Extension, `tests/serve.js`, JavaScript-Auslese):
 sieben Karten in der Sortierung Ziel-Datum → Name, je ein Grund mit
@@ -1764,7 +1769,7 @@ Verifikationsverdikt, keine Followerzahl).
 > Abnahme-Screenshot dieses Durchgangs, und das ist hier vermerkt statt
 > stillschweigend weggelassen.
 
-#### Was die Codex-Pruefung gefunden hat — zwei Punkte, beide berechtigt
+#### Was die Codex-Pruefungen gefunden haben — drei Punkte, alle berechtigt
 
 **1. Ein echtes NUL-Byte (U+0000) in `bottle-lobby-dashboard.html`.** Es stand
 in `organizerOpportunities()` als Trennzeichen im Kartenschluessel:
@@ -1811,19 +1816,42 @@ ueber den **gesamten registrierten Zustand**:
   verbotene Notification-Zeile behandelt: es ist einer der Werte, die sich
   schlicht nicht bewegen duerfen.
 
-Zwei Gegenmutationen, beide **echte Aenderungen**, keine geschoenten
-Artefakte: (a) der Akt schreibt zusaetzlich eine `partnerships`-Zeile — ein
-fremdes Register bewegt sich mit, die Pruefung wird rot; (b) in einem
-**Wegwerf-Fenster** wird mit `BLStore.register()` wirklich ein Zustand
-`opportunitiesSeen` angelegt — die Namensmenge waechst, die Pruefung wird rot.
-Das zweite laeuft bewusst in einem eigenen Fenster: `BLStore` hat kein
-`unregister`, und das Register des Fensters zu verschmutzen, in dem jeder
-andere Abschnitt misst, waere schlimmer als der zweite Boot.
+**3. Der Zustandsdelta war nicht exakt — die zweite Codex-Pruefung.** Der
+Pruefer fragte nur nach `extra` (bewegt, aber nicht erlaubt). Damit waere
+`moved = ['fairAdmissions']` **gruen geblieben**, obwohl `fairAdmissionSeq`
+stillgestanden haette — und die anschliessende Delta-Pruefung haette das
+ebenfalls durchgelassen, weil die neue `invited`-Zeile ja korrekt dasteht.
+Bericht und HANDOFF behaupteten aber „genau zwei". Die Pruefung erzwingt das
+jetzt wirklich: neben `extra` gibt es eine **`missing`**-Menge (erlaubt und
+zwingend erwartet, aber nicht bewegt), und die Aussage wird **nur** gruen, wenn
+`extra` UND `missing` leer sind. Die Formulierung „genau zwei" darf damit
+bleiben, weil der Test sie traegt.
+
+**Drei Gegenmutationen gegen diese eine Pruefung, alle drei echte
+Aenderungen**, keine geschoenten Artefakte:
+
+- (a) der Akt schreibt zusaetzlich eine `partnerships`-Zeile — ein fremdes
+  Register bewegt sich mit → `extra`, rot;
+- (b) **neu:** eine **berechtigte** Organizer-Einladung
+  (`Hawesko GmbH` → `FE-7101`), danach wird **ausschliesslich**
+  `fairAdmissionSeq` auf seinen Vorwert zurueckgesetzt. `fairAdmissions`
+  enthaelt weiterhin die korrekte neue `invited`-Zeile, und die Delta-Pruefung
+  besteht — gemessen. Rot wird der Pruefer **allein** deshalb, weil die
+  zwingend erwartete Aenderung fehlt: `missing: ['fairAdmissionSeq']`;
+- (c) in einem **Wegwerf-Fenster** wird mit `BLStore.register()` wirklich ein
+  Zustand `opportunitiesSeen` angelegt — die Namensmenge waechst, rot. Das
+  laeuft bewusst in einem eigenen Fenster: `BLStore` hat kein `unregister`,
+  und das Register des Fensters zu verschmutzen, in dem jeder andere
+  Abschnitt misst, waere schlimmer als der zweite Boot.
 
 > **Was daraus als Regel bleibt:** eine Bedingung mit `|| true` ist keine
 > Pruefung, und ein Harness, der so etwas gruen meldet, ist gefaehrlicher als
-> gar keiner. Und: unsichtbare Steuerzeichen entkommen jeder DOM- und
-> Quelltextpruefung — was in der Datei steht, wird an der Datei gemessen.
+> gar keiner. Unsichtbare Steuerzeichen entkommen jeder DOM- und
+> Quelltextpruefung — was in der Datei steht, wird an der Datei gemessen. Und
+> der dritte Fund ist derselbe Fehler eine Stufe feiner: **wer „genau N"
+> schreibt, muss beide Richtungen pruefen** — nichts Verbotenes dazu, nichts
+> Erwartetes weg. Eine Pruefung, die nur die eine Richtung kennt, belegt die
+> Aussage nicht, die neben ihr steht.
 
 #### Was O10 ausdruecklich NICHT gebaut hat
 

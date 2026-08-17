@@ -148,11 +148,21 @@ function assertOnlyAdmissionsMoved(before, after, label) {
        ') — no opportunity, message or notification register came into being');
   else bad(label + ': the registered name set moved — appeared: [' + appeared.join(', ') +
            '], vanished: [' + vanished.join(', ') + ']');
-  const moved = after.names.filter(n => before.values[n] !== after.values[n]);
-  const extra = moved.filter(n => ALLOWED.indexOf(n) === -1);
-  if (extra.length) bad(label + ': registered state changed that may not change: ' + extra.join(', '));
-  else ok(label + ': of ' + after.names.length + ' registered states exactly ' + moved.length +
-          ' moved — ' + moved.join(' + ') + ', and nothing else');
+  /* EXACTLY the allowed set — both halves, because only asking for
+     `extra` would let `moved = ['fairAdmissions']` pass while the
+     sequence counter stood still, and the sentence this check makes is
+     "exactly these two moved". So: nothing forbidden moved, AND nothing
+     required stayed put. */
+  const moved   = after.names.filter(n => before.values[n] !== after.values[n]);
+  const extra   = moved.filter(n => ALLOWED.indexOf(n) === -1);
+  const missing = ALLOWED.filter(n => moved.indexOf(n) === -1);
+  if (!extra.length && !missing.length)
+    ok(label + ': of ' + after.names.length + ' registered states exactly ' + moved.length +
+       ' moved — ' + moved.slice().sort().join(' + ') + ', and nothing else');
+  else {
+    if (extra.length) bad(label + ': registered state changed that may not change: ' + extra.join(', '));
+    if (missing.length) bad(label + ': registered state that MUST change did not move: ' + missing.join(', '));
+  }
   const b = JSON.parse(before.values.fairAdmissions || '[]');
   const a = JSON.parse(after.values.fairAdmissions || '[]');
   const gained = a.filter(r => !b.some(x => x.id === r.id));
@@ -734,6 +744,19 @@ console.log('\n§9 Invite to exhibit — the act carries no authority of its own
       const b = registeredState();
       w.eval("doOrganizerOpportunityInvite('Hawesko GmbH','FE-7101');" +
              "partnerships.push({id:'PT-MUT',winery:'Cantina Rossi',distributor:'Hawesko GmbH',status:'active'})");
+      assertOnlyAdmissionsMoved(b, registeredState(), 'the invitation');
+    } finally { restore(); }
+  });
+  expectRed('a legitimate invitation with fairAdmissionSeq alone rolled back — the required change is MISSING', () => {
+    /* The row is written and correct; only the counter stands still.
+       The delta check below would still pass, which is exactly why the
+       state check has to insist on BOTH names, not merely on the
+       absence of forbidden ones. */
+    snap();
+    try {
+      const b = registeredState();
+      const seq = w.eval('fairAdmissionSeq');
+      w.eval("doOrganizerOpportunityInvite('Hawesko GmbH','FE-7101'); fairAdmissionSeq = " + seq + ";");
       assertOnlyAdmissionsMoved(b, registeredState(), 'the invitation');
     } finally { restore(); }
   });
