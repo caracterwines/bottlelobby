@@ -7564,7 +7564,10 @@ function organizerOpportunities() {
      reasons, and the identical reason twice is one reason. */
   const add = (org, orgType, code, srcEd, part, tgt) => {
     if (!fairAdmissionEntrance(tgt.id, org).fresh) return;
-    const key = org + ' ' + tgt.id;
+    /* A collision-free key for the pair, and NOT a separator character:
+       a hidden control byte in the file stream makes tools read the
+       whole document as binary. JSON.stringify escapes what it must. */
+    const key = JSON.stringify([org, tgt.id]);
     let c = byKey[key];
     if (!c) {
       c = byKey[key] = { key: key, org: org, orgType: orgType,

@@ -31,7 +31,7 @@ Kein Build-Command, Publish-Directory = Repo-Root.
 > Dauerhafte Regeln gehoeren in `BOTTLE-LOBBY-SPEC.md`, kurze Invarianten in
 > `CLAUDE.md`. Findet sich hier eine Regel, ist sie am falschen Ort.
 
-**Baum sauber, `main` gepusht, 34 Harnesses gruen** (nachgezaehlt 17.08. nach O10 — O10 brachte `tests/organizer-opportunities.js` als neues File und hebt die Zahl von 33 auf 34; davor 33, nachgezaehlt 15.08. nach O9 — O9 brachte `organizer-profile.js` als neues File; davor 32, nachgezaehlt 14.08. nach O7 — O7 brachte `fair-appointments.js` als neues File; davor 31, nachgezaehlt 13.08. nach O5 — O5 brachte KEIN neues File, sondern erweiterte `wine-guide-page.js`, `persistence.js` und `fairs.js`; `fair-participation.js` kam mit Durchgang O4 dazu, davor `fair-recruiting.js` mit O3, `fairs.js` mit 12, `platform-partners.js` mit 11, `campaigns.js` mit 10, `wine-guide-page.js` mit 9, `member-events.js` mit 7). **`BLStore.VERSION` steht auf 12** — O5 hat gemessen einen Bump auf 12 gebraucht (neue Fixture-Zeilen in den bestehenden Sammlungen `fairSeries`/`fairEditions`/`reviews`, D2D-Klasse; `SCHEMA_HASH` blieb `6d204f48`, alle 40 Fingerprints identisch; O7 hat gemessen KEINEN Bump gebraucht und `SCHEMA_HASH` zweimal nachgezogen, `6d204f48` → `9b503d88` → `b29a32a`, jeweils im selben Commit); O4 hat gemessen einen Bump auf 10 gebraucht (Fixture-Zeilen in den BESTEHENDEN Sammlungen `fairHalls`/`fairStands`/`fairAdmissions`, D2D-Klasse), die Codex-Korrektur einen weiteren auf 11 (FORMAT-Klasse: das Schema-Feld `sh` im Snapshot-Blob; Begruendung jeweils am `VERSION` und in den Bloecken unten); Durchgang 12 brauchte einen (RVW-3005), **O3 gemessen keinen**. **Mit `sh` kam eine neue C8-Pflicht: aendern Fixtures ihre FORM, wird `SCHEMA_HASH` in `assets/bottle-lobby-store.js` im selben Commit nachgezogen — `tests/persistence.js` wird sonst rot und nennt den neuen Wert.**
+**Getrackter Arbeitsstand sauber, `main` gepusht, 34 Harnesses gruen** — `git status` meldet weiterhin die bereits vorhandene UNGETRACKTE Datei `AGENTS.md`, die unangetastet bleibt und nicht committet wird; „Baum vollstaendig sauber“ waere daher falsch. (Harnesses nachgezaehlt 17.08. nach O10 — O10 brachte `tests/organizer-opportunities.js` als neues File und hebt die Zahl von 33 auf 34; davor 33, nachgezaehlt 15.08. nach O9 — O9 brachte `organizer-profile.js` als neues File; davor 32, nachgezaehlt 14.08. nach O7 — O7 brachte `fair-appointments.js` als neues File; davor 31, nachgezaehlt 13.08. nach O5 — O5 brachte KEIN neues File, sondern erweiterte `wine-guide-page.js`, `persistence.js` und `fairs.js`; `fair-participation.js` kam mit Durchgang O4 dazu, davor `fair-recruiting.js` mit O3, `fairs.js` mit 12, `platform-partners.js` mit 11, `campaigns.js` mit 10, `wine-guide-page.js` mit 9, `member-events.js` mit 7.) **`BLStore.VERSION` steht auf 12** — O5 hat gemessen einen Bump auf 12 gebraucht (neue Fixture-Zeilen in den bestehenden Sammlungen `fairSeries`/`fairEditions`/`reviews`, D2D-Klasse; `SCHEMA_HASH` blieb `6d204f48`, alle 40 Fingerprints identisch; O7 hat gemessen KEINEN Bump gebraucht und `SCHEMA_HASH` zweimal nachgezogen, `6d204f48` → `9b503d88` → `b29a32a`, jeweils im selben Commit); O4 hat gemessen einen Bump auf 10 gebraucht (Fixture-Zeilen in den BESTEHENDEN Sammlungen `fairHalls`/`fairStands`/`fairAdmissions`, D2D-Klasse), die Codex-Korrektur einen weiteren auf 11 (FORMAT-Klasse: das Schema-Feld `sh` im Snapshot-Blob; Begruendung jeweils am `VERSION` und in den Bloecken unten); Durchgang 12 brauchte einen (RVW-3005), **O3 gemessen keinen**. **Mit `sh` kam eine neue C8-Pflicht: aendern Fixtures ihre FORM, wird `SCHEMA_HASH` in `assets/bottle-lobby-store.js` im selben Commit nachgezogen — `tests/persistence.js` wird sonst rot und nennt den neuen Wert.**
 
 ### Womit eine Sitzung anfaengt
 
@@ -1659,10 +1659,19 @@ Funktionen aufrufen, `transferSize` vorher lesen (C7).
 > Hier steht nur, was Git und Spec nicht wissen.
 
 **Ausgangs-HEAD** `7c740b236e7eab3b4bcb06b83a79ca9a50e08924` (abgenommen).
-**Commits, drei, in der vorgegebenen Struktur:**
+**Die vorgegebene Dreierstruktur, unveraendert erhalten:**
 `6c15a0c921385253e63a0fd9d3874252e92f8782` (Spec: A24, A8-Absatz, A23.5/A23.7) ·
 `c90de347c2b5460820ad18c44e72f8753cbb6d1b` (Bau **und** die von ihm
-motivierten Zusicherungen in einem Commit) · dieser HANDOFF-Commit.
+motivierten Zusicherungen in einem Commit) ·
+`ecd02c333771d9bc852a124038ecad0e09b12bb8` (HANDOFF).
+**Danach genau EIN zusaetzlicher atomarer Korrekturcommit** — dieser hier.
+
+> **`ecd02c333771d9bc852a124038ecad0e09b12bb8` war der geprueft, aber
+> wegen zweier Punkte NICHT abgenommene Zwischenstand.** Die unabhaengige
+> Codex-Pruefung hat beide gefunden, beide sind berechtigt, und beide sind
+> mit dem Korrekturcommit behoben — siehe „Was die Codex-Pruefung gefunden
+> hat" weiter unten. Historie unveraendert: kein Amend, kein Force, keine
+> Umschreibung.
 
 **Was gebaut wurde, in einem Satz:** die gesperrte Organizer-Zeile
 *Opportunities* ist eine echte Ansicht, die aus den eigenen Fair-Registern
@@ -1677,7 +1686,7 @@ Edition **derselben** Serie noch gar kein Zulassungsverfahren hat.
 | M1 | A24 war frei (hoechstes Kapitel A23) · hoechste D-Nummer **D47**, bleibt es · hoechste OP-Invariante OP-10 · 33 Harnesses vor dem Durchgang |
 | M2 | `inviteToFair()` prueft Serie (`fairSeriesManagedHere`), `cancelled`, `fairOrgEligible` und `fairAdmissionEntrance` **selbst** — die Opportunity-Aktion fuegt keine eigene Autoritaet hinzu. **Praezise Grenze:** „upcoming" traegt `inviteToFair()` NICHT; das ist ein Ableitungsfilter von A24.2, keine Autoritaet des Buttons — eine Karte auf eine vergangene Edition entsteht gar nicht erst, und der Recruiting-Block der Edition bleibt unveraendert |
 | M3 | Genau **SIEBEN** Opportunities, mechanisch bestaetigt und Karte fuer Karte zugeordnet: Domaine Lefèvre 2 (FE-7101 → FE-7103, FE-7102) · Hawesko GmbH 2 (FE-7103 → FE-7101, FE-7102) · Cantina Rossi 2 (representedAtBooth auf FE-7103 → FE-7101, FE-7102) · Weingut Schmitt 1 (FE-7103 → FE-7102; FE-7101 faellt wegen FA-9101 `applied`). FS-7002 traegt keine Participation und liefert nichts |
-| M4a | Segmentpruefsummen von `renderDistributorOpportunities()` + `goToWineShowPlanning()` und des `#dopp-list`/`#dopp-count`-Markups **vor und nach** dem Bau identisch: `aeff0827c6c4f1d8…` (2836 B) und `7f6d1d6f199cdd1d…` (655 B). Das **gerenderte** Fixture-Ergebnis ebenfalls identisch: `(5)` / `5aabf92f71676556…`. Der bekannte Hawesko-Selbstvorschlag steht unangetastet (E-3) |
+| M4a | Segmentpruefsummen von `renderDistributorOpportunities()` + `goToWineShowPlanning()` und des `#dopp-list`/`#dopp-count`-Markups **vor dem Bau, nach dem Bau und nach der Korrektur** identisch, vollstaendig notiert: Renderer `aeff0827c6c4f1d86aa033db6a2d6636702c238ee587e0381b98eeb08be7a615` (2836 B) · Markup `7f6d1d6f199cdd1dd0d8a165f73c56e9b96d782c3d67c83776ec17b7bb63b4cb` (655 B) · gerendertes Fixture-Ergebnis `(5)` / `5aabf92f71676556b46a1dd31746f300b6210a6128d146a3bce4ca0460ee2a0c`. Der bekannte Hawesko-Selbstvorschlag steht unangetastet (E-3) |
 | M4b | Die Ableitung liest weder `partnerFollows` noch `wineFollowGraph` — **mit einer Lesesonde gemessen**, nicht per Quelltext-Grep: die Bindung wird durch einen Proxy ersetzt, der den ersten Property-Zugriff meldet |
 | M4c | `PUBLIC_COLLECTIONS` unveraendert, keine oeffentliche Seite und kein Handelsprofil geaendert |
 | M4d | `renderPartnerStarsFor()` / `renderAllPartnerStars()` unveraendert und funktionsfaehig — **Erhaltungsmessung**, positiv abgenommen |
@@ -1708,7 +1717,7 @@ die hoechste D-Nummer.**
 #### Tests und Browser
 
 `tests/organizer-opportunities.js` ist neu (Verzeichnisscan nimmt es auf) und
-traegt **26 Erkennungen, jede mit Gegenmutation**. Der Kunstgriff, der noetig
+traegt **26 Erkennungen; nach der Korrektur greifen 40 wirksame Gegenmutationen** (mechanisch am finalen Lauf nachgezaehlt, vorher 37). Der Kunstgriff, der noetig
 war: der Grossteil des A24-Vertrags ist ein **Filter** — die richtige
 Ableitung laesst sich durch Fixture-Mutation nicht zu einer verbotenen Karte
 ueberreden, eine reine Datenmutation bliebe gruen und bewiese nichts. Deshalb
@@ -1723,8 +1732,14 @@ Gezielt ergaenzt: `tests/platform-partners.js` (PP-1 fuer die neue Aktion —
 Recruiting-Akt, keine Handelsaktion) · `tests/organizer-profile.js` §9 (OP-10)
 · `tests/fairs.js` (die aktivierte Sperrzeile: jetzt **zwei** statt drei).
 **§7 von `organizer-profile.js` blieb unveraendert und wurde nicht
-abgeschwaecht.** `node tests/run-all.js` lief am finalen Produktstand genau
-EIN Mal vollstaendig: **34/34 gruen.**
+abgeschwaecht.**
+
+**Zwei vollstaendige `run-all`-Laeufe, und sie werden hier nicht zu einem
+zusammengezogen:** einer am inzwischen ueberholten Zwischenstand
+`ecd02c333771d9bc852a124038ecad0e09b12bb8` (**34/34 gruen**) und genau einer
+am korrigierten finalen Produktstand (**34/34 gruen**). Der erste Lauf war zum
+Zeitpunkt seiner Messung richtig und ist trotzdem nicht der Beleg fuer den
+Stand, der jetzt gilt.
 
 **Browser-Abnahme** (Chrome-Extension, `tests/serve.js`, JavaScript-Auslese):
 sieben Karten in der Sortierung Ziel-Datum → Name, je ein Grund mit
@@ -1748,6 +1763,67 @@ Verifikationsverdikt, keine Followerzahl).
 > JavaScript-Auslese** gefahren — die genauere Messung ohnehin. Es gibt kein
 > Abnahme-Screenshot dieses Durchgangs, und das ist hier vermerkt statt
 > stillschweigend weggelassen.
+
+#### Was die Codex-Pruefung gefunden hat — zwei Punkte, beide berechtigt
+
+**1. Ein echtes NUL-Byte (U+0000) in `bottle-lobby-dashboard.html`.** Es stand
+in `organizerOpportunities()` als Trennzeichen im Kartenschluessel:
+`const key = org + '<NUL>' + tgt.id;`. Am abgenommenen Ausgangsstand
+`7c740b2` enthielt die Datei **null** NUL-Bytes, der Zwischenstand `ecd02c3`
+**genau eines**. Das ist kein Schoenheitsfehler: ein Steuerbyte laesst Git,
+`grep` und jedes gewoehnliche Werkzeug das ganze 1,2-MB-Dokument als
+**Binaerdatei** behandeln — und es ist in keiner gerenderten Ansicht und in
+keiner DOM-Zusicherung sichtbar. Ersetzt durch
+`const key = JSON.stringify([org, tgt.id]);` — weiterhin kollisionsfrei, ohne
+verstecktes Zeichen im Dateistrom. **Das fachliche Kartenverhalten aendert
+sich nicht:** die Sieben, ihre Reihenfolge, ihre Gruende und die Aktion sind
+identisch; nur die interne Schluesseldarstellung ist eine andere.
+`tests/organizer-opportunities.js` misst jetzt die **tatsaechlichen
+Dateibytes** (`fs.readFileSync` ohne Encoding), nicht die Quelltextdarstellung
+und nicht das DOM; die Gegenmutation schiebt demselben Pruefer einen Buffer
+mit eingefuegtem NUL unter und macht ihn rot.
+
+**2. Eine wirkungslose Nebenwirkungspruefung.** Im Harness stand
+`if (typeof notifications === 'undefined' || true) { … }`. Das `|| true`
+machte die Bedingung wirkungslos, und die anschliessende Suche nach globalen
+Arrays mit „opportunit" im Namen bewies weder „keine Message-Zeile" noch
+„keine Notification-Zeile" — der Harness meldete trotzdem gruen. **Die
+Aussage ist vollstaendig entfernt**, kein zweiter immer-wahrer Zweig, keine
+Umformulierung. An ihrer Stelle steht eine Pruefung des B4-/OO-8-Vertrags
+ueber den **gesamten registrierten Zustand**:
+
+- vor dem Klick werden **alle** durch `BLStore.names()` registrierten
+  Zustaende (aktuell **47**) und die Namensmenge selbst erfasst;
+- nach `doOrganizerOpportunityInvite(…)` duerfen sich **genau zwei** davon
+  bewegt haben — `fairAdmissions` und `fairAdmissionSeq` —, alle uebrigen 45
+  bleiben byte-identisch;
+- die Namensmenge muss identisch bleiben: **ein neu entstandenes
+  Opportunity-, Message- oder Notification-Register taucht in `names()` von
+  selbst auf** — deshalb fragt die Pruefung den Store und raet nicht an einem
+  globalen Namen herum;
+- die Aenderung an `fairAdmissions` muss **genau eine neue `invited`-Zeile mit
+  einer History-Zeile** sein, und **keine** bestehende Zeile darf umgeschrieben
+  werden;
+- das **abgeleitete** Notifications-System (C9) hat gar kein Register und
+  waere dem Zustandsvergleich unsichtbar — es wird deshalb zusaetzlich fuer
+  alle vier Rollen direkt gelesen und muss byte-identisch bleiben;
+- `notifSeen` ist eines der 47 registrierten Zustaende und wird **nicht** als
+  verbotene Notification-Zeile behandelt: es ist einer der Werte, die sich
+  schlicht nicht bewegen duerfen.
+
+Zwei Gegenmutationen, beide **echte Aenderungen**, keine geschoenten
+Artefakte: (a) der Akt schreibt zusaetzlich eine `partnerships`-Zeile — ein
+fremdes Register bewegt sich mit, die Pruefung wird rot; (b) in einem
+**Wegwerf-Fenster** wird mit `BLStore.register()` wirklich ein Zustand
+`opportunitiesSeen` angelegt — die Namensmenge waechst, die Pruefung wird rot.
+Das zweite laeuft bewusst in einem eigenen Fenster: `BLStore` hat kein
+`unregister`, und das Register des Fensters zu verschmutzen, in dem jeder
+andere Abschnitt misst, waere schlimmer als der zweite Boot.
+
+> **Was daraus als Regel bleibt:** eine Bedingung mit `|| true` ist keine
+> Pruefung, und ein Harness, der so etwas gruen meldet, ist gefaehrlicher als
+> gar keiner. Und: unsichtbare Steuerzeichen entkommen jeder DOM- und
+> Quelltextpruefung — was in der Datei steht, wird an der Datei gemessen.
 
 #### Was O10 ausdruecklich NICHT gebaut hat
 

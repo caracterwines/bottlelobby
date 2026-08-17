@@ -109,6 +109,63 @@ function restore() {
     stakeholders.forEach(function (x) { STAKEHOLDER_INDEX[x.name] = x; });
   })()`);
 }
+/* ── THE WHOLE REGISTERED STATE, read from the platform's own list ──
+   `BLStore.names()` is what this document persists; a register that
+   came into being would appear in it BY ITSELF, which is why the check
+   below asks the store rather than guessing at a global name. Every
+   registered binding is a top-level `let` and is read by its name.
+   `notifSeen` is in that list and is therefore NOT a forbidden
+   "notification row" — it is one of the values that must not move. */
+function registeredState(win) {
+  const win2 = win || w;
+  const names = win2.eval('BLStore.names()');
+  const values = {};
+  names.forEach(n => {
+    /* A registered name whose binding cannot be read is itself worth
+       seeing, so it is recorded rather than thrown. */
+    try { values[n] = win2.eval('JSON.stringify(' + n + ')'); }
+    catch (e) { values[n] = '<unreadable binding>'; }
+  });
+  return { names: names.slice().sort(), values: values };
+}
+/* The DERIVED notification model (C9) has no register at all, so the
+   state comparison cannot see it. It is read directly, for all four
+   roles, and must be byte-identical across the act. */
+function derivedNotifications(win) {
+  return (win || w).eval(
+    "JSON.stringify(['winery','distributor','restaurant','retail']" +
+    ".map(function(r){ return notificationsFor(r); }))");
+}
+/* B4 / OO-8: exactly `fairAdmissions` + `fairAdmissionSeq` may move,
+   the registered NAME SET must be identical, and the delta itself must
+   be one invited row with one history line. */
+function assertOnlyAdmissionsMoved(before, after, label) {
+  const ALLOWED = ['fairAdmissions', 'fairAdmissionSeq'];
+  const appeared = after.names.filter(n => before.names.indexOf(n) === -1);
+  const vanished = before.names.filter(n => after.names.indexOf(n) === -1);
+  if (!appeared.length && !vanished.length)
+    ok(label + ': the registered name set is unchanged (' + after.names.length +
+       ') — no opportunity, message or notification register came into being');
+  else bad(label + ': the registered name set moved — appeared: [' + appeared.join(', ') +
+           '], vanished: [' + vanished.join(', ') + ']');
+  const moved = after.names.filter(n => before.values[n] !== after.values[n]);
+  const extra = moved.filter(n => ALLOWED.indexOf(n) === -1);
+  if (extra.length) bad(label + ': registered state changed that may not change: ' + extra.join(', '));
+  else ok(label + ': of ' + after.names.length + ' registered states exactly ' + moved.length +
+          ' moved — ' + moved.join(' + ') + ', and nothing else');
+  const b = JSON.parse(before.values.fairAdmissions || '[]');
+  const a = JSON.parse(after.values.fairAdmissions || '[]');
+  const gained = a.filter(r => !b.some(x => x.id === r.id));
+  const changed = a.filter(r => { const o = b.find(x => x.id === r.id);
+    return o && JSON.stringify(o) !== JSON.stringify(r); });
+  if (a.length === b.length + 1 && gained.length === 1 && !changed.length &&
+      gained[0].status === 'invited' && gained[0].source === 'invitation' &&
+      (gained[0].history || []).length === 1 && gained[0].history[0].action === 'invited')
+    ok(label + ': the admissions delta is exactly one new invited row with one history line, no row rewritten');
+  else bad(label + ': the admissions delta is ' + gained.length + ' new / ' +
+           changed.length + ' rewritten row(s)');
+}
+
 /* A mutation that runs with the fixtures put back afterwards, always. */
 function withMutation(js, body) {
   snap();
@@ -630,10 +687,16 @@ console.log('\n§9 Invite to exhibit — the act carries no authority of its own
     } finally { restore(); }
   });
 
-  /* (22) exactly one invited row; (23) the card is gone afterwards. */
+  /* (22) exactly one invited row; (23) the card is gone afterwards;
+     (B4/OO-8) NOTHING ELSE came into being — measured over the whole
+     registered state, see registeredState() above. */
   snap();
   const before = ADM().length;
+  const stateBefore = registeredState();
+  const notifBefore = derivedNotifications();
   w.eval("doOrganizerOpportunityInvite('Domaine Lefèvre','FE-7102')");
+  const stateAfter = registeredState();
+  const notifAfter = derivedNotifications();
   const added = ADM().filter(a => a.editionId === 'FE-7102' && a.org === 'Domaine Lefèvre');
   if (ADM().length === before + 1 && added.length === 1 && added[0].status === 'invited' &&
       added[0].source === 'invitation' && added[0].history.length === 1 &&
@@ -656,12 +719,35 @@ console.log('\n§9 Invite to exhibit — the act carries no authority of its own
   if (/Domaine Lefèvre/.test(fairsText) && /Invited by the organizer/.test(fairsText))
     ok("the target edition's recruiting block carries the new invitation");
   else bad('the invitation is not visible on the target edition');
-  /* Nothing else came into being. */
-  if (w.eval('typeof notifications') === 'undefined' || true) {
-    const n = w.eval("JSON.stringify(Object.keys(window).filter(function(k){return /opportunit/i.test(k) && Array.isArray(window[k]);}))");
-    if (n === '[]') ok('no opportunity collection, no message and no notification row came into being');
-    else bad('a collection appeared: ' + n);
-  }
+  /* B4 / OO-8, over the WHOLE registered state and the derived
+     notification model — not over a guessed global name. */
+  assertOnlyAdmissionsMoved(stateBefore, stateAfter, 'the invitation');
+  if (notifBefore === notifAfter)
+    ok('the derived notification model is byte-identical for all four roles — the act notifies nobody (C9, OO-8)');
+  else bad('the invitation changed the derived notifications — a notification arose from an opportunity act');
+  /* Two counter-mutations against the B4/OO-8 check, each breaking a
+     different half of it — and each a REAL change, not a doctored
+     artefact. */
+  expectRed('a foreign register moves along with the act — the act also writes a partnership row', () => {
+    snap();
+    try {
+      const b = registeredState();
+      w.eval("doOrganizerOpportunityInvite('Hawesko GmbH','FE-7101');" +
+             "partnerships.push({id:'PT-MUT',winery:'Cantina Rossi',distributor:'Hawesko GmbH',status:'active'})");
+      assertOnlyAdmissionsMoved(b, registeredState(), 'the invitation');
+    } finally { restore(); }
+  });
+  expectRed('a new state really registered with BLStore — an "opportunitiesSeen" register comes into being', () => {
+    /* In a THROWAWAY window: BLStore has no unregister, and polluting
+       the register of the window every other section measures would be
+       worse than the second boot this costs. */
+    const w2 = boot();
+    const b = registeredState(w2);
+    w2.eval("window.opportunitiesSeen = []; BLStore.register({ opportunitiesSeen: " +
+            "[function(){ return window.opportunitiesSeen; }, " +
+            " function(v){ window.opportunitiesSeen = v; }] })");
+    assertOnlyAdmissionsMoved(b, registeredState(w2), 'the invitation');
+  });
   expectRed('the created invitation removed again — the card comes back', () => {
     snap();
     try {
@@ -698,6 +784,25 @@ console.log('\n§10 unchanged boundaries — trade cockpits, the A7 block, and t
   const MARKUP_SHA   = '7f6d1d6f199cdd1dd0d8a165f73c56e9b96d782c3d67c83776ec17b7bb63b4cb';
   const RENDERED_SHA = '5aabf92f71676556b46a1dd31746f300b6210a6128d146a3bce4ca0460ee2a0c';
   const src = fs.readFileSync(path.join(__dirname, '..', 'bottle-lobby-dashboard.html'), 'utf8');
+
+  /* THE RAW BYTES, not the source as a string and not the DOM. O10
+     first shipped a real U+0000 inside organizerOpportunities(), used
+     as a key separator: invisible in every rendered view, invisible in
+     every DOM assertion — and enough to make git, grep and every
+     ordinary tool treat the whole 1.2 MB document as BINARY. A control
+     byte has no business in this file, so the file's own bytes are
+     what gets measured. */
+  function assertNoControlBytes(buf, what) {
+    const nul = buf.filter(b => b === 0).length;
+    if (nul === 0) ok(what + ': ' + buf.length + ' bytes, not one NUL — the document stays text');
+    else bad(what + ': ' + nul + ' NUL byte(s) in the file — tools read it as binary');
+  }
+  const rawBytes = fs.readFileSync(path.join(__dirname, '..', 'bottle-lobby-dashboard.html'));
+  assertNoControlBytes(rawBytes, 'bottle-lobby-dashboard.html');
+  expectRed('one NUL byte spliced into the measured bytes', () => {
+    assertNoControlBytes(Buffer.concat([rawBytes.slice(0, 100), Buffer.from([0]),
+                                        rawBytes.slice(100)]), 'bottle-lobby-dashboard.html');
+  });
   function fnSegment(name) {
     const i = src.indexOf('function ' + name + '(');
     if (i === -1) return null;
